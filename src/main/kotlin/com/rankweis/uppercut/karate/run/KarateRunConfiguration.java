@@ -70,7 +70,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   protected KarateRunConfiguration(@NotNull Project project,
     @NotNull ConfigurationFactory factory, @Nullable String name) {
     super(name, project, factory);
-    this.setMainClassName("com.rankweis.uppercut.KarateTestRunner");
+    this.setMainClassName("com.rankweis.uppercut.testrunner.KarateTestRunner");
   }
 
   @Override public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {

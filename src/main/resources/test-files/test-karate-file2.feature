@@ -1,4 +1,4 @@
-@Test @Test2
+@Test
 Feature: Test
 
   Background:
