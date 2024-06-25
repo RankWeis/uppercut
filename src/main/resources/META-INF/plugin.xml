@@ -1,0 +1,166 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+  <id>com.rankweis</id>
+  <name>uppercut</name>
+  <vendor>rankweis</vendor>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>JavaScript</depends>
+  <depends>com.intellij.modules.java</depends>
+  <depends>JUnit</depends>
+  <depends>org.intellij.intelliLang</depends>
+
+  <resource-bundle>messages.MyBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Karate"
+      implementationClass="com.rankweis.uppercut.karate.psi.GherkinFileType"
+      fieldName="INSTANCE" language="Karate" extensions="feature"/>
+    <lang.syntaxHighlighterFactory language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.psi.GherkinSyntaxHighlighterFactory"/>
+
+    <lang.parserDefinition language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.psi.GherkinParserDefinition"/>
+    <lang.commenter language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.psi.GherkinCommenter"/>
+    <lang.psiStructureViewFactory language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.psi.structure.GherkinStructureViewFactory"/>
+    <lang.formatter language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.psi.formatter.GherkinFormattingModelBuilder"/>
+    <annotator language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.psi.annotator.GherkinAnnotator"/>
+    <lang.foldingBuilder language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.psi.GherkinFoldingBuilder"/>
+    <langCodeStyleSettingsProvider
+      implementation="com.rankweis.uppercut.karate.psi.formatter.GherkinLanguageCodeStyleSettingsProvider"/>
+    <codeStyleSettingsProvider
+      implementation="com.rankweis.uppercut.karate.psi.formatter.GherkinCodeStyleSettingsProvider"/>
+
+    <lang.findUsagesProvider language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.psi.GherkinFindUsagesProvider"/>
+    <colorSettingsPage
+      implementation="com.rankweis.uppercut.karate.psi.GherkinColorsPage"/>
+
+    <projectConfigurable
+      parentId="tools"
+      instance="com.rankweis.uppercut.settings.UppercutSettingsConfigurable"
+      id="com.rankweis.ProjectSettingsConfigurable"
+      displayName="Karate"
+      nonDefaultProject="true"/>
+
+    <psi.referenceContributor language="Karate"
+      implementation="com.rankweis.uppercut.karate.steps.reference.CucumberReferenceContributor"/>
+
+    <localInspection language="Karate" shortName="CucumberUndefinedStep" bundle="messages.MyBundle"
+      key="cucumber.inspection.undefined.step.name" groupKey="cucumber.inspection.group.name"
+      enabledByDefault="true" level="WARNING"
+      implementationClass="com.rankweis.uppercut.karate.inspections.CucumberStepInspection"/>
+
+    <localInspection language="Karate" shortName="CucumberExamplesColon" bundle="messages.MyBundle"
+      key="inspection.missed.colon.example.name" groupKey="cucumber.inspection.group.name"
+      enabledByDefault="true"
+      level="ERROR"
+      implementationClass="com.rankweis.uppercut.karate.inspections.CucumberExamplesColonInspection"/>
+
+    <localInspection language="Karate" shortName="CucumberMissedExamples" bundle="messages.MyBundle"
+      key="inspection.missed.example.name" groupKey="cucumber.inspection.group.name"
+      enabledByDefault="true" level="ERROR"
+      implementationClass="com.rankweis.uppercut.karate.inspections.CucumberMissedExamplesInspection"/>
+
+    <localInspection language="Karate" shortName="CucumberTableInspection"
+      bundle="messages.MyBundle"
+      key="inspection.table.name" groupKey="cucumber.inspection.group.name" enabledByDefault="true"
+      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+      level="WARNING"
+      implementationClass="com.rankweis.uppercut.karate.inspections.CucumberTableInspection"/>
+
+    <localInspection language="Karate" shortName="GherkinBrokenTableInspection"
+      bundle="messages.MyBundle"
+      key="inspection.gherkin.table.is.broken.name" groupKey="cucumber.inspection.group.name"
+      enabledByDefault="true"
+      level="ERROR"
+      implementationClass="com.rankweis.uppercut.karate.inspections.GherkinBrokenTableInspection"/>
+
+    <localInspection language="Karate" shortName="GherkinMisplacedBackground"
+      bundle="messages.MyBundle"
+      key="inspection.gherkin.background.after.scenario.name"
+      groupKey="cucumber.inspection.group.name" enabledByDefault="true"
+      level="ERROR"
+      implementationClass="com.rankweis.uppercut.karate.inspections.GherkinMisplacedBackgroundInspection"/>
+
+    <localInspection language="Karate" shortName="GherkinScenarioToScenarioOutline"
+      bundle="messages.MyBundle"
+      key="inspection.gherkin.scenario.with.examples.section.name"
+      groupKey="cucumber.inspection.group.name" enabledByDefault="true" level="ERROR"
+      implementationClass="com.rankweis.uppercut.karate.inspections.GherkinScenarioToScenarioOutlineInspection"/>
+    
+
+    <completion.contributor language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.completion.CucumberCompletionContributor"/>
+
+    <enterHandlerDelegate
+      implementation="com.rankweis.uppercut.karate.codeinsight.CucumberEnterHandler"/>
+    <typedHandler
+      implementation="com.rankweis.uppercut.karate.codeinsight.GherkinTypedHandler"/>
+
+    <spellchecker.support language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.spellchecker.GherkinSpellcheckerStrategy"/>
+    <lang.inspectionSuppressor language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.inspections.model.GherkinInspectionSuppressor"/>
+
+    <liveTemplateContext contextId="KARATE_FEATURE_FILE"
+      implementation="com.rankweis.uppercut.karate.GherkinLiveTemplateContextType"/>
+
+    <extendWordSelectionHandler
+      implementation="com.rankweis.uppercut.karate.actions.GherkinStepParameterSelectioner"/>
+
+    <gotoRelatedProvider
+      implementation="com.rankweis.uppercut.karate.navigation.CucumberGoToRelatedProvider"/>
+
+    <renameHandler
+      implementation="com.rankweis.uppercut.karate.psi.refactoring.rename.GherkinInplaceRenameHandler"/>
+    <renameHandler
+      implementation="com.rankweis.uppercut.karate.psi.refactoring.rename.GherkinStepRenameHandler"/>
+
+
+    <renamePsiElementProcessor
+      implementation="com.rankweis.uppercut.karate.psi.refactoring.rename.CucumberStepRenameProcessor"
+      order="first"/>
+
+    <additionalTextAttributes scheme="Default" file="colorSchemes/GherkinDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/GherkinDarcula.xml"/>
+
+    <runLineMarkerContributor id="cucumberRunLineMarkerContributer" language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.run.CucumberRunLineMarkerContributor"/>
+    <runConfigurationProducer
+      implementation="com.rankweis.uppercut.karate.run.KarateRunConfigurationProducer"/>
+    <configurationType
+      implementation="com.rankweis.uppercut.karate.run.KarateConfigurationType"/>
+
+    <intentionAction>
+      <language>Karate</language>
+      <className>
+        com.rankweis.uppercut.karate.intentions.ScenarioToOutlineIntention
+      </className>
+      <categoryKey>intention.family.name.cucumber</categoryKey>
+    </intentionAction>
+    <multiHostInjector
+      implementation="com.rankweis.uppercut.karate.injector.GherkinLanguageInjector"/>
+    <lang.elementManipulator
+      forClass="com.rankweis.uppercut.karate.psi.GherkinPystring"
+      implementationClass="com.rankweis.uppercut.karate.GherkinPyStringManipulator"/>
+    <gotoDeclarationHandler
+      implementation="com.rankweis.uppercut.karate.navigation.KarateGoToSymbolProvider"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint
+      interface="com.rankweis.uppercut.karate.CucumberJvmExtensionPoint"
+      dynamic="true" name="cucumberJvmExtensionPoint"/>
+    <extensionPoint
+      interface="com.rankweis.uppercut.karate.injector.GherkinInjectorExtensionPoint"
+      dynamic="true" name="injectorExtensionPoint"/>
+  </extensionPoints>
+
+
+</idea-plugin>
