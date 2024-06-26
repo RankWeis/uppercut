@@ -30,7 +30,7 @@ repositories {
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
-    compileOnly("io.karatelabs:karate-junit5:" + properties("karateVersion").get())
+    implementation("io.karatelabs:karate-junit5:" + properties("karateVersion").get())
 }
 
 // Set the JVM language level used to build the project.
@@ -134,10 +134,6 @@ tasks {
         password = environment("PRIVATE_KEY_PASSWORD")
     }
     
-    runPluginVerifier {
-        externalPrefixes.set(listOf("com.intuit", "ch"))
-    }
-
     publishPlugin {
         dependsOn("patchChangelog")
         token = environment("PUBLISH_TOKEN")

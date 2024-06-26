@@ -7,7 +7,6 @@
   <depends>com.intellij.modules.platform</depends>
   <depends>JavaScript</depends>
   <depends>com.intellij.modules.java</depends>
-  <depends>JUnit</depends>
   <depends>org.intellij.intelliLang</depends>
 
   <resource-bundle>messages.MyBundle</resource-bundle>
