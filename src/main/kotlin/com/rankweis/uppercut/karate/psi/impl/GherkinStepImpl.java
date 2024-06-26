@@ -167,7 +167,7 @@ public class GherkinStepImpl extends GherkinPsiElementBase implements GherkinSte
   @Nullable
   public GherkinStepsHolder getStepHolder() {
     final PsiElement parent = getParent();
-    return parent != null ? (GherkinStepsHolder)parent : null;
+    return parent != null ? parent instanceof GherkinStepsHolder ? (GherkinStepsHolder) parent : null : null;
   }
 
   private void clearCaches() {

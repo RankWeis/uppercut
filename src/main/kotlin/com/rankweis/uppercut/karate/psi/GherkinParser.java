@@ -34,7 +34,7 @@ public class GherkinParser implements PsiParser {
         parseFeature(builder);
       } else if (tokenType == KarateTokenTypes.TAG) {
         parseTags(builder);
-      } else if ( tokenType == KarateTokenTypes.PYSTRING || tokenType == KarateTokenTypes.PYSTRING_QUOTES) {
+      } else if (tokenType == KarateTokenTypes.PYSTRING || tokenType == KarateTokenTypes.PYSTRING_QUOTES) {
         parsePystring(builder);
       } else {
         builder.advanceLexer();
@@ -185,7 +185,7 @@ public class GherkinParser implements PsiParser {
     }
     return false;
   }
-  
+
   private static void parseStep(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
@@ -208,15 +208,15 @@ public class GherkinParser implements PsiParser {
     final IElementType tokenTypeAfterName = builder.getTokenType();
     if (tokenTypeAfterName == KarateTokenTypes.PIPE) {
       parseTable(builder);
-    } else if (tokenTypeAfterName == KarateTokenTypes.PYSTRING || tokenTypeAfterName == KarateTokenTypes.PYSTRING_QUOTES) {
+    } else if (tokenTypeAfterName == KarateTokenTypes.PYSTRING
+      || tokenTypeAfterName == KarateTokenTypes.PYSTRING_QUOTES) {
       parsePystring(builder);
     }
     final IElementType tokenTypeAfterPyString = builder.getTokenType();
-    if(tokenTypeAfterPyString != tokenTypeAfterName) {
-      if(tokenTypeAfterPyString == TEXT) {
-        builder.advanceLexer();
-      }
+    if (tokenTypeAfterPyString != tokenTypeAfterName && tokenTypeAfterPyString == TEXT) {
+      parseStep(builder);
     }
+
     marker.done(GherkinElementTypes.STEP);
   }
 
