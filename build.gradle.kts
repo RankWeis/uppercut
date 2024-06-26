@@ -30,7 +30,6 @@ repositories {
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
-//    implementation(libs.exampleLibrary)
     compileOnly("io.karatelabs:karate-junit5:" + properties("karateVersion").get())
 }
 
@@ -117,6 +116,9 @@ tasks {
         }
     }
 
+    runIde {
+        autoReloadPlugins = true
+    }
     // Configure UI tests plugin
     // Read more: https://github.com/JetBrains/intellij-ui-test-robot
     runIdeForUiTests {
@@ -130,6 +132,10 @@ tasks {
         certificateChain = environment("CERTIFICATE_CHAIN")
         privateKey = environment("PRIVATE_KEY")
         password = environment("PRIVATE_KEY_PASSWORD")
+    }
+    
+    runPluginVerifier {
+        externalPrefixes.set(listOf("com.intuit", "ch"))
     }
 
     publishPlugin {
