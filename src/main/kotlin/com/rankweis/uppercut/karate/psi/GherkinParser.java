@@ -5,7 +5,6 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -35,7 +34,7 @@ public class GherkinParser implements PsiParser {
         parseFeature(builder);
       } else if (tokenType == KarateTokenTypes.TAG) {
         parseTags(builder);
-      } else if ( tokenType == KarateTokenTypes.PYSTRING || tokenType == KarateTokenTypes.PYSTRING_QUOTES) {
+      } else if (tokenType == KarateTokenTypes.PYSTRING || tokenType == KarateTokenTypes.PYSTRING_QUOTES) {
         parsePystring(builder);
       } else {
         builder.advanceLexer();
@@ -186,7 +185,7 @@ public class GherkinParser implements PsiParser {
     }
     return false;
   }
-  
+
   private static void parseStep(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
@@ -201,11 +200,6 @@ public class GherkinParser implements PsiParser {
       if (hadLineBreakBefore(builder, prevTokenEnd)) {
         break;
       }
-      if(builder.getTokenType() == DECLARATION) {
-        Marker mark = builder.mark();
-        builder.advanceLexer();
-        mark.done(GherkinElementTypes.DECLARATION);
-      }
       prevTokenEnd = builder.getCurrentOffset() + getTokenLength(tokenText);
       if (!parseStepParameter(builder)) {
         builder.advanceLexer();
@@ -214,15 +208,15 @@ public class GherkinParser implements PsiParser {
     final IElementType tokenTypeAfterName = builder.getTokenType();
     if (tokenTypeAfterName == KarateTokenTypes.PIPE) {
       parseTable(builder);
-    } else if (tokenTypeAfterName == KarateTokenTypes.PYSTRING || tokenTypeAfterName == KarateTokenTypes.PYSTRING_QUOTES) {
+    } else if (tokenTypeAfterName == KarateTokenTypes.PYSTRING
+      || tokenTypeAfterName == KarateTokenTypes.PYSTRING_QUOTES) {
       parsePystring(builder);
     }
     final IElementType tokenTypeAfterPyString = builder.getTokenType();
-    if(tokenTypeAfterPyString != tokenTypeAfterName) {
-      if(tokenTypeAfterPyString == TEXT) {
-        builder.advanceLexer();
-      }
+    if (tokenTypeAfterPyString != tokenTypeAfterName && tokenTypeAfterPyString == TEXT) {
+      parseStep(builder);
     }
+
     marker.done(GherkinElementTypes.STEP);
   }
 

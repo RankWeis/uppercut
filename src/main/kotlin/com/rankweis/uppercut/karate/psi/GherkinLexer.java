@@ -122,7 +122,7 @@ public class GherkinLexer extends LexerBase {
   
   private boolean advanceIfJsJson() {
     char openingBrace = myBuffer.charAt(myPosition);
-    char closingBrace = myBuffer.charAt(myPosition) == '{' ? '}' : '{';
+    char closingBrace = myBuffer.charAt(myPosition) == '{' ? '}' : ']';
     int pos = myPosition + 1;
     int closingBracesRequired = 1;
 
@@ -138,14 +138,16 @@ public class GherkinLexer extends LexerBase {
       pos++;
     }
 
-    boolean isQuotedStr = pos < myEndOffset && myBuffer.charAt(pos) == '}';
-    if (isQuotedStr) {
+    boolean isJsJson =
+      pos < myEndOffset && myBuffer.charAt(pos) == closingBrace && 
+        !myBuffer.subSequence(myPosition, pos).toString().matches("[\\[{*\\d]*");
+    if (isJsJson) {
       myPosition = pos + 1;
       if (myPosition > myEndOffset) {
         myPosition = myEndOffset;
       }
     }
-    return isQuotedStr;
+    return isJsJson;
   }
   
   private boolean advanceIfDeclaration() {
@@ -157,7 +159,8 @@ public class GherkinLexer extends LexerBase {
     }
 
     // Look for 'declaration =' but not 'declaration =='
-    boolean isDeclaration = pos < (myEndOffset - 1) && myBuffer.charAt(pos) == '=' && myBuffer.charAt(pos + 1) != '=';
+    boolean isDeclaration = pos < (myEndOffset - 1) && myBuffer.charAt(pos) == '=' && myBuffer.charAt(pos + 1) != '='
+      && myBuffer.charAt(pos - 1) != '!';
     if (isDeclaration) {
       myPosition = pos > myPosition ? pos - 1 : pos;
       if (myPosition > myEndOffset) {
@@ -189,7 +192,7 @@ public class GherkinLexer extends LexerBase {
       if (advanceIfJsJson()) {
         myCurrentToken = KarateTokenTypes.PYSTRING;
       } else {
-        advanceToNextLine();
+        advanceToNextInterestingToken();
       }
     } else if ( isStringAtPosition("function")) {
       myCurrentToken = KarateTokenTypes.PYSTRING;

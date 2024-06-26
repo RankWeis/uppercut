@@ -1,18 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi.impl;
 
-import com.rankweis.uppercut.karate.CucumberUtil;
-import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
-import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
-import com.rankweis.uppercut.karate.psi.GherkinStep;
-import com.rankweis.uppercut.karate.psi.GherkinTable;
-import com.rankweis.uppercut.karate.psi.refactoring.GherkinChangeUtil;
-import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
-import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
-import com.rankweis.uppercut.karate.psi.GherkinPystring;
-import com.rankweis.uppercut.karate.psi.GherkinScenarioOutline;
-import com.rankweis.uppercut.karate.psi.GherkinStepsHolder;
-import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCheckedRenameElement;
@@ -25,6 +13,19 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.rankweis.uppercut.karate.CucumberUtil;
+import com.rankweis.uppercut.karate.MyBundle;
+import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
+import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
+import com.rankweis.uppercut.karate.psi.GherkinPystring;
+import com.rankweis.uppercut.karate.psi.GherkinScenarioOutline;
+import com.rankweis.uppercut.karate.psi.GherkinStep;
+import com.rankweis.uppercut.karate.psi.GherkinStepsHolder;
+import com.rankweis.uppercut.karate.psi.GherkinTable;
+import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import com.rankweis.uppercut.karate.psi.refactoring.GherkinChangeUtil;
+import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
+import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,14 +35,13 @@ import java.util.regex.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.rankweis.uppercut.karate.MyBundle;
 
 
 public class GherkinStepImpl extends GherkinPsiElementBase implements GherkinStep, PsiCheckedRenameElement {
 
   private static final TokenSet TEXT_FILTER = TokenSet
-    .create(KarateTokenTypes.TEXT, GherkinElementTypes.STEP_PARAMETER, TokenType.WHITE_SPACE, KarateTokenTypes.STEP_PARAMETER_TEXT,
-            KarateTokenTypes.STEP_PARAMETER_BRACE);
+    .create(KarateTokenTypes.DECLARATION, KarateTokenTypes.TEXT, GherkinElementTypes.STEP_PARAMETER,
+      TokenType.WHITE_SPACE, KarateTokenTypes.STEP_PARAMETER_TEXT, KarateTokenTypes.STEP_PARAMETER_BRACE);
 
   private static final Pattern PARAMETER_SUBSTITUTION_PATTERN = Pattern.compile("<([^>\n\r]+)>");
   private final Object LOCK = new Object();
@@ -68,7 +68,7 @@ public class GherkinStepImpl extends GherkinPsiElementBase implements GherkinSte
   protected String getElementText() {
     final ASTNode node = getNode();
     final ASTNode[] children = node.getChildren(TEXT_FILTER);
-    return StringUtil.join(children, astNode -> astNode.getText(), "").trim();
+    return StringUtil.join(children, ASTNode::getText, "").trim();
   }
 
   @Override
@@ -167,7 +167,7 @@ public class GherkinStepImpl extends GherkinPsiElementBase implements GherkinSte
   @Nullable
   public GherkinStepsHolder getStepHolder() {
     final PsiElement parent = getParent();
-    return parent != null ? (GherkinStepsHolder)parent : null;
+    return parent != null ? parent instanceof GherkinStepsHolder ? (GherkinStepsHolder) parent : null : null;
   }
 
   private void clearCaches() {
