@@ -2,6 +2,11 @@
 
 # uppercut Changelog
 
+## [0.0.6]
+### Added
+- Some better syntax highlighting/fixes
+- Better js/json parsing.
+
 ## [0.0.5]
 ### Added
 - Some better syntax highlighting/fixes

@@ -5,7 +5,6 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -200,11 +199,6 @@ public class GherkinParser implements PsiParser {
       String tokenText = builder.getTokenText();
       if (hadLineBreakBefore(builder, prevTokenEnd)) {
         break;
-      }
-      if(builder.getTokenType() == DECLARATION) {
-        Marker mark = builder.mark();
-        builder.advanceLexer();
-        mark.done(GherkinElementTypes.DECLARATION);
       }
       prevTokenEnd = builder.getCurrentOffset() + getTokenLength(tokenText);
       if (!parseStepParameter(builder)) {
