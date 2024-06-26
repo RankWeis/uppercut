@@ -6,9 +6,6 @@
 ### Added
 - Some better syntax highlighting/fixes
 
-### Removed
-- Dependency on karate-junit and now just has karate-core, should be much smaller.
-
 ## [0.0.4]
 ### Added
 - Dependency on karate 1.5.0.RC3 for ease of development
