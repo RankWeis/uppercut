@@ -1,7 +1,11 @@
 package com.rankweis.uppercut.karate.psi;
 
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
+
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -83,7 +87,7 @@ public class GherkinParser implements PsiParser {
   }
 
   private static boolean hadLineBreakBefore(PsiBuilder builder, int prevTokenEnd) {
-    if (prevTokenEnd < 0) {
+    if (prevTokenEnd < 0 || prevTokenEnd > builder.getCurrentOffset()) {
       return false;
     }
     final String precedingText =
@@ -191,10 +195,16 @@ public class GherkinParser implements PsiParser {
       || builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_BRACE
       || builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_TEXT
       || builder.getTokenType() == KarateTokenTypes.ACTION_KEYWORD
+      || builder.getTokenType() == DECLARATION
       || builder.getTokenType() == KarateTokenTypes.QUOTE) {
       String tokenText = builder.getTokenText();
       if (hadLineBreakBefore(builder, prevTokenEnd)) {
         break;
+      }
+      if(builder.getTokenType() == DECLARATION) {
+        Marker mark = builder.mark();
+        builder.advanceLexer();
+        mark.done(GherkinElementTypes.DECLARATION);
       }
       prevTokenEnd = builder.getCurrentOffset() + getTokenLength(tokenText);
       if (!parseStepParameter(builder)) {
@@ -206,6 +216,12 @@ public class GherkinParser implements PsiParser {
       parseTable(builder);
     } else if (tokenTypeAfterName == KarateTokenTypes.PYSTRING || tokenTypeAfterName == KarateTokenTypes.PYSTRING_QUOTES) {
       parsePystring(builder);
+    }
+    final IElementType tokenTypeAfterPyString = builder.getTokenType();
+    if(tokenTypeAfterPyString != tokenTypeAfterName) {
+      if(tokenTypeAfterPyString == TEXT) {
+        builder.advanceLexer();
+      }
     }
     marker.done(GherkinElementTypes.STEP);
   }

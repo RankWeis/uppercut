@@ -1,20 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
-import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinFeatureImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinPystringImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinRuleImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinTableRowImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinFeatureHeaderImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinFileImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinScenarioImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinScenarioOutlineImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinStepImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinStepParameterImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinTableHeaderRowImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinTableImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinTagImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
@@ -27,8 +13,22 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.NotNull;
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
+import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinFeatureHeaderImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinFeatureImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinFileImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinPystringImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinRuleImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinScenarioImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinScenarioOutlineImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinStepImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinStepParameterImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinTableHeaderRowImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinTableImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinTableRowImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinTagImpl;
+import org.jetbrains.annotations.NotNull;
 
 public final class GherkinParserDefinition implements ParserDefinition {
   public static final IFileElementType GHERKIN_FILE = new IFileElementType(KarateLanguage.INSTANCE);
@@ -78,6 +78,9 @@ public final class GherkinParserDefinition implements ParserDefinition {
     if (node.getElementType() == GherkinElementTypes.TAG) return new GherkinTagImpl(node);
     if (node.getElementType() == GherkinElementTypes.STEP_PARAMETER) return new GherkinStepParameterImpl(node);
     if (node.getElementType() == GherkinElementTypes.PYSTRING) return new GherkinPystringImpl(node);
+    if (node.getElementType() == GherkinElementTypes.DECLARATION) {
+      return new KarateDeclaration(node);
+    }
     return PsiUtilCore.NULL_PSI_ELEMENT;
   }
 

@@ -21,6 +21,7 @@ public interface GherkinElementTypes {
   IElementType TABLE_CELL = new KarateElementType("table cell");
   IElementType TAG = new KarateElementType("tag");
   IElementType PYSTRING = new KarateElementType("pystring");
+  IElementType DECLARATION = new KarateElementType("declaration");
   IElementType JSON = JsonElementTypes.BLOCK_COMMENT;
 
   TokenSet SCENARIOS = TokenSet.create(SCENARIO, SCENARIO_OUTLINE);

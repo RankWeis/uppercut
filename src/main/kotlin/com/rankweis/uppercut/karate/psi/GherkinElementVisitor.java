@@ -1,5 +1,6 @@
 package com.rankweis.uppercut.karate.psi;
 
+import com.intellij.psi.PsiElementVisitor;
 import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
 import com.rankweis.uppercut.karate.psi.impl.GherkinFeatureHeaderImpl;
 import com.rankweis.uppercut.karate.psi.impl.GherkinStepParameterImpl;
@@ -7,7 +8,6 @@ import com.rankweis.uppercut.karate.psi.impl.GherkinTableHeaderRowImpl;
 import com.rankweis.uppercut.karate.psi.impl.GherkinTableImpl;
 import com.rankweis.uppercut.karate.psi.impl.GherkinTableRowImpl;
 import com.rankweis.uppercut.karate.psi.impl.GherkinTagImpl;
-import com.intellij.psi.PsiElementVisitor;
 
 public abstract class GherkinElementVisitor extends PsiElementVisitor {
   public void visitFeature(GherkinFeature feature) {
@@ -56,6 +56,10 @@ public abstract class GherkinElementVisitor extends PsiElementVisitor {
 
   public void visitStepParameter(GherkinStepParameterImpl gherkinStepParameter) {
     visitElement(gherkinStepParameter);
+  }
+  
+  public void visitDeclaration(KarateDeclaration declaration) {
+    visitElement(declaration);
   }
 
   public void visitGherkinTableCell(final GherkinTableCell cell) {

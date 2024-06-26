@@ -6,7 +6,8 @@ Feature: Test
 
   Scenario: posts error
     * method post
-    * print response
+    * def resp = response
+    * print resp
     Then match responseStatus != 200
 
   Scenario: gets 200

@@ -74,6 +74,9 @@ public final class GherkinHighlighter {
   
   public static final TextAttributesKey TEXT = TextAttributesKey.createTextAttributesKey("GHERKIN_TEXT", HighlighterColors.TEXT);
 
+  public static final TextAttributesKey DECLARATION =
+    TextAttributesKey.createTextAttributesKey("KARATE_DECLARATION", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+
   public static final TextAttributesKey PIPE = TextAttributesKey.createTextAttributesKey("GHERKIN_TABLE_PIPE", KEYWORD);
 
   private GherkinHighlighter() {
