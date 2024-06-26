@@ -22,6 +22,7 @@ public interface KarateTokenTypes {
   KarateElementType STEP_PARAMETER_TEXT = new KarateElementType("STEP_PARAMETER_TEXT");
   KarateElementType COLON = new KarateElementType("COLON");
   KarateElementType TAG = new KarateElementType("TAG");
+  KarateElementType DECLARATION = new KarateElementType("DECLARATION");
   KarateElementType PYSTRING_QUOTES = new KarateElementType("PYSTRING_QUOTES");
   KarateElementType PYSTRING = new KarateElementType("PYSTRING_ELEMENT");
   KarateElementType PYSTRING_INCOMPLETE = new KarateElementType("PYSTRING_INCOMPLETE");

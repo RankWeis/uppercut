@@ -2,11 +2,20 @@
 // found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.*;
 import static com.intellij.json.JsonElementTypes.DOUBLE_QUOTED_STRING;
 import static com.intellij.json.JsonElementTypes.L_CURLY;
 import static com.intellij.json.JsonElementTypes.R_CURLY;
 import static com.intellij.json.JsonElementTypes.SINGLE_QUOTED_STRING;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.COMMENT;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.KEYWORDS;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PIPE;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.QUOTE;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.STEP_KEYWORD;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TABLE_CELL;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TAG;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
 
 import com.intellij.ide.highlighter.EmbeddedTokenHighlighter;
 import com.intellij.json.JsonElementTypes;
@@ -41,6 +50,7 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase implements E
 
     ATTRIBUTES.put(COMMENT, GherkinHighlighter.COMMENT);
     ATTRIBUTES.put(TEXT, GherkinHighlighter.TEXT);
+    ATTRIBUTES.put(DECLARATION, GherkinHighlighter.DECLARATION);
     ATTRIBUTES.put(TAG, GherkinHighlighter.TAG);
     ATTRIBUTES.put(PYSTRING, GherkinHighlighter.PYSTRING);
     ATTRIBUTES.put(JsonElementTypes.OBJECT, GherkinHighlighter.PYSTRING);

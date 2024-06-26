@@ -2,6 +2,8 @@
 // found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
+
 import com.intellij.lexer.LexerBase;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.TokenType;
@@ -40,7 +42,7 @@ public class GherkinLexer extends LexerBase {
   private static final int STATE_QUOTE_INSIDE_STEP = 11;
 
   public static final String PYSTRING_MARKER = "\"\"\"";
-  public static final List<String> INTERESTING_SYMBOLS = List.of("\n", "'", "\"", "#", "{", "function");
+  public static final List<String> INTERESTING_SYMBOLS = List.of("\n", "'", "\"", "#", "{", "[", "function");
   private final GherkinKeywordProvider myKeywordProvider;
   private String myCurLanguage;
 
@@ -119,9 +121,20 @@ public class GherkinLexer extends LexerBase {
   }
   
   private boolean advanceIfJsJson() {
+    char openingBrace = myBuffer.charAt(myPosition);
+    char closingBrace = myBuffer.charAt(myPosition) == '{' ? '}' : '{';
     int pos = myPosition + 1;
+    int closingBracesRequired = 1;
 
-    while (pos < myEndOffset && myBuffer.charAt(pos) != '\n' && myBuffer.charAt(pos) != '}') {
+    while (pos < myEndOffset && myBuffer.charAt(pos) != '\n') {
+      if (myBuffer.charAt(pos) == openingBrace) {
+        closingBracesRequired++;
+      } else if (myBuffer.charAt(pos) == closingBrace) {
+        closingBracesRequired--;
+        if (closingBracesRequired == 0) {
+          break;
+        }
+      }
       pos++;
     }
 
@@ -133,6 +146,26 @@ public class GherkinLexer extends LexerBase {
       }
     }
     return isQuotedStr;
+  }
+  
+  private boolean advanceIfDeclaration() {
+    int startingPos = myPosition;
+    int pos = myPosition + 1;
+
+    while (pos < myEndOffset && myBuffer.charAt(pos) != '\n' && myBuffer.charAt(pos) != '=') {
+      pos++;
+    }
+
+    // Look for 'declaration =' but not 'declaration =='
+    boolean isDeclaration = pos < (myEndOffset - 1) && myBuffer.charAt(pos) == '=' && myBuffer.charAt(pos + 1) != '=';
+    if (isDeclaration) {
+      myPosition = pos > myPosition ? pos - 1 : pos;
+      if (myPosition > myEndOffset) {
+        myPosition = myEndOffset;
+      }
+    }
+    returnWhitespace(startingPos);
+    return isDeclaration;
   }
 
   @Override
@@ -152,7 +185,7 @@ public class GherkinLexer extends LexerBase {
       while (myPosition < myEndOffset && Character.isWhitespace(myBuffer.charAt(myPosition))) {
         advanceOverWhitespace();
       }
-    } else if ( c == '{') {
+    } else if ( (c == '{' || c == '[') && myState != STATE_TABLE) {
       if (advanceIfJsJson()) {
         myCurrentToken = KarateTokenTypes.PYSTRING;
       } else {
@@ -271,6 +304,12 @@ public class GherkinLexer extends LexerBase {
           myCurrentToken = KarateTokenTypes.STEP_PARAMETER_TEXT;
         }
         return;
+      } else if (myState == STATE_AFTER_ACTION_KEYWORD) {
+        if (Character.isAlphabetic(myBuffer.charAt(myPosition)) && advanceIfDeclaration()) {
+          myCurrentToken = DECLARATION;
+          myState = STATE_DEFAULT;
+          return;
+        }
       } else if (isParameterAllowed()) {
         if (myPosition < myEndOffset && myBuffer.charAt(myPosition) == '<' && isStepParameter("\n")) {
           myState = STATE_PARAMETER_INSIDE_STEP;

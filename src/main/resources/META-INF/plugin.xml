@@ -19,7 +19,7 @@
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinSyntaxHighlighterFactory"/>
 
     <lang.parserDefinition language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.GherkinParserDefinition"/>
+      implementationClass="com.rankweis.uppercut.karate.psi.GherkinParserDefinition" />
     <lang.commenter language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinCommenter"/>
     <lang.psiStructureViewFactory language="Karate"
