@@ -66,13 +66,13 @@ public class CucumberStepReferenceProvider extends PsiReferenceProvider {
       }
       @Unmodifiable @NotNull Collection<KarateDeclaration>
         declarations = PsiTreeUtil.findChildrenOfType(element.getParent(), KarateDeclaration.class);
+      TextRange textRange = new TextRange(0, element.getTextLength());
+      KarateReference reference =
+        new KarateReference(element, textRange, true);
       declarations.forEach(declaration -> {
-        TextRange textRange = new TextRange(0, declaration.getTextLength());
-        KarateReference reference =
-          new KarateReference(element, textRange, true);
         declaration.addReference(reference);
-        references.add(reference);
       });
+      references.add(reference);
       return references.toArray(new PsiReference[0]);
     }
     return PsiReference.EMPTY_ARRAY;

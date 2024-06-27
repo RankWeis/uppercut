@@ -3,6 +3,8 @@
 package com.rankweis.uppercut.karate.psi;
 
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.SCENARIOS_KEYWORDS;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
 
 import com.intellij.lexer.LexerBase;
@@ -189,7 +191,11 @@ public class GherkinLexer extends LexerBase {
     myCurrentTokenStart = myPosition;
     char c = myBuffer.charAt(myPosition);
 
-    if (isStringAtPosition(PYSTRING_MARKER)) {
+    if (myState == STATE_AFTER_SCENARIO_KEYWORD) {
+      myCurrentToken = TEXT;
+      advanceToNextLine();
+      myState = STATE_DEFAULT;
+    } if (isStringAtPosition(PYSTRING_MARKER)) {
       injectPyString();
     } else if (Character.isWhitespace(c)) {
       advanceOverWhitespace();
@@ -286,7 +292,7 @@ public class GherkinLexer extends LexerBase {
             myPosition += length;
             if (myCurrentToken == KarateTokenTypes.STEP_KEYWORD) {
               myState = STATE_AFTER_STEP_KEYWORD;
-            } else if (myCurrentToken == KarateTokenTypes.SCENARIO_OUTLINE_KEYWORD) {
+            } else if (SCENARIOS_KEYWORDS.contains(myCurrentToken)) {
               myState = STATE_AFTER_SCENARIO_KEYWORD;
             } else {
               myState = STATE_AFTER_KEYWORD;
