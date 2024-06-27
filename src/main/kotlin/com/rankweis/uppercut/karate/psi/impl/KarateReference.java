@@ -1,6 +1,5 @@
 package com.rankweis.uppercut.karate.psi.impl;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementResolveResult;
@@ -11,7 +10,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.rankweis.uppercut.karate.psi.GherkinScenario;
 import com.rankweis.uppercut.karate.psi.GherkinStep;
 import com.rankweis.uppercut.karate.psi.KarateDeclaration;
-import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,13 +32,6 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
   }
 
   @Override public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-    Project project = myElement.getProject();
-    PsiElement declarationSibling =
-      PsiTreeUtil.findSiblingForward(myElement.getFirstChild(), KarateTokenTypes.DECLARATION, null);
-    if (declarationSibling != null && key.equals(declarationSibling.getText())) {
-      return new PsiElementResolveResult[]{new PsiElementResolveResult(declarationSibling)};
-    }
-
     final List<PsiElement> properties = new ArrayList<>();
     PsiElement parent =
       PsiTreeUtil.findFirstParent(myElement, GherkinScenario.class::isInstance);
@@ -59,6 +50,10 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
           .stream()
           .filter(GherkinScenario::isBackground)
           .flatMap(step -> {
+            GherkinStep[] gherkinSteps = PsiTreeUtil.getChildrenOfType(step, GherkinStep.class);
+            return gherkinSteps != null ? Arrays.stream(gherkinSteps) : Stream.of();
+          })
+          .flatMap(step -> {
             KarateDeclaration[] childrenOfType = PsiTreeUtil.getChildrenOfType(step, KarateDeclaration.class);
             return childrenOfType == null ? Stream.of() : Arrays.stream(childrenOfType);
           }).filter(t -> t.getText().equals(key))
@@ -66,8 +61,8 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
       if (!declarationsInBackground.isEmpty()) {
         return new PsiElementResolveResult[]{new PsiElementResolveResult(declarationsInBackground.get(0))};
       }
-
     }
+
 
     List<ResolveResult> results = new ArrayList<>();
 

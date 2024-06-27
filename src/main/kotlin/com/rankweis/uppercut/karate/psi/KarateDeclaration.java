@@ -6,10 +6,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import com.rankweis.uppercut.karate.psi.element.KarateNamedElement;
 import com.rankweis.uppercut.karate.psi.impl.GherkinPsiElementBase;
 import com.rankweis.uppercut.util.KarateUtil;
+import java.util.ArrayList;
+import java.util.List;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,18 +20,36 @@ import org.jetbrains.annotations.Nullable;
 public class KarateDeclaration extends GherkinPsiElementBase implements PsiNameIdentifierOwner, 
   GherkinPsiElement, GherkinSuppressionHolder, PomTarget, KarateNamedElement {
 
+  List<PsiReference> references = new ArrayList<>();
+
   public KarateDeclaration(@NotNull ASTNode node) {
     super(node);
   }
 
   @Override public String getName() {
-    return getElementText();
+    return this.getText();
+  }
+
+  @Override public PsiReference getReference() {
+    return super.getReference();
+  }
+
+  @Override public PsiReference @NotNull [] getReferences() {
+    return this.references.toArray(new PsiReference[0]);
+  }
+
+  @Override public PsiReference findReferenceAt(int offset) {
+    return super.findReferenceAt(offset);
+  }
+  
+  public void addReference(PsiReference reference) {
+    this.references.add(reference);
   }
 
   @Override protected void acceptGherkin(GherkinElementVisitor gherkinElementVisitor) {
     gherkinElementVisitor.visitDeclaration(this);
   }
-
+  
   @Override public @Nullable PsiElement getNameIdentifier() {
     ASTNode keyNode = getNode().findChildByType(DECLARATION);
     return keyNode != null ? keyNode.getPsi() : null;

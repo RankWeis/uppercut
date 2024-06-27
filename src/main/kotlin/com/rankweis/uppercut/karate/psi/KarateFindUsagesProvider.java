@@ -1,7 +1,6 @@
 package com.rankweis.uppercut.karate.psi;
 
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.COMMENTS;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.IDENTIFIERS;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.KEYWORDS;
 
 import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
@@ -9,6 +8,7 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.tree.TokenSet;
 import com.rankweis.uppercut.karate.MyBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +16,7 @@ public final class KarateFindUsagesProvider implements FindUsagesProvider {
   @Override
   public WordsScanner getWordsScanner() {
     return new DefaultWordsScanner(new GherkinLexer(
-      new PlainKarateKeywordProvider()), IDENTIFIERS, COMMENTS, KEYWORDS);
+      new PlainKarateKeywordProvider()), KEYWORDS, COMMENTS, TokenSet.EMPTY);
   }
 
   @Override

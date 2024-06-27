@@ -15,13 +15,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.rankweis.uppercut.karate.psi.KarateDeclaration;
 import com.rankweis.uppercut.karate.psi.impl.GherkinStepImpl;
 import com.rankweis.uppercut.karate.psi.impl.KarateReference;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 public class CucumberStepReferenceProvider extends PsiReferenceProvider {
 
@@ -32,7 +35,7 @@ public class CucumberStepReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
     @NotNull ProcessingContext context) {
-    if (element instanceof GherkinStepImpl || element instanceof KarateDeclaration) {
+    if (element instanceof GherkinStepImpl gherkinStep) {
       List<PsiReference> references = new ArrayList<>();
       ASTNode variableNode = element.getNode().findChildByType(VARIABLE);
       if (variableNode != null) {
@@ -61,6 +64,15 @@ public class CucumberStepReferenceProvider extends PsiReferenceProvider {
           new KarateReference(element, textRange.shiftRight(-element.getTextOffset()), true);
         references.add(reference);
       }
+      @Unmodifiable @NotNull Collection<KarateDeclaration>
+        declarations = PsiTreeUtil.findChildrenOfType(element.getParent(), KarateDeclaration.class);
+      declarations.forEach(declaration -> {
+        TextRange textRange = new TextRange(0, declaration.getTextLength());
+        KarateReference reference =
+          new KarateReference(element, textRange, true);
+        declaration.addReference(reference);
+        references.add(reference);
+      });
       return references.toArray(new PsiReference[0]);
     }
     return PsiReference.EMPTY_ARRAY;
