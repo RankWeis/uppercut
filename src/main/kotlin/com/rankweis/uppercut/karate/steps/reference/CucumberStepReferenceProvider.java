@@ -35,7 +35,7 @@ public class CucumberStepReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
     @NotNull ProcessingContext context) {
-    if (element instanceof GherkinStepImpl gherkinStep) {
+    if (element instanceof GherkinStepImpl) {
       List<PsiReference> references = new ArrayList<>();
       ASTNode variableNode = element.getNode().findChildByType(VARIABLE);
       if (variableNode != null) {
@@ -69,10 +69,8 @@ public class CucumberStepReferenceProvider extends PsiReferenceProvider {
       TextRange textRange = new TextRange(0, element.getTextLength());
       KarateReference reference =
         new KarateReference(element, textRange, true);
-      declarations.forEach(declaration -> {
-        declaration.addReference(reference);
-      });
-      references.add(reference);
+      declarations.forEach(declaration -> declaration.addReference(reference));
+//      references.add(reference);
       return references.toArray(new PsiReference[0]);
     }
     return PsiReference.EMPTY_ARRAY;
