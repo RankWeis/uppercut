@@ -2,6 +2,7 @@ package com.rankweis.uppercut.karate.psi;
 
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
@@ -185,6 +186,26 @@ public class GherkinParser implements PsiParser {
     }
     return false;
   }
+  
+  private static boolean parseDeclaration(PsiBuilder builder) {
+    if (builder.getTokenType() == DECLARATION) {
+      final PsiBuilder.Marker stepParameterMarker = builder.mark();
+      builder.advanceLexer();
+      stepParameterMarker.done(GherkinElementTypes.DECLARATION);
+      return true;
+    }
+    return false;
+  }
+  
+  private static boolean parseVariable(PsiBuilder builder) {
+    if (builder.getTokenType() == VARIABLE) {
+      final PsiBuilder.Marker stepParameterMarker = builder.mark();
+      builder.advanceLexer();
+      stepParameterMarker.done(GherkinElementTypes.VARIABLE);
+      return true;
+    }
+    return false;
+  }
 
   private static void parseStep(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
@@ -195,13 +216,14 @@ public class GherkinParser implements PsiParser {
       || builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_TEXT
       || builder.getTokenType() == KarateTokenTypes.ACTION_KEYWORD
       || builder.getTokenType() == DECLARATION
+      || builder.getTokenType() == VARIABLE
       || builder.getTokenType() == KarateTokenTypes.QUOTE) {
       String tokenText = builder.getTokenText();
       if (hadLineBreakBefore(builder, prevTokenEnd)) {
         break;
       }
       prevTokenEnd = builder.getCurrentOffset() + getTokenLength(tokenText);
-      if (!parseStepParameter(builder)) {
+      if (!parseStepParameter(builder) && !parseDeclaration(builder)) {
         builder.advanceLexer();
       }
     }

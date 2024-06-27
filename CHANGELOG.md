@@ -1,6 +1,9 @@
 <!-- Keep a Changelog guide -> https://keepachangelog.com -->
 
 # uppercut Changelog
+## [0.0.7]
+### Added
+- References! Now you can go to declaration/find usages on many variables.
 
 ## [0.0.6]
 ### Added

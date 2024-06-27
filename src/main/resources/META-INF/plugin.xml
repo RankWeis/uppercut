@@ -36,7 +36,9 @@
       implementation="com.rankweis.uppercut.karate.psi.formatter.GherkinCodeStyleSettingsProvider"/>
 
     <lang.findUsagesProvider language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.GherkinFindUsagesProvider"/>
+      implementationClass="com.rankweis.uppercut.karate.psi.KarateFindUsagesProvider"/>
+    <lang.refactoringSupport language="Karate"
+      implementationClass="com.rankweis.uppercut.karate.psi.refactoring.KarateRefactorSupportProvider"/>
     <colorSettingsPage
       implementation="com.rankweis.uppercut.karate.psi.GherkinColorsPage"/>
 
@@ -116,16 +118,6 @@
     <gotoRelatedProvider
       implementation="com.rankweis.uppercut.karate.navigation.CucumberGoToRelatedProvider"/>
 
-    <renameHandler
-      implementation="com.rankweis.uppercut.karate.psi.refactoring.rename.GherkinInplaceRenameHandler"/>
-    <renameHandler
-      implementation="com.rankweis.uppercut.karate.psi.refactoring.rename.GherkinStepRenameHandler"/>
-
-
-    <renamePsiElementProcessor
-      implementation="com.rankweis.uppercut.karate.psi.refactoring.rename.CucumberStepRenameProcessor"
-      order="first"/>
-
     <additionalTextAttributes scheme="Default" file="colorSchemes/GherkinDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GherkinDarcula.xml"/>
 
@@ -150,6 +142,8 @@
       implementationClass="com.rankweis.uppercut.karate.GherkinPyStringManipulator"/>
     <gotoDeclarationHandler
       implementation="com.rankweis.uppercut.karate.navigation.KarateGoToSymbolProvider"/>
+    <gotoSymbolContributor
+      implementation="com.rankweis.uppercut.karate.navigation.KarateChooseByNameContributor"/>
   </extensions>
 
   <extensionPoints>

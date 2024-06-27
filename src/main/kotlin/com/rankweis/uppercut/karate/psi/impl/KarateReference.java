@@ -1,23 +1,19 @@
 package com.rankweis.uppercut.karate.psi.impl;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementResolveResult;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.ResolveResult;
-import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.rankweis.uppercut.karate.psi.GherkinFile;
-import com.rankweis.uppercut.karate.psi.GherkinFileType;
-import com.rankweis.uppercut.karate.psi.GherkinPsiElement;
+import com.rankweis.uppercut.karate.psi.GherkinScenario;
+import com.rankweis.uppercut.karate.psi.GherkinStep;
+import com.rankweis.uppercut.karate.psi.KarateDeclaration;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,11 +27,46 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
     key = element.getText().substring(rangeInElement.getStartOffset(), rangeInElement.getEndOffset());
   }
 
+  @Override public boolean isReferenceTo(@NotNull PsiElement element) {
+    return resolve() == element;
+  }
+
   @Override public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-    Project project = myElement.getProject();
-    final List<GherkinPsiElement> properties = findProperties(project, key);
+    final List<PsiElement> properties = new ArrayList<>();
+    PsiElement parent =
+      PsiTreeUtil.findFirstParent(myElement, GherkinScenario.class::isInstance);
+
+    List<KarateDeclaration> declarationsInScenario = Arrays.stream(PsiTreeUtil.getChildrenOfType(parent, GherkinStep.class))
+      .flatMap(step -> {
+        KarateDeclaration[] childrenOfType = PsiTreeUtil.getChildrenOfType(step, KarateDeclaration.class);
+        return childrenOfType == null ? Stream.of() : Arrays.stream(childrenOfType);
+      }).filter(t -> t.getText().equals(key))
+      .toList();
+    if (!declarationsInScenario.isEmpty()) {
+      return new PsiElementResolveResult[]{new PsiElementResolveResult(declarationsInScenario.get(0))};
+    } else {
+      List<KarateDeclaration> declarationsInBackground =
+        PsiTreeUtil.findChildrenOfType(myElement.getContainingFile(), GherkinScenario.class)
+          .stream()
+          .filter(GherkinScenario::isBackground)
+          .flatMap(step -> {
+            GherkinStep[] gherkinSteps = PsiTreeUtil.getChildrenOfType(step, GherkinStep.class);
+            return gherkinSteps != null ? Arrays.stream(gherkinSteps) : Stream.of();
+          })
+          .flatMap(step -> {
+            KarateDeclaration[] childrenOfType = PsiTreeUtil.getChildrenOfType(step, KarateDeclaration.class);
+            return childrenOfType == null ? Stream.of() : Arrays.stream(childrenOfType);
+          }).filter(t -> t.getText().equals(key))
+          .toList();
+      if (!declarationsInBackground.isEmpty()) {
+        return new PsiElementResolveResult[]{new PsiElementResolveResult(declarationsInBackground.get(0))};
+      }
+    }
+
+
     List<ResolveResult> results = new ArrayList<>();
-    for (GherkinPsiElement property : properties) {
+
+    for (PsiElement property : properties) {
       results.add(new PsiElementResolveResult(property));
     }
     return results.toArray(new ResolveResult[0]);
@@ -50,23 +81,7 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
     return super.getVariants();
   }
 
-  public static List<GherkinPsiElement> findProperties(Project project, String key) {
-    List<GherkinPsiElement> result = new ArrayList<>();
-    Collection<VirtualFile> virtualFiles =
-      FileTypeIndex.getFiles(GherkinFileType.INSTANCE, GlobalSearchScope.allScope(project));
-    for (VirtualFile virtualFile : virtualFiles) {
-      GherkinFile simpleFile = (GherkinFile) PsiManager.getInstance(project).findFile(virtualFile);
-      if (simpleFile != null) {
-        GherkinPsiElement[] properties = PsiTreeUtil.getChildrenOfType(simpleFile, GherkinPsiElement.class);
-        if (properties != null) {
-          for (GherkinPsiElement property : properties) {
-            if (key.equals(property.getText())) {
-              result.add(property);
-            }
-          }
-        }
-      }
-    }
-    return result;
+  public String getKey() {
+    return key;
   }
 }
