@@ -1,6 +1,5 @@
 package com.rankweis.uppercut.karate.run;
 
-import com.rankweis.uppercut.testrunner.KarateTestRunner;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
@@ -31,6 +30,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.rankweis.uppercut.testrunner.KarateTestRunner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -64,7 +64,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   private String path;
   private PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
   private String parallelism = "5";
-  private String environment = "DEV";
+  private String environment;
 
 
   protected KarateRunConfiguration(@NotNull Project project,
