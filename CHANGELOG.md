@@ -6,6 +6,7 @@
 ### Added
 - Ability to run tests from a default environment. Simple select your environment from
 "Settings -> Tools -> Karate"
+- Ability to run plugin on community editions.
 
 ## [0.0.7]
 ### Added
