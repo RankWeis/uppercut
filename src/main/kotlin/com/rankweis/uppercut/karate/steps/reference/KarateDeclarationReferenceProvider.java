@@ -29,13 +29,6 @@ public class KarateDeclarationReferenceProvider extends PsiReferenceProvider {
       if (textNode != null) {
         int start = textNode.getTextRange().getStartOffset();
         int end = textNode.getTextRange().getEndOffset();
-//        int endBeforeSpace = end;
-//        textNode = textNode.getTreeNext();
-//        while (textNode != null && TEXT_PARAM_AND_WHITE_SPACE_SET.contains(textNode.getElementType())) {
-//          endBeforeSpace = textNode.getElementType() == TokenType.WHITE_SPACE ? end : textNode.getTextRange().getEndOffset();
-//          end = textNode.getTextRange().getEndOffset();
-//          textNode = textNode.getTreeNext();
-//        }
         TextRange textRange = new TextRange(start, end);
         KarateReference reference = new KarateReference(element, textRange.shiftRight(-element.getTextOffset()), false);
         return new PsiReference[] {reference};
