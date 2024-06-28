@@ -12,6 +12,7 @@
   <resource-bundle>messages.MyBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    
     <fileType name="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinFileType"
       fieldName="INSTANCE" language="Karate" extensions="feature"/>
