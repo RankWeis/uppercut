@@ -2,6 +2,10 @@
 
 # uppercut Changelog
 
+## [0.0.9]
+### Added
+- Better symbol matching. 
+
 ## [0.0.8]
 ### Added
 - Ability to run tests from a default environment. Simple select your environment from

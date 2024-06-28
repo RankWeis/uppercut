@@ -35,6 +35,7 @@ public class PlainKarateKeywordProvider implements GherkinKeywordProvider {
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "url");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "call");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "callonce");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "remove");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "callsingle");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "def");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "match");

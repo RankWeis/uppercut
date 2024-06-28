@@ -829,6 +829,9 @@
 		],
 		"if": [
 			"if"
+		],
+		"remove": [
+			"remove"
 		]
 	},
 	"en-Scouse": {

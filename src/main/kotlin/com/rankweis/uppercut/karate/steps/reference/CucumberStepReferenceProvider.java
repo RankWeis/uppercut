@@ -23,6 +23,8 @@ import com.rankweis.uppercut.karate.psi.impl.KarateReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -64,13 +66,29 @@ public class CucumberStepReferenceProvider extends PsiReferenceProvider {
           new KarateReference(element, textRange.shiftRight(-element.getTextOffset()), true);
         references.add(reference);
       }
+      Pattern compile = Pattern.compile("([\\w\\d.]+)");
+      Matcher m = compile.matcher(element.getText());
+      while (m.find()) {
+        int start = m.start();
+        int end = m.end();
+        String content = m.group();
+        references.add(new KarateReference(element, new TextRange(start, end), true));
+      }
+//      Arrays.stream(element.getText().split(" "))
+//        .filter(s -> s.matches("[\\w\\d]+"))
+//        .map(s -> {
+//          int startOffset = element.getText().indexOf(s);
+//          return new TextRange(startOffset, startOffset + s.length());
+//        })
+//        .map(t -> new KarateReference(element, t, true))
+//        .forEach(references::add);
+      
       @Unmodifiable @NotNull Collection<KarateDeclaration>
         declarations = PsiTreeUtil.findChildrenOfType(element.getParent(), KarateDeclaration.class);
       TextRange textRange = new TextRange(0, element.getTextLength());
       KarateReference reference =
         new KarateReference(element, textRange, true);
       declarations.forEach(declaration -> declaration.addReference(reference));
-//      references.add(reference);
       return references.toArray(new PsiReference[0]);
     }
     return PsiReference.EMPTY_ARRAY;
