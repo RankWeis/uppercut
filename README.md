@@ -1,8 +1,8 @@
 # uppercut
 
-![Build](https://github.com/rankweis/api/uppercut/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
+![Build](https://github.com/rankweis/uppercut/workflows/Build/badge.svg)
+[![Version](https://img.shields.io/jetbrains/plugin/v/24736.svg)](https://plugins.jetbrains.com/plugin/24736/)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/24736.svg)](https://plugins.jetbrains.com/plugin/24736)
 
 <!-- Plugin description -->
 This IntelliJ plugin gives many useful upgrades to the usage of the  Karate language.
