@@ -1,12 +1,5 @@
 package com.rankweis.uppercut.karate.steps.reference;
 
-import static com.intellij.psi.tree.TokenSet.WHITE_SPACE;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.STEP_PARAMETER;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.QUOTE;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.STEP_PARAMETER_BRACE;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.STEP_PARAMETER_TEXT;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
 
 import com.intellij.lang.ASTNode;
@@ -14,7 +7,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.rankweis.uppercut.karate.psi.KarateDeclaration;
@@ -29,10 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 public class CucumberStepReferenceProvider extends PsiReferenceProvider {
-
-  private static final TokenSet TEXT_AND_PARAM_SET =
-    TokenSet.create(TEXT, DECLARATION, VARIABLE, STEP_PARAMETER_TEXT, STEP_PARAMETER_BRACE, STEP_PARAMETER, QUOTE);
-  private static final TokenSet TEXT_PARAM_AND_WHITE_SPACE_SET = TokenSet.orSet(TEXT_AND_PARAM_SET, WHITE_SPACE);
 
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
@@ -73,16 +61,22 @@ public class CucumberStepReferenceProvider extends PsiReferenceProvider {
         int end = m.end();
         String content = m.group();
         references.add(new KarateReference(element, new TextRange(start, end), true));
+        String[] dotSplitted = content.split("\\.");
+        for (int i = 0; i < dotSplitted.length; i++) {
+          StringBuilder builder = new StringBuilder();
+          for (int j = 0; j <= i; j++) {
+            if (!builder.isEmpty()) {
+              builder.append(".");
+            }
+            builder.append(dotSplitted[j]);
+          }
+          int splittedEnd = start + builder.length();
+          TextRange textRange = new TextRange(start, splittedEnd);
+          KarateReference reference =
+            new KarateReference(element, textRange, true);
+          references.add(reference);
+        }
       }
-//      Arrays.stream(element.getText().split(" "))
-//        .filter(s -> s.matches("[\\w\\d]+"))
-//        .map(s -> {
-//          int startOffset = element.getText().indexOf(s);
-//          return new TextRange(startOffset, startOffset + s.length());
-//        })
-//        .map(t -> new KarateReference(element, t, true))
-//        .forEach(references::add);
-      
       @Unmodifiable @NotNull Collection<KarateDeclaration>
         declarations = PsiTreeUtil.findChildrenOfType(element.getParent(), KarateDeclaration.class);
       TextRange textRange = new TextRange(0, element.getTextLength());

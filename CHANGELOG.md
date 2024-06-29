@@ -2,6 +2,11 @@
 
 # uppercut Changelog
 
+## [1.0.0]
+### Added
+- Official release version.
+- Better symbol matching.
+
 ## [0.0.9]
 ### Added
 - Better symbol matching. 
