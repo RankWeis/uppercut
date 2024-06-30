@@ -82,6 +82,7 @@ public class KarateTestRunner {
     setLoggingLevel(Level.INFO);
     KarateTestRunner runner = new KarateTestRunner();
     runner.parseArgs(args);
+    runner.doTest();
   }
 
   public void parseArgs(String[] args) {
