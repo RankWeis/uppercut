@@ -1,9 +1,8 @@
 package com.rankweis.uppercut.karate.run;
 
-import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
-import com.rankweis.uppercut.karate.run.KarateRunConfiguration.PreferredTest;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.editor.Document;
@@ -20,20 +19,28 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import com.rankweis.uppercut.karate.run.KarateRunConfiguration.PreferredTest;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer<KarateRunConfiguration> {
 
   @NotNull @Override public ConfigurationFactory getConfigurationFactory() {
-    return new KarateConfigurationType();
+    return KarateConfigurationType.INSTANCE;
   }
 
   @Override public boolean isConfigurationFromContext(@NotNull KarateRunConfiguration configuration,
     @NotNull ConfigurationContext context) {
     return false;
+  }
+
+  @Override
+  public @Nullable ConfigurationFromContext createConfigurationFromContext(@NotNull ConfigurationContext context) {
+    return super.createConfigurationFromContext(context);
   }
 
   @Override
@@ -98,7 +105,6 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     } else {
       configuration.setName(name);
     }
-    sourceElement.set(sourceElement.isNull() ? null : sourceElement.get().getContainingFile());
     return true;
   }
 

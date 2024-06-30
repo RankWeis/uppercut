@@ -79,7 +79,7 @@ public class KarateTestRunner {
   }
 
   public static void main(String[] args) {
-    setLoggingLevel(Level.INFO);
+    setLoggingLevel();
     KarateTestRunner runner = new KarateTestRunner();
     runner.parseArgs(args);
     runner.doTest();
@@ -102,7 +102,10 @@ public class KarateTestRunner {
     }
   }
 
-  public static void setLoggingLevel(Level level) {
+  public static void setLoggingLevel() {
+    Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    logger.setLevel(INFO);
+    logger.detachAndStopAllAppenders();
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
     OutputStreamAppender<ILoggingEvent> outputStreamAppender = new OutputStreamAppender<>();
     outputStreamAppender.setContext(context);
@@ -120,9 +123,6 @@ public class KarateTestRunner {
     intuitLogger.setLevel(Level.INFO);
     apacheLogger.setLevel(WARN);
     thymeleafLogger.setLevel(Level.OFF);
-    Logger logger = (Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-    logger.setLevel(INFO);
-    logger.detachAndStopAllAppenders();
     logger.addAppender(outputStreamAppender);
   }
 

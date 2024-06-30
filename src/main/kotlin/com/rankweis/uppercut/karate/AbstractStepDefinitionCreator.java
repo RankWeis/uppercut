@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate;
 
-import com.rankweis.uppercut.karate.psi.GherkinStep;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.rankweis.uppercut.karate.psi.GherkinStep;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +63,7 @@ public abstract class AbstractStepDefinitionCreator implements StepDefinitionCre
     }
     return FileUtil.join(featureFile.getContainingDirectory().getVirtualFile().getPath(), CucumberUtil.STEP_DEFINITIONS_DIR_NAME);
   }
-
+  
   @Nullable
   private static PsiDirectory findStepDefinitionDirectory(@NotNull final PsiFile featureFile) {
     final PsiDirectory psiFeatureDir = featureFile.getContainingDirectory();
