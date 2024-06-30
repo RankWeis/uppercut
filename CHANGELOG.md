@@ -2,6 +2,12 @@
 
 # uppercut Changelog
 
+## [1.0.1]
+### Modified
+- Small QoL improvements.
+- Much smaller file size, no longer bundling Karate.
+
+
 ## [1.0.0]
 ### Added
 - Official release version.
