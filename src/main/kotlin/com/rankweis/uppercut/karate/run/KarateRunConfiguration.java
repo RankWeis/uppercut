@@ -26,11 +26,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
-import com.rankweis.uppercut.testrunner.KarateTestRunner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -91,13 +88,16 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
       protected JavaParameters createJavaParameters() throws ExecutionException {
         final JavaParameters params = super.createJavaParameters();
 
-        Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
-        String parentPath = PathUtil.getParentPath(PathUtil.getJarPathForClass(this.getClass()));
-
-        String testRunnerClassPath = PathUtil.getJarPathForClass(KarateTestRunner.class);
-        params.getClassPath().add(testRunnerClassPath);
-        params.getClassPath().add(parentPath);
-        params.getClassPath().add(projectSdk.getHomePath());
+        Thread currentThread = Thread.currentThread();
+        ClassLoader originalClassLoader = currentThread.getContextClassLoader();
+        ClassLoader pluginClassLoader = this.getClass().getClassLoader();
+        try {
+          currentThread.setContextClassLoader(pluginClassLoader);
+          params.getClassPath().add(PathUtil.getJarPathForClass(this.getClass()));
+          // code working with ServiceLoader here
+        } finally {
+          currentThread.setContextClassLoader(originalClassLoader);
+        }
         if (env.getRunnerSettings() instanceof GenericDebuggerRunnerSettings genericDebuggerRunnerSettings) {
           params.getVMParametersList()
             .addParametersString(String.format("-agentlib:jdwp=transport=dt_socket,server=y,address=%s,suspend=y",

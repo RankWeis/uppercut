@@ -30,7 +30,8 @@ repositories {
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
-    implementation("io.karatelabs:karate-junit5:" + properties("karateVersion").get())
+    compileOnly("io.karatelabs:karate-junit5:" + properties("karateVersion").get())
+    implementation("ch.qos.logback:logback-classic:" + properties("logbackVersion").get())
 }
 
 // Set the JVM language level used to build the project.

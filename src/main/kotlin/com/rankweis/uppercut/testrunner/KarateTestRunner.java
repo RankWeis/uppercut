@@ -9,9 +9,8 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.OutputStreamAppender;
-import com.intuit.karate.Results;
-import com.intuit.karate.junit5.Karate;
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +22,7 @@ public class KarateTestRunner {
 
   final Map<String, List<String>> params = new HashMap<>();
 
-  Results doTest() {
+  int doTest() {
     String[] testNames =
       Optional.ofNullable(params.get("testname")).orElse(List.of()).stream().map(s -> "classpath:" + s).toList()
         .toArray(new String[0]);
@@ -46,26 +45,43 @@ public class KarateTestRunner {
         .map(l -> l.get(0))
         .map(Integer::parseInt)
         .orElse(1);
-    
-    if(tags.length == 0 && testNames.length == 0) {
+
+    if (tags.length == 0 && testNames.length == 0) {
       testNames = new String[]{"classpath:test-files"};
       tags = new String[]{"@Test"};
     }
-    Karate k = tags.length > 0 ? Karate.run(workingDirectories).tags(tags) : Karate.run(testNames);
-    return k
-      .workingDir(new File(workingDirectories[0]))
-      .karateEnv(env)
-      .parallel(parallelism);
+
+    try {
+      Class<?> clazz = Class.forName("com.intuit.karate.junit5.Karate",
+        true, Thread.currentThread().getContextClassLoader());
+      Object invoke = clazz.getDeclaredConstructor().newInstance();
+      Method mRun = clazz.getMethod("path", String[].class);
+      Method mTags = clazz.getMethod("tags", String[].class);
+      Method mWorkingDir = clazz.getMethod("workingDir", File.class);
+      Method mKarateEnv = clazz.getMethod("karateEnv", String.class);
+      Method mParallel = clazz.getMethod("parallel", int.class);
+      if (tags.length > 0) {
+        invoke = mRun.invoke(invoke, new Object[]{workingDirectories});
+        invoke = mTags.invoke(invoke, new Object[]{tags});
+      } else {
+        invoke = mRun.invoke(invoke, new Object[]{testNames});
+      }
+      invoke = mWorkingDir.invoke(invoke, new File(workingDirectories[0]));
+      invoke = mKarateEnv.invoke(invoke, env);
+      invoke = mParallel.invoke(invoke, parallelism);
+      return 0;
+
+    } catch (Exception e) {
+      throw new RuntimeException("Must have Karate installed on classpath", e);
+    }
+
+
   }
 
   public static void main(String[] args) {
     setLoggingLevel(Level.INFO);
     KarateTestRunner runner = new KarateTestRunner();
     runner.parseArgs(args);
-    Results parallel = runner.doTest();
-    if (parallel.getFeaturesTotal() == 0) {
-      throw new RuntimeException("No tests selected");
-    }
   }
 
   public void parseArgs(String[] args) {
@@ -75,7 +91,7 @@ public class KarateTestRunner {
     for (int i = 0; i < args.length; i += 2) {
       String key = args[i].toLowerCase();
       key = key.startsWith("--") ? key.substring(2) : key.substring(1);
-      if(params.containsKey(key)) {
+      if (params.containsKey(key)) {
         params.get(key).add(args[i + 1]);
       } else {
         List<String> list = new ArrayList<>();
@@ -84,8 +100,9 @@ public class KarateTestRunner {
       }
     }
   }
+
   public static void setLoggingLevel(Level level) {
-    LoggerContext context = (LoggerContext)LoggerFactory.getILoggerFactory();
+    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
     OutputStreamAppender<ILoggingEvent> outputStreamAppender = new OutputStreamAppender<>();
     outputStreamAppender.setContext(context);
     PatternLayoutEncoder encoder = new PatternLayoutEncoder();
