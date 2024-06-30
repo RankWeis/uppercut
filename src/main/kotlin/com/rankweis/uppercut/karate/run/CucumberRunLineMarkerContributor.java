@@ -10,8 +10,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.rankweis.uppercut.karate.CucumberUtil;
+import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
 import com.rankweis.uppercut.karate.psi.GherkinFile;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,12 @@ public final class CucumberRunLineMarkerContributor extends RunLineMarkerContrib
     }
     IElementType type = PsiUtilCore.getElementType(element);
     if (!RUN_LINE_MARKER_ELEMENTS.contains(type)) {
+      return null;
+    }
+    if (type == KarateTokenTypes.TAG && 
+      PsiTreeUtil.findSiblingBackward(element.getParent(), GherkinElementTypes.TAG, null) != null) {
+      // This is a hack; without this, if you have @Tag1 @Tag2 @Tag3, all the run configs will come back as @Tag3.
+      // I can't figure out why this is, so the better UX is to just have one run configuration per line.
       return null;
     }
     TestStateStorage.Record state = getTestStateStorage(element);
