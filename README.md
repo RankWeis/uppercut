@@ -7,13 +7,17 @@
 <!-- Plugin description -->
 This *100% free* IntelliJ plugin gives many useful upgrades to the usage of the Karate language.
 
-Features include syntax highlighting, Go-To definitions, running tests from intelliJ,
-embedded JSON, Javascript and XML support (for IntelliJ Ultimate only), 
-and attaching a debugger to a running karate test.
+Features include 
+- Syntax highlighting
+- Go-To definitions/references
+- Running tests from intelliJ,
+- Embedded JSON, Javascript and XML support (for IntelliJ Ultimate only), 
+- attaching a debugger to a running karate test.
 
-This project is open sourced via the Apache Commons 2.0 license and is a work in progress. 
+This project is open sourced via the Apache Commons 2.0 license and is a **work in progress**. 
+Please report bugs and issues so we can make this plugin something we all enjoy using.
 
-This icon, 'Karate', provided by The Noun Project and Akhmad Sobahus Surur - 
+The icon, 'Karate', provided by The Noun Project and Akhmad Sobahus Surur - 
   * https://thenounproject.com/icon/karate-6844506/ via the Creative Commons 3.0 License found 
   here https://creativecommons.org/licenses/by/3.0/
 

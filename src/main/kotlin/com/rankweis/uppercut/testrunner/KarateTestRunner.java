@@ -2,6 +2,7 @@ package com.rankweis.uppercut.testrunner;
 
 import static ch.qos.logback.classic.Level.INFO;
 import static ch.qos.logback.classic.Level.WARN;
+import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 public class KarateTestRunner {
@@ -103,9 +105,21 @@ public class KarateTestRunner {
   }
 
   public static void setLoggingLevel() {
-    Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    Logger logger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
     logger.setLevel(INFO);
     logger.detachAndStopAllAppenders();
+    OutputStreamAppender<ILoggingEvent> outputStreamAppender =
+      getOutputStreamAppender();
+    Logger intuitLogger = (Logger) LoggerFactory.getLogger("com.intuit");
+    Logger thymeleafLogger = (Logger) LoggerFactory.getLogger("org.thymeleaf");
+    Logger apacheLogger = (Logger) LoggerFactory.getLogger("org.apache");
+    intuitLogger.setLevel(Level.INFO);
+    apacheLogger.setLevel(WARN);
+    thymeleafLogger.setLevel(Level.OFF);
+    logger.addAppender(outputStreamAppender);
+  }
+
+  private static @NotNull OutputStreamAppender<ILoggingEvent> getOutputStreamAppender() {
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
     OutputStreamAppender<ILoggingEvent> outputStreamAppender = new OutputStreamAppender<>();
     outputStreamAppender.setContext(context);
@@ -117,13 +131,7 @@ public class KarateTestRunner {
     outputStreamAppender.setEncoder(encoder);
     outputStreamAppender.setOutputStream(System.out);
     outputStreamAppender.start();
-    Logger intuitLogger = (Logger) LoggerFactory.getLogger("com.intuit");
-    Logger thymeleafLogger = (Logger) LoggerFactory.getLogger("org.thymeleaf");
-    Logger apacheLogger = (Logger) LoggerFactory.getLogger("org.apache");
-    intuitLogger.setLevel(Level.INFO);
-    apacheLogger.setLevel(WARN);
-    thymeleafLogger.setLevel(Level.OFF);
-    logger.addAppender(outputStreamAppender);
+    return outputStreamAppender;
   }
 
 }
