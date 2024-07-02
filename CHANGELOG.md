@@ -4,8 +4,6 @@
 
 ## [Unreleased]
 
-## [1.0.2]
-
 ### Fixed
 
 - Streamlining creating references, avoids an intelliJ error.
