@@ -11,8 +11,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.rankweis.uppercut.karate.psi.element.KarateNamedElement;
 import com.rankweis.uppercut.karate.psi.impl.GherkinPsiElementBase;
 import com.rankweis.uppercut.util.KarateUtil;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 public class KarateDeclaration extends GherkinPsiElementBase implements PsiNameIdentifierOwner, 
   GherkinPsiElement, GherkinSuppressionHolder, PomTarget, KarateNamedElement {
 
-  List<PsiReference> references = new ArrayList<>();
+  ConcurrentLinkedQueue<PsiReference> references = new ConcurrentLinkedQueue<>();
 
   public KarateDeclaration(@NotNull ASTNode node) {
     super(node);
@@ -35,7 +34,7 @@ public class KarateDeclaration extends GherkinPsiElementBase implements PsiNameI
   }
 
   @Override public PsiReference @NotNull [] getReferences() {
-    return this.references.toArray(new PsiReference[0]);
+    return this.references.stream().filter(r -> r.isReferenceTo(this)).toList().toArray(new PsiReference[0]);
   }
 
   @Override public PsiReference findReferenceAt(int offset) {

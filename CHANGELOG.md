@@ -2,41 +2,55 @@
 
 # uppercut Changelog
 
+## [Unreleased]
+
+### Fixed
+- Dynamic plugin reloading even when a karate file is open in editor.
+- Support for multiple tags in the gutter run configuration
+
 ## [1.0.1]
+
 ### Modified
 - Small QoL improvements.
 - Much smaller file size, no longer bundling Karate.
 
 
 ## [1.0.0]
+
 ### Added
 - Official release version.
 - Better symbol matching.
 
 ## [0.0.9]
+
 ### Added
 - Better symbol matching. 
 
 ## [0.0.8]
+
 ### Added
 - Ability to run tests from a default environment. Simple select your environment from
 "Settings -> Tools -> Karate"
 - Ability to run plugin on community editions.
 
 ## [0.0.7]
+
 ### Added
 - References! Now you can go to declaration/find usages on many variables.
 
 ## [0.0.6]
+
 ### Added
 - Some better syntax highlighting/fixes
 - Better js/json parsing.
 
 ## [0.0.5]
+
 ### Added
 - Some better syntax highlighting/fixes
 
 ## [0.0.4]
+
 ### Added
 - Dependency on karate 1.5.0.RC3 for ease of development
 
@@ -44,14 +58,17 @@
 - Requirement for JUnit plugin
 
 ## [0.0.3]
+
 ### Added
 - Fixes compatibility issues with intelliJ
 - Allows for running of tests from gutter
 
 ## [0.0.2]
+
 ### Added
 - Initial plugin with syntax highlighting and clickable links.
 
-## [Unreleased]
+## [0.0.1]
+
 ### Added
 - Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)

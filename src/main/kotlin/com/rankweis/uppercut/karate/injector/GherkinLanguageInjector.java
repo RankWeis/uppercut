@@ -3,18 +3,16 @@ package com.rankweis.uppercut.karate.injector;
 
 import static com.rankweis.uppercut.karate.psi.GherkinLexer.PYSTRING_MARKER;
 
-import com.rankweis.uppercut.karate.psi.GherkinPystring;
 import com.intellij.json.json5.Json5Language;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lang.javascript.JavascriptLanguage;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.rankweis.uppercut.karate.psi.GherkinPystring;
 import java.util.Collections;
 import java.util.List;
 import kotlinx.serialization.SerializationException;
@@ -22,11 +20,6 @@ import kotlinx.serialization.json.Json;
 import org.jetbrains.annotations.NotNull;
 
 public final class GherkinLanguageInjector implements MultiHostInjector {
-    private final Project project;
-
-    public GherkinLanguageInjector(Project project) {
-        this.project = project;
-    }
 
     @NotNull
     @Override
@@ -36,13 +29,11 @@ public final class GherkinLanguageInjector implements MultiHostInjector {
 
     @Override
     public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
-        if (!(context instanceof GherkinPystring)) {
+        if (!(context instanceof GherkinPystring host)) {
             return;
         }
 
-        final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost) context;
-
-        final String hostText = host.getText();
+      final String hostText = host.getText();
         if(PYSTRING_MARKER.equals(hostText))  {
             return;
         }
@@ -73,23 +64,21 @@ public final class GherkinLanguageInjector implements MultiHostInjector {
             language = JavascriptLanguage.INSTANCE;
         }
 
-        if (language != null) {
-            int skipWhitespaceForward = StringUtil.skipWhitespaceOrNewLineForward(hostText, skippedOffset);
-            int skipWhitespaceBackward = StringUtil.skipWhitespaceOrNewLineBackward(hostText, host.getTextLength() - skippedOffset);
-            final TextRange range = TextRange.create(skipWhitespaceForward, skipWhitespaceBackward);
+      int skipWhitespaceForward = StringUtil.skipWhitespaceOrNewLineForward(hostText, skippedOffset);
+      int skipWhitespaceBackward = StringUtil.skipWhitespaceOrNewLineBackward(hostText, host.getTextLength() - skippedOffset);
+      final TextRange range = TextRange.create(skipWhitespaceForward, skipWhitespaceBackward);
 
-            if (!range.isEmpty()) {
-                String prefix = null;
-                String suffix = null;
-                if (language == JavascriptLanguage.INSTANCE) {
-                    prefix = "let a = ";
-                    suffix = ";";
-                }
+      if (!range.isEmpty()) {
+          String prefix = null;
+          String suffix = null;
+          if (language == JavascriptLanguage.INSTANCE) {
+              prefix = "let x = ";
+              suffix = ";";
+          }
 
-                registrar.startInjecting(language);
-                registrar.addPlace(prefix, suffix, host, range);
-                registrar.doneInjecting();
-            }
-        }
+          registrar.startInjecting(language);
+          registrar.addPlace(prefix, suffix, host, range);
+          registrar.doneInjecting();
+      }
     }
 }
