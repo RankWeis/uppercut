@@ -4,7 +4,10 @@
 
 ## [Unreleased]
 
+## [1.0.2]
+
 ### Fixed
+
 - Streamlining creating references, avoids an intelliJ error.
 - JSON syntax sticks even when making edits to the JSON.
 
