@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.0.2] - 2024-07-02
+
 ### Fixed
 
 - Streamlining creating references, avoids an intelliJ error.
@@ -79,7 +81,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/rankweis/uppercut/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/rankweis/uppercut/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/rankweis/uppercut/compare/v0.0.9...v1.0.0
 [0.0.9]: https://github.com/rankweis/uppercut/compare/v0.0.8...v0.0.9
