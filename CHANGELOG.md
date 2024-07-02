@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Streamlining creating references, avoids an intelliJ error.
+
 ## [1.0.1]
 
 ### Modified
