@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2024-07-10
+
 ### Added
 
 - New icon for the plugin, much easier to see at low resolutions.
@@ -85,7 +87,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/rankweis/uppercut/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/rankweis/uppercut/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/rankweis/uppercut/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/rankweis/uppercut/compare/v0.0.9...v1.0.0
