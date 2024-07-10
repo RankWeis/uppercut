@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- New icon for the plugin, much easier to see at low resolutions.
+
 ## [1.0.2] - 2024-07-02
 
 ### Fixed

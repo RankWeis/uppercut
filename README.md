@@ -17,10 +17,6 @@ Features include
 This project is open sourced via the Apache Commons 2.0 license and is a **work in progress**. 
 Please report bugs and issues so we can make this plugin something we all enjoy using.
 
-The icon, 'Karate', provided by The Noun Project and Akhmad Sobahus Surur - 
-  * https://thenounproject.com/icon/karate-6844506/ via the Creative Commons 3.0 License found 
-  here https://creativecommons.org/licenses/by/3.0/
-
 <!-- Plugin description end -->
 
 ## Installation
