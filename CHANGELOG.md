@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Modified
+
+- Logo for plugin
+
 ## [1.1.0] - 2024-07-10
 
 ### Added
