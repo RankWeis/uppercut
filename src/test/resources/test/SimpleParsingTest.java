@@ -1,4 +1,4 @@
-package com.rankweis.test;
+package test;
 
 import com.rankweis.uppercut.karate.psi.GherkinParserDefinition;
 import com.intellij.testFramework.ParsingTestCase;
