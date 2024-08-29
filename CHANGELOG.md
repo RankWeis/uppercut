@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Modified
+
+- Fewer intellij exceptions when not using karate tests.
+
 ## [1.1.1] - 2024-07-15
 
 ### Modified
