@@ -13,6 +13,7 @@ import com.rankweis.uppercut.karate.psi.KarateDeclaration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,9 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
     PsiElement parent =
       PsiTreeUtil.findFirstParent(myElement, GherkinScenario.class::isInstance);
 
-    List<KarateDeclaration> declarationsInScenario = Arrays.stream(PsiTreeUtil.getChildrenOfType(parent, GherkinStep.class))
+    List<KarateDeclaration> declarationsInScenario = Arrays.stream(
+        Optional.ofNullable(PsiTreeUtil.getChildrenOfType(parent, GherkinStep.class))
+          .orElse(GherkinStep.EMPTY_ARRAY))
       .flatMap(step -> {
         KarateDeclaration[] childrenOfType = PsiTreeUtil.getChildrenOfType(step, KarateDeclaration.class);
         return childrenOfType == null ? Stream.of() : Arrays.stream(childrenOfType);
@@ -62,7 +65,6 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
         return new PsiElementResolveResult[]{new PsiElementResolveResult(declarationsInBackground.get(0))};
       }
     }
-
 
     List<ResolveResult> results = new ArrayList<>();
 

@@ -121,6 +121,9 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
   }
 
   private static String getRelativePathFromModule(Module contextModule, String path, String name) {
+    if (contextModule == null) {
+      return "";
+    }
     return Arrays.stream(ModuleRootManager.getInstance(contextModule).getSourceRoots()).map(
         VirtualFile::getPath)
       .filter(s -> FileUtil.isAncestor(s, path, false))
