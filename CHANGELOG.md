@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.1.3] - 2024-08-29
+
 ### Modified
 
 - Fewer intellij exceptions when not using karate tests.
@@ -97,7 +99,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/rankweis/uppercut/compare/v1.1.1...v1.1.3
 [1.1.1]: https://github.com/rankweis/uppercut/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/rankweis/uppercut/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/rankweis/uppercut/compare/v1.0.1...v1.0.2
