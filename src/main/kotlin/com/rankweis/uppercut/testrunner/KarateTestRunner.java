@@ -107,7 +107,12 @@ public class KarateTestRunner {
   public static void setLoggingLevel() {
     Logger logger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
     logger.setLevel(INFO);
-    logger.detachAndStopAllAppenders();
+    logger.iteratorForAppenders()
+      .forEachRemaining(appender -> {
+        if (!appender.getName().contains("FILE")) {
+          logger.detachAppender(appender);
+        }
+      });
     OutputStreamAppender<ILoggingEvent> outputStreamAppender =
       getOutputStreamAppender();
     Logger intuitLogger = (Logger) LoggerFactory.getLogger("com.intuit");

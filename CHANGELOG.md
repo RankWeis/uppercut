@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Modified
+
+- karate.log populated when running tests from the plugin.
+
 ## [1.1.3] - 2024-08-29
 
 ### Modified
