@@ -26,7 +26,7 @@
     <lang.psiStructureViewFactory language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.structure.GherkinStructureViewFactory"/>
     <lang.formatter language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.formatter.GherkinFormattingModelBuilder"/>
+      implementationClass="com.rankweis.uppercut.karate.format.KarateFormattingModelBuilder"/>
     <annotator language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.annotator.GherkinAnnotator"/>
     <lang.foldingBuilder language="Karate"

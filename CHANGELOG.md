@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Modified
+
+- Improved autoformatting.
+
 ## [1.1.4] - 2024-11-04
 
 ### Modified

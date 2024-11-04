@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class KarateBlock extends AbstractBlock {
-  
+
   final SpacingBuilder spacingBuilder;
 
   protected KarateBlock(@NotNull ASTNode node, @Nullable Wrap wrap,

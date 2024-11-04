@@ -1,9 +1,5 @@
 package com.rankweis.uppercut.karate.psi.formatter;
 
-import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
-import com.rankweis.uppercut.karate.psi.GherkinParserDefinition;
-import com.rankweis.uppercut.karate.psi.GherkinTable;
-import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Block;
@@ -17,6 +13,10 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
+import com.rankweis.uppercut.karate.psi.GherkinParserDefinition;
+import com.rankweis.uppercut.karate.psi.GherkinTable;
+import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GherkinBlock implements ASTBlock {
+
   private final ASTNode myNode;
   private final Indent myIndent;
   private final TextRange myTextRange;
@@ -31,20 +32,21 @@ public class GherkinBlock implements ASTBlock {
   private List<Block> myChildren = null;
 
   private static final TokenSet BLOCKS_TO_INDENT = TokenSet.create(GherkinElementTypes.FEATURE_HEADER,
-                                                                   GherkinElementTypes.RULE,
-                                                                   GherkinElementTypes.SCENARIO,
-                                                                   GherkinElementTypes.SCENARIO_OUTLINE,
-                                                                   GherkinElementTypes.STEP,
-                                                                   GherkinElementTypes.TABLE,
-                                                                   GherkinElementTypes.EXAMPLES_BLOCK);
+    GherkinElementTypes.RULE,
+    GherkinElementTypes.SCENARIO,
+    GherkinElementTypes.SCENARIO_OUTLINE,
+    GherkinElementTypes.STEP,
+    GherkinElementTypes.TABLE,
+    GherkinElementTypes.EXAMPLES_BLOCK);
 
   private static final TokenSet BLOCKS_TO_INDENT_CHILDREN = TokenSet.create(GherkinParserDefinition.GHERKIN_FILE,
-                                                                            GherkinElementTypes.FEATURE,
-                                                                            GherkinElementTypes.SCENARIO,
-                                                                            GherkinElementTypes.RULE,
-                                                                            GherkinElementTypes.SCENARIO_OUTLINE);
+    GherkinElementTypes.FEATURE,
+    GherkinElementTypes.SCENARIO,
+    GherkinElementTypes.RULE,
+    GherkinElementTypes.SCENARIO_OUTLINE);
 
-  private static final TokenSet READ_ONLY_BLOCKS = TokenSet.create(GherkinElementTypes.PYSTRING, KarateTokenTypes.COMMENT);
+  private static final TokenSet READ_ONLY_BLOCKS =
+    TokenSet.create(GherkinElementTypes.PYSTRING, KarateTokenTypes.COMMENT);
 
   public GherkinBlock(ASTNode node) {
     this(node, Indent.getAbsoluteNoneIndent());
@@ -79,7 +81,9 @@ public class GherkinBlock implements ASTBlock {
   @Override
   @NotNull
   public List<Block> getSubBlocks() {
-    if (myLeaf) return Collections.emptyList();
+    if (myLeaf) {
+      return Collections.emptyList();
+    }
     if (myChildren == null) {
       myChildren = buildChildren();
     }
@@ -99,13 +103,12 @@ public class GherkinBlock implements ASTBlock {
       }
 
       boolean isTagInsideScenario = child.getElementType() == GherkinElementTypes.TAG &&
-                  myNode.getElementType() == GherkinElementTypes.SCENARIO_OUTLINE &&
-                  child.getStartOffset() > myNode.getStartOffset();
+        myNode.getElementType() == GherkinElementTypes.SCENARIO_OUTLINE &&
+        child.getStartOffset() > myNode.getStartOffset();
       Indent indent;
       if (BLOCKS_TO_INDENT.contains(child.getElementType()) || isTagInsideScenario) {
         indent = Indent.getNormalIndent();
-      }
-      else {
+      } else {
         indent = Indent.getNoneIndent();
       }
       // skip epmty cells
@@ -116,7 +119,8 @@ public class GherkinBlock implements ASTBlock {
       }
       if (child.getElementType() == KarateTokenTypes.COMMENT) {
         final ASTNode commentIndentElement = child.getTreePrev();
-        if (commentIndentElement != null && (commentIndentElement.getText().contains("\n") || commentIndentElement.getTreePrev() == null)) {
+        if (commentIndentElement != null && (commentIndentElement.getText().contains("\n")
+          || commentIndentElement.getTreePrev() == null)) {
           final String whiteSpaceText = commentIndentElement.getText();
           final int lineBreakIndex = whiteSpaceText.lastIndexOf("\n");
 
@@ -161,17 +165,20 @@ public class GherkinBlock implements ASTBlock {
     if (READ_ONLY_BLOCKS.contains(elementType2)) {
       return Spacing.getReadOnlySpacing();
     }
+    if (KarateTokenTypes.ACTION_KEYWORD == elementType1 || KarateTokenTypes.ACTION_KEYWORD == elementType2) {
+      return Spacing.createSpacing(1, 1, 0, false, 0);
+    }
     if (GherkinElementTypes.SCENARIOS.contains(elementType2) &&
-        elementType1 != KarateTokenTypes.COMMENT &&
-        parent1 != GherkinElementTypes.RULE) {
+      elementType1 != KarateTokenTypes.COMMENT &&
+      parent1 != GherkinElementTypes.RULE) {
       return Spacing.createSpacing(0, 0, 2, true, 2);
     }
     if (elementType1 == KarateTokenTypes.PIPE &&
-        elementType2 == GherkinElementTypes.TABLE_CELL) {
+      elementType2 == GherkinElementTypes.TABLE_CELL) {
       return Spacing.createSpacing(1, 1, 0, false, 0);
     }
     if ((elementType1 == GherkinElementTypes.TABLE_CELL || elementType1 == KarateTokenTypes.PIPE) &&
-        elementType2 == KarateTokenTypes.PIPE) {
+      elementType2 == KarateTokenTypes.PIPE) {
       final ASTNode tableNode = TreeUtil.findParent(node1, GherkinElementTypes.TABLE);
       if (tableNode != null) {
         int columnIndex = getTableCellColumnIndex(node1);
@@ -188,19 +195,20 @@ public class GherkinBlock implements ASTBlock {
 
   private static int getTableCellColumnIndex(ASTNode node) {
     int pipeCount = 0;
-    while(node != null) {
+    while (node != null) {
       if (node.getElementType() == KarateTokenTypes.PIPE) {
         pipeCount++;
       }
       node = node.getTreePrev();
     }
-    return pipeCount-1;
+    return pipeCount - 1;
   }
 
   @Override
   @NotNull
   public ChildAttributes getChildAttributes(int newChildIndex) {
-    Indent childIndent = BLOCKS_TO_INDENT_CHILDREN.contains(getNode().getElementType()) ? Indent.getNormalIndent() : Indent.getNoneIndent();
+    Indent childIndent = BLOCKS_TO_INDENT_CHILDREN.contains(getNode().getElementType()) ? Indent.getNormalIndent()
+      : Indent.getNoneIndent();
     return new ChildAttributes(childIndent, null);
   }
 
@@ -211,8 +219,8 @@ public class GherkinBlock implements ASTBlock {
     }
     if (getNode().getElementType() == GherkinElementTypes.FEATURE) {
       return getNode().getChildren(TokenSet.create(GherkinElementTypes.FEATURE_HEADER,
-                                                   GherkinElementTypes.SCENARIO,
-                                                   GherkinElementTypes.SCENARIO_OUTLINE)).length == 0;
+        GherkinElementTypes.SCENARIO,
+        GherkinElementTypes.SCENARIO_OUTLINE)).length == 0;
     }
     return false;
   }

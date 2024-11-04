@@ -1,16 +1,14 @@
 package com.rankweis.uppercut.karate.format;
 
-import com.intellij.formatting.Alignment;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.FormattingModelProvider;
 import com.intellij.formatting.SpacingBuilder;
-import com.intellij.formatting.Wrap;
-import com.intellij.formatting.WrapType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.rankweis.uppercut.karate.psi.KarateLanguage;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import com.rankweis.uppercut.karate.psi.formatter.GherkinBlock;
 import org.jetbrains.annotations.NotNull;
 
 public class KarateFormattingModelBuilder implements FormattingModelBuilder {
@@ -26,10 +24,7 @@ public class KarateFormattingModelBuilder implements FormattingModelBuilder {
     final CodeStyleSettings codeStyleSettings = formattingContext.getCodeStyleSettings();
     return FormattingModelProvider
       .createFormattingModelForPsiFile(formattingContext.getContainingFile(),
-        new KarateBlock(formattingContext.getNode(),
-          Wrap.createWrap(WrapType.NONE, false),
-          Alignment.createAlignment(),
-          createSpaceBuilder(codeStyleSettings)),
+        new GherkinBlock(formattingContext.getNode()),
         codeStyleSettings);
   }
 
