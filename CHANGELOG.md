@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.1.4] - 2024-11-04
+
 ### Modified
 
 - karate.log populated when running tests from the plugin.
@@ -103,7 +105,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.1.4...HEAD
+[1.1.4]: https://github.com/rankweis/uppercut/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/rankweis/uppercut/compare/v1.1.1...v1.1.3
 [1.1.1]: https://github.com/rankweis/uppercut/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/rankweis/uppercut/compare/v1.0.2...v1.1.0
