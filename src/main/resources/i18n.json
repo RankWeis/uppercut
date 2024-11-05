@@ -848,6 +848,10 @@
 		"remove": [
 			"remove",
 			"remove "
+		],
+		"status": [
+			"status",
+			"status "
 		]
 	},
 	"en-Scouse": {

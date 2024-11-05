@@ -48,6 +48,7 @@ public class PlainKarateKeywordProvider implements GherkinKeywordProvider {
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "print");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "table");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "if");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "status");
     
     ourKeywordsWithNoSpaceAfter.add("Lorsqu'");
 
