@@ -45,7 +45,7 @@ public class GherkinLexer extends LexerBase {
   private static final int STATE_QUOTE_INSIDE_STEP = 11;
 
   public static final String PYSTRING_MARKER = "\"\"\"";
-  public static final List<String> INTERESTING_SYMBOLS = List.of("\n", "'", "\"", "#", "{", "[", "function");
+  public static final List<String> INTERESTING_SYMBOLS = List.of("\n", "'", "\"", "#", "{", "[", "function", " ");
   private final GherkinKeywordProvider myKeywordProvider;
   private String myCurLanguage;
 
@@ -254,7 +254,7 @@ public class GherkinLexer extends LexerBase {
       }
     } else if (c == '#') {
       myCurrentToken = KarateTokenTypes.COMMENT;
-      advanceToNextLine();
+      advanceToNextLine(false);
 
       String commentText = myBuffer.subSequence(myCurrentTokenStart + 1, myPosition).toString().trim();
       final String language = fetchLocationLanguage(commentText);
@@ -305,6 +305,10 @@ public class GherkinLexer extends LexerBase {
       if (myState == STATE_AFTER_STEP_KEYWORD) {
         for (String keyword : myKeywords) {
           if (myKeywordProvider.isActionKeyword(keyword) && isStringAtPosition(keyword)) {
+            if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) &&
+              !Character.isWhitespace(myBuffer.charAt(myPosition + keyword.length()))) {
+              continue;
+            }
             myState = STATE_AFTER_ACTION_KEYWORD;
             myCurrentToken = KarateTokenTypes.ACTION_KEYWORD;
             myPosition += keyword.length();
@@ -471,14 +475,20 @@ public class GherkinLexer extends LexerBase {
   }
   
   private void advanceToNextLine() {
+    advanceToNextLine(true);
+  }
+  
+  private void advanceToNextLine(boolean includeWhitespace) {
     myPosition++;
     int mark = myPosition;
     while (myPosition < myEndOffset && myBuffer.charAt(myPosition) != '\n') {
       myPosition++;
     }
 
-    if (myPosition < myEndOffset && myBuffer.charAt(myPosition) == '\n') {
-      myPosition++;
+    if (includeWhitespace) {
+      if (myPosition < myEndOffset && myBuffer.charAt(myPosition) == '\n') {
+        myPosition++;
+      }
     }
   }
 

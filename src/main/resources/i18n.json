@@ -786,52 +786,68 @@
 			"When "
 		],
 		"url": [
-			"url"
+			"url",
+			"url "
 		],
 		"call": [
-			"call"
+			"call",
+			"call "
 		],
 		"def": [
-			"def"
+			"def",
+			"def "
 		],
 		"match": [
-			"match"
+			"match",
+			"match "
 		],
 		"path": [
-			"path"
+			"path",
+			"path "
 		],
 		"param": [
-			"param"
+			"param",
+			"param "
 		],
 		"method": [
-			"method"
+			"method",
+			"method "
 		],
 		"set": [
-			"set"
+			"set",
+			"set "
 		],
 		"header": [
-			"header"
+			"header",
+			"header "
 		],
 		"configure": [
-			"configure"
+			"configure",
+			"configure "
 		],
 		"print": [
-			"print"
+			"print",
+			"print "
 		],
 		"table": [
-			"table"
+			"table",
+			"table "
 		],
 		"callonce": [
-			"callonce"
+			"callonce",
+			"callonce "
 		],
 		"callsingle": [
-			"callonce"
+			"callonce",
+			"callonce "
 		],
 		"if": [
-			"if"
+			"if",
+			"if "
 		],
 		"remove": [
-			"remove"
+			"remove",
+			"remove "
 		]
 	},
 	"en-Scouse": {

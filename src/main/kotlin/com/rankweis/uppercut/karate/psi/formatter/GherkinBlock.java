@@ -168,6 +168,15 @@ public class GherkinBlock implements ASTBlock {
     if (KarateTokenTypes.ACTION_KEYWORD == elementType1 || KarateTokenTypes.ACTION_KEYWORD == elementType2) {
       return Spacing.createSpacing(1, 1, 0, false, 0);
     }
+    if(KarateTokenTypes.DECLARATION == elementType1 || KarateTokenTypes.DECLARATION == elementType2) {
+      return Spacing.createSpacing(1, 1, 0, false, 0);
+    }
+    if(KarateTokenTypes.VARIABLE == elementType1 || KarateTokenTypes.VARIABLE == elementType2) {
+      return Spacing.createSpacing(1, 1, 0, false, 0);
+    }
+    if(KarateTokenTypes.TEXT == elementType1 || KarateTokenTypes.TEXT == elementType2) {
+      return Spacing.createSpacing(0, 1, 0, true, 1);
+    }
     if (GherkinElementTypes.SCENARIOS.contains(elementType2) &&
       elementType1 != KarateTokenTypes.COMMENT &&
       parent1 != GherkinElementTypes.RULE) {
