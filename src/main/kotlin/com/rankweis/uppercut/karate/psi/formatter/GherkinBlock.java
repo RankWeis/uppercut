@@ -165,6 +165,9 @@ public class GherkinBlock implements ASTBlock {
     if (READ_ONLY_BLOCKS.contains(elementType2)) {
       return Spacing.getReadOnlySpacing();
     }
+    if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType1)) {
+      return Spacing.createSpacing(1, 1, 0, false, 0);
+    }
     if (KarateTokenTypes.ACTION_KEYWORD == elementType1 || KarateTokenTypes.ACTION_KEYWORD == elementType2) {
       return Spacing.createSpacing(1, 1, 0, false, 0);
     }

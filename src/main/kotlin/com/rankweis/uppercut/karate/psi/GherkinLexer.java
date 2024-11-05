@@ -191,18 +191,18 @@ public class GherkinLexer extends LexerBase {
     myCurrentTokenStart = myPosition;
     char c = myBuffer.charAt(myPosition);
 
-    if (myState == STATE_AFTER_SCENARIO_KEYWORD) {
-      myCurrentToken = TEXT;
-      advanceToNextLine();
-      myState = STATE_DEFAULT;
-    } if (isStringAtPosition(PYSTRING_MARKER)) {
-      injectPyString();
-    } else if (Character.isWhitespace(c)) {
+    if (Character.isWhitespace(c)) {
       advanceOverWhitespace();
       myCurrentToken = TokenType.WHITE_SPACE;
       while (myPosition < myEndOffset && Character.isWhitespace(myBuffer.charAt(myPosition))) {
         advanceOverWhitespace();
       }
+    } else if (myState == STATE_AFTER_SCENARIO_KEYWORD) {
+      myCurrentToken = TEXT;
+      advanceToNextLine(false);
+      myState = STATE_DEFAULT;
+    } else if (isStringAtPosition(PYSTRING_MARKER)) {
+      injectPyString();
     } else if ( (c == '{' || c == '[') && myState != STATE_TABLE) {
       if (advanceIfJsJson()) {
         myCurrentToken = KarateTokenTypes.PYSTRING;
@@ -293,6 +293,9 @@ public class GherkinLexer extends LexerBase {
             if (myCurrentToken == KarateTokenTypes.STEP_KEYWORD) {
               myState = STATE_AFTER_STEP_KEYWORD;
             } else if (SCENARIOS_KEYWORDS.contains(myCurrentToken)) {
+              if (myPosition < myEndOffset - 1 && myBuffer.charAt(myPosition) == ':') {
+                myPosition++;
+              }
               myState = STATE_AFTER_SCENARIO_KEYWORD;
             } else {
               myState = STATE_AFTER_KEYWORD;
@@ -306,7 +309,8 @@ public class GherkinLexer extends LexerBase {
         for (String keyword : myKeywords) {
           if (myKeywordProvider.isActionKeyword(keyword) && isStringAtPosition(keyword)) {
             if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) &&
-              !Character.isWhitespace(myBuffer.charAt(myPosition + keyword.length()))) {
+              (myPosition + keyword.length() >= myBuffer.length() || 
+                !Character.isWhitespace(myBuffer.charAt(myPosition + keyword.length())))) {
               continue;
             }
             myState = STATE_AFTER_ACTION_KEYWORD;
@@ -478,17 +482,22 @@ public class GherkinLexer extends LexerBase {
     advanceToNextLine(true);
   }
   
-  private void advanceToNextLine(boolean includeWhitespace) {
+  private void advanceToNextLine(boolean includeNewlines) {
     myPosition++;
     int mark = myPosition;
     while (myPosition < myEndOffset && myBuffer.charAt(myPosition) != '\n') {
       myPosition++;
     }
 
-    if (includeWhitespace) {
+    if (includeNewlines) {
       if (myPosition < myEndOffset && myBuffer.charAt(myPosition) == '\n') {
         myPosition++;
       }
+    } else {
+      returnWhitespace(mark);
+    }
+    if (myPosition > myEndOffset) {
+      myPosition = myEndOffset;
     }
   }
 
