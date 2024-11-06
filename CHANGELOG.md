@@ -6,7 +6,8 @@
 
 ### Modified
 
-- Improved autoformatting.
+- Autoformatting has significant improvements and bug fixes.
+- Allows for changing of step signifiers separately from comments in color settings.
 
 ## [1.1.4] - 2024-11-04
 
