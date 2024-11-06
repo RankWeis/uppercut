@@ -16,6 +16,12 @@ public final class GherkinHighlighter {
     DefaultLanguageHighlighterColors.DOC_COMMENT
   );
 
+  static final String STEP_KEYWORD_ID = "KARATE_STEP_KEYWORD";
+  public static final TextAttributesKey STEP_KEYWORD = TextAttributesKey.createTextAttributesKey(
+    STEP_KEYWORD_ID,
+    DefaultLanguageHighlighterColors.DOC_COMMENT
+  );
+
   @NonNls
   static final String QUOTE_ID = "QUOTE";
   public static final TextAttributesKey QUOTE = TextAttributesKey.createTextAttributesKey(

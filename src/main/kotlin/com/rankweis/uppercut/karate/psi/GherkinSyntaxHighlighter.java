@@ -46,7 +46,7 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase implements E
       .forEach(p -> ATTRIBUTES.put(p, GherkinHighlighter.KEYWORD));
     Arrays.stream(KEYWORDS.getTypes())
       .filter(p -> p.equals(STEP_KEYWORD))
-      .forEach(p -> ATTRIBUTES.put(p, GherkinHighlighter.COMMENT));
+      .forEach(p -> ATTRIBUTES.put(p, GherkinHighlighter.STEP_KEYWORD));
 
     ATTRIBUTES.put(COMMENT, GherkinHighlighter.COMMENT);
     ATTRIBUTES.put(TEXT, GherkinHighlighter.TEXT);
