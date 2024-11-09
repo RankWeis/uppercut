@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+
+Support for new intelliJ versions.
+
 ## [1.1.5] - 2024-11-07
 
 ### Modified
