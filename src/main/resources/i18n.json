@@ -862,7 +862,7 @@
 			"assert "
 		],
 		"read": [
-			"read",
+			"read"
 		],
 		"headers": [
 			"headers",
