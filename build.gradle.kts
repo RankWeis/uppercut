@@ -46,18 +46,18 @@ kotlin {
 
 // Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 dependencies {
-
+    testImplementation(libs.junit)
+    
     intellijPlatform {
-//        pluginName = properties("pluginName")
         val version = properties("platformVersion")
-//        val type = properties("platformType")
 
         intellijIdeaUltimate(version, useInstaller = false)
-        // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
-        bundledPlugins(properties("platformPlugins").map {
-            it.split(',')
-                .map(String::trim).filter(String::isNotEmpty)
-        })
+        // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
+        bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
+
+        // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
+        plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
+
         pluginVerifier()
         zipSigner()
         instrumentationTools()
@@ -67,10 +67,10 @@ dependencies {
 
 intellijPlatform {
     pluginConfiguration {
-        version = properties("platformVersion").get()
+        version = properties("pluginVersion")
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
-            untilBuild = providers.gradleProperty("pluginUntilBuild").map { it.ifBlank { null } }
+            untilBuild = providers.gradleProperty("pluginUntilBuild")
         }
         // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
         description =
@@ -146,11 +146,6 @@ idea {
 }
 
 tasks {
-    jar {
-        archiveBaseName.set(properties("pluginName"))
-        archiveClassifier.set("")
-        archiveVersion.set(properties("pluginVersion"))
-    }
     wrapper {
         gradleVersion = properties("gradleVersion").get()
     }
@@ -161,35 +156,28 @@ tasks {
         }
     }
 
-    patchPluginXml {
-        version = properties("pluginVersion")
-        sinceBuild = properties("pluginSinceBuild")
-        untilBuild = properties("pluginUntilBuild")
-
-
-    }
-
-    runIde {
-        autoReload = true
-    }
-    // Configure UI tests plugin
-    // Read more: https://github.com/JetBrains/intellij-ui-test-robot
-
-    signPlugin {
-        certificateChain = environment("CERTIFICATE_CHAIN")
-        privateKey = environment("PRIVATE_KEY")
-        password = environment("PRIVATE_KEY_PASSWORD")
-    }
-
     publishPlugin {
         dependsOn("patchChangelog")
-        token = environment("PUBLISH_TOKEN")
-        // The pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
-        // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
-        // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
-        channels = properties("pluginVersion").map {
-            listOf(
-                it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" })
+    }
+}
+
+intellijPlatformTesting {
+    runIde {
+        register("runIdeForUiTests") {
+            task {
+                jvmArgumentProviders += CommandLineArgumentProvider {
+                    listOf(
+                        "-Drobot-server.port=8082",
+                        "-Dide.mac.message.dialogs.as.sheets=false",
+                        "-Djb.privacy.policy.text=<!--999.999-->",
+                        "-Djb.consents.confirmation.enabled=false",
+                    )
+                }
+            }
+
+            plugins {
+                robotServerPlugin()
+            }
         }
     }
 }
