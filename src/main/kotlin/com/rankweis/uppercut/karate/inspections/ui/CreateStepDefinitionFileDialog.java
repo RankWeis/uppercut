@@ -1,9 +1,5 @@
 package com.rankweis.uppercut.karate.inspections.ui;
 
-import com.rankweis.uppercut.karate.inspections.model.CreateStepDefinitionFileModel;
-import com.rankweis.uppercut.karate.inspections.model.FileTypeComboboxItem;
-import com.rankweis.uppercut.karate.steps.CucumberStepHelper;
-import com.rankweis.uppercut.karate.MyBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
@@ -15,6 +11,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
+import com.rankweis.uppercut.karate.MyBundle;
+import com.rankweis.uppercut.karate.inspections.model.CreateStepDefinitionFileModel;
+import com.rankweis.uppercut.karate.inspections.model.FileTypeComboboxItem;
+import com.rankweis.uppercut.karate.steps.CucumberStepHelper;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
@@ -88,8 +88,9 @@ public class CreateStepDefinitionFileDialog extends DialogWrapper {
     folderChooserDescriptor.withTreeRootVisible(true);
     folderChooserDescriptor.setShowFileSystemRoots(false);
     folderChooserDescriptor.setHideIgnored(true);
+    folderChooserDescriptor.setTitle(folderChooserTitle);
 
-    myDirectoryTextField.addBrowseFolderListener(folderChooserTitle, null, project, folderChooserDescriptor);
+    myDirectoryTextField.addBrowseFolderListener(project, folderChooserDescriptor);
     myDirectoryTextField.getTextField().addKeyListener(keyListener);
     myDirectoryTextField.setText(FileUtil.toSystemDependentName(model.getDefaultDirectory()));
     validateAll();

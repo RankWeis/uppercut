@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Modified
+
+- Increased support for new intellij versions.
+
 ## [1.2.0] - 2024-11-11
 
 ### Added

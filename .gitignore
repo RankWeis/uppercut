@@ -6,3 +6,5 @@ build
 target/
 .kotlin/
 .DS_STORE
+
+.intellijPlatform
