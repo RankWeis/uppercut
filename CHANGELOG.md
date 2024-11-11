@@ -6,7 +6,8 @@
 
 ### Added
 
-Support for new intelliJ versions.
+- Support for new intelliJ versions.
+- More keyword support.
 
 ## [1.1.5] - 2024-11-07
 

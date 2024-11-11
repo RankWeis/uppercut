@@ -852,6 +852,42 @@
 		"status": [
 			"status",
 			"status "
+		],
+		"request": [
+			"request",
+			"request "
+		],
+		"assert": [
+			"assert",
+			"assert "
+		],
+		"read": [
+			"read",
+			"read "
+		],
+		"headers": [
+			"headers",
+			"headers "
+		],
+		"cookie": [
+			"cookie",
+			"cookie "
+		],
+		"cookies": [
+			"cookies",
+			"cookies "
+		],
+		"params": [
+			"params",
+			"params "
+		],
+		"response": [
+			"response",
+			"response "
+		],
+		"eval": [
+			"eval",
+			"eval "
 		]
 	},
 	"en-Scouse": {
