@@ -17,6 +17,14 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - name: free disk space
+        run: |
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          sudo apt clean
+          docker rmi $(docker image ls -aq)
+          df -h
+
       # Check out the current repository
       - name: Fetch Sources
         uses: actions/checkout@v4
