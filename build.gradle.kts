@@ -28,8 +28,6 @@ repositories {
     mavenCentral()
     intellijPlatform {
         defaultRepositories()
-        jetbrainsIdeInstallers()
-        jetbrainsRuntime()
     }
 }
 
