@@ -167,9 +167,9 @@ public class GherkinLexer extends LexerBase {
     boolean isDeclaration = positionOkay && myBuffer.charAt(pos + 1) != '='
       && myBuffer.charAt(pos - 1) != '!';
     boolean isVariable =
-      !isDeclaration && positionOkay && (myBuffer.charAt(pos + 1) == '=' || myBuffer.charAt(pos - 1) == '!');
+      !isDeclaration && positionOkay && (nextNonSpace(pos + 1) == '=' || prevNonSpace(startingPos, pos - 1) == '!');
     if (isDeclaration || isVariable) {
-      myPosition = pos > myPosition ? !Character.isLetterOrDigit(myBuffer.charAt(pos - 1)) ? pos - 1 : pos : pos;
+      myPosition = pos > myPosition ? !Character.isLetterOrDigit(prevNonSpace(startingPos, pos - 1)) ? pos - 1 : pos : pos;
       if (myPosition > myEndOffset) {
         myPosition = myEndOffset;
       }
@@ -182,7 +182,21 @@ public class GherkinLexer extends LexerBase {
     }
     return isDeclaration || isVariable;
   }
-
+  
+  private char nextNonSpace(int pos) {
+    while (pos < myEndOffset && myBuffer.charAt(pos) == ' ') {
+      pos++;
+    }
+    return myBuffer.charAt(pos);
+  }
+  
+  private char prevNonSpace(int start, int pos) {
+    while (pos > start && myBuffer.charAt(pos) == ' ') {
+      pos--;
+    }
+    return myBuffer.charAt(pos);
+  }
+  
   @Override
   public void advance() {
     if (myPosition >= myEndOffset) {

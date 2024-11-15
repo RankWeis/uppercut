@@ -1,5 +1,9 @@
 package com.rankweis.uppercut.karate.psi.formatter;
 
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.COLON;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.IDENTIFIERS;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
+
 import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Block;
@@ -173,9 +177,6 @@ public class GherkinBlock implements ASTBlock {
     if (READ_ONLY_BLOCKS.contains(elementType2)) {
       return Spacing.getReadOnlySpacing();
     }
-    if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType1)) {
-      return Spacing.createSpacing(1, 1, 0, false, 0);
-    }
     if (KarateTokenTypes.ACTION_KEYWORD == elementType1) {
       String text = node1.getText();
       if (myActionKeywordProvider.isActionKeyword(text)) {
@@ -188,15 +189,12 @@ public class GherkinBlock implements ASTBlock {
         return Spacing.createSpacing(1, 1, 0, false, 0);
       }
     }
-    if (KarateTokenTypes.DECLARATION == elementType1 || KarateTokenTypes.DECLARATION == elementType2) {
+    if (IDENTIFIERS.contains(elementType1) || IDENTIFIERS.contains(elementType2)) {
       return Spacing.createSpacing(1, 1, 0, false, 0);
     }
-    if (KarateTokenTypes.VARIABLE == elementType1 || KarateTokenTypes.VARIABLE == elementType2) {
-      return Spacing.createSpacing(1, 1, 0, false, 0);
-    }
-    if ((KarateTokenTypes.TEXT == elementType1 && KarateTokenTypes.QUOTE != elementType2) || (
-      KarateTokenTypes.TEXT == elementType2 && KarateTokenTypes.QUOTE != elementType1)) {
-      if ( !(elementType1 == KarateTokenTypes.TEXT && elementType2 == KarateTokenTypes.TEXT)) {
+    if ((TEXT == elementType1 && KarateTokenTypes.QUOTE != elementType2) || (
+      TEXT == elementType2 && KarateTokenTypes.QUOTE != elementType1)) {
+      if (!(elementType1 == TEXT && elementType2 == TEXT)) {
         return Spacing.createSpacing(1, 1, 0, true, 1);
       }
     }
@@ -221,6 +219,9 @@ public class GherkinBlock implements ASTBlock {
         }
         return Spacing.createSpacing(spacingWidth, spacingWidth, 0, false, 0);
       }
+    }
+    if (KarateTokenTypes.KEYWORDS.contains(elementType1) && elementType2 != COLON) {
+      return Spacing.createSpacing(1, 1, 0, false, 0);
     }
     return null;
   }

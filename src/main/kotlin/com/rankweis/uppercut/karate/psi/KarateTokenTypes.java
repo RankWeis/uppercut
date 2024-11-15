@@ -30,8 +30,9 @@ public interface KarateTokenTypes {
   
   KarateElementType PIPE = new KarateElementType("PIPE");
   KarateElementType TABLE_CELL = new KarateElementType("TABLE_CELL");
-  
-  TokenSet IDENTIFIERS = TokenSet.create(VARIABLE, DECLARATION);
+
+  TokenSet IDENTIFIERS =
+    TokenSet.create(VARIABLE, DECLARATION, GherkinElementTypes.VARIABLE, GherkinElementTypes.DECLARATION);
 
   TokenSet KEYWORDS = TokenSet.create(FEATURE_KEYWORD, RULE_KEYWORD, EXAMPLE_KEYWORD,
     BACKGROUND_KEYWORD, SCENARIO_KEYWORD, SCENARIO_OUTLINE_KEYWORD,
