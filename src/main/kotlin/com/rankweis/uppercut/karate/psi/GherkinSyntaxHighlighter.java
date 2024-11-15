@@ -9,6 +9,7 @@ import static com.intellij.json.JsonElementTypes.SINGLE_QUOTED_STRING;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.COMMENT;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.KEYWORDS;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPERATOR;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PIPE;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.QUOTE;
@@ -50,6 +51,7 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase implements E
 
     ATTRIBUTES.put(COMMENT, GherkinHighlighter.COMMENT);
     ATTRIBUTES.put(TEXT, GherkinHighlighter.TEXT);
+    ATTRIBUTES.put(OPERATOR, GherkinHighlighter.TEXT);
     ATTRIBUTES.put(DECLARATION, GherkinHighlighter.DECLARATION);
     ATTRIBUTES.put(TAG, GherkinHighlighter.TAG);
     ATTRIBUTES.put(PYSTRING, GherkinHighlighter.PYSTRING);

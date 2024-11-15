@@ -18,6 +18,7 @@ import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
 import com.rankweis.uppercut.karate.psi.GherkinParserDefinition;
 import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import com.rankweis.uppercut.karate.psi.PlainKarateKeywordProvider;
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +37,7 @@ public class GherkinBlock implements ASTBlock {
   private final boolean myLeaf;
   private List<Block> myChildren = null;
   private GherkinKeywordProvider myKeywordProvider = JsonGherkinKeywordProvider.getKeywordProvider();
+  private GherkinKeywordProvider myActionKeywordProvider = new PlainKarateKeywordProvider();
 
   private static final TokenSet BLOCKS_TO_INDENT = TokenSet.create(GherkinElementTypes.FEATURE_HEADER,
     GherkinElementTypes.RULE,
@@ -174,26 +176,29 @@ public class GherkinBlock implements ASTBlock {
     if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType1)) {
       return Spacing.createSpacing(1, 1, 0, false, 0);
     }
-//    if (KarateTokenTypes.ACTION_KEYWORD == elementType1) {
-//      String text = node1.getText();
-//      if (myKeywordProvider.isActionKeyword(text)) {
-//        if (myKeywordProvider.isSpaceRequiredAfterKeyword("en", text)) {
-//          return Spacing.createSpacing(1, 1, 0, false, 0);
-//        } else {
-//          return Spacing.createSpacing(0, 1, 0, false, 0);
-//        }
-//      } else {
-//        return Spacing.createSpacing(1, 1, 0, false, 0);
-//      }
-//    }
-    if(KarateTokenTypes.DECLARATION == elementType1 || KarateTokenTypes.DECLARATION == elementType2) {
+    if (KarateTokenTypes.ACTION_KEYWORD == elementType1) {
+      String text = node1.getText();
+      if (myActionKeywordProvider.isActionKeyword(text)) {
+        if (myKeywordProvider.isSpaceRequiredAfterKeyword("en", text)) {
+          return Spacing.createSpacing(1, 1, 0, false, 0);
+        } else {
+          return Spacing.createSpacing(0, 1, 0, false, 0);
+        }
+      } else {
+        return Spacing.createSpacing(1, 1, 0, false, 0);
+      }
+    }
+    if (KarateTokenTypes.DECLARATION == elementType1 || KarateTokenTypes.DECLARATION == elementType2) {
       return Spacing.createSpacing(1, 1, 0, false, 0);
     }
-    if(KarateTokenTypes.VARIABLE == elementType1 || KarateTokenTypes.VARIABLE == elementType2) {
+    if (KarateTokenTypes.VARIABLE == elementType1 || KarateTokenTypes.VARIABLE == elementType2) {
       return Spacing.createSpacing(1, 1, 0, false, 0);
     }
-    if(KarateTokenTypes.TEXT == elementType1 || KarateTokenTypes.TEXT == elementType2) {
-      return Spacing.createSpacing(0, 1, 0, true, 1);
+    if ((KarateTokenTypes.TEXT == elementType1 && KarateTokenTypes.QUOTE != elementType2) || (
+      KarateTokenTypes.TEXT == elementType2 && KarateTokenTypes.QUOTE != elementType1)) {
+      if ( !(elementType1 == KarateTokenTypes.TEXT && elementType2 == KarateTokenTypes.TEXT)) {
+        return Spacing.createSpacing(1, 1, 0, true, 1);
+      }
     }
     if (GherkinElementTypes.SCENARIOS.contains(elementType2) &&
       elementType1 != KarateTokenTypes.COMMENT &&

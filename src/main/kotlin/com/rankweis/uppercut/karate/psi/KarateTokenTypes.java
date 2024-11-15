@@ -7,6 +7,7 @@ import com.intellij.psi.tree.TokenSet;
 public interface KarateTokenTypes {
   KarateElementType COMMENT = new KarateElementType("COMMENT");
   KarateElementType TEXT = new KarateElementType("TEXT");
+  KarateElementType OPERATOR = new KarateElementType("OPERATOR");
   KarateElementType QUOTE = new KarateElementType("QUOTE");
   KarateElementType EXAMPLES_KEYWORD = new KarateElementType("EXAMPLES_KEYWORD");
   KarateElementType FEATURE_KEYWORD = new KarateElementType("FEATURE_KEYWORD");
@@ -36,6 +37,8 @@ public interface KarateTokenTypes {
     BACKGROUND_KEYWORD, SCENARIO_KEYWORD, SCENARIO_OUTLINE_KEYWORD,
     EXAMPLES_KEYWORD, EXAMPLES_KEYWORD, ACTION_KEYWORD,
     STEP_KEYWORD);
+  
+  TokenSet TEXT_LIKE = TokenSet.create(TEXT, OPERATOR);
 
   TokenSet SCENARIOS_KEYWORDS = TokenSet.create(SCENARIO_KEYWORD, SCENARIO_OUTLINE_KEYWORD, EXAMPLE_KEYWORD);
 

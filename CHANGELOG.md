@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Autoformatting bugs.
+
 ## [1.2.4] - 2024-11-15
 
 ### Fixed

@@ -1,7 +1,7 @@
 package com.rankweis.uppercut.karate.psi;
 
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT_LIKE;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
 
 import com.intellij.lang.ASTNode;
@@ -52,7 +52,7 @@ public class GherkinParser implements PsiParser {
     PsiBuilder.Marker descMarker = null;
     while (true) {
       final IElementType tokenType = builder.getTokenType();
-      if (tokenType == KarateTokenTypes.TEXT && descMarker == null) {
+      if (TEXT_LIKE.contains(tokenType) && descMarker == null) {
         if (hadLineBreakBefore(builder, featureEnd)) {
           descMarker = builder.mark();
         }
@@ -118,7 +118,7 @@ public class GherkinParser implements PsiParser {
           break;
         }
 
-        while (builder.getTokenType() == KarateTokenTypes.TEXT) {
+        while (TEXT_LIKE.contains(builder.getTokenType())) {
           builder.advanceLexer();
         }
       }
@@ -211,7 +211,7 @@ public class GherkinParser implements PsiParser {
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
     int prevTokenEnd = -1;
-    while (builder.getTokenType() == KarateTokenTypes.TEXT
+    while (TEXT_LIKE.contains(builder.getTokenType())
       || builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_BRACE
       || builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_TEXT
       || builder.getTokenType() == KarateTokenTypes.ACTION_KEYWORD
@@ -235,7 +235,7 @@ public class GherkinParser implements PsiParser {
       parsePystring(builder);
     }
     final IElementType tokenTypeAfterPyString = builder.getTokenType();
-    if (tokenTypeAfterPyString != tokenTypeAfterName && tokenTypeAfterPyString == TEXT) {
+    if (tokenTypeAfterPyString != tokenTypeAfterName && TEXT_LIKE.contains(tokenTypeAfterPyString)) {
       parseStep(builder);
     }
 

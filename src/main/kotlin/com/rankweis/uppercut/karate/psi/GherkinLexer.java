@@ -3,6 +3,7 @@
 package com.rankweis.uppercut.karate.psi;
 
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPERATOR;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.SCENARIOS_KEYWORDS;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
@@ -168,7 +169,7 @@ public class GherkinLexer extends LexerBase {
     boolean isVariable =
       !isDeclaration && positionOkay && (myBuffer.charAt(pos + 1) == '=' || myBuffer.charAt(pos - 1) == '!');
     if (isDeclaration || isVariable) {
-      myPosition = pos > myPosition ? pos - 1 : pos;
+      myPosition = pos > myPosition ? !Character.isLetterOrDigit(myBuffer.charAt(pos - 1)) ? pos - 1 : pos : pos;
       if (myPosition > myEndOffset) {
         myPosition = myEndOffset;
       }
@@ -207,6 +208,7 @@ public class GherkinLexer extends LexerBase {
       if (advanceIfJsJson()) {
         myCurrentToken = KarateTokenTypes.PYSTRING;
       } else {
+        myCurrentToken = TEXT;
         advanceToNextInterestingToken();
       }
     } else if ( isStringAtPosition("function")) {
@@ -270,6 +272,13 @@ public class GherkinLexer extends LexerBase {
       while (myPosition < myEndOffset && isValidTagChar(myBuffer.charAt(myPosition))) {
         myPosition++;
       }
+    } else if (isStringAtPosition("==") || isStringAtPosition("!=") 
+      || isStringAtPosition("<=") || isStringAtPosition(">=")) {
+      myPosition += 2;
+      myCurrentToken = OPERATOR;
+    } else if (isStringAtPosition("=") || isStringAtPosition("<") || isStringAtPosition(">")) {
+      myPosition++;
+      myCurrentToken = OPERATOR;
     } else {
       if (myState == STATE_DEFAULT) {
         for (String keyword : myKeywords) {
