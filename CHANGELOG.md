@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.2.3] - 2024-11-15
+
 ### Fixed
 
 - Issue where some action keywords would involuntarily get spaces added to them.
@@ -130,7 +132,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.2.3...HEAD
+[1.2.3]: https://github.com/rankweis/uppercut/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/rankweis/uppercut/compare/v1.2.0...v1.2.2
 [1.2.0]: https://github.com/rankweis/uppercut/compare/v1.1.5...v1.2.0
 [1.1.5]: https://github.com/rankweis/uppercut/compare/v1.1.4...v1.1.5
