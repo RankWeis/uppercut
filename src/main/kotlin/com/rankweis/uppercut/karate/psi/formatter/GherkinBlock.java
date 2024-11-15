@@ -3,6 +3,7 @@ package com.rankweis.uppercut.karate.psi.formatter;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.COLON;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.IDENTIFIERS;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT_LIKE;
 
 import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Alignment;
@@ -192,8 +193,8 @@ public class GherkinBlock implements ASTBlock {
     if (IDENTIFIERS.contains(elementType1) || IDENTIFIERS.contains(elementType2)) {
       return Spacing.createSpacing(1, 1, 0, false, 0);
     }
-    if ((TEXT == elementType1 && KarateTokenTypes.QUOTE != elementType2) || (
-      TEXT == elementType2 && KarateTokenTypes.QUOTE != elementType1)) {
+    if ((TEXT_LIKE.contains(elementType1) && KarateTokenTypes.QUOTE != elementType2) || (
+      TEXT_LIKE.contains(elementType2) && KarateTokenTypes.QUOTE != elementType1)) {
       if (!(elementType1 == TEXT && elementType2 == TEXT)) {
         return Spacing.createSpacing(1, 1, 0, true, 1);
       }
