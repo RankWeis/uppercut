@@ -14,22 +14,28 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
+import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
 import com.rankweis.uppercut.karate.psi.GherkinParserDefinition;
 import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GherkinBlock implements ASTBlock {
 
+  private static final Logger log = LoggerFactory.getLogger(GherkinBlock.class);
   private final ASTNode myNode;
   private final Indent myIndent;
   private final TextRange myTextRange;
   private final boolean myLeaf;
   private List<Block> myChildren = null;
+  private GherkinKeywordProvider myKeywordProvider = JsonGherkinKeywordProvider.getKeywordProvider();
 
   private static final TokenSet BLOCKS_TO_INDENT = TokenSet.create(GherkinElementTypes.FEATURE_HEADER,
     GherkinElementTypes.RULE,
@@ -168,9 +174,18 @@ public class GherkinBlock implements ASTBlock {
     if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType1)) {
       return Spacing.createSpacing(1, 1, 0, false, 0);
     }
-    if (KarateTokenTypes.ACTION_KEYWORD == elementType1 || KarateTokenTypes.ACTION_KEYWORD == elementType2) {
-      return Spacing.createSpacing(0, 1, 0, false, 0);
-    }
+//    if (KarateTokenTypes.ACTION_KEYWORD == elementType1) {
+//      String text = node1.getText();
+//      if (myKeywordProvider.isActionKeyword(text)) {
+//        if (myKeywordProvider.isSpaceRequiredAfterKeyword("en", text)) {
+//          return Spacing.createSpacing(1, 1, 0, false, 0);
+//        } else {
+//          return Spacing.createSpacing(0, 1, 0, false, 0);
+//        }
+//      } else {
+//        return Spacing.createSpacing(1, 1, 0, false, 0);
+//      }
+//    }
     if(KarateTokenTypes.DECLARATION == elementType1 || KarateTokenTypes.DECLARATION == elementType2) {
       return Spacing.createSpacing(1, 1, 0, false, 0);
     }
