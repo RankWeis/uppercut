@@ -8,6 +8,10 @@
 
 - Autoformatting bugs.
 
+### Mentions
+
+- Special thanks to @calvario-31 on GitHub for contributing time and effort into making this plugin better!
+
 ## [1.2.4] - 2024-11-15
 
 ### Fixed
