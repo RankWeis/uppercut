@@ -169,7 +169,7 @@ public class GherkinBlock implements ASTBlock {
       return Spacing.createSpacing(1, 1, 0, false, 0);
     }
     if (KarateTokenTypes.ACTION_KEYWORD == elementType1 || KarateTokenTypes.ACTION_KEYWORD == elementType2) {
-      return Spacing.createSpacing(1, 1, 0, false, 0);
+      return Spacing.createSpacing(0, 1, 0, false, 0);
     }
     if(KarateTokenTypes.DECLARATION == elementType1 || KarateTokenTypes.DECLARATION == elementType2) {
       return Spacing.createSpacing(1, 1, 0, false, 0);

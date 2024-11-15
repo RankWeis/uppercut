@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Issue where some action keywords would involuntarily get spaces added to them.
+- Issue where karate.log may not be generated if logback-test.xml was present.
+
+## [1.2.2] - 2024-11-12
+
 ### Modified
 
 - Increased support for new intellij versions.
@@ -123,7 +130,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/rankweis/uppercut/compare/v1.2.0...v1.2.2
 [1.2.0]: https://github.com/rankweis/uppercut/compare/v1.1.5...v1.2.0
 [1.1.5]: https://github.com/rankweis/uppercut/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/rankweis/uppercut/compare/v1.1.3...v1.1.4

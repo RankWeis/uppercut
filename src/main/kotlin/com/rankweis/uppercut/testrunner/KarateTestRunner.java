@@ -109,7 +109,7 @@ public class KarateTestRunner {
     logger.setLevel(INFO);
     logger.iteratorForAppenders()
       .forEachRemaining(appender -> {
-        if (!appender.getName().contains("FILE")) {
+        if (appender.getClass().getCanonicalName().contains("ConsoleAppender")) {
           logger.detachAppender(appender);
         }
       });
