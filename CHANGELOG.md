@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.2.6] - 2024-11-15
+
 ### Fixed
 
 - Autoformatting bugs.
@@ -146,7 +148,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.2.4...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.2.6...HEAD
+[1.2.6]: https://github.com/rankweis/uppercut/compare/v1.2.4...v1.2.6
 [1.2.4]: https://github.com/rankweis/uppercut/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/rankweis/uppercut/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/rankweis/uppercut/compare/v1.2.0...v1.2.2
