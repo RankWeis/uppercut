@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Issue where karate HTML reports were poorly formatted.
+
 ## [1.2.3] - 2024-11-15
 
 ### Fixed

@@ -1,10 +1,8 @@
 package com.rankweis.uppercut.testrunner;
 
 import static ch.qos.logback.classic.Level.INFO;
-import static ch.qos.logback.classic.Level.WARN;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
@@ -76,8 +74,6 @@ public class KarateTestRunner {
     } catch (Exception e) {
       throw new RuntimeException("Must have Karate installed on classpath", e);
     }
-
-
   }
 
   public static void main(String[] args) {
@@ -115,12 +111,6 @@ public class KarateTestRunner {
       });
     OutputStreamAppender<ILoggingEvent> outputStreamAppender =
       getOutputStreamAppender();
-    Logger intuitLogger = (Logger) LoggerFactory.getLogger("com.intuit");
-    Logger thymeleafLogger = (Logger) LoggerFactory.getLogger("org.thymeleaf");
-    Logger apacheLogger = (Logger) LoggerFactory.getLogger("org.apache");
-    intuitLogger.setLevel(Level.INFO);
-    apacheLogger.setLevel(WARN);
-    thymeleafLogger.setLevel(Level.OFF);
     logger.addAppender(outputStreamAppender);
   }
 
