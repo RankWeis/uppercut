@@ -5,15 +5,15 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import org.jetbrains.annotations.NotNull;
 import com.rankweis.uppercut.karate.MyBundle;
 import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
 import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
-public final class CucumberExamplesColonInspection extends GherkinInspection {
+public final class KarateExamplesColonInspection extends GherkinInspection {
 
   @Override
   public boolean isEnabledByDefault() {
@@ -23,7 +23,7 @@ public final class CucumberExamplesColonInspection extends GherkinInspection {
   @NotNull
   @Override
   public String getShortName() {
-    return "CucumberExamplesColon";
+    return "KarateExamplesColon";
   }
 
   @NotNull

@@ -6,15 +6,15 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.NotNull;
 import com.rankweis.uppercut.karate.MyBundle;
 import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
 import com.rankweis.uppercut.karate.psi.GherkinScenarioOutline;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
+import org.jetbrains.annotations.NotNull;
 
 
-public final class CucumberMissedExamplesInspection extends GherkinInspection {
+public final class KarateMissedExamplesInspection extends GherkinInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;
@@ -23,7 +23,7 @@ public final class CucumberMissedExamplesInspection extends GherkinInspection {
   @Override
   @NotNull
   public String getShortName() {
-    return "CucumberMissedExamples";
+    return "KarateMissedExamples";
   }
 
   @NotNull

@@ -54,48 +54,48 @@
     <psi.referenceContributor language="Karate"
       implementation="com.rankweis.uppercut.karate.steps.reference.CucumberReferenceContributor"/>
 
-    <localInspection language="Karate" shortName="CucumberUndefinedStep" bundle="messages.MyBundle"
+    <localInspection language="Karate" shortName="KarateUndefinedStep" bundle="messages.MyBundle"
       key="cucumber.inspection.undefined.step.name" groupKey="cucumber.inspection.group.name"
       enabledByDefault="true" level="WARNING"
-      implementationClass="com.rankweis.uppercut.karate.inspections.CucumberStepInspection"/>
+      implementationClass="com.rankweis.uppercut.karate.inspections.KarateStepInspection"/>
 
-    <localInspection language="Karate" shortName="CucumberExamplesColon" bundle="messages.MyBundle"
+    <localInspection language="Karate" shortName="KarateExamplesColon" bundle="messages.MyBundle"
       key="inspection.missed.colon.example.name" groupKey="cucumber.inspection.group.name"
       enabledByDefault="true"
       level="ERROR"
-      implementationClass="com.rankweis.uppercut.karate.inspections.CucumberExamplesColonInspection"/>
+      implementationClass="com.rankweis.uppercut.karate.inspections.KarateExamplesColonInspection"/>
 
-    <localInspection language="Karate" shortName="CucumberMissedExamples" bundle="messages.MyBundle"
+    <localInspection language="Karate" shortName="KarateMissedExamples" bundle="messages.MyBundle"
       key="inspection.missed.example.name" groupKey="cucumber.inspection.group.name"
       enabledByDefault="true" level="ERROR"
-      implementationClass="com.rankweis.uppercut.karate.inspections.CucumberMissedExamplesInspection"/>
+      implementationClass="com.rankweis.uppercut.karate.inspections.KarateMissedExamplesInspection"/>
 
-    <localInspection language="Karate" shortName="CucumberTableInspection"
+    <localInspection language="Karate" shortName="KarateTableInspection"
       bundle="messages.MyBundle"
       key="inspection.table.name" groupKey="cucumber.inspection.group.name" enabledByDefault="true"
       editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
       level="WARNING"
-      implementationClass="com.rankweis.uppercut.karate.inspections.CucumberTableInspection"/>
+      implementationClass="com.rankweis.uppercut.karate.inspections.KarateTableInspection"/>
 
-    <localInspection language="Karate" shortName="GherkinBrokenTableInspection"
+    <localInspection language="Karate" shortName="KarateBrokenTableInspection"
       bundle="messages.MyBundle"
       key="inspection.gherkin.table.is.broken.name" groupKey="cucumber.inspection.group.name"
       enabledByDefault="true"
       level="ERROR"
-      implementationClass="com.rankweis.uppercut.karate.inspections.GherkinBrokenTableInspection"/>
+      implementationClass="com.rankweis.uppercut.karate.inspections.KarateBrokenTableInspection"/>
 
-    <localInspection language="Karate" shortName="GherkinMisplacedBackground"
+    <localInspection language="Karate" shortName="KarateMisplacedBackground"
       bundle="messages.MyBundle"
       key="inspection.gherkin.background.after.scenario.name"
       groupKey="cucumber.inspection.group.name" enabledByDefault="true"
       level="ERROR"
-      implementationClass="com.rankweis.uppercut.karate.inspections.GherkinMisplacedBackgroundInspection"/>
+      implementationClass="com.rankweis.uppercut.karate.inspections.KarateMisplacedBackgroundInspection"/>
 
-    <localInspection language="Karate" shortName="GherkinScenarioToScenarioOutline"
+    <localInspection language="Karate" shortName="KarateScenarioToScenarioOutline"
       bundle="messages.MyBundle"
       key="inspection.gherkin.scenario.with.examples.section.name"
       groupKey="cucumber.inspection.group.name" enabledByDefault="true" level="ERROR"
-      implementationClass="com.rankweis.uppercut.karate.inspections.GherkinScenarioToScenarioOutlineInspection"/>
+      implementationClass="com.rankweis.uppercut.karate.inspections.KarateScenarioToScenarioOutlineInspection"/>
     
 
     <completion.contributor language="Karate"

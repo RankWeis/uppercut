@@ -1,5 +1,6 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 fun properties(key: String) = providers.gradleProperty(key)
 fun environment(key: String) = providers.environmentVariable(key)
@@ -17,7 +18,6 @@ plugins {
 configure<SourceSetContainer> {
     named("main") {
         java.srcDir("src/main/kotlin")
-        java.srcDir("src/test/kotlin")
     }
 }
 group = properties("pluginGroup").get()
@@ -59,6 +59,7 @@ dependencies {
         pluginVerifier()
         zipSigner()
         instrumentationTools()
+        testFramework(TestFrameworkType.Platform)
     }
 }
 

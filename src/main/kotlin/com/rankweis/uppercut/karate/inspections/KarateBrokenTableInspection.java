@@ -1,5 +1,8 @@
 package com.rankweis.uppercut.karate.inspections;
 
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.rankweis.uppercut.karate.MyBundle;
 import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
 import com.rankweis.uppercut.karate.psi.GherkinExamplesBlock;
@@ -7,14 +10,11 @@ import com.rankweis.uppercut.karate.psi.GherkinScenarioOutline;
 import com.rankweis.uppercut.karate.psi.GherkinStep;
 import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.rankweis.uppercut.karate.psi.GherkinTableRow;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
 
-public final class GherkinBrokenTableInspection extends GherkinInspection {
+public final class KarateBrokenTableInspection extends GherkinInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -54,6 +54,6 @@ public final class GherkinBrokenTableInspection extends GherkinInspection {
   @NotNull
   @Override
   public String getShortName() {
-    return "GherkinBrokenTableInspection";
+    return "KarateBrokenTableInspection";
   }
 }

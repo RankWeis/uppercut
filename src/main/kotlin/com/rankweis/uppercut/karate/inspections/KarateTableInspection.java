@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.rankweis.uppercut.karate.inspections;
 
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElementVisitor;
 import com.rankweis.uppercut.karate.MyBundle;
 import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
 import com.rankweis.uppercut.karate.psi.GherkinExamplesBlock;
@@ -9,8 +11,6 @@ import com.rankweis.uppercut.karate.psi.GherkinStep;
 import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.rankweis.uppercut.karate.psi.GherkinTableCell;
 import com.rankweis.uppercut.karate.psi.GherkinTableRow;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiElementVisitor;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.Collection;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 
-public final class CucumberTableInspection extends GherkinInspection {
+public final class KarateTableInspection extends GherkinInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;
@@ -30,7 +30,7 @@ public final class CucumberTableInspection extends GherkinInspection {
   @NotNull
   @Override
   public String getShortName() {
-    return "CucumberTableInspection";
+    return "KarateTableInspection";
   }
 
   @NotNull

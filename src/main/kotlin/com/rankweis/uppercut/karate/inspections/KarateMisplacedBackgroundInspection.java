@@ -4,12 +4,12 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import org.jetbrains.annotations.NotNull;
 import com.rankweis.uppercut.karate.MyBundle;
 import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
 import com.rankweis.uppercut.karate.psi.GherkinScenario;
+import org.jetbrains.annotations.NotNull;
 
-public final class GherkinMisplacedBackgroundInspection extends GherkinInspection {
+public final class KarateMisplacedBackgroundInspection extends GherkinInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -37,6 +37,6 @@ public final class GherkinMisplacedBackgroundInspection extends GherkinInspectio
   @NotNull
   @Override
   public String getShortName() {
-    return "GherkinMisplacedBackground";
+    return "KarateMisplacedBackground";
   }
 }
