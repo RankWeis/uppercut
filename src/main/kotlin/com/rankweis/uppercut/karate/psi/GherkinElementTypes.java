@@ -24,6 +24,7 @@ public interface GherkinElementTypes {
   IElementType DECLARATION = new KarateElementType("declaration");
   IElementType VARIABLE = new KarateElementType("variable");
   IElementType JSON = JsonElementTypes.BLOCK_COMMENT;
+  IElementType PAREN_ELEMENT = new KarateElementType("paren element");
 
   TokenSet SCENARIOS = TokenSet.create(SCENARIO, SCENARIO_OUTLINE);
 }

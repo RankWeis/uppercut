@@ -4,6 +4,17 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Overhaul of the syntax engine to be more stable.
+- No longer conflicts with Gherkin plugin.
+- Autoformatting bugs.
+- Issue where karate HTML reports were poorly formatted.
+
+### Mentions
+
+- Special thanks to @calvario-31 on GitHub for contributing time and effort into making this plugin better!
+
 ## [1.2.7] - 2024-11-16
 
 ### Fixed

@@ -81,6 +81,9 @@ public final class GherkinParserDefinition implements ParserDefinition {
     if (node.getElementType() == GherkinElementTypes.DECLARATION) {
       return new KarateDeclaration(node);
     }
+    if (node.getElementType() == GherkinElementTypes.PAREN_ELEMENT) {
+      return new KarateParenElement(node);
+    }
     return PsiUtilCore.NULL_PSI_ELEMENT;
   }
 

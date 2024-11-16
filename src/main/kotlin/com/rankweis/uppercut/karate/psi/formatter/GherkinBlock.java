@@ -1,8 +1,11 @@
 package com.rankweis.uppercut.karate.psi.formatter;
 
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.STEP;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.CLOSE_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.COLON;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.IDENTIFIERS;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPEN_PAREN;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPERATOR;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT_LIKE;
 
 import com.intellij.formatting.ASTBlock;
@@ -30,12 +33,11 @@ import java.util.Collections;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class GherkinBlock implements ASTBlock {
 
-  private static final Logger log = LoggerFactory.getLogger(GherkinBlock.class);
+  private static final List<String> NON_SPACED_CHARACTERS = List.of(",", ".");
+
   private final ASTNode myNode;
   private final Indent myIndent;
   private final TextRange myTextRange;
@@ -190,14 +192,19 @@ public class GherkinBlock implements ASTBlock {
         return Spacing.createSpacing(1, 1, 0, false, 0);
       }
     }
-    if (IDENTIFIERS.contains(elementType1) || IDENTIFIERS.contains(elementType2)) {
+    if (OPEN_PAREN == elementType1 || CLOSE_PAREN == elementType2) {
+      return Spacing.createSpacing(0, 0, 0, false, 0);
+    }
+    if (IDENTIFIERS.contains(elementType1) || IDENTIFIERS.contains(elementType2)
+      || OPERATOR == elementType1 || OPERATOR == elementType2) {
       return Spacing.createSpacing(1, 1, 0, false, 0);
     }
-    if ((TEXT_LIKE.contains(elementType1) && KarateTokenTypes.QUOTE != elementType2) || (
-      TEXT_LIKE.contains(elementType2) && KarateTokenTypes.QUOTE != elementType1)) {
-      if (!(elementType1 == TEXT && elementType2 == TEXT)) {
-        return Spacing.createSpacing(1, 1, 0, true, 1);
+    if ((TEXT_LIKE.contains(elementType1) && KarateTokenTypes.QUOTED_STRING.contains(elementType2)) || (
+      TEXT_LIKE.contains(elementType2) && KarateTokenTypes.QUOTED_STRING.contains(elementType1))) {
+      if ((NON_SPACED_CHARACTERS.stream().anyMatch(s -> node2.getText().startsWith(s)))) {
+        return Spacing.createSpacing(0, 0, 0, false, 0);
       }
+      return Spacing.createSpacing(1, 1, 0, true, 1);
     }
     if (GherkinElementTypes.SCENARIOS.contains(elementType2) &&
       elementType1 != KarateTokenTypes.COMMENT &&
@@ -222,7 +229,11 @@ public class GherkinBlock implements ASTBlock {
       }
     }
     if (KarateTokenTypes.KEYWORDS.contains(elementType1) && elementType2 != COLON) {
-      return Spacing.createSpacing(1, 1, 0, false, 0);
+      boolean keepLineBreaks = false;
+      if (elementType2 == STEP) {
+        keepLineBreaks = true;
+      }
+      return Spacing.createSpacing(1, 1, 0, keepLineBreaks, 0);
     }
     return null;
   }

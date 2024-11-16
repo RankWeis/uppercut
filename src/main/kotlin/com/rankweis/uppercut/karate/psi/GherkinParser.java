@@ -1,6 +1,10 @@
 package com.rankweis.uppercut.karate.psi;
 
+import static com.intellij.json.JsonElementTypes.DOUBLE_QUOTED_STRING;
+import static com.intellij.json.JsonElementTypes.SINGLE_QUOTED_STRING;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.CLOSE_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPEN_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT_LIKE;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
 
@@ -9,12 +13,14 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import java.util.LinkedList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GherkinParser implements PsiParser {
 
-  private static final TokenSet SCENARIO_END_TOKENS =
+  LinkedList<PsiBuilder.Marker> parens = new LinkedList<>();
+  private final TokenSet SCENARIO_END_TOKENS =
     TokenSet.create(
       KarateTokenTypes.BACKGROUND_KEYWORD, KarateTokenTypes.SCENARIO_KEYWORD,
       KarateTokenTypes.SCENARIO_OUTLINE_KEYWORD, KarateTokenTypes.RULE_KEYWORD, KarateTokenTypes.FEATURE_KEYWORD);
@@ -25,10 +31,11 @@ public class GherkinParser implements PsiParser {
     final PsiBuilder.Marker marker = builder.mark();
     parseFileTopLevel(builder);
     marker.done(GherkinParserDefinition.GHERKIN_FILE);
+    builder.setDebugMode(true);
     return builder.getTreeBuilt();
   }
 
-  private static void parseFileTopLevel(PsiBuilder builder) {
+  private void parseFileTopLevel(PsiBuilder builder) {
     while (!builder.eof()) {
       final IElementType tokenType = builder.getTokenType();
       if (tokenType == KarateTokenTypes.FEATURE_KEYWORD) {
@@ -43,7 +50,7 @@ public class GherkinParser implements PsiParser {
     }
   }
 
-  private static void parseFeature(PsiBuilder builder) {
+  private void parseFeature(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
 
     assert builder.getTokenType() == KarateTokenTypes.FEATURE_KEYWORD;
@@ -86,7 +93,7 @@ public class GherkinParser implements PsiParser {
     marker.done(GherkinElementTypes.FEATURE);
   }
 
-  private static boolean hadLineBreakBefore(PsiBuilder builder, int prevTokenEnd) {
+  private boolean hadLineBreakBefore(PsiBuilder builder, int prevTokenEnd) {
     if (prevTokenEnd < 0 || prevTokenEnd > builder.getCurrentOffset()) {
       return false;
     }
@@ -95,7 +102,7 @@ public class GherkinParser implements PsiParser {
     return precedingText.contains("\n");
   }
 
-  private static void parseTags(PsiBuilder builder) {
+  private void parseTags(PsiBuilder builder) {
     while (builder.getTokenType() == KarateTokenTypes.TAG) {
       final PsiBuilder.Marker tagMarker = builder.mark();
       builder.advanceLexer();
@@ -103,7 +110,7 @@ public class GherkinParser implements PsiParser {
     }
   }
 
-  private static void parseFeatureElements(PsiBuilder builder) {
+  private void parseFeatureElements(PsiBuilder builder) {
     PsiBuilder.Marker ruleMarker = null;
     while (builder.getTokenType() != KarateTokenTypes.FEATURE_KEYWORD && !builder.eof()) {
       if (builder.getTokenType() == KarateTokenTypes.RULE_KEYWORD) {
@@ -139,7 +146,7 @@ public class GherkinParser implements PsiParser {
     }
   }
 
-  private static void parseScenario(PsiBuilder builder) {
+  private void parseScenario(PsiBuilder builder) {
     while (!atScenarioEnd(builder)) {
       if (builder.getTokenType() == KarateTokenTypes.TAG) {
         final PsiBuilder.Marker marker = builder.mark();
@@ -168,7 +175,7 @@ public class GherkinParser implements PsiParser {
     }
   }
 
-  private static boolean atScenarioEnd(PsiBuilder builder) {
+  private boolean atScenarioEnd(PsiBuilder builder) {
     int i = 0;
     while (builder.lookAhead(i) == KarateTokenTypes.TAG) {
       i++;
@@ -177,7 +184,7 @@ public class GherkinParser implements PsiParser {
     return tokenType == null || SCENARIO_END_TOKENS.contains(tokenType);
   }
 
-  private static boolean parseStepParameter(PsiBuilder builder) {
+  private boolean parseStepParameter(PsiBuilder builder) {
     if (builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_TEXT) {
       final PsiBuilder.Marker stepParameterMarker = builder.mark();
       builder.advanceLexer();
@@ -186,8 +193,8 @@ public class GherkinParser implements PsiParser {
     }
     return false;
   }
-  
-  private static boolean parseDeclaration(PsiBuilder builder) {
+
+  private boolean parseDeclaration(PsiBuilder builder) {
     if (builder.getTokenType() == DECLARATION) {
       final PsiBuilder.Marker stepParameterMarker = builder.mark();
       builder.advanceLexer();
@@ -196,8 +203,8 @@ public class GherkinParser implements PsiParser {
     }
     return false;
   }
-  
-  private static boolean parseVariable(PsiBuilder builder) {
+
+  private boolean parseVariable(PsiBuilder builder) {
     if (builder.getTokenType() == VARIABLE) {
       final PsiBuilder.Marker stepParameterMarker = builder.mark();
       builder.advanceLexer();
@@ -207,26 +214,10 @@ public class GherkinParser implements PsiParser {
     return false;
   }
 
-  private static void parseStep(PsiBuilder builder) {
+  private void parseStep(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
-    int prevTokenEnd = -1;
-    while (TEXT_LIKE.contains(builder.getTokenType())
-      || builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_BRACE
-      || builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_TEXT
-      || builder.getTokenType() == KarateTokenTypes.ACTION_KEYWORD
-      || builder.getTokenType() == DECLARATION
-      || builder.getTokenType() == VARIABLE
-      || builder.getTokenType() == KarateTokenTypes.QUOTE) {
-      String tokenText = builder.getTokenText();
-      if (hadLineBreakBefore(builder, prevTokenEnd)) {
-        break;
-      }
-      prevTokenEnd = builder.getCurrentOffset() + getTokenLength(tokenText);
-      if (!parseStepParameter(builder) && !parseDeclaration(builder)) {
-        builder.advanceLexer();
-      }
-    }
+    parseTextLikeObjects(builder);
     final IElementType tokenTypeAfterName = builder.getTokenType();
     if (tokenTypeAfterName == KarateTokenTypes.PIPE) {
       parseTable(builder);
@@ -242,7 +233,57 @@ public class GherkinParser implements PsiParser {
     marker.done(GherkinElementTypes.STEP);
   }
 
-  private static void parsePystring(PsiBuilder builder) {
+  private void parseTextLikeObjects(PsiBuilder builder) {
+    int prevTokenEnd = -1;
+    while (TEXT_LIKE.contains(builder.getTokenType())
+      || builder.getTokenType() == OPEN_PAREN
+      || builder.getTokenType() == CLOSE_PAREN
+      || builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_BRACE
+      || builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_TEXT
+      || builder.getTokenType() == KarateTokenTypes.ACTION_KEYWORD
+      || builder.getTokenType() == DECLARATION
+      || builder.getTokenType() == VARIABLE
+      || builder.getTokenType() == SINGLE_QUOTED_STRING
+      || builder.getTokenType() == DOUBLE_QUOTED_STRING) {
+      if (hadLineBreakBefore(builder, prevTokenEnd) || builder.eof()) {
+        if (!parens.isEmpty()) {
+          while (!parens.isEmpty()) {
+            parens.pop().rollbackTo();
+            builder.error("Unbalanced parentheses");
+          }
+        }
+        break;
+      }
+      String tokenText = builder.getTokenText();
+      prevTokenEnd = builder.getCurrentOffset() + getTokenLength(tokenText);
+      if (builder.getTokenType() == OPEN_PAREN) {
+        final PsiBuilder.Marker marker = builder.mark();
+        parens.push(marker);
+        builder.advanceLexer();
+        continue;
+      }
+      if (builder.getTokenType() == CLOSE_PAREN) {
+        if (!parens.isEmpty()) {
+          parens.pop().done(GherkinElementTypes.PAREN_ELEMENT);
+        } else {
+          builder.error("Unbalanced parentheses");
+        }
+        builder.advanceLexer();
+        continue;
+      }
+      if (!parseStepParameter(builder) && !parseDeclaration(builder)) {
+        builder.advanceLexer();
+      }
+    }
+    if (!parens.isEmpty()) {
+      while (!parens.isEmpty()) {
+        parens.pop().rollbackTo();
+        builder.error("Unbalanced parentheses");
+      }
+    }
+  }
+
+  private void parsePystring(PsiBuilder builder) {
     if (!builder.eof()) {
       final PsiBuilder.Marker marker = builder.mark();
       builder.advanceLexer();
@@ -250,7 +291,7 @@ public class GherkinParser implements PsiParser {
     }
   }
 
-  private static void parseExamplesBlock(PsiBuilder builder) {
+  private void parseExamplesBlock(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
     if (builder.getTokenType() == KarateTokenTypes.COLON) {
@@ -265,7 +306,7 @@ public class GherkinParser implements PsiParser {
     marker.done(GherkinElementTypes.EXAMPLES_BLOCK);
   }
 
-  private static void parseTable(PsiBuilder builder) {
+  private void parseTable(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
     PsiBuilder.Marker rowMarker = builder.mark();
     int prevCellEnd = -1;
@@ -310,15 +351,15 @@ public class GherkinParser implements PsiParser {
     marker.done(GherkinElementTypes.TABLE);
   }
 
-  private static void closeCell(PsiBuilder.Marker cellMarker) {
+  private void closeCell(PsiBuilder.Marker cellMarker) {
     cellMarker.done(GherkinElementTypes.TABLE_CELL);
   }
 
-  private static void closeRowMarker(PsiBuilder.Marker rowMarker, boolean headerRow) {
+  private void closeRowMarker(PsiBuilder.Marker rowMarker, boolean headerRow) {
     rowMarker.done(headerRow ? GherkinElementTypes.TABLE_HEADER_ROW : GherkinElementTypes.TABLE_ROW);
   }
 
-  private static int getTokenLength(@Nullable final String tokenText) {
+  private int getTokenLength(@Nullable final String tokenText) {
     return tokenText != null ? tokenText.length() : 0;
   }
 }

@@ -2,7 +2,11 @@
 // found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
+import static com.intellij.json.JsonElementTypes.DOUBLE_QUOTED_STRING;
+import static com.intellij.json.JsonElementTypes.SINGLE_QUOTED_STRING;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.CLOSE_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPEN_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPERATOR;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.SCENARIOS_KEYWORDS;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
@@ -32,7 +36,6 @@ public class GherkinLexer extends LexerBase {
   private int myState;
 
   private final static int STATE_DEFAULT = 0;
-  private final static int STATE_AFTER_KEYWORD = 1;
   private final static int STATE_TABLE = 2;
   private final static int STATE_AFTER_STEP_KEYWORD = 3;
   private final static int STATE_AFTER_SCENARIO_KEYWORD = 4;
@@ -41,12 +44,11 @@ public class GherkinLexer extends LexerBase {
 
   private final static int STATE_PARAMETER_INSIDE_PYSTRING = 7;
   private final static int STATE_PARAMETER_INSIDE_STEP = 8;
-
-  private static final int STATE_QUOTE_INSIDE_PYSTRING = 10;
-  private static final int STATE_QUOTE_INSIDE_STEP = 11;
+  private final static int STATE_AFTER_FEATURE_KEYWORD = 9;
 
   public static final String PYSTRING_MARKER = "\"\"\"";
-  public static final List<String> INTERESTING_SYMBOLS = List.of("\n", "'", "\"", "#", "{", "[", "function", " ");
+  public static final List<String> INTERESTING_SYMBOLS =
+    List.of("\n", "'", "\"", "#", "{", "[", "function", " ", "(", ")");
   private final GherkinKeywordProvider myKeywordProvider;
   private String myCurLanguage;
 
@@ -106,15 +108,14 @@ public class GherkinLexer extends LexerBase {
     return false;
   }
 
-  private boolean advanceIfQuoted() {
-    char startingQuote = myBuffer.charAt(myPosition);
+  private boolean advanceIfQuoted(char quoteChar) {
     int pos = myPosition + 1;
 
-    while (pos < myEndOffset && myBuffer.charAt(pos) != '\n' && myBuffer.charAt(pos) != startingQuote) {
+    while (pos < myEndOffset && myBuffer.charAt(pos) != '\n' && myBuffer.charAt(pos) != quoteChar) {
       pos++;
     }
 
-    boolean isQuotedStr = pos < myEndOffset && myBuffer.charAt(pos) == startingQuote;
+    boolean isQuotedStr = pos < myEndOffset && myBuffer.charAt(pos) == quoteChar;
     if (isQuotedStr) {
       myPosition = pos + 1;
       if (myPosition > myEndOffset) {
@@ -212,7 +213,7 @@ public class GherkinLexer extends LexerBase {
       while (myPosition < myEndOffset && Character.isWhitespace(myBuffer.charAt(myPosition))) {
         advanceOverWhitespace();
       }
-    } else if (myState == STATE_AFTER_SCENARIO_KEYWORD) {
+    } else if (myState == STATE_AFTER_SCENARIO_KEYWORD || myState == STATE_AFTER_FEATURE_KEYWORD) {
       myCurrentToken = TEXT;
       advanceToNextLine(false);
       myState = STATE_DEFAULT;
@@ -224,14 +225,6 @@ public class GherkinLexer extends LexerBase {
       } else {
         myCurrentToken = TEXT;
         advanceToNextInterestingToken();
-      }
-    } else if ( isStringAtPosition("function")) {
-      myCurrentToken = KarateTokenTypes.PYSTRING;
-      advanceToNextLine();
-    } else if (isQuote(c)) {
-      myCurrentToken = KarateTokenTypes.QUOTE;
-      if (!advanceIfQuoted() && myPosition < myEndOffset) {
-        advanceToNextLine();
       }
     } else if (c == '|' && myState != STATE_INSIDE_PYSTRING) {
       myCurrentToken = KarateTokenTypes.PIPE;
@@ -268,6 +261,19 @@ public class GherkinLexer extends LexerBase {
       while (myPosition > 0 && Character.isWhitespace(myBuffer.charAt(myPosition - 1))) {
         myPosition--;
       }
+    } else if ( isStringAtPosition("function")) {
+      myCurrentToken = KarateTokenTypes.PYSTRING;
+      advanceToNextLine();
+    } else if (c == '\'') {
+      myCurrentToken = SINGLE_QUOTED_STRING;
+      if (!advanceIfQuoted('\'') && myPosition < myEndOffset) {
+        advanceToNextLine();
+      }
+    } else if (c == '"') {
+      myCurrentToken = DOUBLE_QUOTED_STRING;
+      if (!advanceIfQuoted('"') && myPosition < myEndOffset) {
+        advanceToNextLine();
+      }
     } else if (c == '#') {
       myCurrentToken = KarateTokenTypes.COMMENT;
       advanceToNextLine(false);
@@ -293,39 +299,13 @@ public class GherkinLexer extends LexerBase {
     } else if (isStringAtPosition("=") || isStringAtPosition("<") || isStringAtPosition(">")) {
       myPosition++;
       myCurrentToken = OPERATOR;
+    } else if (c == '(' || c == ')') {
+      myPosition++;
+      myCurrentToken = c == '(' ? OPEN_PAREN : CLOSE_PAREN;
     } else {
       if (myState == STATE_DEFAULT) {
-        for (String keyword : myKeywords) {
-          int length = keyword.length();
-          if (isStringAtPosition(keyword)) {
-            if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) &&
-              myEndOffset - myPosition > length &&
-              Character.isLetterOrDigit(myBuffer.charAt(myPosition + length))) {
-              continue;
-            }
-
-            char followedByChar = myPosition + length < myEndOffset ? myBuffer.charAt(myPosition + length) : 0;
-            myCurrentToken = myKeywordProvider.getTokenType(myCurLanguage, keyword);
-            if (myCurrentToken == KarateTokenTypes.STEP_KEYWORD) {
-              boolean followedByWhitespace = Character.isWhitespace(followedByChar) && followedByChar != '\n';
-              if (followedByWhitespace != myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword)) {
-                myCurrentToken = KarateTokenTypes.TEXT;
-              }
-            }
-            myPosition += length;
-            if (myCurrentToken == KarateTokenTypes.STEP_KEYWORD) {
-              myState = STATE_AFTER_STEP_KEYWORD;
-            } else if (SCENARIOS_KEYWORDS.contains(myCurrentToken)) {
-              if (myPosition < myEndOffset - 1 && myBuffer.charAt(myPosition) == ':') {
-                myPosition++;
-              }
-              myState = STATE_AFTER_SCENARIO_KEYWORD;
-            } else {
-              myState = STATE_AFTER_KEYWORD;
-            }
-
-            return;
-          }
+        if (handleKeywords()) {
+          return;
         }
       }
       if (myState == STATE_AFTER_STEP_KEYWORD) {
@@ -334,6 +314,9 @@ public class GherkinLexer extends LexerBase {
             if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) &&
               (myPosition + keyword.length() >= myBuffer.length() || 
                 !Character.isWhitespace(myBuffer.charAt(myPosition + keyword.length())))) {
+              continue;
+            } else if(myPosition + keyword.length() < myBuffer.length() && 
+              Character.isLetter(myBuffer.charAt(myPosition + keyword.length()))) {
               continue;
             }
             myState = STATE_AFTER_ACTION_KEYWORD;
@@ -357,6 +340,10 @@ public class GherkinLexer extends LexerBase {
         if (Character.isAlphabetic(myBuffer.charAt(myPosition)) && advanceIfDeclaration()) {
           myState = STATE_DEFAULT;
           return;
+        } else {
+          if (handleKeywords()) {
+            return;
+          }
         }
       } else if (isParameterAllowed()) {
         if (myPosition < myEndOffset && myBuffer.charAt(myPosition) == '<' && isStepParameter("\n")) {
@@ -373,6 +360,45 @@ public class GherkinLexer extends LexerBase {
       myCurrentToken = KarateTokenTypes.TEXT;
       advanceToNextInterestingToken();
     }
+  }
+
+  private boolean handleKeywords() {
+    for (String keyword : myKeywords) {
+      int length = keyword.length();
+      if (isStringAtPosition(keyword)) {
+        if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) &&
+          myEndOffset - myPosition > length &&
+          Character.isLetterOrDigit(myBuffer.charAt(myPosition + length))) {
+          continue;
+        }
+
+        char followedByChar = myPosition + length < myEndOffset ? myBuffer.charAt(myPosition + length) : 0;
+        myCurrentToken = myKeywordProvider.getTokenType(myCurLanguage, keyword);
+        if (myCurrentToken == KarateTokenTypes.STEP_KEYWORD) {
+          boolean followedByWhitespace = Character.isWhitespace(followedByChar) && followedByChar != '\n';
+          if (followedByWhitespace != myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword)) {
+            myCurrentToken = KarateTokenTypes.TEXT;
+          }
+        }
+        myPosition += length;
+        if (myCurrentToken == KarateTokenTypes.STEP_KEYWORD) {
+          myState = STATE_AFTER_STEP_KEYWORD;
+        } else if (myCurrentToken == KarateTokenTypes.FEATURE_KEYWORD) {
+          if (myPosition < myEndOffset - 1 && myBuffer.charAt(myPosition) == ':') {
+            myPosition++;
+          }
+          myState = STATE_AFTER_FEATURE_KEYWORD;
+        } else if (SCENARIOS_KEYWORDS.contains(myCurrentToken)) {
+          if (myPosition < myEndOffset - 1 && myBuffer.charAt(myPosition) == ':') {
+            myPosition++;
+          }
+          myState = STATE_AFTER_SCENARIO_KEYWORD;
+        }
+
+        return true;
+      }
+    }
+    return false;
   }
 
   private void injectPyString() {
