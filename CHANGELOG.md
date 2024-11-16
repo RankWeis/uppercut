@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.2.7] - 2024-11-16
+
 ### Fixed
 
 - No longer conflicts with Gherkin plugin.
@@ -156,7 +158,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.2.6...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.2.7...HEAD
+[1.2.7]: https://github.com/rankweis/uppercut/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/rankweis/uppercut/compare/v1.2.4...v1.2.6
 [1.2.4]: https://github.com/rankweis/uppercut/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/rankweis/uppercut/compare/v1.2.2...v1.2.3
