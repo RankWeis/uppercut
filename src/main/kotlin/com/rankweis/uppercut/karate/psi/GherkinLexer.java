@@ -208,7 +208,15 @@ public class GherkinLexer extends LexerBase {
     }
     myCurrentTokenStart = myPosition;
     char c = myBuffer.charAt(myPosition);
-
+    if (myState == STATE_AFTER_OPERATOR) {
+      if (c == '<') {
+        // Probably is attempting xml
+        myCurrentToken = KarateTokenTypes.PYSTRING;
+        advanceToNextLine(false);
+        return;
+      }
+      myState = STATE_DEFAULT;
+    }
     if (Character.isWhitespace(c)) {
       advanceOverWhitespace();
       myCurrentToken = TokenType.WHITE_SPACE;
@@ -294,10 +302,6 @@ public class GherkinLexer extends LexerBase {
       while (myPosition < myEndOffset && isValidTagChar(myBuffer.charAt(myPosition))) {
         myPosition++;
       }
-    } else if (c == '<' && myState == STATE_AFTER_OPERATOR) {
-      // Probably is attempting xml
-      myCurrentToken = KarateTokenTypes.PYSTRING;
-      advanceToNextLine(false);
     } else if (isStringAtPosition("==") || isStringAtPosition("!=")
       || isStringAtPosition("<=") || isStringAtPosition(">=")) {
       myPosition += 2;
