@@ -110,7 +110,7 @@ intellijPlatform {
         // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
         channels = providers.gradleProperty("pluginVersion")
-            .map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
+            .map { listOf(it.substringAfter("-ch", "").substringBefore('.').ifEmpty { "default" }) }
     }
     pluginVerification {
         ides {
