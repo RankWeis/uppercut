@@ -11,7 +11,7 @@ Feature: Get collection
 
   Scenario: Get collection with filters=attribute.projectId==#projectId
     * def statusCode = 200
-    * def collectionFilterParam  = "attribute.projectId==" + projectId
+    * def collectionFilterParam  =  "attribute.projectId==" + projectId
     * def getCollection = call  read('classpath:test-objects/collection/Collection.feature@get-collection')
     * match getCollection.response.id == collectionId
     * match collectionId ==  collectionId

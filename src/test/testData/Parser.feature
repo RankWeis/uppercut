@@ -14,8 +14,9 @@ Feature: Get collection
     * def collectionFilterParam = "attribute.projectId==" + projectId
     * def getCollection = call read('classpath:test-objects/collection/Collection.feature@get-collection')
     * match getCollection.response.id == collectionId
-
-    * match collectionId == collectionId#TODO: permissionContext is not returned when we call collection api. Need to figure out another way for 2LO auth check.
+    * match collectionId == collectionId
+    
+  #TODO: permissionContext is not returned when we call collection api. Need to figure out another way for 2LO auth check.
   @ignore
   Scenario: Get collection with filters=attribute.projectId==#projectId with 2LO
     * def statusCode = 200
