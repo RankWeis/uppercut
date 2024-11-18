@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Support for JSON in IntelliJ CE.
+
 ## [1.3.0] - 2024-11-17
 
 ### Fixed

@@ -13,7 +13,7 @@
   <resource-bundle>messages.MyBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    
+
     <fileType name="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinFileType"
       fieldName="INSTANCE" language="Karate" extensions="feature"/>
@@ -21,7 +21,7 @@
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinSyntaxHighlighterFactory"/>
 
     <lang.parserDefinition language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.GherkinParserDefinition" />
+      implementationClass="com.rankweis.uppercut.karate.psi.GherkinParserDefinition"/>
     <lang.commenter language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinCommenter"/>
     <lang.psiStructureViewFactory language="Karate"
@@ -96,7 +96,7 @@
       key="inspection.gherkin.scenario.with.examples.section.name"
       groupKey="cucumber.inspection.group.name" enabledByDefault="true" level="ERROR"
       implementationClass="com.rankweis.uppercut.karate.inspections.KarateScenarioToScenarioOutlineInspection"/>
-    
+
 
     <completion.contributor language="Karate"
       implementationClass="com.rankweis.uppercut.karate.completion.CucumberCompletionContributor"/>
@@ -144,6 +144,8 @@
       implementation="com.rankweis.uppercut.karate.navigation.KarateGoToSymbolProvider"/>
     <gotoSymbolContributor
       implementation="com.rankweis.uppercut.karate.navigation.KarateChooseByNameContributor"/>
+    <multiHostInjector
+      implementation="com.rankweis.uppercut.karate.injector.GherkinLanguageInjectorNoJS"/>
   </extensions>
 
   <extensionPoints>
