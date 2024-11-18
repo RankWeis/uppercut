@@ -7,7 +7,6 @@
   <depends>com.intellij.modules.platform</depends>
   <depends optional="true" config-file="plugin-withJs.xml">JavaScript</depends>
   <depends>com.intellij.modules.java</depends>
-  <depends>com.intellij.modules.json</depends>
   <depends>org.intellij.intelliLang</depends>
 
   <resource-bundle>messages.MyBundle</resource-bundle>
