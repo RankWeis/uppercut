@@ -16,8 +16,6 @@ import com.rankweis.uppercut.karate.psi.GherkinPystring;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-import kotlinx.serialization.SerializationException;
-import kotlinx.serialization.json.Json;
 import org.jetbrains.annotations.NotNull;
 
 public final class GherkinLanguageInjectorNoJS implements MultiHostInjector {
@@ -54,16 +52,9 @@ public final class GherkinLanguageInjectorNoJS implements MultiHostInjector {
         .substring(PYSTRING_MARKER.length(), hostText.length() - PYSTRING_MARKER.length()));
     }
     Language language;
-    if (JSON_LOOSE_FORMAT.matcher(strippedText).matches()) {
-      // Favor towards json so there isn't a sudden switch to javascript when invalid json is typed.
+    if (JSON_LOOSE_FORMAT.matcher(strippedText).matches() || StringUtil.startsWith(strippedText, "{")
+      || StringUtil.startsWith(strippedText, "[")) {
       language = Json5Language.INSTANCE;
-    } else if (StringUtil.startsWith(strippedText, "{")) {
-      try {
-        Json.Default.parseToJsonElement(strippedText);
-        language = Json5Language.INSTANCE;
-      } catch (SerializationException e) {
-        language = Json5Language.INSTANCE;
-      }
     } else if (StringUtil.startsWith(strippedText, "<")) {
       language = XMLLanguage.INSTANCE;
     } else {
