@@ -11,6 +11,11 @@ Feature: json schema validation
 
   Scenario: using karate's simpler alternative to json-schema
     * def warehouseLocation = { latitude: '#number', longitude: '#number' }
+    * def letJs2 =
+    """
+      jquery.constructor = "wahtever";
+      var demoBaseUrl = 'https://some-demo-url.com';
+    """
     * def letJs =
     """
 function fn() {
@@ -45,8 +50,7 @@ function fn() {
     """
     * def productsJson =
     """
-    [
-    {
+    [{
         "id": 2,
         "name": "An ice sculpture",
         "price": 12.50,
@@ -74,8 +78,7 @@ function fn() {
             "latitude": 54.4,
             "longitude": -32.7
         }
-    }
-    ]
+    }]
     """
     * def json = read('products.json')
     * match json == '#[] productStructure'

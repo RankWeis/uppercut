@@ -52,7 +52,7 @@ public final class GherkinLanguageInjector implements MultiHostInjector {
     }
     Language language;
     if (!JSON_LOOSE_FORMAT.matcher(strippedText).matches() && !StringUtil.startsWith(strippedText, "{")
-      && !StringUtil.startsWith(strippedText, "<")) {
+      && !StringUtil.startsWith(strippedText, "[") && !StringUtil.startsWith(strippedText, "<")) {
       language = JavascriptLanguage.INSTANCE;
     } else {
       return;
