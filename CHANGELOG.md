@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.3.1] - 2024-11-19
+
 ### Added
 
 - Support for JSON in IntelliJ CE.
@@ -175,7 +177,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/rankweis/uppercut/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/rankweis/uppercut/compare/v1.2.7...v1.3.0
 [1.2.7]: https://github.com/rankweis/uppercut/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/rankweis/uppercut/compare/v1.2.4...v1.2.6
