@@ -4,13 +4,14 @@
 
 ## [Unreleased]
 
+
 ### Fixed
 
 - Issue where <text> in angle brackets would be improperly formatted.
 - Issue where [key] in brackets would be parsed as JSON.
 - Issue where code folding would not persist after restart.
 
-## [1.3.1] - 2024-11-19
+## [1.3.1-2024.2] - 2024-11-19
 
 ### Added
 
@@ -183,7 +184,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.3.0-2024.2...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.3.1-2024.2...HEAD
+[1.3.1-2024.2]: https://github.com/rankweis/uppercut/compare/v1.3.0-2024.2...v1.3.1-2024.2
 [1.3.0-2024.2]: https://github.com/rankweis/uppercut/compare/v1.2.7...v1.3.0-2024.2
 [1.2.7]: https://github.com/rankweis/uppercut/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/rankweis/uppercut/compare/v1.2.4...v1.2.6
