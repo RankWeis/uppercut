@@ -203,7 +203,7 @@ public class GherkinBlock implements ASTBlock {
     if ((TEXT_LIKE.contains(elementType1) && KarateTokenTypes.QUOTED_STRING.contains(elementType2)) || (
       TEXT_LIKE.contains(elementType2) && KarateTokenTypes.QUOTED_STRING.contains(elementType1))) {
       if (NON_SPACED_CHARACTERS.stream().anyMatch(s -> node2.getText().startsWith("" + s)) ||
-      NON_SPACED_CHARACTERS.stream().anyMatch(s -> StringUtil.endsWith(node1.getText(), s))) {
+        NON_SPACED_CHARACTERS.stream().anyMatch(s -> StringUtil.endsWith(node1.getText(), s))) {
         return Spacing.createSpacing(0, 1, 0, false, 0);
       }
       return Spacing.createSpacing(1, 1, 0, true, 1);

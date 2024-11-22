@@ -4,11 +4,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- Ability to go-to links that aren't only 'classpath:'
+
 ### Fixed
 
 - Issue where <text> in angle brackets would be improperly formatted.
 - Issue where [key] in brackets would be parsed as JSON.
 - Issue where code folding would not persist after restart.
+- Issue where some xml would not be parsed as xml.
 
 ## [1.3.1] - 2024-11-19
 

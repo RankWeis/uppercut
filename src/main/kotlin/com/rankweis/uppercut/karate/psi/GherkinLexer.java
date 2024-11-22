@@ -215,7 +215,9 @@ public class GherkinLexer extends LexerBase {
         advanceToNextLine(false);
         return;
       }
-      myState = STATE_DEFAULT;
+      if (!Character.isWhitespace(c)) {
+        myState = STATE_DEFAULT;
+      }
     }
     if (Character.isWhitespace(c)) {
       advanceOverWhitespace();
