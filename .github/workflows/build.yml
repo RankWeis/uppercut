@@ -165,12 +165,6 @@ jobs:
           distribution: zulu
           java-version: 17
 
-      # Run Qodana inspections
-      - name: Qodana - Code Inspection
-        uses: JetBrains/qodana-action@v2024.2.6
-        with:
-          cache-default-branch-only: true
-
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
     name: Verify plugin
@@ -250,9 +244,9 @@ jobs:
         run: |
           gh release create "v${{ needs.build.outputs.version }}" \
             --draft \
+            --target $BRANCH \
             --title "v${{ needs.build.outputs.version }}" \
-            --notes "$(cat << 'EOM' \
-            --target $BRANCH
+            --notes "$(cat << 'EOM'
           ${{ needs.build.outputs.changelog }}
           EOM
           )"
