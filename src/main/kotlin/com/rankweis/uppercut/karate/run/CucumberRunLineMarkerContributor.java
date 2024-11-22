@@ -47,10 +47,7 @@ public final class CucumberRunLineMarkerContributor extends RunLineMarkerContrib
     }
     TestStateStorage.Record state = getTestStateStorage(element);
     AnAction[] actions = ExecutorAction.getActions(0);
-    boolean isClass = false;
-    if (type == KarateTokenTypes.FEATURE_KEYWORD || type == KarateTokenTypes.TAG) {
-      isClass = true;
-    }
+    boolean isClass = type == KarateTokenTypes.FEATURE_KEYWORD || type == KarateTokenTypes.TAG;
     return new Info(getTestStateIcon(state, isClass),  actions, RUN_TEST_TOOLTIP_PROVIDER);
   }
   

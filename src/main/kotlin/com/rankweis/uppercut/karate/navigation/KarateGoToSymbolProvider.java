@@ -57,7 +57,7 @@ public class KarateGoToSymbolProvider implements GotoDeclarationHandler {
       }
     }
     final Lookup activeLookup =
-      sourceElement != null ? LookupManager.getInstance(sourceElement.getProject()).getActiveLookup() : null;
+      LookupManager.getInstance(sourceElement.getProject()).getActiveLookup();
     final LookupElement item = activeLookup != null ? activeLookup.getCurrentItem() : null;
     final Object lookupObject = item != null && item.isValid() ? item.getObject() : null;
     //    return lookupObject instanceof DartLookupObject ? ((DartLookupObject)lookupObject).findPsiElement() : null;
@@ -70,7 +70,11 @@ public class KarateGoToSymbolProvider implements GotoDeclarationHandler {
   }
 
   private PsiElement[] goToClasspath(@Nullable PsiElement sourceElement, List<String> filePaths) {
-    Module module = ModuleUtilCore.findModuleForFile(sourceElement.getContainingFile());
+    PsiFile containingFile = sourceElement.getContainingFile();
+    if (containingFile == null) {
+      return new PsiElement[0];
+    }
+    Module module = ModuleUtilCore.findModuleForFile(containingFile);
     if (module == null) {
       return new PsiElement[0];
     }

@@ -1,6 +1,5 @@
 package com.rankweis.uppercut.karate.actions;
 
-import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
 import com.intellij.codeInsight.editorActions.wordSelection.AbstractWordSelectioner;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
@@ -9,16 +8,17 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.rankweis.uppercut.karate.psi.GherkinPsiUtil;
+import com.rankweis.uppercut.karate.psi.GherkinStep;
+import com.rankweis.uppercut.karate.psi.GherkinStepsHolder;
+import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
+import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import org.jetbrains.annotations.NotNull;
-import com.rankweis.uppercut.karate.psi.GherkinPsiUtil;
-import com.rankweis.uppercut.karate.psi.GherkinStep;
-import com.rankweis.uppercut.karate.psi.GherkinStepsHolder;
-import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
-import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
 
 /**
  * @author Dennis.Ushakov
@@ -47,7 +47,10 @@ public final class GherkinStepParameterSelectioner extends AbstractWordSelection
                                 @NotNull final Editor editor) {
     final List<TextRange> result = new ArrayList<>();
     if (editor.getSettings().isCamelWords()) {
-      result.addAll(super.select(e, editorText, cursorOffset, editor));
+      List<TextRange> select = super.select(e, editorText, cursorOffset, editor);
+      if (select != null) {
+        result.addAll(select);
+      }
     }
     final PsiElement parent = e.getParent();
     if (parent instanceof GherkinStep step) {

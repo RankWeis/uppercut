@@ -56,11 +56,10 @@ public class GherkinKeywordTable {
   }
 
   public Collection<String> getScenarioLikeKeywords() {
-    final Set<String> keywords = new HashSet<>();
 
     final Collection<String> scenarios = getKeywords(KarateTokenTypes.SCENARIO_KEYWORD);
     assert scenarios != null;
-    keywords.addAll(scenarios);
+    final Set<String> keywords = new HashSet<>(scenarios);
 
     final Collection<String> scenarioOutline = getKeywords(KarateTokenTypes.SCENARIO_OUTLINE_KEYWORD);
     assert scenarioOutline != null;

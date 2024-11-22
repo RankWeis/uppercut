@@ -14,7 +14,6 @@ public final class GherkinCommenter implements CodeDocumentationAwareCommenter {
   private static final String LINE_COMMENT_PREFIX = "#";
 
   @Override
-  @Nullable
   public String getLineCommentPrefix() {
     return LINE_COMMENT_PREFIX;
   }
@@ -43,7 +42,6 @@ public final class GherkinCommenter implements CodeDocumentationAwareCommenter {
     return null;
   }
 
-  @Nullable
   @Override
   public IElementType getLineCommentTokenType() {
     return KarateTokenTypes.COMMENT;

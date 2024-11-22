@@ -1,6 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.rankweis.uppercut.karate.inspections;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.rankweis.uppercut.karate.MyBundle;
 import com.rankweis.uppercut.karate.psi.GherkinElementFactory;
 import com.rankweis.uppercut.karate.psi.GherkinExamplesBlock;
@@ -12,22 +21,12 @@ import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.rankweis.uppercut.karate.psi.GherkinTableCell;
 import com.rankweis.uppercut.karate.psi.GherkinTableRow;
 import com.rankweis.uppercut.karate.psi.GherkinUtil;
-import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import java.util.ArrayList;
-import java.util.List;
-import org.jetbrains.annotations.NotNull;
-
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
 import com.rankweis.uppercut.karate.psi.impl.GherkinScenarioOutlineImpl;
+import java.util.ArrayList;
+import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 public class CucumberCreateExamplesSectionFix implements LocalQuickFix {
 
@@ -79,12 +78,12 @@ public class CucumberCreateExamplesSectionFix implements LocalQuickFix {
 
     GherkinExamplesBlockImpl addedSection = (GherkinExamplesBlockImpl)outline.add(fakeExampleSection);
     addedSection = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(addedSection);
-    final GherkinTable table = addedSection.getTable();
+    final GherkinTable table = addedSection != null ? addedSection.getTable() : null;
     assert table != null;
     final GherkinTableRow headerRow = table.getHeaderRow();
     assert headerRow != null;
     final List<GherkinTableCell> cells = headerRow.getPsiCells();
-    final int firstCellOffset =  cells.size() > 0 && cells.get(0).getTextLength() > 0 ?
+    final int firstCellOffset = !cells.isEmpty() && cells.get(0).getTextLength() > 0 ?
                                  cells.get(0).getTextOffset() : headerRow.getTextOffset() + 1;
 
     final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();

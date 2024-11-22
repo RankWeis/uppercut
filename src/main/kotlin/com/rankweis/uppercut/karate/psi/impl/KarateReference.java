@@ -10,7 +10,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.rankweis.uppercut.karate.psi.GherkinScenario;
 import com.rankweis.uppercut.karate.psi.GherkinStep;
 import com.rankweis.uppercut.karate.psi.KarateDeclaration;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +32,6 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
   }
 
   @Override public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-    final List<PsiElement> properties = new ArrayList<>();
     PsiElement parent =
       PsiTreeUtil.findFirstParent(myElement, GherkinScenario.class::isInstance);
 
@@ -66,12 +64,7 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
       }
     }
 
-    List<ResolveResult> results = new ArrayList<>();
-
-    for (PsiElement property : properties) {
-      results.add(new PsiElementResolveResult(property));
-    }
-    return results.toArray(new ResolveResult[0]);
+    return new ResolveResult[0];
   }
 
   @Override public @Nullable PsiElement resolve() {

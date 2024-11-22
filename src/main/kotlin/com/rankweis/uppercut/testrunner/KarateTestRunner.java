@@ -68,7 +68,7 @@ public class KarateTestRunner {
       }
       invoke = mWorkingDir.invoke(invoke, new File(workingDirectories[0]));
       invoke = mKarateEnv.invoke(invoke, env);
-      invoke = mParallel.invoke(invoke, parallelism);
+      mParallel.invoke(invoke, parallelism);
       return 0;
 
     } catch (Exception e) {

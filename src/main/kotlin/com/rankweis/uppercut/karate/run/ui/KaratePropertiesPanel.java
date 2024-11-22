@@ -15,26 +15,23 @@
  */
 package com.rankweis.uppercut.karate.run.ui;
 
-import com.rankweis.uppercut.MyBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AddEditRemovePanel;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
+import com.rankweis.uppercut.MyBundle;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class KaratePropertiesPanel extends AddEditRemovePanel<Pair<String, String>> {
-  private final Map<String, String> myAvailableProperties;
 
   public KaratePropertiesPanel(Map<String, String> availableProperties) {
     super(new MyPropertiesTableModel(), new ArrayList<>(), null);
     setPreferredSize(new Dimension(100, 100));
-    myAvailableProperties = availableProperties;
   }
 
   @Override

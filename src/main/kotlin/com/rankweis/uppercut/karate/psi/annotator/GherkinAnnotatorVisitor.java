@@ -1,28 +1,5 @@
 package com.rankweis.uppercut.karate.psi.annotator;
 
-import com.rankweis.uppercut.karate.CucumberUtil;
-import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
-import com.rankweis.uppercut.karate.psi.GherkinExamplesBlock;
-import com.rankweis.uppercut.karate.psi.GherkinScenarioOutline;
-import com.rankweis.uppercut.karate.psi.GherkinStep;
-import com.rankweis.uppercut.karate.psi.GherkinStepParameter;
-import com.rankweis.uppercut.karate.psi.GherkinStepsHolder;
-import com.rankweis.uppercut.karate.psi.GherkinTable;
-import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
-import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesNavigator;
-import com.rankweis.uppercut.karate.psi.impl.GherkinTableHeaderRowImpl;
-import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
-import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
-import com.rankweis.uppercut.karate.MyBundle;
-import com.rankweis.uppercut.karate.psi.GherkinHighlighter;
-import com.rankweis.uppercut.karate.psi.GherkinPsiUtil;
-import com.rankweis.uppercut.karate.psi.GherkinPystring;
-import com.rankweis.uppercut.karate.psi.GherkinTableCell;
-import com.rankweis.uppercut.karate.psi.GherkinTableRow;
-import com.rankweis.uppercut.karate.psi.impl.GherkinScenarioOutlineImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinTableImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinTableNavigator;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -34,6 +11,29 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.rankweis.uppercut.karate.CucumberUtil;
+import com.rankweis.uppercut.karate.MyBundle;
+import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
+import com.rankweis.uppercut.karate.psi.GherkinExamplesBlock;
+import com.rankweis.uppercut.karate.psi.GherkinHighlighter;
+import com.rankweis.uppercut.karate.psi.GherkinPsiUtil;
+import com.rankweis.uppercut.karate.psi.GherkinPystring;
+import com.rankweis.uppercut.karate.psi.GherkinScenarioOutline;
+import com.rankweis.uppercut.karate.psi.GherkinStep;
+import com.rankweis.uppercut.karate.psi.GherkinStepParameter;
+import com.rankweis.uppercut.karate.psi.GherkinStepsHolder;
+import com.rankweis.uppercut.karate.psi.GherkinTable;
+import com.rankweis.uppercut.karate.psi.GherkinTableCell;
+import com.rankweis.uppercut.karate.psi.GherkinTableRow;
+import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesNavigator;
+import com.rankweis.uppercut.karate.psi.impl.GherkinScenarioOutlineImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinTableHeaderRowImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinTableImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinTableNavigator;
+import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
+import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -75,10 +75,9 @@ public class GherkinAnnotatorVisitor extends GherkinElementVisitor {
   }
 
   private static boolean hasStepsBefore(@NotNull PsiElement element) {
-    element = element.getPrevSibling();
-    while (element != null && (!(element instanceof GherkinStep))) {
+    do {
       element = element.getPrevSibling();
-    }
+    } while (element != null && (!(element instanceof GherkinStep)));
     return element != null;
   }
 

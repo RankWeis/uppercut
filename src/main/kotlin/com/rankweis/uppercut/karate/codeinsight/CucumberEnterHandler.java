@@ -13,9 +13,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NotNull;
 import com.rankweis.uppercut.karate.psi.GherkinFile;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import org.jetbrains.annotations.NotNull;
 
 
 public final class CucumberEnterHandler extends EnterHandlerDelegateAdapter {
@@ -39,8 +39,8 @@ public final class CucumberEnterHandler extends EnterHandlerDelegateAdapter {
     final String docText = document.getText();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     final PsiElement probableQuotes = file.findElementAt(caretOffsetValue - 1);
-    IElementType elementType = probableQuotes.getNode().getElementType();
-    if (probableQuotes != null && elementType == KarateTokenTypes.PYSTRING_INCOMPLETE || elementType == KarateTokenTypes.PYSTRING_QUOTES) {
+    IElementType elementType = probableQuotes != null ? probableQuotes.getNode().getElementType() : null;
+    if (elementType == KarateTokenTypes.PYSTRING_INCOMPLETE || elementType == KarateTokenTypes.PYSTRING_QUOTES) {
       final PsiElement probablePyStringText =
         document.getTextLength() == PYSTRING_QUOTES.length() ? null : file.findElementAt(caretOffsetValue - 1 - PYSTRING_QUOTES.length());
       if (probablePyStringText == null || probablePyStringText.getNode().getElementType() != KarateTokenTypes.PYSTRING) {

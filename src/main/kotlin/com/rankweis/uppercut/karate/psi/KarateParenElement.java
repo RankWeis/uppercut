@@ -12,6 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.rankweis.uppercut.karate.psi.element.KarateNamedElement;
 import com.rankweis.uppercut.karate.psi.impl.GherkinPsiElementBase;
 import com.rankweis.uppercut.util.KarateUtil;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public class KarateParenElement extends GherkinPsiElementBase implements PsiName
   
   @Override public @Nullable PsiElement getNameIdentifier() {
     ASTNode keyNode = getNode().findChildByType(OPEN_PAREN);
-    PsiElement element = keyNode.getPsi();
+    PsiElement element = Objects.requireNonNull(keyNode).getPsi();
     while(element != null) {
       element = element.getNextSibling();
       if (element instanceof PsiWhiteSpace) {

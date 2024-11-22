@@ -1,19 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.intentions;
 
-import com.rankweis.uppercut.karate.CucumberUtil;
-import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
-import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
-import com.rankweis.uppercut.karate.MyBundle;
-import com.rankweis.uppercut.karate.psi.GherkinElementFactory;
-import com.rankweis.uppercut.karate.psi.GherkinFile;
-import com.rankweis.uppercut.karate.psi.GherkinKeywordTable;
-import com.rankweis.uppercut.karate.psi.KarateLanguage;
-import com.rankweis.uppercut.karate.psi.GherkinScenario;
-import com.rankweis.uppercut.karate.psi.GherkinStep;
-import com.rankweis.uppercut.karate.psi.GherkinStepsHolder;
-import com.rankweis.uppercut.karate.psi.GherkinTag;
-import com.rankweis.uppercut.karate.psi.GherkinUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -23,14 +10,26 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.rankweis.uppercut.karate.CucumberUtil;
+import com.rankweis.uppercut.karate.MyBundle;
+import com.rankweis.uppercut.karate.psi.GherkinElementFactory;
+import com.rankweis.uppercut.karate.psi.GherkinFile;
+import com.rankweis.uppercut.karate.psi.GherkinKeywordTable;
+import com.rankweis.uppercut.karate.psi.GherkinScenario;
+import com.rankweis.uppercut.karate.psi.GherkinStep;
+import com.rankweis.uppercut.karate.psi.GherkinStepsHolder;
+import com.rankweis.uppercut.karate.psi.GherkinTag;
+import com.rankweis.uppercut.karate.psi.GherkinUtil;
+import com.rankweis.uppercut.karate.psi.KarateLanguage;
+import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
+import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
+import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jetbrains.annotations.NotNull;
-
-import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 
 public final class ScenarioToOutlineIntention implements IntentionAction {
   public static final String ARGUMENT = "argument";
@@ -114,7 +113,7 @@ public final class ScenarioToOutlineIntention implements IntentionAction {
 
   private static String replaceVarNames(String stepName, AbstractStepDefinition definition, Map<String, String> examples) {
     final List<String> varNames = definition.getVariableNames();
-    if (varNames.size() > 0) {
+    if (!varNames.isEmpty()) {
       final Pattern pattern = definition.getPattern();
 
       if (pattern != null) {
@@ -144,7 +143,7 @@ public final class ScenarioToOutlineIntention implements IntentionAction {
   private static String buildExamplesSection(Map<String, String> examples, String keyword) {
     StringBuilder builder = new StringBuilder(keyword);
     builder.append(":\n");
-    if (examples.size() > 0) {
+    if (!examples.isEmpty()) {
       for (String key : examples.keySet()) {
         builder.append("|").append(key);
       }

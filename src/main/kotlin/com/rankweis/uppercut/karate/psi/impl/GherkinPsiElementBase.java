@@ -6,7 +6,6 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -70,7 +69,7 @@ public abstract class GherkinPsiElementBase extends ASTWrapperPsiElement impleme
     };
   }
 
-  protected @NlsSafe String getPresentableText() {
+  protected String getPresentableText() {
     return toString();
   }
 

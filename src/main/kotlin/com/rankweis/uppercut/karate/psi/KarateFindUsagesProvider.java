@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.rankweis.uppercut.karate.MyBundle;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 public final class KarateFindUsagesProvider implements FindUsagesProvider {
@@ -21,11 +22,7 @@ public final class KarateFindUsagesProvider implements FindUsagesProvider {
 
   @Override
   public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
-    if (psiElement instanceof PsiNamedElement) {
-      return true;
-    }
-
-    return false;
+    return psiElement instanceof PsiNamedElement;
   }
 
   @Override
@@ -47,7 +44,7 @@ public final class KarateFindUsagesProvider implements FindUsagesProvider {
   @NotNull
   @Override
   public String getDescriptiveName(@NotNull PsiElement element) {
-    return element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "";
+    return element instanceof PsiNamedElement ? Objects.requireNonNull(((PsiNamedElement) element).getName()) : "";
   }
 
   @NotNull

@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
-import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
 import com.rankweis.uppercut.karate.CucumberElementFactory;
+import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Chernyatchik
@@ -34,7 +35,7 @@ public final class GherkinElementFactory {
     final GherkinKeywordTable keywordsTable = provider.getKeywordsTable(language);
     String featureText = "# language: " + language + "\n" + keywordsTable.getFeatureSectionKeyword() + ": Dummy\n" + text;
     GherkinFeature feature = createFeatureFromText(project, featureText);
-    return feature.getScenarios() [0];
+    return Objects.requireNonNull(feature).getScenarios() [0];
   }
 
   public static PsiElement[] getTopLevelElements(final Project project, @NotNull final String text) {
