@@ -88,8 +88,9 @@ public class CreateStepDefinitionFileDialog extends DialogWrapper {
     folderChooserDescriptor.withTreeRootVisible(true);
     folderChooserDescriptor.setShowFileSystemRoots(false);
     folderChooserDescriptor.setHideIgnored(true);
+    folderChooserDescriptor.setTitle(folderChooserTitle);
 
-    myDirectoryTextField.addBrowseFolderListener(folderChooserTitle, null, project, folderChooserDescriptor);
+    myDirectoryTextField.addBrowseFolderListener(project, folderChooserDescriptor);
     myDirectoryTextField.getTextField().addKeyListener(keyListener);
     myDirectoryTextField.setText(FileUtil.toSystemDependentName(model.getDefaultDirectory()));
     validateAll();
