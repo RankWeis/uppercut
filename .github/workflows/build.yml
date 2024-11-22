@@ -252,6 +252,7 @@ jobs:
             --draft \
             --title "v${{ needs.build.outputs.version }}" \
             --notes "$(cat << 'EOM'
+            --target $BRANCH
           ${{ needs.build.outputs.changelog }}
           EOM
           )"
