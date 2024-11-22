@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.steps.reference;
 
-import com.rankweis.uppercut.karate.CucumberUtil;
-import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -17,6 +15,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
+import com.rankweis.uppercut.karate.CucumberJvmExtensionPoint;
+import com.rankweis.uppercut.karate.CucumberUtil;
+import com.rankweis.uppercut.karate.psi.impl.GherkinStepImpl;
+import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
 import com.rankweis.uppercut.karate.steps.CucumberStepHelper;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,8 +27,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.rankweis.uppercut.karate.CucumberJvmExtensionPoint;
-import com.rankweis.uppercut.karate.psi.impl.GherkinStepImpl;
 
 
 public class CucumberStepReference implements PsiPolyVariantReference {
@@ -105,7 +105,7 @@ public class CucumberStepReference implements PsiPolyVariantReference {
     List<CucumberJvmExtensionPoint> frameworks = CucumberJvmExtensionPoint.EP_NAME.getExtensionList();
     Collection<String> stepVariants =
       frameworks.stream().map(e -> e.getStepName(myStep)).filter(Objects::nonNull).collect(Collectors.toSet());
-    if (stepVariants.size() == 0) {
+    if (stepVariants.isEmpty()) {
       return ResolveResult.EMPTY_ARRAY;
     }
 

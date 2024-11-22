@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 public final class GherkinFormattingModelBuilder implements FormattingModelBuilder {
@@ -17,7 +18,7 @@ public final class GherkinFormattingModelBuilder implements FormattingModelBuild
   public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
     final PsiFile file = formattingContext.getContainingFile();
     final FileElement fileElement = TreeUtil.getFileElement(
-      (TreeElement)SourceTreeToPsiMap.psiElementToTree(formattingContext.getPsiElement()));
+      (TreeElement) Objects.requireNonNull(SourceTreeToPsiMap.psiElementToTree(formattingContext.getPsiElement())));
     final GherkinBlock rootBlock = new GherkinBlock(fileElement);
     //FormattingModelDumper.dumpFormattingModel(rootBlock, 0, System.out);
     return new DocumentBasedFormattingModel(rootBlock, file.getProject(), formattingContext.getCodeStyleSettings(), file.getFileType(),

@@ -9,6 +9,8 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.CommonProcessors.CollectProcessor;
+import com.rankweis.uppercut.karate.CucumberUtil;
+import com.rankweis.uppercut.karate.psi.GherkinStep;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -18,8 +20,6 @@ import java.util.regex.PatternSyntaxException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.rankweis.uppercut.karate.CucumberUtil;
-import com.rankweis.uppercut.karate.psi.GherkinStep;
 
 public abstract class AbstractStepDefinition {
   private static final Pattern ESCAPE_PATTERN = Pattern.compile("(#\\{.+?})");
@@ -69,7 +69,7 @@ public abstract class AbstractStepDefinition {
     try {
       final String cucumberRegex = getCucumberRegex();
       if (cucumberRegex == null) return null;
-      if (myRegexText == null || !cucumberRegex.equals(myRegexText)) {
+      if (!cucumberRegex.equals(myRegexText)) {
         final StringBuilder patternText = new StringBuilder(ESCAPE_PATTERN.matcher(cucumberRegex).replaceAll("(.*)"));
         if (patternText.toString().startsWith(CUCUMBER_START_PREFIX)) {
           patternText.replace(0, CUCUMBER_START_PREFIX.length(), "^");
@@ -109,9 +109,7 @@ public abstract class AbstractStepDefinition {
 
     AbstractStepDefinition that = (AbstractStepDefinition)o;
 
-    if (!myElementPointer.equals(that.myElementPointer)) return false;
-
-    return true;
+    return myElementPointer.equals(that.myElementPointer);
   }
 
   @Override

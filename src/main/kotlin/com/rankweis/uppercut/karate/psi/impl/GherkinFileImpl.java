@@ -1,20 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi.impl;
 
-import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
-import com.rankweis.uppercut.karate.psi.GherkinKeywordTable;
-import com.rankweis.uppercut.karate.psi.KarateLanguage;
-import com.rankweis.uppercut.karate.psi.GherkinFeature;
-import com.rankweis.uppercut.karate.psi.GherkinFile;
-import com.rankweis.uppercut.karate.psi.GherkinFileType;
-import com.rankweis.uppercut.karate.psi.GherkinLexer;
-import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
+import com.rankweis.uppercut.karate.psi.GherkinFeature;
+import com.rankweis.uppercut.karate.psi.GherkinFile;
+import com.rankweis.uppercut.karate.psi.GherkinFileType;
+import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
+import com.rankweis.uppercut.karate.psi.GherkinKeywordTable;
+import com.rankweis.uppercut.karate.psi.GherkinLexer;
+import com.rankweis.uppercut.karate.psi.KarateLanguage;
+import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,14 +40,13 @@ public class GherkinFileImpl extends PsiFileBase implements GherkinFile {
   @Override
   public List<String> getStepKeywords() {
     final GherkinKeywordProvider provider = JsonGherkinKeywordProvider.getKeywordProvider(this);
-    List<String> result = new ArrayList<>();
 
     // find language comment
     final String language = getLocaleLanguage();
 
     // step keywords
     final GherkinKeywordTable table = provider.getKeywordsTable(language);
-    result.addAll(table.getStepKeywords());
+    List<String> result = new ArrayList<>(table.getStepKeywords());
 
     return result;
   }
@@ -89,7 +88,7 @@ public class GherkinFileImpl extends PsiFileBase implements GherkinFile {
     PsiElement result = super.findElementAt(offset);
     if (result == null && offset == getTextLength()) {
       final PsiElement last = getLastChild();
-      result = last != null ? last.getLastChild() : last;
+      result = last != null ? last.getLastChild() : null;
     }
     return result;
   }

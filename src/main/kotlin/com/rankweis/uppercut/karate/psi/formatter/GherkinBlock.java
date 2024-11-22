@@ -44,8 +44,8 @@ public class GherkinBlock implements ASTBlock {
   private final TextRange myTextRange;
   private final boolean myLeaf;
   private List<Block> myChildren = null;
-  private GherkinKeywordProvider myKeywordProvider = JsonGherkinKeywordProvider.getKeywordProvider();
-  private GherkinKeywordProvider myActionKeywordProvider = new PlainKarateKeywordProvider();
+  private final GherkinKeywordProvider myKeywordProvider = JsonGherkinKeywordProvider.getKeywordProvider();
+  private final GherkinKeywordProvider myActionKeywordProvider = new PlainKarateKeywordProvider();
 
   private static final TokenSet BLOCKS_TO_INDENT = TokenSet.create(GherkinElementTypes.FEATURE_HEADER,
     GherkinElementTypes.RULE,
@@ -166,7 +166,7 @@ public class GherkinBlock implements ASTBlock {
 
   @Override
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
-    if (child1 == null) {
+    if (child1 == null || child2 == null) {
       return null;
     }
 
@@ -174,6 +174,9 @@ public class GherkinBlock implements ASTBlock {
     ASTBlock block2 = (ASTBlock) child2;
     ASTNode node1 = block1.getNode();
     ASTNode node2 = block2.getNode();
+    if(node1 == null || node2 == null) {
+      return null;
+    }
     final IElementType parent1 = node1.getTreeParent() != null ? node1.getTreeParent().getElementType() : null;
     final IElementType elementType1 = node1.getElementType();
     final IElementType elementType2 = node2.getElementType();
@@ -231,10 +234,7 @@ public class GherkinBlock implements ASTBlock {
       }
     }
     if (KarateTokenTypes.KEYWORDS.contains(elementType1) && elementType2 != COLON) {
-      boolean keepLineBreaks = false;
-      if (elementType2 == STEP) {
-        keepLineBreaks = true;
-      }
+      boolean keepLineBreaks = elementType2 == STEP;
       return Spacing.createSpacing(1, 1, 0, keepLineBreaks, 0);
     }
     return null;
@@ -254,18 +254,24 @@ public class GherkinBlock implements ASTBlock {
   @Override
   @NotNull
   public ChildAttributes getChildAttributes(int newChildIndex) {
-    Indent childIndent = BLOCKS_TO_INDENT_CHILDREN.contains(getNode().getElementType()) ? Indent.getNormalIndent()
-      : Indent.getNoneIndent();
+    ASTNode node = getNode();
+    Indent childIndent =
+      node != null && BLOCKS_TO_INDENT_CHILDREN.contains(getNode().getElementType()) ? Indent.getNormalIndent()
+        : Indent.getNoneIndent();
     return new ChildAttributes(childIndent, null);
   }
 
   @Override
   public boolean isIncomplete() {
-    if (GherkinElementTypes.SCENARIOS.contains(getNode().getElementType())) {
+    ASTNode node = getNode();
+    if (node == null) {
+      return false;
+    }
+    if (GherkinElementTypes.SCENARIOS.contains(node.getElementType())) {
       return true;
     }
-    if (getNode().getElementType() == GherkinElementTypes.FEATURE) {
-      return getNode().getChildren(TokenSet.create(GherkinElementTypes.FEATURE_HEADER,
+    if (node.getElementType() == GherkinElementTypes.FEATURE) {
+      return node.getChildren(TokenSet.create(GherkinElementTypes.FEATURE_HEADER,
         GherkinElementTypes.SCENARIO,
         GherkinElementTypes.SCENARIO_OUTLINE)).length == 0;
     }
@@ -274,6 +280,6 @@ public class GherkinBlock implements ASTBlock {
 
   @Override
   public boolean isLeaf() {
-    return myLeaf || getSubBlocks().size() == 0;
+    return myLeaf || getSubBlocks().isEmpty();
   }
 }

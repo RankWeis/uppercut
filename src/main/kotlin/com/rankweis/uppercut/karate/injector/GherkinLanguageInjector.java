@@ -67,12 +67,10 @@ public final class GherkinLanguageInjector implements MultiHostInjector {
     final TextRange range = TextRange.create(skipWhitespaceForward, skipWhitespaceBackward);
 
     if (!range.isEmpty()) {
-      String prefix = null;
-      String suffix = null;
-      if (language == JavascriptLanguage.INSTANCE) {
-        prefix = "let x = ";
-        suffix = ";";
-      }
+      String prefix;
+      String suffix;
+      prefix = "let x = ";
+      suffix = ";";
 
       registrar.startInjecting(language);
       registrar.addPlace(prefix, suffix, host, range);

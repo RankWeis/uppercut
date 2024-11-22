@@ -1,11 +1,11 @@
 package com.rankweis.uppercut.karate.psi.impl;
 
-import com.rankweis.uppercut.karate.psi.GherkinPsiElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
+import com.rankweis.uppercut.karate.psi.GherkinPsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class GherkinSimpleReference implements PsiReference {
@@ -59,7 +59,7 @@ public class GherkinSimpleReference implements PsiReference {
     if (resolved == null) {
       resolved = element;
     }
-    return myResolved != null && resolved.equals(myResolved);
+    return resolved.equals(myResolved);
   }
 
   @Override

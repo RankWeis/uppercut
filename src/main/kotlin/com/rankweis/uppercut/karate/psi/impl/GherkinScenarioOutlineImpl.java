@@ -1,16 +1,16 @@
 package com.rankweis.uppercut.karate.psi.impl;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
 import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
 import com.rankweis.uppercut.karate.psi.GherkinExamplesBlock;
 import com.rankweis.uppercut.karate.psi.GherkinScenarioOutline;
 import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.rankweis.uppercut.karate.psi.GherkinTableCell;
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,7 +67,7 @@ public class GherkinScenarioOutlineImpl extends GherkinStepsHolderBase implement
     final List<GherkinExamplesBlock> examplesBlocks = scenarioOutline.getExamplesBlocks();
     for (GherkinExamplesBlock examplesBlock : examplesBlocks) {
       GherkinTable table = examplesBlock.getTable();
-      if (table == null || table.getHeaderRow() == null || table.getDataRows().size() == 0) {
+      if (table == null || table.getHeaderRow() == null || table.getDataRows().isEmpty()) {
         continue;
       }
       List<GherkinTableCell> headerCells = table.getHeaderRow().getPsiCells();

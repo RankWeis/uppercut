@@ -63,9 +63,7 @@ public class BDDFrameworkType {
     if (!(o instanceof BDDFrameworkType type)) return false;
 
     if (myAdditionalInfo != null ? !myAdditionalInfo.equals(type.myAdditionalInfo) : type.myAdditionalInfo != null) return false;
-    if (!myFileType.equals(type.myFileType)) return false;
-
-    return true;
+    return myFileType.equals(type.myFileType);
   }
 
   @Override

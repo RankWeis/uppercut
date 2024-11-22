@@ -17,7 +17,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,6 @@ public class GherkinLexer extends LexerBase {
   private IElementType myCurrentToken;
   private int myCurrentTokenStart;
   private List<String> myKeywords;
-  private List<String> myActionKeywords;
   private int myState;
 
   private final static int STATE_DEFAULT = 0;
@@ -308,10 +306,9 @@ public class GherkinLexer extends LexerBase {
       myPosition++;
     } else if (c == '@') {
       myCurrentToken = KarateTokenTypes.TAG;
-      myPosition++;
-      while (myPosition < myEndOffset && isValidTagChar(myBuffer.charAt(myPosition))) {
+      do {
         myPosition++;
-      }
+      } while (myPosition < myEndOffset && isValidTagChar(myBuffer.charAt(myPosition)));
     } else if (isStringAtPosition("==") || isStringAtPosition("!=")
       || isStringAtPosition("<=") || isStringAtPosition(">=")) {
       myPosition += 2;
@@ -354,14 +351,8 @@ public class GherkinLexer extends LexerBase {
         }
       }
       if (myState == STATE_PARAMETER_INSIDE_STEP) {
-        if (c == '>') {
-          myState = STATE_AFTER_ACTION_KEYWORD;
-          myPosition++;
-          myCurrentToken = KarateTokenTypes.STEP_PARAMETER_BRACE;
-        } else {
-          advanceToParameterEnd("\n");
-          myCurrentToken = KarateTokenTypes.STEP_PARAMETER_TEXT;
-        }
+        advanceToParameterEnd("\n");
+        myCurrentToken = KarateTokenTypes.STEP_PARAMETER_TEXT;
         return;
       } else if (myState == STATE_AFTER_ACTION_KEYWORD) {
         if (Character.isAlphabetic(myBuffer.charAt(myPosition)) && advanceIfDeclaration()) {
@@ -510,46 +501,6 @@ public class GherkinLexer extends LexerBase {
     while (myPosition > mark && Character.isWhitespace(myBuffer.charAt(myPosition - 1))) {
       myPosition--;
     }
-  }
-
-  private void advanceToParameterOrSymbol(String s, int parameterState, boolean shouldReturnWhitespace) {
-    int mark = myPosition;
-
-    while (myPosition < myEndOffset && !isStringAtPosition(s) && !isStepParameter(s)) {
-      if (INTERESTING_SYMBOLS.contains(myBuffer.charAt(myPosition))) {
-        return;
-      }
-      myPosition++;
-    }
-
-    if (shouldReturnWhitespace) {
-      myState = STATE_DEFAULT;
-      if (myPosition < myEndOffset) {
-        if (!isStringAtPosition(s)) {
-          myState = parameterState;
-        }
-      }
-
-      returnWhitespace(mark);
-    }
-  }
-
-  private int findOffset(Character match, Character... terminate) {
-    int mark = myPosition;
-    while (mark < myEndOffset) {
-      char c = myBuffer.charAt(mark);
-      if (c == match) {
-        return mark - myPosition;
-      } else if (Arrays.stream(terminate).anyMatch(ch -> ch == c)) {
-        return -1;
-      }
-      mark++;
-    }
-    return -1;
-  }
-
-  private boolean isQuote(char c) {
-    return c == '\'' || c == '"';
   }
 
   private void advanceToParameterEnd(String endSymbol) {

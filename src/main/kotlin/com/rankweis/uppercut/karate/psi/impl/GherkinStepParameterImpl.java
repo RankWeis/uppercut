@@ -1,7 +1,5 @@
 package com.rankweis.uppercut.karate.psi.impl;
 
-import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
-import com.rankweis.uppercut.karate.psi.GherkinStepParameter;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -11,6 +9,9 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.rankweis.uppercut.karate.psi.GherkinElementFactory;
+import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
+import com.rankweis.uppercut.karate.psi.GherkinStepParameter;
+import java.util.Objects;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class GherkinStepParameterImpl extends GherkinPsiElementBase implements G
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     final LeafPsiElement content = PsiTreeUtil.getChildOfType(this, LeafPsiElement.class);
     PsiElement[] elements = GherkinElementFactory.getTopLevelElements(getProject(), name);
-    getNode().replaceChild(content, elements[0].getNode());
+    getNode().replaceChild(Objects.requireNonNull(content), elements[0].getNode());
     return this;
   }
 

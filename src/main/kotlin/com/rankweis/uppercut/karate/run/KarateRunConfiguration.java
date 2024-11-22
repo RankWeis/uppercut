@@ -177,7 +177,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
 
 
   @Override public void checkConfiguration() {
-    return;
   }
 
   public void setLineNumber(int lineNumber) {
