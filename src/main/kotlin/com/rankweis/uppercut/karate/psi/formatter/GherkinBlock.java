@@ -166,7 +166,7 @@ public class GherkinBlock implements ASTBlock {
 
   @Override
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
-    if (child1 == null || child2 == null) {
+    if (child1 == null) {
       return null;
     }
 

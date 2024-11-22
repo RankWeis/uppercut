@@ -32,7 +32,7 @@ public abstract class GherkinPsiElementBase extends ASTWrapperPsiElement impleme
   protected String getElementText() {
     final ASTNode node = getNode();
     final ASTNode[] children = node.getChildren(TEXT_FILTER);
-    return StringUtil.join(children, astNode -> astNode.getText(), " ").trim();
+    return StringUtil.join(children, ASTNode::getText, " ").trim();
   }
 
   @Override
@@ -50,7 +50,7 @@ public abstract class GherkinPsiElementBase extends ASTWrapperPsiElement impleme
       result.add(psiChild);
       psiChild = psiChild.getNextSibling();
     }
-    return result == null ? PsiElement.EMPTY_ARRAY : PsiUtilCore.toPsiElementArray(result);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 
 

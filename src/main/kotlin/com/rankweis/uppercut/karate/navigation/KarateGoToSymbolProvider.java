@@ -1,8 +1,5 @@
 package com.rankweis.uppercut.karate.navigation;
 
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -25,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class KarateGoToSymbolProvider implements GotoDeclarationHandler {
-
-  private static final Pattern QUOTED_PATTERN = Pattern.compile("#\\((\\w+)\\)");
 
   private static final Pattern FILE_PATTERN = Pattern.compile("[^ :]+\\.[^ :]+");
 
@@ -56,10 +51,10 @@ public class KarateGoToSymbolProvider implements GotoDeclarationHandler {
         return new PsiElement[] {PsiManager.getInstance(sourceElement.getProject()).findFile(potentialFilePath)};
       }
     }
-    final Lookup activeLookup =
-      LookupManager.getInstance(sourceElement.getProject()).getActiveLookup();
-    final LookupElement item = activeLookup != null ? activeLookup.getCurrentItem() : null;
-    final Object lookupObject = item != null && item.isValid() ? item.getObject() : null;
+//    final Lookup activeLookup =
+//      LookupManager.getInstance(sourceElement.getProject()).getActiveLookup();
+//    final LookupElement item = activeLookup != null ? activeLookup.getCurrentItem() : null;
+//    final Object lookupObject = item != null && item.isValid() ? item.getObject() : null;
     //    return lookupObject instanceof DartLookupObject ? ((DartLookupObject)lookupObject).findPsiElement() : null;
     return new PsiElement[0];
   }
@@ -70,7 +65,7 @@ public class KarateGoToSymbolProvider implements GotoDeclarationHandler {
   }
 
   private PsiElement[] goToClasspath(@Nullable PsiElement sourceElement, List<String> filePaths) {
-    PsiFile containingFile = sourceElement.getContainingFile();
+    PsiFile containingFile = Objects.requireNonNull(sourceElement).getContainingFile();
     if (containingFile == null) {
       return new PsiElement[0];
     }

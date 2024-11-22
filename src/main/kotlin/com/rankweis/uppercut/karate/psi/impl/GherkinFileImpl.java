@@ -46,9 +46,8 @@ public class GherkinFileImpl extends PsiFileBase implements GherkinFile {
 
     // step keywords
     final GherkinKeywordTable table = provider.getKeywordsTable(language);
-    List<String> result = new ArrayList<>(table.getStepKeywords());
 
-    return result;
+    return new ArrayList<>(table.getStepKeywords());
   }
 
   @Override
