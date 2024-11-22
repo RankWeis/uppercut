@@ -17,13 +17,18 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - name: free disk space
-        run: |
-          sudo swapoff -a
-          sudo rm -f /swapfile
-          sudo apt clean
-          docker rmi $(docker image ls -aq)
-          df -h
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+
+#      - name: free disk space
+#        run: |
+#          sudo swapoff -a
+#          sudo rm -f /swapfile
+#          sudo apt clean
+#          docker rmi $(docker image ls -aq)
+#          df -h
 
       # Check out the current repository
       - name: Fetch Sources
@@ -105,4 +110,5 @@ jobs:
             --title "Changelog update - \`$VERSION\`" \
             --body "Current pull request contains patched \`CHANGELOG.md\` file for the \`$VERSION\` version." \
             --label "$LABEL" \
+            --base "${{ steps.extract_branch.outputs.branch }}" \
             --head $BRANCH
