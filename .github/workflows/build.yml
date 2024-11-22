@@ -251,7 +251,7 @@ jobs:
           gh release create "v${{ needs.build.outputs.version }}" \
             --draft \
             --title "v${{ needs.build.outputs.version }}" \
-            --notes "$(cat << 'EOM'
+            --notes "$(cat << 'EOM' \
             --target $BRANCH
           ${{ needs.build.outputs.changelog }}
           EOM
