@@ -28,6 +28,7 @@ import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.rankweis.uppercut.karate.psi.PlainKarateKeywordProvider;
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
+import io.netty.util.internal.StringUtil;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class GherkinBlock implements ASTBlock {
 
-  private static final List<String> NON_SPACED_CHARACTERS = List.of(",", ".");
+  private static final List<Character> NON_SPACED_CHARACTERS = List.of(',', '.', '[', ']');
 
   private final ASTNode myNode;
   private final Indent myIndent;
@@ -201,8 +202,9 @@ public class GherkinBlock implements ASTBlock {
     }
     if ((TEXT_LIKE.contains(elementType1) && KarateTokenTypes.QUOTED_STRING.contains(elementType2)) || (
       TEXT_LIKE.contains(elementType2) && KarateTokenTypes.QUOTED_STRING.contains(elementType1))) {
-      if ((NON_SPACED_CHARACTERS.stream().anyMatch(s -> node2.getText().startsWith(s)))) {
-        return Spacing.createSpacing(0, 0, 0, false, 0);
+      if (NON_SPACED_CHARACTERS.stream().anyMatch(s -> node2.getText().startsWith("" + s)) ||
+      NON_SPACED_CHARACTERS.stream().anyMatch(s -> StringUtil.endsWith(node1.getText(), s))) {
+        return Spacing.createSpacing(0, 1, 0, false, 0);
       }
       return Spacing.createSpacing(1, 1, 0, true, 1);
     }

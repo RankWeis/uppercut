@@ -230,6 +230,14 @@ public class GherkinLexer extends LexerBase {
     } else if (isStringAtPosition(PYSTRING_MARKER)) {
       injectPyString();
     } else if ((c == '{' || c == '[') && myState != STATE_TABLE) {
+      if (c == '[') {
+        String stringUntilNextInterestingToken = getStringUntilNextInterestingToken();
+        if(stringUntilNextInterestingToken.matches("\\[?[\\w+.]*]?")) {
+          myCurrentToken = TEXT;
+          advanceToNextInterestingToken();
+          return;
+        }
+      }
       if (advanceIfJsJson()) {
         myCurrentToken = KarateTokenTypes.PYSTRING;
       } else {
@@ -307,10 +315,15 @@ public class GherkinLexer extends LexerBase {
       myPosition += 2;
       myCurrentToken = OPERATOR;
       myState = STATE_AFTER_OPERATOR;
-    } else if (isStringAtPosition("=") || isStringAtPosition("<") || isStringAtPosition(">")) {
-      myPosition++;
-      myCurrentToken = OPERATOR;
-      myState = STATE_AFTER_OPERATOR;
+    } else if (c == '=' || c == '<' || c == '>') {
+      if ( c == '<' && getStringUntilNextInterestingToken().trim().matches("<\\w+>")) {
+        myCurrentToken = TEXT;
+        advanceToNextInterestingToken();
+      } else {
+        myPosition++;
+        myCurrentToken = OPERATOR;
+        myState = STATE_AFTER_OPERATOR;
+      }
     } else if (c == '(' || c == ')') {
       myPosition++;
       myCurrentToken = c == '(' ? OPEN_PAREN : CLOSE_PAREN;
@@ -475,6 +488,20 @@ public class GherkinLexer extends LexerBase {
     }
     returnWhitespace(mark);
     myState = STATE_DEFAULT;
+  }
+
+  private String getStringUntilNextInterestingToken() {
+    int mark = myPosition + 1;
+    while (mark < myEndOffset) {
+      final int finalMark = mark;
+      if (INTERESTING_SYMBOLS.stream()
+        .noneMatch(s -> this.isStringAtPosition(s, finalMark))) {
+        mark++;
+      } else {
+        break;
+      }
+    }
+    return myBuffer.subSequence(myPosition, mark).toString();
   }
 
   private void returnWhitespace(int mark) {

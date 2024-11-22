@@ -52,6 +52,9 @@ public final class GherkinLanguageInjectorNoJS implements MultiHostInjector {
         .substring(PYSTRING_MARKER.length(), hostText.length() - PYSTRING_MARKER.length()));
     }
     Language language;
+    if(strippedText.matches("\\[?[\\w+.]*]?")) {
+      return;
+    }
     if (JSON_LOOSE_FORMAT.matcher(strippedText).matches() || StringUtil.startsWith(strippedText, "{")
       || StringUtil.startsWith(strippedText, "[")) {
       language = Json5Language.INSTANCE;

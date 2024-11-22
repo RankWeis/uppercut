@@ -8,6 +8,8 @@ Feature: json schema validation
     * string json = read('products.json')
     * def SchemaUtils = Java.type('com.intuit.karate.demo.util.SchemaUtils')
     * assert SchemaUtils.isValid(json, schema)
+    * print <hello>
+    * read('comment.json')
 
   Scenario: using karate's simpler alternative to json-schema
     * def warehouseLocation = { latitude: '#number', longitude: '#number' }

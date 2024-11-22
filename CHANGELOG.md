@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Issue where <text> in angle brackets would be improperly formatted.
+- Issue where [key] in brackets would be parsed as JSON.
+- Issue where code folding would not persist after restart.
+
 ## [1.3.1] - 2024-11-19
 
 ### Added

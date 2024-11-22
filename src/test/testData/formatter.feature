@@ -8,6 +8,17 @@ Feature: Get collection
     * def serviceId  =  clientId
     * def collectionId = karate.get("collectionIdForProjectId")
     * def projectId = karate.get("projectUrn")
+    * print <hello>
+
+    Scenario Outline:
+      Given path 'comments', <id>
+        When method get
+        Then status 200
+      * print <postId>
+      Examples:
+        | id | postId |
+        | 1  | 1     |
+        | 2  | 2     |
 
   Scenario: Get collection with filters=attribute.projectId==#projectId
     * def statusCode = 200
@@ -15,7 +26,9 @@ Feature: Get collection
     * def getCollection = call  read('classpath:test-objects/collection/Collection.feature@get-collection')
     * match getCollection.response.id == collectionId
     * match collectionId ==  collectionId
-    
+    * def response = cats[pathParams.id]
+    * match postExchangeResult.response.errors[*].detail contains ['Components must not be null.', 'The exchange space type must be supplied.' ]
+
     #TODO: permissionContext is not returned when we call collection api. Need to figure out another way for 2LO auth check.
   @ignore
   Scenario: Get collection with filters=attribute.projectId==#projectId with 2LO

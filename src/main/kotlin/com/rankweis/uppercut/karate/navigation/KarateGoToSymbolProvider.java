@@ -16,7 +16,6 @@ import com.intellij.psi.PsiManager;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -28,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 public class KarateGoToSymbolProvider implements GotoDeclarationHandler {
 
   private static final Pattern QUOTED_PATTERN = Pattern.compile("#\\((\\w+)\\)");
+
+  private static final Pattern FILE_PATTERN = Pattern.compile("[^ :]+\\.[^ :]+");
 
   @Override public PsiElement @Nullable [] getGotoDeclarationTargets(@Nullable PsiElement sourceElement, int offset,
     Editor editor) {
@@ -44,16 +45,22 @@ public class KarateGoToSymbolProvider implements GotoDeclarationHandler {
     if (!filePaths.isEmpty()) {
       return goToClasspath(sourceElement, filePaths);
     } else {
-      Optional<String> stringLiteral = Arrays.stream(quotedSplit)
-        .map(s -> QUOTED_PATTERN.matcher(s))
+      VirtualFile potentialFilePath = Arrays.stream(quotedSplit)
+        .map(FILE_PATTERN::matcher)
         .filter(Matcher::matches)
-        .map(m -> m.group(1))
-        .findFirst();
+        .map(m -> m.group(0))
+        .findFirst()
+        .map(s -> sourceElement.getContainingFile().getVirtualFile().getParent().findFileByRelativePath(s))
+        .orElse(null);
+      if (potentialFilePath != null) {
+        return new PsiElement[] {PsiManager.getInstance(sourceElement.getProject()).findFile(potentialFilePath)};
+      }
     }
-    final Lookup activeLookup = sourceElement != null ? LookupManager.getInstance(sourceElement.getProject()).getActiveLookup() : null;
+    final Lookup activeLookup =
+      sourceElement != null ? LookupManager.getInstance(sourceElement.getProject()).getActiveLookup() : null;
     final LookupElement item = activeLookup != null ? activeLookup.getCurrentItem() : null;
     final Object lookupObject = item != null && item.isValid() ? item.getObject() : null;
-//    return lookupObject instanceof DartLookupObject ? ((DartLookupObject)lookupObject).findPsiElement() : null;
+    //    return lookupObject instanceof DartLookupObject ? ((DartLookupObject)lookupObject).findPsiElement() : null;
     return new PsiElement[0];
   }
 
