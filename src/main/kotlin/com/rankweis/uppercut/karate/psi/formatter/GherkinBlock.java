@@ -62,7 +62,7 @@ public class GherkinBlock implements ASTBlock {
     GherkinElementTypes.SCENARIO_OUTLINE);
 
   private static final TokenSet READ_ONLY_BLOCKS =
-    TokenSet.create(GherkinElementTypes.PYSTRING, KarateTokenTypes.COMMENT);
+    TokenSet.create(KarateTokenTypes.COMMENT);
 
   public GherkinBlock(ASTNode node) {
     this(node, Indent.getAbsoluteNoneIndent());

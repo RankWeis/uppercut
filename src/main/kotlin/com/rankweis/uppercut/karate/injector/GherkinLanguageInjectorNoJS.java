@@ -67,10 +67,10 @@ public final class GherkinLanguageInjectorNoJS implements MultiHostInjector {
     int skipWhitespaceForward = StringUtil.skipWhitespaceOrNewLineForward(hostText, skippedOffset);
     int skipWhitespaceBackward =
       StringUtil.skipWhitespaceOrNewLineBackward(hostText, host.getTextLength() - skippedOffset);
-    final TextRange range = TextRange.create(skipWhitespaceForward, skipWhitespaceBackward);
+    final TextRange range = TextRange.create(skippedOffset, host.getTextLength() - skippedOffset);
 
     if (!range.isEmpty()) {
-      registrar.startInjecting(language);
+      registrar.startInjecting(language, "feature");
       registrar.addPlace(null, null, host, range);
       registrar.doneInjecting();
     }

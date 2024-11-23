@@ -146,6 +146,8 @@
       implementation="com.rankweis.uppercut.karate.navigation.KarateChooseByNameContributor"/>
     <multiHostInjector
       implementation="com.rankweis.uppercut.karate.injector.GherkinLanguageInjectorNoJS"/>
+    <formatting.injectedOptions
+      implementation="com.rankweis.uppercut.karate.injector.KarateInjectedFormattingOptionsProvider"/>
   </extensions>
 
   <extensionPoints>
