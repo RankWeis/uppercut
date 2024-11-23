@@ -71,6 +71,7 @@ jobs:
 
       # Publish the plugin to JetBrains Marketplace
       - name: Publish Plugin
+        continue-on-error: true
         env:
           PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
           CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
@@ -80,6 +81,7 @@ jobs:
 
       # Upload artifact as a release asset
       - name: Upload Release Asset
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload ${{ github.event.release.tag_name }} ./build/distributions/*
@@ -110,5 +112,5 @@ jobs:
             --title "Changelog update - \`$VERSION\`" \
             --body "Current pull request contains patched \`CHANGELOG.md\` file for the \`$VERSION\` version." \
             --label "$LABEL" \
-            --base "${{ steps.extract_branch.outputs.branch }}" \
+            --base ${{ steps.extract_branch.outputs.branch }} \
             --head $BRANCH

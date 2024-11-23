@@ -215,25 +215,30 @@ public class GherkinAnnotatorVisitor extends GherkinElementVisitor {
         if (table == null) {
           return null;
         }
-        final GherkinTableRow header = table.getHeaderRow();
-        assert header != null;
-
-        final List<GherkinTableCell> headerCells = header.getPsiCells();
-        // fetch headers
-        final List<String> headers = new ArrayList<>(headerCells.size() + 1);
-        for (PsiElement headerCell : headerCells) {
-          headers.add(headerCell.getText().trim());
-        }
-        // filter used substitutions names
-        final List<String> realSubstitutions = new ArrayList<>(possibleSubstitutions.size() + 1);
-        for (String substitution : possibleSubstitutions) {
-          if (headers.contains(substitution)) {
-            realSubstitutions.add(substitution);
-          }
-        }
+        final List<String> realSubstitutions = getSubstitutions(table, possibleSubstitutions);
         return realSubstitutions.isEmpty() ? null : realSubstitutions;
       }
     }
     return null;
+  }
+
+  private static @NotNull List<String> getSubstitutions(GherkinTable table, List<String> possibleSubstitutions) {
+    final GherkinTableRow header = table.getHeaderRow();
+    assert header != null;
+
+    final List<GherkinTableCell> headerCells = header.getPsiCells();
+    // fetch headers
+    final List<String> headers = new ArrayList<>(headerCells.size() + 1);
+    for (PsiElement headerCell : headerCells) {
+      headers.add(headerCell.getText().trim());
+    }
+    // filter used substitutions names
+    final List<String> realSubstitutions = new ArrayList<>(possibleSubstitutions.size() + 1);
+    for (String substitution : possibleSubstitutions) {
+      if (headers.contains(substitution)) {
+        realSubstitutions.add(substitution);
+      }
+    }
+    return realSubstitutions;
   }
 }
