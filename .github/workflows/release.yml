@@ -112,5 +112,5 @@ jobs:
             --title "Changelog update - \`$VERSION\`" \
             --body "Current pull request contains patched \`CHANGELOG.md\` file for the \`$VERSION\` version." \
             --label "$LABEL" \
-            --base ${{ steps.extract_branch.outputs.branch }} \
+            --base ${{ github.event.release.target_commitish }} \
             --head $BRANCH
