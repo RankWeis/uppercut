@@ -4,12 +4,7 @@
 
 ## [Unreleased]
 
-### Added
-
-- Support for IntelliJ Community Edition.
-- Support for Aqua.
-
-## [1.3.2-2024.2] - 2024-11-26
+## [1.3.2] - 2024-11-26
 
 ### Added
 
@@ -22,13 +17,13 @@
 - Issue where code folding would not persist after restart.
 - Issue where some xml would not be parsed as xml.
 
-## [1.3.1-2024.2] - 2024-11-19
+## [1.3.1] - 2024-11-19
 
 ### Added
 
 - Support for JSON in IntelliJ CE.
 
-## [1.3.0-2024.2] - 2024-11-17
+## [1.3.0] - 2024-11-17
 
 ### Fixed
 
@@ -195,10 +190,10 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.3.2-2024.2...HEAD
-[1.3.2-2024.2]: https://github.com/rankweis/uppercut/compare/v1.3.1-2024.2...v1.3.2-2024.2
-[1.3.1-2024.2]: https://github.com/rankweis/uppercut/compare/v1.3.0-2024.2...v1.3.1-2024.2
-[1.3.0-2024.2]: https://github.com/rankweis/uppercut/compare/v1.2.7...v1.3.0-2024.2
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v1.3.2...HEAD
+[1.3.2]: https://github.com/rankweis/uppercut/compare/v1.3.1...v1.3.2
+[1.3.1]: https://github.com/rankweis/uppercut/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/rankweis/uppercut/compare/v1.2.7...v1.3.0
 [1.2.7]: https://github.com/rankweis/uppercut/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/rankweis/uppercut/compare/v1.2.4...v1.2.6
 [1.2.4]: https://github.com/rankweis/uppercut/compare/v1.2.3...v1.2.4
