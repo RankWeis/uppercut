@@ -49,7 +49,6 @@ dependencies {
     intellijPlatform {
         val version = properties("platformVersion")
 
-        intellijIdeaUltimate(version, useInstaller = false)
         intellijIdeaCommunity(version, useInstaller = false)
         // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
