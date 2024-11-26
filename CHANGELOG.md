@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Support for IntelliJ Community Edition.
+- Support for Aqua.
+
 ## [1.3.2-2024.2] - 2024-11-26
 
 ### Added
