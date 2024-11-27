@@ -84,8 +84,8 @@ public abstract class GherkinPsiElementBase extends ASTWrapperPsiElement impleme
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof GherkinElementVisitor) {
-      acceptGherkin((GherkinElementVisitor) visitor);
+    if (visitor instanceof GherkinElementVisitor v) {
+      acceptGherkin(v);
     } else {
       super.accept(visitor);
     }

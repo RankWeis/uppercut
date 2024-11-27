@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Ability to format injected languages (xml, json, javascript) in the editor.
+
 ## [1.3.2] - 2024-11-26
 
 ### Added
