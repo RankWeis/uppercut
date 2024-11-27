@@ -15,6 +15,7 @@ import com.rankweis.uppercut.karate.psi.GherkinPystring;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 public final class GherkinLanguageInjector implements MultiHostInjector {
@@ -58,7 +59,7 @@ public final class GherkinLanguageInjector implements MultiHostInjector {
       return;
     }
 
-    int skipWhitespaceForward = StringUtil.skipWhitespaceOrNewLineForward(hostText, skippedOffset);
+    int skipWhitespaceForward = (StringUtil.startsWithWhitespace(hostText.substring(skippedOffset)) ? 1 : 0) + skippedOffset;
     int skipWhitespaceBackward =
       StringUtil.skipWhitespaceOrNewLineBackward(hostText, host.getTextLength() - skippedOffset);
     if (skipWhitespaceForward > skipWhitespaceBackward) {
@@ -69,12 +70,17 @@ public final class GherkinLanguageInjector implements MultiHostInjector {
     if (!range.isEmpty()) {
       String prefix;
       String suffix;
-      prefix = "let x = ";
-      suffix = ";";
+      if (StringUtils.startsWithAny(range.substring(hostText).trim(), "let", "const", "var")) {
+        prefix = null;
+        suffix = null;
+      } else {
+        prefix = "let x = ";
+        suffix = ";";
+      }
 
-      registrar.startInjecting(language);
-      registrar.addPlace(prefix, suffix, host, range);
-      registrar.doneInjecting();
+      registrar.startInjecting(language)
+        .addPlace(prefix, suffix, host, range)
+        .doneInjecting();
     }
   }
 }
