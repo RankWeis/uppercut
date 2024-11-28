@@ -13,6 +13,7 @@ import com.intellij.psi.PsiManager;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -45,16 +46,17 @@ public class KarateGoToSymbolProvider implements GotoDeclarationHandler {
         .filter(Matcher::matches)
         .map(m -> m.group(0))
         .findFirst()
-        .map(s -> sourceElement.getContainingFile().getVirtualFile().getParent().findFileByRelativePath(s))
+        .flatMap(s -> Optional.of(sourceElement.getContainingFile().getVirtualFile().getParent())
+          .map(f -> f.findFileByRelativePath(s)))
         .orElse(null);
       if (potentialFilePath != null) {
-        return new PsiElement[] {PsiManager.getInstance(sourceElement.getProject()).findFile(potentialFilePath)};
+        return new PsiElement[]{PsiManager.getInstance(sourceElement.getProject()).findFile(potentialFilePath)};
       }
     }
-//    final Lookup activeLookup =
-//      LookupManager.getInstance(sourceElement.getProject()).getActiveLookup();
-//    final LookupElement item = activeLookup != null ? activeLookup.getCurrentItem() : null;
-//    final Object lookupObject = item != null && item.isValid() ? item.getObject() : null;
+    //    final Lookup activeLookup =
+    //      LookupManager.getInstance(sourceElement.getProject()).getActiveLookup();
+    //    final LookupElement item = activeLookup != null ? activeLookup.getCurrentItem() : null;
+    //    final Object lookupObject = item != null && item.isValid() ? item.getObject() : null;
     //    return lookupObject instanceof DartLookupObject ? ((DartLookupObject)lookupObject).findPsiElement() : null;
     return new PsiElement[0];
   }

@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Exception that could sometimes occur during formatting.
+
 ## [1.3.3] - 2024-11-27
 
 ### Added
