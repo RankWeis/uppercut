@@ -46,6 +46,9 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
     if (!declarationsInScenario.isEmpty()) {
       return new PsiElementResolveResult[]{new PsiElementResolveResult(declarationsInScenario.get(0))};
     } else {
+      if (!myElement.isValid()) {
+        return new ResolveResult[0];
+      }
       List<KarateDeclaration> declarationsInBackground =
         PsiTreeUtil.findChildrenOfType(myElement.getContainingFile(), GherkinScenario.class)
           .stream()
