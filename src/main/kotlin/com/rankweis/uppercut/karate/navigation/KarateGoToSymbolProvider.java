@@ -46,7 +46,7 @@ public class KarateGoToSymbolProvider implements GotoDeclarationHandler {
         .filter(Matcher::matches)
         .map(m -> m.group(0))
         .findFirst()
-        .flatMap(s -> Optional.of(sourceElement.getContainingFile().getVirtualFile().getParent())
+        .flatMap(s -> Optional.ofNullable(sourceElement.getContainingFile().getVirtualFile().getParent())
           .map(f -> f.findFileByRelativePath(s)))
         .orElse(null);
       if (potentialFilePath != null) {
