@@ -3,12 +3,6 @@ package com.rankweis.uppercut.karate.psi.i18n;
 
 import static com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement;
 
-import com.rankweis.uppercut.karate.psi.GherkinKeywordList;
-import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
-import com.rankweis.uppercut.karate.psi.GherkinKeywordTable;
-import com.rankweis.uppercut.karate.psi.PlainKarateKeywordProvider;
-import com.rankweis.uppercut.karate.steps.CucumberStepHelper;
-import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.MalformedJsonException;
@@ -16,6 +10,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.rankweis.uppercut.karate.psi.GherkinKeywordList;
+import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
+import com.rankweis.uppercut.karate.psi.GherkinKeywordTable;
+import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import com.rankweis.uppercut.karate.psi.PlainKarateKeywordProvider;
+import com.rankweis.uppercut.karate.steps.CucumberStepHelper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -44,6 +44,7 @@ public class JsonGherkinKeywordProvider implements GherkinKeywordProvider {
 
   private static GherkinKeywordProvider myKeywordProvider;
   private static GherkinKeywordProvider myGherkin6KeywordProvider;
+  private static PlainKarateKeywordProvider myPlainKarateKeywordProvider;
 
   public static GherkinKeywordProvider getKeywordProvider() {
     if (myKeywordProvider == null) {

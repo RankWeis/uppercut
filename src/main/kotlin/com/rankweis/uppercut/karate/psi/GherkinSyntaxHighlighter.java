@@ -12,6 +12,7 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.KEYWORDS;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPERATOR;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PIPE;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING_QUOTES;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.STEP_KEYWORD;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TABLE_CELL;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TAG;
@@ -54,6 +55,7 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase implements E
     ATTRIBUTES.put(DECLARATION, GherkinHighlighter.DECLARATION);
     ATTRIBUTES.put(TAG, GherkinHighlighter.TAG);
     ATTRIBUTES.put(PYSTRING, GherkinHighlighter.PYSTRING);
+    ATTRIBUTES.put(PYSTRING_QUOTES, GherkinHighlighter.PYSTRING);
     ATTRIBUTES.put(JsonElementTypes.OBJECT, GherkinHighlighter.PYSTRING);
     ATTRIBUTES.put(TABLE_CELL, GherkinHighlighter.TABLE_CELL);
     ATTRIBUTES.put(PIPE, GherkinHighlighter.PIPE);

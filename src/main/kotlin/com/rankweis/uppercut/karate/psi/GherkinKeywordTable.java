@@ -51,6 +51,12 @@ public class GherkinKeywordTable {
     return keywords;
   }
 
+  public Collection<String> getActionKeywords() {
+    final Collection<String> keywords = getKeywords(KarateTokenTypes.ACTION_KEYWORD);
+    assert keywords != null;
+    return keywords;
+  }
+
   public Collection<String> getScenarioKeywords() {
     return getKeywords(KarateTokenTypes.SCENARIO_KEYWORD);
   }

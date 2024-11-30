@@ -1,16 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.rankweis.uppercut.karate;
+package com.rankweis.uppercut.karate.manipulator;
 
 import static com.rankweis.uppercut.karate.psi.GherkinLexer.PYSTRING_MARKER;
 
-import com.rankweis.uppercut.karate.psi.GherkinFileType;
-import com.rankweis.uppercut.karate.psi.GherkinPystring;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.IncorrectOperationException;
+import com.rankweis.uppercut.karate.psi.GherkinFileType;
+import com.rankweis.uppercut.karate.psi.GherkinPystring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

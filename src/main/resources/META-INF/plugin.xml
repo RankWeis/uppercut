@@ -138,7 +138,10 @@
     </intentionAction>
     <lang.elementManipulator
       forClass="com.rankweis.uppercut.karate.psi.GherkinPystring"
-      implementationClass="com.rankweis.uppercut.karate.GherkinPyStringManipulator"/>
+      implementationClass="com.rankweis.uppercut.karate.manipulator.GherkinPyStringManipulator"/>
+    <lang.elementManipulator
+      forClass="com.rankweis.uppercut.karate.psi.GherkinStep"
+      implementationClass="com.rankweis.uppercut.karate.manipulator.GherkinStepManipulator"/>
     <gotoDeclarationHandler
       implementation="com.rankweis.uppercut.karate.navigation.KarateGoToSymbolProvider"/>
     <gotoSymbolContributor

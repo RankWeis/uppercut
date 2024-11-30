@@ -98,4 +98,8 @@ public class PlainKarateKeywordProvider implements GherkinKeywordProvider {
   public GherkinKeywordTable getKeywordsTable(@Nullable final String language) {
     return DEFAULT_KEYWORD_TABLE;
   }
+
+  public Collection<String> getActionKeywords() {
+    return DEFAULT_KEYWORD_TABLE.getActionKeywords();
+  }
 }
