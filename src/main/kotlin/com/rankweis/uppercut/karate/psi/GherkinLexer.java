@@ -206,6 +206,20 @@ public class GherkinLexer extends LexerBase {
     }
     myCurrentTokenStart = myPosition;
     char c = myBuffer.charAt(myPosition);
+    if (isStringAtPosition(PYSTRING_MARKER)) {
+      myCurrentToken = KarateTokenTypes.PYSTRING_QUOTES;
+      myPosition += PYSTRING_MARKER.length();
+      if (myState != STATE_INSIDE_PYSTRING) {
+        myState = STATE_INSIDE_PYSTRING;
+      } else {
+        myState = STATE_DEFAULT;
+      }
+      return;
+    }
+    if (myState == STATE_INSIDE_PYSTRING) {
+      injectPyString();
+      return;
+    }
     if (myState == STATE_AFTER_OPERATOR) {
       if (c == '<') {
         // Probably is attempting xml
@@ -420,14 +434,11 @@ public class GherkinLexer extends LexerBase {
   }
 
   private void injectPyString() {
-    myPosition += PYSTRING_MARKER.length();
     while (myPosition < myEndOffset && !isStringAtPosition(PYSTRING_MARKER)) {
       myPosition++;
     }
-    myPosition += PYSTRING_MARKER.length();
     myCurrentToken = KarateTokenTypes.PYSTRING;
-    if (myPosition >= myEndOffset && !isStringAtPosition(PYSTRING_MARKER, myPosition - 3)) {
-      myState = STATE_INSIDE_PYSTRING;
+    if (myPosition >= myEndOffset) {
       myPosition = myEndOffset;
       myCurrentToken = KarateTokenTypes.PYSTRING_INCOMPLETE;
     }

@@ -34,7 +34,8 @@ public class KarateDeclaration extends GherkinPsiElementBase implements PsiNameI
   }
 
   @Override public PsiReference @NotNull [] getReferences() {
-    return this.references.stream().filter(r -> r.isReferenceTo(this)).toList().toArray(new PsiReference[0]);
+    return this.references.stream().filter(r -> r.isReferenceTo(this))
+      .toList().toArray(new PsiReference[0]);
   }
 
   @Override public PsiReference findReferenceAt(int offset) {

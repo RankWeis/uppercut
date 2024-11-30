@@ -3,19 +3,9 @@ package com.rankweis.uppercut.karate.completion;
 
 import static com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.STEP;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.STEP_KEYWORD;
 
-import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
-import com.rankweis.uppercut.karate.steps.CucumberStepHelper;
-import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
-import com.rankweis.uppercut.karate.psi.GherkinFeature;
-import com.rankweis.uppercut.karate.psi.GherkinFile;
-import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
-import com.rankweis.uppercut.karate.psi.GherkinKeywordTable;
-import com.rankweis.uppercut.karate.psi.GherkinRule;
-import com.rankweis.uppercut.karate.psi.GherkinScenario;
-import com.rankweis.uppercut.karate.psi.GherkinStep;
-import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
-import com.rankweis.uppercut.karate.psi.GherkinUtil;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -42,8 +32,24 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
+import com.rankweis.uppercut.karate.psi.GherkinFeature;
+import com.rankweis.uppercut.karate.psi.GherkinFile;
+import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
+import com.rankweis.uppercut.karate.psi.GherkinKeywordTable;
+import com.rankweis.uppercut.karate.psi.GherkinRule;
+import com.rankweis.uppercut.karate.psi.GherkinScenario;
+import com.rankweis.uppercut.karate.psi.GherkinStep;
+import com.rankweis.uppercut.karate.psi.GherkinUtil;
+import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
+import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
+import com.rankweis.uppercut.karate.psi.impl.GherkinScenarioOutlineImpl;
+import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
+import com.rankweis.uppercut.karate.steps.CucumberStepHelper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -55,10 +61,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jetbrains.annotations.NotNull;
-
-import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
-import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
-import com.rankweis.uppercut.karate.psi.impl.GherkinScenarioOutlineImpl;
 
 
 public final class CucumberCompletionContributor extends CompletionContributor {
@@ -96,7 +98,18 @@ public final class CucumberCompletionContributor extends CompletionContributor {
     PsiElementPattern.Capture<PsiElement> inScenario =
       psiElement().inside(psiElement().withElementType(GherkinElementTypes.SCENARIOS)).andNot(inTable);
     PsiElementPattern.Capture<PsiElement> inStep =
-      psiElement().inside(psiElement().withElementType(GherkinElementTypes.STEP)).andNot(inTable);
+      psiElement().inside(psiElement().withElementType(STEP)).andNot(inTable);
+
+    extend(CompletionType.BASIC,
+      psiElement().afterSibling(psiElement().withElementType(TokenSet.WHITE_SPACE).afterSibling(psiElement().withElementType(STEP_KEYWORD))),
+      new CompletionProvider<>() {
+        @Override
+        protected void addCompletions(@NotNull CompletionParameters parameters,
+          @NotNull ProcessingContext context,
+          @NotNull CompletionResultSet result) {
+          addActionKeywords(result, parameters.getOriginalFile());
+        }
+      });
 
     extend(CompletionType.BASIC, psiElement().inFile(PlatformPatterns.psiElement(GherkinFile.class)).andNot(inTable), new CompletionProvider<>() {
       @Override
@@ -258,6 +271,12 @@ public final class CucumberCompletionContributor extends CompletionContributor {
     if (!(file instanceof GherkinFile gherkinFile)) return;
 
     addKeywordsToResult(gherkinFile.getStepKeywords(), result, false);
+  }
+
+  private static void addActionKeywords(CompletionResultSet result, PsiFile file) {
+    if (!(file instanceof GherkinFile gherkinFile)) return;
+
+    addKeywordsToResult(gherkinFile.getActionKeywords(), result, false);
   }
 
 

@@ -1,5 +1,7 @@
 package com.rankweis.uppercut.karate.steps.reference;
 
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.QUOTED_STRING;
+
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -31,6 +33,9 @@ public class CucumberStepReferenceProvider extends PsiReferenceProvider {
         int start = m.start();
         int end = m.end();
         String content = m.group();
+        if (QUOTED_STRING.contains(element.findElementAt(m.start()).getNode().getElementType())) {
+          continue;
+        }
         references.add(new KarateReference(element, new TextRange(start, end), true));
         String[] dotSplitted = content.split("\\.");
         for (int i = 0; i < dotSplitted.length; i++) {

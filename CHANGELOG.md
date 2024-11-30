@@ -4,8 +4,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- Ability to auto-complete action keywords.
+
 ### Fixed
 
+- Auto rename functionality
 - Exception that could sometimes occur during formatting.
 
 ## [1.3.4] - 2024-11-28

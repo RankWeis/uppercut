@@ -15,6 +15,7 @@ import com.rankweis.uppercut.karate.psi.GherkinKeywordTable;
 import com.rankweis.uppercut.karate.psi.GherkinLexer;
 import com.rankweis.uppercut.karate.psi.KarateLanguage;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import com.rankweis.uppercut.karate.psi.PlainKarateKeywordProvider;
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class GherkinFileImpl extends PsiFileBase implements GherkinFile {
+  private PlainKarateKeywordProvider keywordProvider = new PlainKarateKeywordProvider();
   public GherkinFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, KarateLanguage.INSTANCE);
   }
@@ -48,6 +50,10 @@ public class GherkinFileImpl extends PsiFileBase implements GherkinFile {
     final GherkinKeywordTable table = provider.getKeywordsTable(language);
 
     return new ArrayList<>(table.getStepKeywords());
+  }
+
+  @Override public List<String> getActionKeywords() {
+    return new ArrayList<>(keywordProvider.getActionKeywords());
   }
 
   @Override
