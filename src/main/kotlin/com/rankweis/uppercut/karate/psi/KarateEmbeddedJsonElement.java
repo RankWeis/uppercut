@@ -4,9 +4,9 @@ import com.intellij.lang.ASTNode;
 import com.rankweis.uppercut.karate.psi.impl.GherkinPsiElementBase;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonEmbeddedContentTokenType extends GherkinPsiElementBase {
+public class KarateEmbeddedJsonElement extends GherkinPsiElementBase {
 
-  public JsonEmbeddedContentTokenType(@NotNull ASTNode node) {
+  public KarateEmbeddedJsonElement(@NotNull ASTNode node) {
     super(node);
   }
 

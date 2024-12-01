@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
+
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
@@ -41,7 +43,7 @@ public final class GherkinParserDefinition implements ParserDefinition {
 
   @Override
   public @NotNull PsiParser createParser(Project project) {
-    return new GherkinParser();
+    return new GherkinParser(this);
   }
 
   @Override
@@ -83,6 +85,13 @@ public final class GherkinParserDefinition implements ParserDefinition {
     }
     if (node.getElementType() == GherkinElementTypes.PAREN_ELEMENT) {
       return new KarateParenElement(node);
+    }
+    if ( node.getElementType() == GherkinElementTypes.JAVASCRIPT) {
+      return new KarateEmbeddedJavascriptElement(node);
+    } else if (node.getElementType() == JSON) {
+      return new KarateEmbeddedJsonElement(node);
+    } else if (node.getElementType() == GherkinElementTypes.XML) {
+      return new KarateEmbeddedJavascriptElement(node);
     }
     return PsiUtilCore.NULL_PSI_ELEMENT;
   }
