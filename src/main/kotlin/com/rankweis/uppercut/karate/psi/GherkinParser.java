@@ -18,16 +18,15 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
-import com.intellij.lang.javascript.JavaScriptSupportLoader;
-import com.intellij.lang.javascript.JavascriptLanguage;
-import com.intellij.lang.javascript.ecmascript6.parsing.TypeScriptParser;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.impl.source.parsing.xml.XmlParser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
 import com.rankweis.uppercut.parser.KarateJsonParser;
 import java.util.LinkedList;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,29 +45,29 @@ public class GherkinParser implements PsiParser {
       KarateTokenTypes.BACKGROUND_KEYWORD, KarateTokenTypes.SCENARIO_KEYWORD,
       KarateTokenTypes.SCENARIO_OUTLINE_KEYWORD, KarateTokenTypes.RULE_KEYWORD, KarateTokenTypes.FEATURE_KEYWORD);
 
-//  class JsonBuilder extends PsiBuilderImpl {
-//
-//    private final int maxOffset;
-//
-//    public JsonBuilder(@NotNull PsiBuilderImpl delegate, int maxOffset) {
-//      new PsiBuilderImpl(delegate.)
-//      Project project = delegate.getProject();
-//      Lexer lexer = parserDefinition.createLexer(project);
-//      this.maxOffset = maxOffset;
-//    }
-//
-//    @Override public void advanceLexer() {
-//      if (!myDelegate.eof() && myDelegate.getCurrentOffset() < maxOffset) {
-//        myDelegate.advanceLexer();
-//      }
-//    }
-//
-//    @Override public void rawAdvanceLexer(int steps) {
-//      if (!myDelegate.eof() && myDelegate.getCurrentOffset() < maxOffset) {
-//        myDelegate.rawAdvanceLexer(steps);
-//      }
-//    }
-//  }
+  //  class JsonBuilder extends PsiBuilderImpl {
+  //
+  //    private final int maxOffset;
+  //
+  //    public JsonBuilder(@NotNull PsiBuilderImpl delegate, int maxOffset) {
+  //      new PsiBuilderImpl(delegate.)
+  //      Project project = delegate.getProject();
+  //      Lexer lexer = parserDefinition.createLexer(project);
+  //      this.maxOffset = maxOffset;
+  //    }
+  //
+  //    @Override public void advanceLexer() {
+  //      if (!myDelegate.eof() && myDelegate.getCurrentOffset() < maxOffset) {
+  //        myDelegate.advanceLexer();
+  //      }
+  //    }
+  //
+  //    @Override public void rawAdvanceLexer(int steps) {
+  //      if (!myDelegate.eof() && myDelegate.getCurrentOffset() < maxOffset) {
+  //        myDelegate.rawAdvanceLexer(steps);
+  //      }
+  //    }
+  //  }
 
   @Override
   @NotNull
@@ -76,8 +75,8 @@ public class GherkinParser implements PsiParser {
     final PsiBuilder.Marker marker = builder.mark();
     parseFileTopLevel(builder);
     marker.done(GherkinParserDefinition.GHERKIN_FILE);
-    builder.setDebugMode(true);
-    return builder.getTreeBuilt();
+    ASTNode treeBuilt = builder.getTreeBuilt();
+    return treeBuilt;
   }
 
   private void parseFileTopLevel(PsiBuilder builder) {
@@ -288,7 +287,12 @@ public class GherkinParser implements PsiParser {
       || builder.getTokenType() == DECLARATION
       || builder.getTokenType() == VARIABLE
       || builder.getTokenType() == SINGLE_QUOTED_STRING
-      || builder.getTokenType() == DOUBLE_QUOTED_STRING) {
+      || builder.getTokenType() == DOUBLE_QUOTED_STRING
+      || isPystring(builder.getTokenType())) {
+      if (isPystring(builder.getTokenType())) {
+        parsePystring(builder);
+        continue;
+      }
       if (hadLineBreakBefore(builder, prevTokenEnd) || builder.eof()) {
         if (!parens.isEmpty()) {
           while (!parens.isEmpty()) {
@@ -315,7 +319,7 @@ public class GherkinParser implements PsiParser {
         builder.advanceLexer();
         continue;
       }
-      if (!parseStepParameter(builder) && !parseDeclaration(builder)) {
+      if (!parseStepParameter(builder) && !parseDeclaration(builder) && !parseVariable(builder)) {
         builder.advanceLexer();
       }
     }
@@ -340,9 +344,15 @@ public class GherkinParser implements PsiParser {
           marker.done(GherkinElementTypes.PYSTRING);
           return;
         }
-        if (builder.getTokenType().getLanguage() == JavascriptLanguage.INSTANCE) {
-          TypeScriptParser jsxParser = new TypeScriptParser(JavaScriptSupportLoader.TYPESCRIPT_JSX, builder);
-          parseLanguage(builder, JAVASCRIPT, (b) -> jsxParser.getStatementParser().parseStatement());
+        Optional<KarateJavascriptParsingExtensionPoint> jsExt =
+          KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList().stream().findFirst();
+        if (jsExt.map(j -> j.isJSLanguage(builder.getTokenType().getLanguage())).orElse(false)) {
+          parseLanguage(builder, JAVASCRIPT, false,
+            jsExt.map(KarateJavascriptParsingExtensionPoint::parseJs).orElse((b) -> {
+              while (b.getTokenType() == KarateTokenTypes.TEXT) {
+                builder.advanceLexer();
+              }
+            }));
         } else if (builder.getTokenType().getLanguage() == Json5Language.INSTANCE
           || builder.getTokenType().getLanguage() == JsonLanguage.INSTANCE) {
           new KarateJsonParser().parseLight(JSON, builder);
@@ -357,15 +367,21 @@ public class GherkinParser implements PsiParser {
         }
       }
     } else {
-      if (builder.getTokenType().getLanguage() == JavascriptLanguage.INSTANCE) {
-        TypeScriptParser jsxParser = new TypeScriptParser(JavaScriptSupportLoader.TYPESCRIPT_JSX, builder);
-        parseLanguage(builder, JAVASCRIPT, false, (b) -> jsxParser.getStatementParser().parseStatement());
+      Optional<KarateJavascriptParsingExtensionPoint> jsExt =
+        KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList().stream().findFirst();
+      if (jsExt.map(j -> j.isJSLanguage(builder.getTokenType().getLanguage())).orElse(false)) {
+        parseLanguage(builder, JAVASCRIPT, false,
+          jsExt.map(KarateJavascriptParsingExtensionPoint::parseJs).orElse((b) -> {
+            while (b.getTokenType() == KarateTokenTypes.TEXT) {
+              builder.advanceLexer();
+            }
+          }));
       } else if (builder.getTokenType().getLanguage() == Json5Language.INSTANCE
         || builder.getTokenType().getLanguage() == JsonLanguage.INSTANCE) {
         new KarateJsonParser().parseLight(JSON, builder);
       } else if (builder.getTokenType().getLanguage() == XMLLanguage.INSTANCE) {
         XmlParser xmlParser = new XmlParser();
-        parseLanguage(builder, XML, false, (b) -> xmlParser.parse(Objects.requireNonNull(b.getTokenType()), b));
+        parseLanguage(builder, XML, false, (b) -> xmlParser.parseLight(XML, b));
       } else {
         builder.advanceLexer();
       }
@@ -484,8 +500,10 @@ public class GherkinParser implements PsiParser {
     if (tokenType == null) {
       return false;
     }
-    return tokenType == KarateTokenTypes.PYSTRING || tokenType == PYSTRING_QUOTES || tokenType.getLanguage()
-      .is(JavascriptLanguage.INSTANCE) || tokenType.getLanguage().is(Json5Language.INSTANCE) || tokenType.getLanguage()
+    return tokenType == KarateTokenTypes.PYSTRING || tokenType == PYSTRING_QUOTES
+      || KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList().stream().findFirst()
+      .map(j -> j.isJSLanguage(tokenType.getLanguage())).orElse(false) || tokenType.getLanguage()
+      .is(Json5Language.INSTANCE) || tokenType.getLanguage()
       .is(JsonLanguage.INSTANCE) || tokenType.getLanguage().is(XMLLanguage.INSTANCE);
   }
 }

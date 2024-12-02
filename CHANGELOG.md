@@ -7,6 +7,8 @@
 ### Added
 
 - Ability to auto-complete action keywords.
+- Most requested feature! Javascript Highlighting in IntelliJ Community
+- Major overhaul of the parsing for a hopefully more stable experience. Please reach out to me if you have any issues.
 
 ### Fixed
 

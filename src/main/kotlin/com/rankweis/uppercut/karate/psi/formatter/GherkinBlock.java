@@ -19,7 +19,6 @@ import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.ChildAttributes;
-import com.intellij.formatting.FormattingMode;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Spacing;
 import com.intellij.formatting.SpacingBuilder;
@@ -31,10 +30,6 @@ import com.intellij.json.formatter.JsonBlock;
 import com.intellij.json.formatter.JsonCodeStyleSettings;
 import com.intellij.json.json5.Json5Language;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.javascript.dialects.TypeScriptLanguageDialect;
-import com.intellij.lang.javascript.formatter.JSBlockContext;
-import com.intellij.lang.javascript.formatter.blocks.JSBlock;
-import com.intellij.lang.javascript.formatter.blocks.JSBlockEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -42,6 +37,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
 import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
 import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
 import com.rankweis.uppercut.karate.psi.GherkinParserDefinition;
@@ -62,19 +58,14 @@ public class GherkinBlock implements ASTBlock {
 
   private final ASTNode myNode;
   private final Indent myIndent;
-  private JsonBlock parent;
   private Alignment alignment;
   private final TextRange myTextRange;
   private final boolean myLeaf;
   private List<Block> myChildren = null;
   private final GherkinKeywordProvider myKeywordProvider = JsonGherkinKeywordProvider.getKeywordProvider();
   private final GherkinKeywordProvider myActionKeywordProvider = new PlainKarateKeywordProvider();
-  private final JSBlockContext jsBlockContext =
-    new JSBlockContext(CodeStyleSettings.getDefaults(), TypeScriptLanguageDialect.getInstance(), null,
-      FormattingMode.REFORMAT);
-  JsonCodeStyleSettings jsonCustomSettings =
+  private final JsonCodeStyleSettings jsonCustomSettings =
     CodeStyleSettings.getDefaults().getCustomSettings(JsonCodeStyleSettings.class);
-  private boolean inlineJson = false;
 
   private static final TokenSet BLOCKS_TO_INDENT = TokenSet.create(GherkinElementTypes.FEATURE_HEADER,
     GherkinElementTypes.RULE,
@@ -144,16 +135,10 @@ public class GherkinBlock implements ASTBlock {
     List<Block> result = new ArrayList<>();
 
     if (myNode.getElementType() == JAVASCRIPT) {
-      for (ASTNode jsChild : children) {
-        if (jsChild.getElementType() == TokenType.WHITE_SPACE) {
-          continue;
-        }
-        JSBlock jsBlock =
-          new JSBlockEx(jsChild, getAlignment(),
-            Indent.getContinuationWithoutFirstIndent(), null, null, jsBlockContext);
-        result.add(jsBlock);
-      }
-      return result;
+      return KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList()
+        .stream().findFirst()
+        .map(extension -> extension.getJsSubBlocks(myNode, alignment))
+        .orElse(result);
     }
     if (myNode.getElementType() == JSON) {
       JsonBlock parentblock =
@@ -169,6 +154,9 @@ public class GherkinBlock implements ASTBlock {
           new JsonBlock(null, myNode, jsonCustomSettings, getAlignment(),
             Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false),
             createJsonSpacingBuilder(CodeStyleSettings.getDefaults()));
+      } else {
+        jsonCustomSettings.OBJECT_WRAPPING = 2;
+        jsonCustomSettings.ARRAY_WRAPPING = 2;
       }
       for (ASTNode jsChild : children) {
         if (jsChild.getElementType() == TokenType.WHITE_SPACE) {
@@ -192,7 +180,6 @@ public class GherkinBlock implements ASTBlock {
         child.getStartOffset() > myNode.getStartOffset();
       Indent indent;
       Alignment blockAlignment = null;
-      JsonBlock parent = null;
       if (BLOCKS_TO_INDENT.contains(child.getElementType()) || isTagInsideScenario) {
         indent = Indent.getNormalIndent();
       } else {
@@ -207,13 +194,6 @@ public class GherkinBlock implements ASTBlock {
       if (child.getElementType() == JAVASCRIPT) {
         blockAlignment = Alignment.createAlignment();
       }
-      //      if (child.getElementType() == JSON) {
-      //        parent = new JsonBlock(null, child, jsonCustomSettings, blockAlignment, Indent.getNormalIndent(), null,
-      //          createJsonSpacingBuilder(CodeStyleSettings.getDefaults()));
-      //        this.setParent(parent);
-      //        result.add(parent);
-      //        continue;
-      //      }
       if (child.getElementType() == KarateTokenTypes.COMMENT) {
         final ASTNode commentIndentElement = child.getTreePrev();
         if (commentIndentElement != null && (commentIndentElement.getText().contains("\n")
@@ -251,13 +231,6 @@ public class GherkinBlock implements ASTBlock {
     this.alignment = alignment;
   }
 
-  public void setParent(JsonBlock parent) {
-    this.parent = parent;
-  }
-
-  public void setInlineJson(boolean inlineJson) {
-    this.inlineJson = inlineJson;
-  }
 
   @Override
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
@@ -276,18 +249,6 @@ public class GherkinBlock implements ASTBlock {
     final IElementType elementType1 = node1.getElementType();
     final IElementType elementType2 = node2.getElementType();
 
-    //    if (elementType2 == JAVASCRIPT) {
-    //      return Spacing.createSpacing(0, 0, 1, true, 1);
-    //    }
-    //    if(elementType1 == JAVASCRIPT && block2 instanceof JSBlock) {
-    //      return Spacing.createSpacing(0, 0, 1, false, 0);
-    //    }
-    if (block1 instanceof JSBlock && block2 instanceof JSBlock) {
-      return block1.getSpacing(block1, block2);
-    }
-    if (inlineJson) {
-      return createJsonSpacingBuilder(CodeStyleSettings.getDefaults()).getSpacing(parent, child1, child2);
-    }
     if (READ_ONLY_BLOCKS.contains(elementType2)) {
       return Spacing.getReadOnlySpacing();
     }
@@ -391,10 +352,6 @@ public class GherkinBlock implements ASTBlock {
   }
 
   static @NotNull SpacingBuilder createJsonSpacingBuilder(CodeStyleSettings settings) {
-    return createJsonSpacingBuilder(settings, false);
-  }
-
-  static @NotNull SpacingBuilder createJsonSpacingBuilder(CodeStyleSettings settings, boolean inline) {
     final JsonCodeStyleSettings jsonSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JsonLanguage.INSTANCE);
 
@@ -405,8 +362,8 @@ public class GherkinBlock implements ASTBlock {
     return new SpacingBuilder(settings, Json5Language.INSTANCE)
       .before(JsonElementTypes.COLON).spacing(spacesBeforeColon, spacesBeforeColon, 0, false, 0)
       .after(JsonElementTypes.COLON).spacing(spacesAfterColon, spacesAfterColon, 0, false, 0)
-      .withinPair(L_BRACKET, R_BRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS, true)
-      .withinPair(L_CURLY, R_CURLY).spaceIf(commonSettings.SPACE_WITHIN_BRACES, true)
+      .withinPair(L_BRACKET, R_BRACKET).spaces(1, true)
+      .withinPair(L_CURLY, R_CURLY).spaces(1, true)
       .before(COMMA).spacing(spacesBeforeComma, spacesBeforeComma, 0, false, 0)
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA);
   }

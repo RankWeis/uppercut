@@ -15,6 +15,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
+import com.rankweis.uppercut.karate.lexer.GherkinLexer;
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
 import com.rankweis.uppercut.karate.psi.impl.GherkinFeatureHeaderImpl;
@@ -80,7 +81,8 @@ public final class GherkinParserDefinition implements ParserDefinition {
     if (node.getElementType() == GherkinElementTypes.TAG) return new GherkinTagImpl(node);
     if (node.getElementType() == GherkinElementTypes.STEP_PARAMETER) return new GherkinStepParameterImpl(node);
     if (node.getElementType() == GherkinElementTypes.PYSTRING) return new GherkinPystringImpl(node);
-    if (node.getElementType() == GherkinElementTypes.DECLARATION) {
+    if (node.getElementType() == GherkinElementTypes.DECLARATION
+      || node.getElementType() == GherkinElementTypes.VARIABLE) {
       return new KarateDeclaration(node);
     }
     if (node.getElementType() == GherkinElementTypes.PAREN_ELEMENT) {

@@ -24,7 +24,7 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
   public KarateReference(@NotNull PsiElement element,
     TextRange rangeInElement, boolean soft) {
     super(element, rangeInElement, soft);
-    key = element.getText().substring(rangeInElement.getStartOffset(), rangeInElement.getEndOffset());
+    key = rangeInElement.substring(element.getText());
   }
 
   @Override public boolean isReferenceTo(@NotNull PsiElement element) {

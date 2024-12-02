@@ -5,8 +5,7 @@
   <vendor>rankweis</vendor>
 
   <depends>com.intellij.modules.platform</depends>
-<!--  <depends optional="true" config-file="plugin-withJs.xml">JavaScript</depends>-->
-  <depends>JavaScript</depends>
+  <depends optional="true" config-file="plugin-withJs.xml">JavaScript</depends>
   <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.json</depends>
   <depends>org.intellij.intelliLang</depends>
@@ -20,6 +19,8 @@
       fieldName="INSTANCE" language="Karate" extensions="feature"/>
     <lang.syntaxHighlighterFactory language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="KarateJs"
+      implementationClass="com.rankweis.uppercut.karate.highlight.KarateJsSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JSON"
       implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
     <json.jsonLikePsiWalkerFactory implementation="com.rankweis.uppercut.karate.extension.KarateJson5PsiWalkerFactory" order="first"/>
@@ -27,6 +28,12 @@
       implementation="com.rankweis.uppercut.karate.extension.KarateJsonLiteralChecker" order="first"/>
 <!--    <localInspection language="JSON" shortName="JsonStandardCompliance" bundle="messages.JsonBundle" key="inspection.compliance.name" groupKey="json.inspection.group" enabledByDefault="false" level="ERROR" implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection" />-->
     <localInspection language="JSON" shortName="KarateJsonStandardCompliance" bundle="messages.JsonBundle" key="inspection.compliance.name" groupKey="json.inspection.group" enabledByDefault="true" level="ERROR" implementationClass="com.rankweis.uppercut.karate.extension.KarateStandardComplianceInspection" order="last" />
+    <localInspection language="Karate"
+      enabledByDefault="true"
+      shortName="KarateJavascriptStandardCompliance"
+      displayName="Karate Javascript standard compliance"
+      groupName="Karate suppressions"
+      implementationClass="com.rankweis.uppercut.karate.extension.KarateInspectionTool" order="last"/>
 
     <lang.parserDefinition language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinParserDefinition"/>
@@ -160,13 +167,19 @@
 <!--    <formatting.injectedOptions implementation="com.rankweis.uppercut.karate.injector.KarateInjectedFormattingOptionsProvider"/>-->
   </extensions>
 
+  <extensions defaultExtensionNs="com.rankweis.uppercut">
+    <karateJavascriptParsingExtensionPoint
+      implementation="io.karatelabs.js.KarateJsNoPluginExtension"
+      order="first"/>
+  </extensions>
+
   <extensionPoints>
     <extensionPoint
       interface="com.rankweis.uppercut.karate.CucumberJvmExtensionPoint"
       dynamic="true" name="cucumberJvmExtensionPoint"/>
-<!--    <extensionPoint-->
-<!--      interface="com.rankweis.uppercut.karate.injector.GherkinInjectorExtensionPoint"-->
-<!--      dynamic="true" name="injectorExtensionPoint"/>-->
+    <extensionPoint
+      interface="com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint"
+      dynamic="true" name="uppercut.karateJavascriptParsingExtensionPoint"/>
   </extensionPoints>
 
 

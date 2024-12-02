@@ -13,6 +13,7 @@ import com.rankweis.uppercut.karate.psi.KarateLanguage;
 import org.jetbrains.annotations.NotNull;
 
 public class KarateStandardComplianceInspection extends JsonStandardComplianceInspection {
+
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
 
     if (!holder.getFile().getLanguage().equals(KarateLanguage.INSTANCE)) {
@@ -26,7 +27,9 @@ public class KarateStandardComplianceInspection extends JsonStandardComplianceIn
     return OptPane.EMPTY;
   }
 
-  private final class StandardKarateValidatingElementVisitor extends JsonStandardComplianceInspection.StandardJsonValidatingElementVisitor {
+  private final class StandardKarateValidatingElementVisitor
+    extends JsonStandardComplianceInspection.StandardJsonValidatingElementVisitor {
+
     StandardKarateValidatingElementVisitor(ProblemsHolder holder) {
       super(holder);
     }
@@ -58,6 +61,11 @@ public class KarateStandardComplianceInspection extends JsonStandardComplianceIn
         String textWithoutHostEscaping = JsonPsiUtil.getElementTextWithoutHostEscaping(literal);
         return textWithoutHostEscaping.startsWith("\"") || textWithoutHostEscaping.startsWith("'");
       }
+    }
+
+    @Override
+    public void visitReferenceExpression(@NotNull JsonReferenceExpression reference) {
+      return;
     }
   }
 

@@ -1,7 +1,11 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
+  <extensions defaultExtensionNs="com.rankweis.uppercut">
+    <karateJavascriptParsingExtensionPoint
+      implementation="com.rankweis.uppercut.karate.lexer.impl.KarateJavascriptExtension"
+      order="first"/>
+  </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <multiHostInjector
-      implementation="com.rankweis.uppercut.karate.injector.GherkinLanguageInjector"/>
+    <lang.inspectionSuppressor language="Karate" implementationClass="com.rankweis.uppercut.karate.inspections.JSInspector"/>
   </extensions>
 </idea-plugin>

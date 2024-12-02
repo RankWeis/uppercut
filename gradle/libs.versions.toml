@@ -1,6 +1,7 @@
 [versions]
 # libraries
 junit = "4.13.2"
+karate-js = "0.1.1"
 
 # plugins
 kotlin = "2.1.0"
@@ -11,6 +12,7 @@ kover = "0.8.3"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+karatejs = { group = "io.karatelabs.js", name = "karate-js", version.ref = "karate-js"}
 
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
