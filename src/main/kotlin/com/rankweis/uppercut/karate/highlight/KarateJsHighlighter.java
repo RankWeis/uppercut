@@ -107,14 +107,18 @@ public class KarateJsHighlighter extends SyntaxHighlighterBase {
   static {
     register(HighlighterColors.NO_HIGHLIGHTING, WS_LF, WS);
     register(DefaultLanguageHighlighterColors.STRING, BACKTICK, S_STRING, D_STRING, T_STRING);
-    register(HighlighterColors.TEXT, L_CURLY, L_BRACKET, L_PAREN, R_CURLY, R_BRACKET, R_PAREN, COMMA, COLON, SEMI,
+    register(DefaultLanguageHighlighterColors.BRACES, L_CURLY, R_CURLY);
+    register(DefaultLanguageHighlighterColors.BRACKETS, L_BRACKET, R_BRACKET);
+    register(DefaultLanguageHighlighterColors.PARENTHESES, L_PAREN, R_PAREN);
+    register(HighlighterColors.TEXT, COMMA, COLON, SEMI,
       DOT_DOT_DOT, DOT, EQ_EQ_EQ, EQ_EQ, EQ, EQ_GT, NOT_EQ_EQ, NOT_EQ, NOT, PIPE_PIPE_EQ, PIPE_PIPE, PIPE_EQ, PIPE,
       AMP_AMP_EQ, AMP_AMP, AMP_EQ, AMP, CARET_EQ, CARET, QUES_QUES, QUES, PLUS_PLUS, PLUS_EQ, PLUS, MINUS_MINUS,
       MINUS_EQ, MINUS, STAR_STAR_EQ, STAR_STAR, STAR_EQ, STAR, SLASH_EQ, SLASH, PERCENT_EQ, PERCENT, TILDE,
       PLUS_PLUS, PLUS_EQ, PLUS, MINUS_MINUS, MINUS_EQ, MINUS, STAR_STAR_EQ, STAR_STAR, STAR_EQ, STAR, SLASH_EQ,
       SLASH, PERCENT_EQ, PERCENT, TILDE);
-    register(DefaultLanguageHighlighterColors.KEYWORD, NULL, TRUE, FALSE, FUNCTION, RETURN, TRY, CATCH, FINALLY, THROW,
+    register(DefaultLanguageHighlighterColors.KEYWORD, NULL, TRUE, FALSE, RETURN, TRY, CATCH, FINALLY, THROW,
       NEW, VAR, LET, CONST, IF, ELSE, TYPEOF, INSTANCEOF, DELETE, FOR, IN, OF, DO, WHILE, SWITCH, CASE, DEFAULT, BREAK);
+    register(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, FUNCTION);
     register(DefaultLanguageHighlighterColors.LINE_COMMENT, L_COMMENT);
     register(DefaultLanguageHighlighterColors.BLOCK_COMMENT, B_COMMENT);
     register(DefaultLanguageHighlighterColors.NUMBER, NUMBER);

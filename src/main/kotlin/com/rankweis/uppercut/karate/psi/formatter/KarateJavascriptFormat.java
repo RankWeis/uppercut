@@ -17,13 +17,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import java.util.ArrayList;
 import java.util.List;
 
-public class KarateJavascriptBlock {
+public class KarateJavascriptFormat {
 
   private final JSLanguageDialect dialect;
   private final DialectOptionHolder holder;
   private final JSBlockContext jsBlockContext;
 
-  public KarateJavascriptBlock(JSLanguageDialect dialect, DialectOptionHolder holder) {
+  public KarateJavascriptFormat(JSLanguageDialect dialect, DialectOptionHolder holder) {
     this.dialect = dialect;
     this.holder = holder;
     this.jsBlockContext = new JSBlockContext(CodeStyleSettings.getDefaults(), dialect, null,

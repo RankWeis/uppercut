@@ -9,8 +9,6 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPEN_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPERATOR;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING_INCOMPLETE;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.SCENARIOS_KEYWORDS;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.SCENARIO_KEYWORD;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.SCENARIO_OUTLINE_KEYWORD;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.SINGLE_QUOTED_STRING;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
@@ -28,8 +26,10 @@ import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 
 public class GherkinLexer extends LexerBase {
@@ -94,14 +94,20 @@ public class GherkinLexer extends LexerBase {
     myKeywords.sort((o1, o2) -> o2.length() - o1.length());
   }
 
-  @Override
-  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState, boolean advance) {
     myBuffer = buffer;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myPosition = startOffset;
     myState = initialState;
-    advance();
+    if (advance) {
+      advance();
+    }
+  }
+
+  @Override
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    start(buffer, startOffset, endOffset, initialState, true);
   }
 
   @Override
@@ -227,6 +233,11 @@ public class GherkinLexer extends LexerBase {
     return myBuffer.charAt(pos);
   }
 
+  private boolean injecting() {
+    return myState == STATE_INSIDE_PYSTRING || myState == INJECTING_JAVASCRIPT || myState == INJECTING_JSON
+      || myState == INJECTING_XML;
+  }
+
   @Override
   public void advance() {
     if (myPosition >= myEndOffset) {
@@ -239,24 +250,24 @@ public class GherkinLexer extends LexerBase {
     if (isStringAtPosition(PYSTRING_MARKER)) {
       myCurrentToken = KarateTokenTypes.PYSTRING_QUOTES;
       myPosition += PYSTRING_MARKER.length();
-      if (myState != STATE_INSIDE_PYSTRING && myState != INJECTING_JAVASCRIPT && myState != INJECTING_JSON
-        && myState != INJECTING_XML) {
+      if (injecting()) {
+        myState = STATE_DEFAULT;
+      } else {
         if (myPosition >= myEndOffset) {
           myCurrentToken = PYSTRING_INCOMPLETE;
           return;
         }
-        // If you've opened up a marker """ we don't want it to try to parse the rset of the file necessarily.
-        int nextNonWhitespace = getPositionOfNextNonWhitespace();
-        for (String keyword : myKeywords) {
-          if ((myKeywordProvider.isStepKeyword(keyword) || keyword.equals(SCENARIO_KEYWORD.getDebugName())
-            || keyword.equals(SCENARIO_OUTLINE_KEYWORD)) && isStringAtPosition(keyword, nextNonWhitespace)) {
-            myCurrentToken = PYSTRING_INCOMPLETE;
-            return;
-          }
+        List<String> scenarioKeywords =
+          Stream.of("Scenario", "Background").toList();
+        List<String> stepKeywords = myKeywords.stream().filter(myKeywordProvider::isStepKeyword).toList();
+        List<String> interruptions = new ArrayList<>(scenarioKeywords);
+        interruptions.addAll(stepKeywords);
+        int pystringInterrupted = isPystringInterrupted(interruptions, List.of(PYSTRING_MARKER));
+        if (pystringInterrupted == -1) {
+          myCurrentToken = PYSTRING_INCOMPLETE;
+          return;
         }
         myState = STATE_INSIDE_PYSTRING;
-      } else {
-        myState = STATE_DEFAULT;
       }
       return;
     }
@@ -363,7 +374,7 @@ public class GherkinLexer extends LexerBase {
       if (endOfFunction < 0) {
         endOfFunction = getPositionOfNextLine();
       }
-      startInjectJs(myPosition, endOfFunction);
+      startInjectJs(myPosition, Math.min(endOfFunction + 1, myEndOffset - 1));
     } else if (c == '\'') {
       myCurrentToken = SINGLE_QUOTED_STRING;
       if (!advanceIfQuoted('\'') && myPosition < myEndOffset) {
@@ -462,7 +473,8 @@ public class GherkinLexer extends LexerBase {
     }
   }
 
-  private int findNextMatchingClosingBrace() {
+  @VisibleForTesting
+  int findNextMatchingClosingBrace() {
     int pos = myPosition;
     int closingBracesRequired = 0;
     while (pos < myEndOffset) {
@@ -476,10 +488,12 @@ public class GherkinLexer extends LexerBase {
       }
       pos++;
     }
+
+    pos = Math.max(Math.min(pos, myEndOffset - 1), 0);
     if (myBuffer.charAt(pos) != '}') {
       return -1;
     } else {
-      return pos + 1;
+      return pos;
     }
   }
 
@@ -573,7 +587,17 @@ public class GherkinLexer extends LexerBase {
   }
 
   private void injectJs() {
-    jsLexer.advance();
+    try {
+      jsLexer.advance();
+    } catch (Exception e) {
+      int findClosingPystring = isPystringInterrupted(List.of(), List.of(PYSTRING_MARKER));
+      if (findClosingPystring != -1) {
+        advanceToNextLine();
+      } else {
+        myPosition = findClosingPystring;
+        myCurrentToken = TokenType.ERROR_ELEMENT;
+      }
+    }
     myCurrentToken = jsLexer.getTokenType();
     myPosition = jsLexer.getTokenEnd();
   }
@@ -722,12 +746,48 @@ public class GherkinLexer extends LexerBase {
     }
   }
 
-  private int getPositionOfNextNonWhitespace() {
-    int end = myPosition;
+
+  // includingSelf = true means we count your position as a potential return, false means we start at the next
+  // character.
+  private int getPositionOfNextNonWhitespace(int startPosition, boolean includingSelf) {
+    int end = startPosition;
+    if (!Character.isWhitespace(myBuffer.charAt(end)) && includingSelf) {
+      return end;
+    }
     while (end < myEndOffset && Character.isWhitespace(myBuffer.charAt(end))) {
       end++;
     }
     return end;
+  }
+
+  private boolean isBeginningOfLine(int startPos) {
+    while (startPos > 0 && myBuffer.charAt(startPos) != '\n') {
+      if (!Character.isWhitespace(myBuffer.charAt(startPos))) {
+        return false;
+      }
+      startPos--;
+    }
+    return true;
+  }
+
+  // Gives the position of the terminal string (i.e. the matching pystring)
+  // Or -1 if it hits an interruption before this is possible.
+  private int isPystringInterrupted(List<String> interruptions, List<String> terminations) {
+    int end = myPosition;
+    while (end < myEndOffset) {
+      end = getPositionOfNextNonWhitespace(end, true);
+      int finalEnd = end;
+      if (terminations.stream().anyMatch(s -> isStringAtPosition(s, finalEnd))) {
+        return end;
+      }
+      if (interruptions.stream().anyMatch(s -> isStringAtPosition(s, finalEnd))) {
+        if (isBeginningOfLine(end - 1)) {
+          return -1;
+        }
+      }
+      end++;
+    }
+    return -1;
   }
 
   private int getPositionOfNextLine() {

@@ -19,13 +19,11 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.psi.impl.source.parsing.xml.XmlParser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
 import com.rankweis.uppercut.parser.KarateJsonParser;
 import java.util.LinkedList;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -44,30 +42,6 @@ public class GherkinParser implements PsiParser {
     TokenSet.create(
       KarateTokenTypes.BACKGROUND_KEYWORD, KarateTokenTypes.SCENARIO_KEYWORD,
       KarateTokenTypes.SCENARIO_OUTLINE_KEYWORD, KarateTokenTypes.RULE_KEYWORD, KarateTokenTypes.FEATURE_KEYWORD);
-
-  //  class JsonBuilder extends PsiBuilderImpl {
-  //
-  //    private final int maxOffset;
-  //
-  //    public JsonBuilder(@NotNull PsiBuilderImpl delegate, int maxOffset) {
-  //      new PsiBuilderImpl(delegate.)
-  //      Project project = delegate.getProject();
-  //      Lexer lexer = parserDefinition.createLexer(project);
-  //      this.maxOffset = maxOffset;
-  //    }
-  //
-  //    @Override public void advanceLexer() {
-  //      if (!myDelegate.eof() && myDelegate.getCurrentOffset() < maxOffset) {
-  //        myDelegate.advanceLexer();
-  //      }
-  //    }
-  //
-  //    @Override public void rawAdvanceLexer(int steps) {
-  //      if (!myDelegate.eof() && myDelegate.getCurrentOffset() < maxOffset) {
-  //        myDelegate.rawAdvanceLexer(steps);
-  //      }
-  //    }
-  //  }
 
   @Override
   @NotNull
@@ -344,82 +318,47 @@ public class GherkinParser implements PsiParser {
           marker.done(GherkinElementTypes.PYSTRING);
           return;
         }
-        Optional<KarateJavascriptParsingExtensionPoint> jsExt =
-          KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList().stream().findFirst();
-        if (jsExt.map(j -> j.isJSLanguage(builder.getTokenType().getLanguage())).orElse(false)) {
-          parseLanguage(builder, JAVASCRIPT, false,
-            jsExt.map(KarateJavascriptParsingExtensionPoint::parseJs).orElse((b) -> {
-              while (b.getTokenType() == KarateTokenTypes.TEXT) {
-                builder.advanceLexer();
-              }
-            }));
-        } else if (builder.getTokenType().getLanguage() == Json5Language.INSTANCE
-          || builder.getTokenType().getLanguage() == JsonLanguage.INSTANCE) {
-          new KarateJsonParser().parseLight(JSON, builder);
-        } else if (builder.getTokenType().getLanguage() == XMLLanguage.INSTANCE) {
-          XmlParser xmlParser = new XmlParser();
-          parseLanguage(builder, XML, (b) -> xmlParser.parse(Objects.requireNonNull(b.getTokenType()), b));
-        } else {
-          builder.advanceLexer();
-        }
-        if (builder.getTokenType() == PYSTRING_QUOTES) {
-          builder.advanceLexer();
-        }
       }
+    }
+    Optional<KarateJavascriptParsingExtensionPoint> jsExt =
+      KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList().stream().findFirst();
+    if (jsExt.map(j -> j.isJSLanguage(builder.getTokenType().getLanguage())).orElse(false)) {
+      parseLanguage(builder, JAVASCRIPT,
+        jsExt.map(KarateJavascriptParsingExtensionPoint::parseJs).orElseThrow());
+    } else if (builder.getTokenType() != null && (builder.getTokenType().getLanguage() == Json5Language.INSTANCE
+      || builder.getTokenType().getLanguage() == JsonLanguage.INSTANCE)) {
+      new KarateJsonParser().parseLight(JSON, builder);
+    } else if (builder.getTokenType() != null && builder.getTokenType().getLanguage() == XMLLanguage.INSTANCE) {
+      parseLanguage(builder, XML, (b) -> {
+        while (!b.eof() && b.getTokenType().getLanguage() == XMLLanguage.INSTANCE) {
+          builder.advanceLexer();
+        }
+      });
     } else {
-      Optional<KarateJavascriptParsingExtensionPoint> jsExt =
-        KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList().stream().findFirst();
-      if (jsExt.map(j -> j.isJSLanguage(builder.getTokenType().getLanguage())).orElse(false)) {
-        parseLanguage(builder, JAVASCRIPT, false,
-          jsExt.map(KarateJavascriptParsingExtensionPoint::parseJs).orElse((b) -> {
-            while (b.getTokenType() == KarateTokenTypes.TEXT) {
-              builder.advanceLexer();
-            }
-          }));
-      } else if (builder.getTokenType().getLanguage() == Json5Language.INSTANCE
-        || builder.getTokenType().getLanguage() == JsonLanguage.INSTANCE) {
-        new KarateJsonParser().parseLight(JSON, builder);
-      } else if (builder.getTokenType().getLanguage() == XMLLanguage.INSTANCE) {
-        XmlParser xmlParser = new XmlParser();
-        parseLanguage(builder, XML, false, (b) -> xmlParser.parseLight(XML, b));
-      } else {
-        builder.advanceLexer();
-      }
+      builder.advanceLexer();
+    }
+    if (builder.getTokenType() == PYSTRING_QUOTES) {
+      builder.advanceLexer();
     }
     marker.done(GherkinElementTypes.PYSTRING);
   }
 
-  private static void parseLanguage(PsiBuilder builder, IElementType closingTag, Consumer<PsiBuilder> doParse) {
-    parseLanguage(builder, closingTag, true, doParse);
-  }
-
-  private static void parseLanguage(PsiBuilder builder, IElementType closingTag, boolean multiline,
+  private static void parseLanguage(PsiBuilder builder, IElementType closingTag,
     Consumer<PsiBuilder> doParse) {
 
     PsiBuilder.Marker languageMarker = null;
     if (closingTag != null) {
       languageMarker = builder.mark();
     }
-    int prevOffset = builder.getCurrentOffset();
-    while (!builder.eof() && builder.getTokenType() != null
+    if (!builder.eof() && builder.getTokenType() != null
       && builder.getTokenType() != KarateTokenTypes.PYSTRING_QUOTES) {
       doParse.accept(builder);
-      if (prevOffset == builder.getCurrentOffset()) {
-        if (languageMarker != null) {
+      if (languageMarker != null) {
+        if (builder.eof()) {
           languageMarker.drop();
+        } else {
+          languageMarker.done(closingTag);
         }
-        builder.advanceLexer();
-        break;
-      }
-      if (!multiline) {
-        break;
-      }
-    }
-    if (languageMarker != null) {
-      if (builder.eof() && multiline) {
-        languageMarker.drop();
-      } else {
-        languageMarker.done(closingTag);
       }
     }
   }

@@ -9,10 +9,13 @@ import io.karatelabs.js.Type;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class KarateLexerAdapter extends LexerBase {
+  Log log = LogFactory.getLog(KarateLexerAdapter.class);
 
   private Lexer lexer;
   public static final Map<String, Token> STRING_TOKEN_MAP = new ConcurrentHashMap<>();
@@ -49,7 +52,8 @@ public class KarateLexerAdapter extends LexerBase {
   @Override public void advance() {
     try {
       currentToken = lexer.yylex();
-    } catch (IOException e) {
+    } catch (IOException | Error e) {
+      log.error("Error in lexer", e);
       throw new RuntimeException(e);
     }
   }

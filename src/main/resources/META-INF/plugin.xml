@@ -17,6 +17,9 @@
     <fileType name="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinFileType"
       fieldName="INSTANCE" language="Karate" extensions="feature"/>
+    <fileType name="KarateJs"
+      implementationClass="com.rankweis.uppercut.karate.psi.KarateJsFileType"
+      fieldName="INSTANCE" language="KarateJs" extensions="featurejs"/>
     <lang.syntaxHighlighterFactory language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="KarateJs"
@@ -37,12 +40,16 @@
 
     <lang.parserDefinition language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinParserDefinition"/>
+    <lang.parserDefinition language="KarateJs"
+      implementationClass="com.rankweis.uppercut.karate.psi.parser.KarateJsParserDefinition"/>
     <lang.commenter language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinCommenter"/>
     <lang.psiStructureViewFactory language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.structure.GherkinStructureViewFactory"/>
     <lang.formatter language="Karate"
       implementationClass="com.rankweis.uppercut.karate.format.KarateFormattingModelBuilder"/>
+    <lang.formatter language="KarateJs"
+      implementationClass="com.rankweis.uppercut.karate.format.KarateJSFormattingModelBuilder"/>
     <annotator language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.annotator.GherkinAnnotator"/>
     <lang.foldingBuilder language="Karate"
@@ -169,8 +176,7 @@
 
   <extensions defaultExtensionNs="com.rankweis.uppercut">
     <karateJavascriptParsingExtensionPoint
-      implementation="io.karatelabs.js.KarateJsNoPluginExtension"
-      order="first"/>
+      implementation="io.karatelabs.js.KarateJsNoPluginExtension" order="last"/>
   </extensions>
 
   <extensionPoints>

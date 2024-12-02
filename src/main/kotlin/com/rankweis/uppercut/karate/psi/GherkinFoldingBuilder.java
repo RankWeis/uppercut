@@ -1,6 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.XML;
+
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -17,10 +21,11 @@ import org.jetbrains.annotations.NotNull;
 
 
 public final class GherkinFoldingBuilder extends FoldingBuilderEx implements DumbAware {
+
   private static final TokenSet BLOCKS_TO_FOLD = TokenSet.create(GherkinElementTypes.SCENARIO,
-                                                                 GherkinElementTypes.SCENARIO_OUTLINE,
-                                                                 GherkinElementTypes.EXAMPLES_BLOCK,
-                                                                 KarateTokenTypes.PYSTRING);
+    GherkinElementTypes.SCENARIO_OUTLINE,
+    GherkinElementTypes.EXAMPLES_BLOCK,
+    KarateTokenTypes.PYSTRING, JSON, JAVASCRIPT, XML);
 
 
   @Override public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document,

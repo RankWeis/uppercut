@@ -8,21 +8,43 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.javascript.DialectOptionHolder;
 import com.intellij.lang.javascript.JSFlexAdapter;
 import com.intellij.lang.javascript.JSLanguageDialect;
+import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.JavascriptLanguage;
 import com.intellij.lang.javascript.ecmascript6.parsing.jsx.JSXParser;
 import com.intellij.lang.javascript.highlighting.JSHighlighter;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
-import com.rankweis.uppercut.karate.psi.formatter.KarateJavascriptBlock;
+import com.rankweis.uppercut.karate.psi.formatter.KarateJavascriptFormat;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class KarateJavascriptExtension implements KarateJavascriptParsingExtensionPoint {
 
-  private Lexer lexer = null;
-  private static final DialectOptionHolder holder = JavascriptLanguage.INSTANCE.getOptionHolder();
-  private static final JSLanguageDialect language = JavascriptLanguage.INSTANCE;
+
+  static class CustomJSLanguageOptionHolder extends DialectOptionHolder {
+    private static CustomJSLanguageOptionHolder INSTANCE = new CustomJSLanguageOptionHolder();
+    public static DialectOptionHolder getInstance() {
+      return INSTANCE;
+    }
+    public CustomJSLanguageOptionHolder() {
+      super("JSX", false, true);
+    }
+  }
+
+  static class CustomJSLanguageDialect extends JSLanguageDialect {
+    private static CustomJSLanguageDialect INSTANCE = new CustomJSLanguageDialect();
+    public static JSLanguageDialect getInstance() {
+      return INSTANCE;
+    }
+    public CustomJSLanguageDialect() {
+      super("KarateJS", new CustomJSLanguageOptionHolder());
+    }
+  }
+
+  private static final DialectOptionHolder holder = CustomJSLanguageOptionHolder.getInstance();
+  private static final JSLanguageDialect dialect = CustomJSLanguageDialect.getInstance();
+
 
   @Override public Lexer getLexer(boolean highlighting) {
     return new JSFlexAdapter(holder, highlighting);
@@ -33,14 +55,18 @@ public class KarateJavascriptExtension implements KarateJavascriptParsingExtensi
   }
 
   @Override public List<Block> getJsSubBlocks(ASTNode astNode, Alignment alignment) {
-    return new KarateJavascriptBlock(language, holder).getJsSubBlocks(astNode, alignment);
+    return new KarateJavascriptFormat(dialect, holder).getJsSubBlocks(astNode, alignment);
   }
 
   @Override public Consumer<PsiBuilder> parseJs() {
     return (builder) -> {
-      new JSXParser(language, builder)
-        .getStatementParser()
-        .parseStatement();
+      while (!builder.eof() && builder.getTokenType().getLanguage() == dialect.getBaseLanguage()) {
+        if (  builder.getTokenType() == JSTokenTypes.FUNCTION_KEYWORD) {
+          new JSXParser(dialect, builder).getFunctionParser().parseFunctionExpression();
+        } else {
+          new JSXParser(dialect, builder).getStatementParser().parseStatement();
+        }
+      }
     };
   }
 
