@@ -14,10 +14,10 @@ public class KarateParserTest extends ParsingTestCase {
   }
 
   public KarateParserTest() {
-    super("", "feature", new GherkinParserDefinition());
+    super("", "feature", true, new GherkinParserDefinition());
   }
 
-  public void testParser() {
+  public void testRandom() {
     doTest(true, true);
   }
 
@@ -34,4 +34,6 @@ public class KarateParserTest extends ParsingTestCase {
   protected boolean includeRanges() {
     return true;
   }
+
+
 }

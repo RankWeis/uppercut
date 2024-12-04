@@ -63,6 +63,11 @@ public class GherkinLexer extends LexerBase {
   public static final List<String> INTERESTING_SYMBOLS =
     List.of("\n", "'", "\"", "#", "{", "[", "function", " ", "(", ")");
   private final GherkinKeywordProvider myKeywordProvider;
+  List<String> scenarioKeywords =
+    Stream.of("Scenario", "Background").toList();
+  List<String> stepKeywords;
+  List<String> interruptions;
+
   private final boolean highlighting;
   private String myCurLanguage;
 
@@ -71,12 +76,7 @@ public class GherkinLexer extends LexerBase {
   Lexer xmlLexer = null;
 
   public GherkinLexer(GherkinKeywordProvider provider) {
-    myKeywordProvider = provider;
-    this.highlighting = false;
-    this.jsLexer =
-      KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().map(l -> l.getLexer(highlighting))
-        .orElse(null);
-    updateLanguage("en");
+    this(provider, false);
   }
 
   public GherkinLexer(GherkinKeywordProvider provider, boolean highlighting) {
@@ -86,6 +86,10 @@ public class GherkinLexer extends LexerBase {
       KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().map(l -> l.getLexer(highlighting))
         .orElse(null);
     updateLanguage("en");
+    stepKeywords  = myKeywords.stream().filter(myKeywordProvider::isStepKeyword).toList();
+    interruptions = new ArrayList<>();
+    interruptions.addAll(stepKeywords);
+    interruptions.addAll(scenarioKeywords);
   }
 
   private void updateLanguage(String language) {
@@ -168,7 +172,12 @@ public class GherkinLexer extends LexerBase {
     int pos = myPosition + 1;
     int closingBracesRequired = 1;
 
-    while (pos < myEndOffset && myBuffer.charAt(pos) != '\n') {
+    while (pos < myEndOffset) {
+      int nextPos = isStringInterrupted(interruptions, List.of("" + openingBrace, "" + closingBrace), pos);
+      if (nextPos == -1 || nextPos >= myEndOffset) {
+        return false;
+      }
+      pos = nextPos;
       if (myBuffer.charAt(pos) == openingBrace) {
         closingBracesRequired++;
       } else if (myBuffer.charAt(pos) == closingBrace) {
@@ -257,12 +266,7 @@ public class GherkinLexer extends LexerBase {
           myCurrentToken = PYSTRING_INCOMPLETE;
           return;
         }
-        List<String> scenarioKeywords =
-          Stream.of("Scenario", "Background").toList();
-        List<String> stepKeywords = myKeywords.stream().filter(myKeywordProvider::isStepKeyword).toList();
-        List<String> interruptions = new ArrayList<>(scenarioKeywords);
-        interruptions.addAll(stepKeywords);
-        int pystringInterrupted = isPystringInterrupted(interruptions, List.of(PYSTRING_MARKER));
+        int pystringInterrupted = isStringInterrupted(interruptions, List.of(PYSTRING_MARKER));
         if (pystringInterrupted == -1) {
           myCurrentToken = PYSTRING_INCOMPLETE;
           return;
@@ -324,7 +328,7 @@ public class GherkinLexer extends LexerBase {
     } else if ((c == '{' || c == '[') && myState != STATE_TABLE) {
       if (c == '[') {
         String stringUntilNextInterestingToken = getStringUntilNextInterestingToken();
-        if (stringUntilNextInterestingToken.matches("\\[?[\\w+.]*]?")) {
+        if (stringUntilNextInterestingToken.matches("\\[?[\\w+.]*]")) {
           myCurrentToken = TEXT;
           advanceToNextInterestingToken();
           return;
@@ -590,7 +594,7 @@ public class GherkinLexer extends LexerBase {
     try {
       jsLexer.advance();
     } catch (Exception e) {
-      int findClosingPystring = isPystringInterrupted(List.of(), List.of(PYSTRING_MARKER));
+      int findClosingPystring = isStringInterrupted(List.of(), List.of(PYSTRING_MARKER));
       if (findClosingPystring != -1) {
         advanceToNextLine();
       } else {
@@ -772,8 +776,12 @@ public class GherkinLexer extends LexerBase {
 
   // Gives the position of the terminal string (i.e. the matching pystring)
   // Or -1 if it hits an interruption before this is possible.
-  private int isPystringInterrupted(List<String> interruptions, List<String> terminations) {
-    int end = myPosition;
+  private int isStringInterrupted(List<String> interruptions, List<String> terminations) {
+    return isStringInterrupted(interruptions, terminations, myPosition);
+  }
+
+  private int isStringInterrupted(List<String> interruptions, List<String> terminations, int myStartPosition) {
+    int end = myStartPosition;
     while (end < myEndOffset) {
       end = getPositionOfNextNonWhitespace(end, true);
       int finalEnd = end;
