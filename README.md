@@ -11,7 +11,8 @@ Features include
 - Syntax highlighting
 - Go-To definitions/references
 - Running tests from intelliJ,
-- Embedded JSON, Javascript and XML support (for IntelliJ Ultimate only), 
+- Embedded JSON, Javascript and XML support
+- Formatting
 - attaching a debugger to a running karate test.
 
 This project is open sourced via the Apache Commons 2.0 license and is a **work in progress**. 
