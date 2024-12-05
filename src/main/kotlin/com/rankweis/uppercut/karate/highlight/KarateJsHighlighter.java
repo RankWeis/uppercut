@@ -30,11 +30,15 @@ import static io.karatelabs.js.Token.FALSE;
 import static io.karatelabs.js.Token.FINALLY;
 import static io.karatelabs.js.Token.FOR;
 import static io.karatelabs.js.Token.FUNCTION;
+import static io.karatelabs.js.Token.GT;
+import static io.karatelabs.js.Token.GT_EQ;
 import static io.karatelabs.js.Token.IDENT;
 import static io.karatelabs.js.Token.IF;
 import static io.karatelabs.js.Token.IN;
 import static io.karatelabs.js.Token.INSTANCEOF;
 import static io.karatelabs.js.Token.LET;
+import static io.karatelabs.js.Token.LT;
+import static io.karatelabs.js.Token.LT_EQ;
 import static io.karatelabs.js.Token.L_BRACKET;
 import static io.karatelabs.js.Token.L_COMMENT;
 import static io.karatelabs.js.Token.L_CURLY;
@@ -89,8 +93,6 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
 import com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter;
 import io.karatelabs.js.Token;
@@ -98,7 +100,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class KarateJsHighlighter extends SyntaxHighlighterBase {
 
@@ -110,7 +111,7 @@ public class KarateJsHighlighter extends SyntaxHighlighterBase {
     register(DefaultLanguageHighlighterColors.BRACES, L_CURLY, R_CURLY);
     register(DefaultLanguageHighlighterColors.BRACKETS, L_BRACKET, R_BRACKET);
     register(DefaultLanguageHighlighterColors.PARENTHESES, L_PAREN, R_PAREN);
-    register(HighlighterColors.TEXT, COMMA, COLON, SEMI,
+    register(HighlighterColors.TEXT, COMMA, COLON, SEMI, GT, LT, LT_EQ, GT_EQ,
       DOT_DOT_DOT, DOT, EQ_EQ_EQ, EQ_EQ, EQ, EQ_GT, NOT_EQ_EQ, NOT_EQ, NOT, PIPE_PIPE_EQ, PIPE_PIPE, PIPE_EQ, PIPE,
       AMP_AMP_EQ, AMP_AMP, AMP_EQ, AMP, CARET_EQ, CARET, QUES_QUES, QUES, PLUS_PLUS, PLUS_EQ, PLUS, MINUS_MINUS,
       MINUS_EQ, MINUS, STAR_STAR_EQ, STAR_STAR, STAR_EQ, STAR, SLASH_EQ, SLASH, PERCENT_EQ, PERCENT, TILDE,
@@ -123,10 +124,7 @@ public class KarateJsHighlighter extends SyntaxHighlighterBase {
     register(DefaultLanguageHighlighterColors.BLOCK_COMMENT, B_COMMENT);
     register(DefaultLanguageHighlighterColors.NUMBER, NUMBER);
     register(DefaultLanguageHighlighterColors.IDENTIFIER, IDENT, DOLLAR_L_CURLY);
-  }
-
-
-  public KarateJsHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
+    register(HighlighterColors.NO_HIGHLIGHTING, WS_LF, WS);
   }
 
   public KarateJsHighlighter() {

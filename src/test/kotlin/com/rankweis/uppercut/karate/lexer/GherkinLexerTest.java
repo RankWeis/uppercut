@@ -11,6 +11,34 @@ public class GherkinLexerTest extends LightPlatformTestCase {
 
   @Mock GherkinKeywordProvider keywordProvider;
 
+  private static final String[] REAL_SCENARIOS = new String[]{
+    """
+      Scenario: Process deeply nested JSON with dynamic expressions
+        * def input = { "outer": { "inner": { "key": "#[randomString(5)]" } } }
+        * def expected = karate.jsonPath(input, '$.outer.inner.key')
+        * def dynamicResult = function() {
+        var result = karate.jsonPath(input, '$.outer.inner.key');
+        return result == expected;
+        }
+        * match dynamicResult() == true
+        * print 'Dynamic result validation passed!
+        '""",
+    """
+          * def flattenJson = function(obj, prefix) {
+              var result = {};
+              for (var key in obj) {
+                  var prefixedKey = prefix ? prefix + '.' + key : key;
+                  if (typeof obj[key] === 'object' && obj[key] !== null) {
+                      Object.assign(result, flattenJson(obj[key], prefixedKey));
+                  } else {
+                      result[prefixedKey] = obj[key];
+                  }
+              }
+              return result;
+          }
+      """
+  };
+
   public void setUp() throws Exception {
     super.setUp();
     MockitoAnnotations.openMocks(this);
@@ -38,23 +66,15 @@ public class GherkinLexerTest extends LightPlatformTestCase {
   }
 
   public void testFindingNextMatchingClosingBrace_RealScenario() {
-    String realScenario = """
-      Scenario: Process deeply nested JSON with dynamic expressions
-        * def input = { "outer": { "inner": { "key": "#[randomString(5)]" } } }
-        * def expected = karate.jsonPath(input, '$.outer.inner.key')
-        * def dynamicResult = function() {
-        var result = karate.jsonPath(input, '$.outer.inner.key');
-        return result == expected;
-        }
-        * match dynamicResult() == true
-        * print 'Dynamic result validation passed!
-        '""";
-    int start = realScenario.indexOf("function");
-    int end = realScenario.lastIndexOf("}");
-    lexer.start(realScenario, start, realScenario.length(), 0, false);
-    int result = lexer.findNextMatchingClosingBrace();
-    assertEquals(end, result);
+    for(String realScenario : REAL_SCENARIOS) {
+      int start = realScenario.indexOf("function");
+      int end = realScenario.lastIndexOf("}");
+      lexer.start(realScenario, start, realScenario.length(), 0, false);
+      int result = lexer.findNextMatchingClosingBrace();
+      assertEquals(end, result);
+    }
   }
+
 
   public void testFindNextMatchingClosingBrace_EmptyString() {
     lexer.start("", 0, 0, 0);

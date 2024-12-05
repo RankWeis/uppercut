@@ -7,6 +7,8 @@ import com.rankweis.uppercut.parser.types.KarateJsElementType;
 import io.karatelabs.js.Token;
 import io.karatelabs.js.Type;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.logging.Log;
@@ -71,8 +73,24 @@ public class KarateLexerAdapter extends LexerBase {
       token -> new KarateJsElementType(t.name()));
   }
 
+  public static List<IElementType> getElements(Token... types) {
+    return Arrays.stream(types).map(t ->
+      TOKEN_TO_ELEMENT.computeIfAbsent(STRING_TOKEN_MAP.computeIfAbsent(t.name(), k -> t),
+        token -> new KarateJsElementType(t.name()))).toList();
+  }
+
   public static IElementType getType(Type t) {
     return TYPE_TO_ELEMENT.computeIfAbsent(t, type -> new KarateJsElementType(t.name()));
+  }
+
+  public static List<IElementType> getTypes(Type... types) {
+    return Arrays.stream(types).map(t -> TYPE_TO_ELEMENT.computeIfAbsent(t, type -> new KarateJsElementType(t.name())))
+      .toList();
+  }
+
+  public static List<IElementType> getTypes(Token... types) {
+    return Arrays.stream(types).map(t -> TOKEN_TO_ELEMENT.computeIfAbsent(t, type -> new KarateJsElementType(t.name())))
+      .toList();
   }
 
   public static IElementType getToken(IElementType e) {

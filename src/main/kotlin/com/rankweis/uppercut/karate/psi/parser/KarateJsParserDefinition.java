@@ -50,4 +50,8 @@ public class KarateJsParserDefinition implements ParserDefinition {
   @Override public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new KarateJsFileImpl(viewProvider);
   }
+
+  @Override public @NotNull TokenSet getWhitespaceTokens() {
+    return TokenSet.create(KarateLexerAdapter.getElement(Token.WS), KarateLexerAdapter.getElement(Token.WS_LF));
+  }
 }

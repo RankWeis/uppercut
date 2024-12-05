@@ -70,6 +70,7 @@ public class GherkinLexer extends LexerBase {
 
   private final boolean highlighting;
   private String myCurLanguage;
+  private int myEndInject = 0;
 
   private final Lexer jsLexer;
   Lexer jsonLexer = null;
@@ -86,7 +87,7 @@ public class GherkinLexer extends LexerBase {
       KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().map(l -> l.getLexer(highlighting))
         .orElse(null);
     updateLanguage("en");
-    stepKeywords  = myKeywords.stream().filter(myKeywordProvider::isStepKeyword).toList();
+    stepKeywords = myKeywords.stream().filter(myKeywordProvider::isStepKeyword).toList();
     interruptions = new ArrayList<>();
     interruptions.addAll(stepKeywords);
     interruptions.addAll(scenarioKeywords);
@@ -378,7 +379,7 @@ public class GherkinLexer extends LexerBase {
       if (endOfFunction < 0) {
         endOfFunction = getPositionOfNextLine();
       }
-      startInjectJs(myPosition, Math.min(endOfFunction + 1, myEndOffset - 1));
+      startInjectJs(myPosition, Math.min(endOfFunction + 1, myEndOffset));
     } else if (c == '\'') {
       myCurrentToken = SINGLE_QUOTED_STRING;
       if (!advanceIfQuoted('\'') && myPosition < myEndOffset) {
@@ -585,6 +586,7 @@ public class GherkinLexer extends LexerBase {
     if (endPos > myEndOffset) {
       endPos = myEndOffset;
     }
+    myEndInject = endPos;
     jsLexer.start(myBuffer, startPos, endPos);
     myState = INJECTING_JAVASCRIPT;
     injectJs();
@@ -594,13 +596,9 @@ public class GherkinLexer extends LexerBase {
     try {
       jsLexer.advance();
     } catch (Exception e) {
-      int findClosingPystring = isStringInterrupted(List.of(), List.of(PYSTRING_MARKER));
-      if (findClosingPystring != -1) {
-        advanceToNextLine();
-      } else {
-        myPosition = findClosingPystring;
-        myCurrentToken = TokenType.ERROR_ELEMENT;
-      }
+      myCurrentToken = TokenType.ERROR_ELEMENT;
+      myPosition = jsLexer.getBufferEnd();
+      return;
     }
     myCurrentToken = jsLexer.getTokenType();
     myPosition = jsLexer.getTokenEnd();
@@ -610,8 +608,7 @@ public class GherkinLexer extends LexerBase {
     if (endPos > myEndOffset) {
       endPos = myEndOffset;
     }
-    Json5Lexer json5Lexer = new Json5Lexer();
-    jsonLexer = json5Lexer;
+    jsonLexer = new Json5Lexer();
     jsonLexer.start(myBuffer, startPos, endPos);
     myState = INJECTING_JSON;
     myCurrentToken = jsonLexer.getTokenType();

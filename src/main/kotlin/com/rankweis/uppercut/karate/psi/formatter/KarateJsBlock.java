@@ -1,19 +1,32 @@
 package com.rankweis.uppercut.karate.psi.formatter;
 
-import static com.intellij.json.JsonElementTypes.COMMA;
-import static com.intellij.json.JsonElementTypes.L_BRACKET;
-import static com.intellij.json.JsonElementTypes.L_CURLY;
-import static com.intellij.json.JsonElementTypes.R_BRACKET;
-import static com.intellij.json.JsonElementTypes.R_CURLY;
+import static com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter.getElement;
+import static com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter.getElements;
+import static com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter.getType;
+import static com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter.getTypes;
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.STEP;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.CLOSE_PAREN;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.COLON;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.IDENTIFIERS;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPEN_PAREN;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPERATOR;
-import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT_LIKE;
+import static io.karatelabs.js.Token.B_COMMENT;
+import static io.karatelabs.js.Token.ELSE;
+import static io.karatelabs.js.Token.EQ;
+import static io.karatelabs.js.Token.EQ_EQ;
+import static io.karatelabs.js.Token.EQ_EQ_EQ;
+import static io.karatelabs.js.Token.EQ_GT;
+import static io.karatelabs.js.Token.GT;
+import static io.karatelabs.js.Token.GT_EQ;
+import static io.karatelabs.js.Token.GT_GT_EQ;
+import static io.karatelabs.js.Token.GT_GT_GT;
+import static io.karatelabs.js.Token.LT;
+import static io.karatelabs.js.Token.LT_EQ;
+import static io.karatelabs.js.Token.LT_LT_EQ;
+import static io.karatelabs.js.Token.L_COMMENT;
+import static io.karatelabs.js.Token.L_CURLY;
+import static io.karatelabs.js.Token.RETURN;
+import static io.karatelabs.js.Token.R_CURLY;
+import static io.karatelabs.js.Token.SEMI;
+import static io.karatelabs.js.Token.WS;
+import static io.karatelabs.js.Token.WS_LF;
+import static io.karatelabs.js.Type.BLOCK;
+import static io.karatelabs.js.Type.STATEMENT;
 
 import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Alignment;
@@ -21,31 +34,15 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.ChildAttributes;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Spacing;
-import com.intellij.formatting.SpacingBuilder;
 import com.intellij.formatting.Wrap;
-import com.intellij.formatting.WrapType;
-import com.intellij.json.JsonElementTypes;
-import com.intellij.json.JsonLanguage;
-import com.intellij.json.formatter.JsonBlock;
-import com.intellij.json.formatter.JsonCodeStyleSettings;
-import com.intellij.json.json5.Json5Language;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
 import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
-import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
-import com.rankweis.uppercut.karate.psi.GherkinParserDefinition;
-import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
-import com.rankweis.uppercut.karate.psi.PlainKarateKeywordProvider;
-import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
-import io.netty.util.internal.StringUtil;
+import io.karatelabs.js.Token;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -61,46 +58,69 @@ public class KarateJsBlock implements ASTBlock {
   private Alignment alignment;
   private final TextRange myTextRange;
   private final boolean myLeaf;
+  private final Wrap myWrap;
   private List<Block> myChildren = null;
-  private final GherkinKeywordProvider myKeywordProvider = JsonGherkinKeywordProvider.getKeywordProvider();
-  private final GherkinKeywordProvider myActionKeywordProvider = new PlainKarateKeywordProvider();
-  private final JsonCodeStyleSettings jsonCustomSettings =
-    CodeStyleSettings.getDefaults().getCustomSettings(JsonCodeStyleSettings.class);
 
-  private static final TokenSet BLOCKS_TO_INDENT = TokenSet.create(GherkinElementTypes.FEATURE_HEADER,
-    GherkinElementTypes.RULE,
-    GherkinElementTypes.SCENARIO,
-    GherkinElementTypes.SCENARIO_OUTLINE,
-    GherkinElementTypes.STEP,
-    GherkinElementTypes.TABLE,
-    GherkinElementTypes.EXAMPLES_BLOCK);
+  private static final TokenSet BLOCKS_TO_INDENT = TokenSet.create(
+    getType(STATEMENT));
 
-  private static final TokenSet BLOCKS_TO_INDENT_CHILDREN = TokenSet.create(GherkinParserDefinition.GHERKIN_FILE,
-    GherkinElementTypes.FEATURE,
-    GherkinElementTypes.SCENARIO,
-    GherkinElementTypes.RULE,
-    GherkinElementTypes.SCENARIO_OUTLINE, JAVASCRIPT);
+  private static final TokenSet BLOCKS_TO_INDENT_CHILDREN = TokenSet.create(
+    getType(STATEMENT));
+
+  private static final TokenSet BLOCKS_TO_LINE_FEED_BEFORE = TokenSet.create();
+
+  private static final TokenSet BLOCKS_TO_LINE_FEED_AFTER = TokenSet.create(
+    getType(STATEMENT), getElement(L_COMMENT), getElement(B_COMMENT));
+
+  private static final TokenSet BLOCKS_TO_SPACE;
+
+  private static final TokenSet BLOCKS_TO_SPACE_AFTER = TokenSet.create(
+    getElement(SEMI)
+  );
+
+  private static final TokenSet BLOCKS_TO_NOT_SPACE_AFTER = TokenSet.create(
+    getElement(L_CURLY)
+  );
+
+  private static final TokenSet BLOCKS_TO_NOT_SPACE_BEFORE = TokenSet.create(
+    getElements(SEMI, Token.COMMA, R_CURLY).toArray(IElementType[]::new)
+  );
+
+  static {
+    List<IElementType> types = new ArrayList<>();
+      types.addAll(getTypes(EQ, EQ_GT, LT_LT_EQ, EQ_EQ, EQ_EQ_EQ, GT_EQ, GT, LT, LT_EQ, LT_LT_EQ, GT_GT_EQ, GT_GT_GT, RETURN));
+    types.add(getType(STATEMENT));
+    types.add(getType(BLOCK));
+
+     BLOCKS_TO_SPACE = TokenSet.create(types
+        .toArray(IElementType[]::new));
+  }
 
   private static final TokenSet READ_ONLY_BLOCKS =
     TokenSet.create(JAVASCRIPT, GherkinElementTypes.PYSTRING, KarateTokenTypes.COMMENT);
+  private boolean isSingleLine;
 
-  public KarateJsBlock(ASTNode node) {
-    this(node, Indent.getAbsoluteNoneIndent());
+  public KarateJsBlock(ASTNode node, Indent indent, boolean isSingleLine) {
+    this(node, indent, node.getTextRange(), isSingleLine);
   }
 
-  public KarateJsBlock(ASTNode node, Indent indent) {
-    this(node, indent, node.getTextRange());
+  public KarateJsBlock(ASTNode node, Indent indent, final TextRange textRange, boolean isSingleLine) {
+    this(node, indent, textRange, false, isSingleLine);
   }
 
-  public KarateJsBlock(ASTNode node, Indent indent, final TextRange textRange) {
-    this(node, indent, textRange, false);
+  public KarateJsBlock(ASTNode node, Indent indent, final TextRange textRange, final boolean leaf,
+    boolean isSingleLine) {
+    this(node, indent, textRange, leaf, null, isSingleLine);
   }
 
-  public KarateJsBlock(ASTNode node, Indent indent, final TextRange textRange, final boolean leaf) {
-    myNode = node;
-    myIndent = indent;
-    myTextRange = textRange;
-    myLeaf = leaf;
+  public KarateJsBlock(ASTNode myNode, Indent myIndent, TextRange myTextRange, boolean myLeaf, Wrap myWrap,
+    boolean isSingleLine) {
+    this.myNode = myNode;
+    this.myIndent = myIndent;
+    this.myTextRange = myTextRange;
+    this.myLeaf = myLeaf;
+    this.myWrap = myWrap;
+    this.isSingleLine = isSingleLine;
   }
 
   @Override
@@ -134,44 +154,11 @@ public class KarateJsBlock implements ASTBlock {
 
     List<Block> result = new ArrayList<>();
 
-    if (myNode.getElementType() == JAVASCRIPT) {
-      return KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList()
-        .stream().findFirst()
-        .map(extension -> extension.getJsSubBlocks(myNode, alignment))
-        .orElse(result);
-    }
-    if (myNode.getElementType() == JSON) {
-      JsonBlock parentblock =
-        new JsonBlock(null, myNode, jsonCustomSettings, getAlignment(),
-          Indent.getContinuationWithoutFirstIndent(), Wrap.createWrap(WrapType.NORMAL, true),
-          createJsonSpacingBuilder(CodeStyleSettings.getDefaults()));
-
-      if (!myNode.getText().strip().contains("\n")) {
-        jsonCustomSettings.OBJECT_WRAPPING = 0;
-        jsonCustomSettings.ARRAY_WRAPPING = 0;
-        setAlignment(Alignment.createAlignment());
-        parentblock =
-          new JsonBlock(null, myNode, jsonCustomSettings, getAlignment(),
-            Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false),
-            createJsonSpacingBuilder(CodeStyleSettings.getDefaults()));
-      } else {
-        jsonCustomSettings.OBJECT_WRAPPING = 2;
-        jsonCustomSettings.ARRAY_WRAPPING = 2;
-      }
-      for (ASTNode jsChild : children) {
-        if (jsChild.getElementType() == TokenType.WHITE_SPACE) {
-          continue;
-        }
-        JsonBlock jsonBlock =
-          new JsonBlock(parentblock, jsChild, jsonCustomSettings, getAlignment(),
-            Indent.getContinuationWithoutFirstIndent(), Wrap.createWrap(WrapType.NORMAL, true),
-            createJsonSpacingBuilder(CodeStyleSettings.getDefaults()));
-        result.add(jsonBlock);
-      }
-      return result;
-    }
     for (ASTNode child : children) {
-      if (child.getElementType() == TokenType.WHITE_SPACE) {
+      if (child.getElementType() == TokenType.WHITE_SPACE
+        || child.getElementType() == getElement(WS)
+        || child.getElementType() == getElement(WS_LF)) {
+
         continue;
       }
 
@@ -180,7 +167,7 @@ public class KarateJsBlock implements ASTBlock {
         child.getStartOffset() > myNode.getStartOffset();
       Indent indent;
       Alignment blockAlignment = null;
-      if (BLOCKS_TO_INDENT.contains(child.getElementType()) || isTagInsideScenario) {
+      if (BLOCKS_TO_INDENT_CHILDREN.contains(myNode.getElementType()) || isTagInsideScenario) {
         indent = Indent.getNormalIndent();
       } else {
         indent = Indent.getNoneIndent();
@@ -194,17 +181,10 @@ public class KarateJsBlock implements ASTBlock {
       if (child.getElementType() == JAVASCRIPT) {
         blockAlignment = Alignment.createAlignment();
       }
-      if (child.getElementType() == KarateTokenTypes.COMMENT) {
-        final ASTNode commentIndentElement = child.getTreePrev();
-        if (commentIndentElement != null && (commentIndentElement.getText().contains("\n")
-          || commentIndentElement.getTreePrev() == null)) {
-          final String whiteSpaceText = commentIndentElement.getText();
-          final int lineBreakIndex = whiteSpaceText.lastIndexOf("\n");
-
-          indent = Indent.getSpaceIndent(whiteSpaceText.length() - lineBreakIndex - 1);
-        }
+      if (child.getElementType() == getElement(L_COMMENT) || child.getElementType() == getElement(B_COMMENT)) {
+        indent = Indent.getNormalIndent();
       }
-      KarateJsBlock e = new KarateJsBlock(child, indent);
+      KarateJsBlock e = new KarateJsBlock(child, indent, isSingleLine);
       e.setAlignment(blockAlignment);
       result.add(e);
     }
@@ -214,7 +194,7 @@ public class KarateJsBlock implements ASTBlock {
   @Override
   @Nullable
   public Wrap getWrap() {
-    return null;
+    return myWrap;
   }
 
   @Override
@@ -231,92 +211,54 @@ public class KarateJsBlock implements ASTBlock {
     this.alignment = alignment;
   }
 
-
   @Override
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
-    if (child1 == null) {
-      return null;
-    }
-
     ASTBlock block1 = (ASTBlock) child1;
     ASTBlock block2 = (ASTBlock) child2;
     ASTNode node1 = block1.getNode();
     ASTNode node2 = block2.getNode();
-    if (node1 == null || node2 == null) {
+    boolean makeChange = false;
+    int spaces = 0;
+    int lineFeeds = 0;
+    if (child1 == null) {
       return null;
     }
-    final IElementType parent1 = node1.getTreeParent() != null ? node1.getTreeParent().getElementType() : null;
-    final IElementType elementType1 = node1.getElementType();
-    final IElementType elementType2 = node2.getElementType();
+    if (BLOCKS_TO_NOT_SPACE_BEFORE.contains(node2.getElementType()) || BLOCKS_TO_NOT_SPACE_AFTER.contains(
+      node1.getElementType())) {
+      makeChange = true;
+      spaces = 0;
+    }
+    if (BLOCKS_TO_SPACE_AFTER.contains(node1.getElementType())) {
+      makeChange = true;
+      spaces = 1;
+    }
 
-    if (READ_ONLY_BLOCKS.contains(elementType2)) {
-      return Spacing.getReadOnlySpacing();
-    }
-    if (KarateTokenTypes.ACTION_KEYWORD == elementType1) {
-      String text = node1.getText();
-      if (myActionKeywordProvider.isActionKeyword(text)) {
-        if (myKeywordProvider.isSpaceRequiredAfterKeyword("en", text)) {
-          return Spacing.createSpacing(1, 1, 0, false, 0);
-        } else {
-          return Spacing.createSpacing(0, 1, 0, false, 0);
-        }
-      } else {
-        return Spacing.createSpacing(1, 1, 0, false, 0);
-      }
-    }
-    if (OPEN_PAREN == elementType1 || CLOSE_PAREN == elementType2) {
-      return Spacing.createSpacing(0, 0, 0, false, 0);
-    }
-    if (IDENTIFIERS.contains(elementType1) || IDENTIFIERS.contains(elementType2)
-      || OPERATOR == elementType1 || OPERATOR == elementType2) {
-      return Spacing.createSpacing(1, 1, 0, false, 0);
-    }
-    if ((TEXT_LIKE.contains(elementType1) && KarateTokenTypes.QUOTED_STRING.contains(elementType2)) || (
-      TEXT_LIKE.contains(elementType2) && KarateTokenTypes.QUOTED_STRING.contains(elementType1))) {
-      if (NON_SPACED_CHARACTERS.stream().anyMatch(s -> node2.getText().startsWith("" + s)) ||
-        NON_SPACED_CHARACTERS.stream().anyMatch(s -> StringUtil.endsWith(node1.getText(), s))) {
-        return Spacing.createSpacing(0, 1, 0, false, 0);
-      }
-      return Spacing.createSpacing(1, 1, 0, true, 1);
-    }
-    if (GherkinElementTypes.SCENARIOS.contains(elementType2) &&
-      elementType1 != KarateTokenTypes.COMMENT &&
-      parent1 != GherkinElementTypes.RULE) {
-      return Spacing.createSpacing(0, 0, 2, true, 2);
-    }
-    if (elementType1 == KarateTokenTypes.PIPE &&
-      elementType2 == GherkinElementTypes.TABLE_CELL) {
-      return Spacing.createSpacing(1, 1, 0, false, 0);
-    }
-    if ((elementType1 == GherkinElementTypes.TABLE_CELL || elementType1 == KarateTokenTypes.PIPE) &&
-      elementType2 == KarateTokenTypes.PIPE) {
-      final ASTNode tableNode = TreeUtil.findParent(node1, GherkinElementTypes.TABLE);
-      if (tableNode != null) {
-        int columnIndex = getTableCellColumnIndex(node1);
-        int maxWidth = ((GherkinTable) tableNode.getPsi()).getColumnWidth(columnIndex);
-        int spacingWidth = (maxWidth - node1.getText().trim().length()) + 1;
-        if (elementType1 == KarateTokenTypes.PIPE) {
-          spacingWidth += 2;
-        }
-        return Spacing.createSpacing(spacingWidth, spacingWidth, 0, false, 0);
-      }
-    }
-    if (KarateTokenTypes.KEYWORDS.contains(elementType1) && elementType2 != COLON) {
-      boolean keepLineBreaks = elementType2 == STEP;
-      return Spacing.createSpacing(1, 1, 0, keepLineBreaks, 0);
-    }
-    return null;
-  }
+    if (BLOCKS_TO_SPACE.contains(node1.getElementType()) || BLOCKS_TO_SPACE.contains(node2.getElementType())
+      || BLOCKS_TO_SPACE_AFTER.contains(node1.getElementType())) {
 
-  private static int getTableCellColumnIndex(ASTNode node) {
-    int pipeCount = 0;
-    while (node != null) {
-      if (node.getElementType() == KarateTokenTypes.PIPE) {
-        pipeCount++;
-      }
-      node = node.getTreePrev();
+      makeChange = true;
+      spaces = 1;
     }
-    return pipeCount - 1;
+
+    if ((BLOCKS_TO_LINE_FEED_BEFORE.contains(node2.getElementType())
+      || (BLOCKS_TO_LINE_FEED_AFTER.contains(node1.getElementType()) && node2.getElementType() != getElement(L_COMMENT))
+      || (node1.getElementType() == getElement(L_CURLY) && node1.getTreeParent().getElementType() == getType(BLOCK)))
+      && !(node1.getElementType() == getType(STATEMENT) && (node2.getElementType() == getElement(ELSE)))) {
+      makeChange = true;
+      lineFeeds = 1;
+    }
+    //    if (BLOCKS_TO_LINE_FEED.contains(node1.getElementType()) && BLOCKS_TO_LINE_FEED.contains(node2
+    //    .getElementType())
+    //      && !isSingleLine) {
+    //      return Spacing.createSpacing(1, 1, 1, true, 1);
+    //    }
+    if (isSingleLine) {
+      lineFeeds = 0;
+    }
+    if (makeChange) {
+      return Spacing.createSpacing(spaces, spaces, lineFeeds, true, 1);
+    }
+     return Spacing.createSafeSpacing(true, 1);
   }
 
   @Override
@@ -329,42 +271,15 @@ public class KarateJsBlock implements ASTBlock {
     return new ChildAttributes(childIndent, null);
   }
 
-  @Override
-  public boolean isIncomplete() {
-    ASTNode node = getNode();
-    if (node == null) {
-      return false;
-    }
-    if (GherkinElementTypes.SCENARIOS.contains(node.getElementType())) {
-      return true;
-    }
-    if (node.getElementType() == GherkinElementTypes.FEATURE) {
-      return node.getChildren(TokenSet.create(GherkinElementTypes.FEATURE_HEADER,
-        GherkinElementTypes.SCENARIO,
-        GherkinElementTypes.SCENARIO_OUTLINE)).length == 0;
-    }
+  @Override public boolean isIncomplete() {
     return false;
   }
 
-  @Override
-  public boolean isLeaf() {
-    return myLeaf;
+  public void setSingleLine(boolean singleLine) {
+    isSingleLine = singleLine;
   }
 
-  static @NotNull SpacingBuilder createJsonSpacingBuilder(CodeStyleSettings settings) {
-    final JsonCodeStyleSettings jsonSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
-    final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JsonLanguage.INSTANCE);
-
-    final int spacesBeforeComma = commonSettings.SPACE_BEFORE_COMMA ? 1 : 0;
-    final int spacesBeforeColon = jsonSettings.SPACE_BEFORE_COLON ? 1 : 0;
-    final int spacesAfterColon = jsonSettings.SPACE_AFTER_COLON ? 1 : 0;
-
-    return new SpacingBuilder(settings, Json5Language.INSTANCE)
-      .before(JsonElementTypes.COLON).spacing(spacesBeforeColon, spacesBeforeColon, 0, false, 0)
-      .after(JsonElementTypes.COLON).spacing(spacesAfterColon, spacesAfterColon, 0, false, 0)
-      .withinPair(L_BRACKET, R_BRACKET).spaces(1, true)
-      .withinPair(L_CURLY, R_CURLY).spaces(1, true)
-      .before(COMMA).spacing(spacesBeforeComma, spacesBeforeComma, 0, false, 0)
-      .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA);
+  @Override public boolean isLeaf() {
+    return false;
   }
 }

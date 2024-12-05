@@ -27,13 +27,13 @@ public class KarateJsParser implements PsiParser {
     PsiBuilder.Marker mark = b.mark();
     do {
       sb.append(b.getTokenText());
-      b.advanceLexer();
+      b.rawAdvanceLexer(1);
     } while (!b.eof() && b.getTokenType().getLanguage() == KarateJsLanguage.INSTANCE);
     if (!sb.toString().trim().isEmpty()) {
       Node parsedNode;
       try {
         parsedNode = new Parser(new Source(sb.toString())).parse();
-      } catch (EvalError e) {
+      } catch (Exception e) {
         mark.error("Invalid JavaScript");
         while (!b.eof() && b.getTokenType().getLanguage() == KarateJsLanguage.INSTANCE) {
           b.advanceLexer();
@@ -42,6 +42,12 @@ public class KarateJsParser implements PsiParser {
         return b;
       }
       mark.rollbackTo();
+//      b.setTokenTypeRemapper((e, startInt, end, charSequence) -> {
+//        if (e == KarateLexerAdapter.getElement(Token.WS) || e == KarateLexerAdapter.getElement(Token.WS_LF)) {
+//          return TokenType.WHITE_SPACE;
+//        }
+//        return e;
+//      });
       doParseRecursive(b, parsedNode, 0);
       // Get rid of any lingering whitespace.
       while (!b.eof() && b.getTokenType().getLanguage() == KarateJsLanguage.INSTANCE) {
@@ -54,9 +60,20 @@ public class KarateJsParser implements PsiParser {
   }
 
   private StringBuilder doParseRecursive(PsiBuilder b, Node node, int level) {
+    while (b.isWhitespaceOrComment(b.getTokenType()) || karateJsParserDefinition.getWhitespaceTokens()
+      .contains(b.getTokenType()) || karateJsParserDefinition.getCommentTokens().contains(b.getTokenType())) {
+      b.advanceLexer();
+    }
     PsiBuilder.Marker mark = b.mark();
     StringBuilder sb = new StringBuilder();
 
+    if (node.isChunk()) {
+      sb.append(b.getTokenText().strip());
+      b.advanceLexer();
+      mark.drop();
+//      mark.done(KarateLexerAdapter.getType(node.type));
+      return sb;
+    }
     node.children.forEach(n -> {
       if (!sb.isEmpty()) {
         sb.append(" ");
@@ -65,7 +82,8 @@ public class KarateJsParser implements PsiParser {
     });
     while ((!node.toString().equals(sb.toString().trim())) && !b.eof()) {
       b.advanceLexer();
-      if (isWhitespaceOrComment(b.getTokenType())) {
+      if (b.isWhitespaceOrComment(b.getTokenType()) || karateJsParserDefinition.getWhitespaceTokens()
+        .contains(b.getTokenType()) || karateJsParserDefinition.getCommentTokens().contains(b.getTokenType())) {
         continue;
       }
       if (b.getTokenType().getLanguage() != KarateJsLanguage.INSTANCE || sb.length() > node.toString().length()) {

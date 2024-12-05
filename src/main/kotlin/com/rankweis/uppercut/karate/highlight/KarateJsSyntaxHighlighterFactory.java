@@ -11,6 +11,6 @@ public class KarateJsSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
 
   @Override
   public @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
-    return new KarateJsHighlighter(project, virtualFile);
+    return new KarateJsHighlighter();
   }
 }
