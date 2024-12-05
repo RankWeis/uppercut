@@ -22,6 +22,7 @@ public interface GherkinElementTypes {
   IElementType PYSTRING = new KarateElementType("pystring");
   IElementType JAVASCRIPT = new KarateElementType("javascript_element");
   IElementType JSON = new KarateElementType("json_element");
+  IElementType TEXT_BLOCK = new KarateElementType("json_element");
   IElementType XML = new KarateElementType("xml_element");
   IElementType DECLARATION = new KarateElementType("declaration");
   IElementType VARIABLE = new KarateElementType("variable");

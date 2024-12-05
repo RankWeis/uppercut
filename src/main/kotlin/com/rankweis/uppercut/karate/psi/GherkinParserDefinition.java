@@ -2,6 +2,7 @@
 package com.rankweis.uppercut.karate.psi;
 
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.TEXT_BLOCK;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
@@ -94,6 +95,8 @@ public final class GherkinParserDefinition implements ParserDefinition {
       return new KarateEmbeddedJsonElement(node);
     } else if (node.getElementType() == GherkinElementTypes.XML) {
       return new KarateEmbeddedJavascriptElement(node);
+    } else if (node.getElementType() == TEXT_BLOCK) {
+      return new GherkinPystringImpl(node);
     }
     return PsiUtilCore.NULL_PSI_ELEMENT;
   }

@@ -17,6 +17,10 @@ public class KarateFormattingTest extends FormatterTestCase {
         doTest();
     }
 
+    public void testJs() throws Exception {
+        doTest();
+    }
+
     @Override
     public String getBasePath() {
         return "testData";

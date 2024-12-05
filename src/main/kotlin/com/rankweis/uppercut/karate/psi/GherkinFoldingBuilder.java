@@ -3,6 +3,7 @@ package com.rankweis.uppercut.karate.psi;
 
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.TEXT_BLOCK;
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.XML;
 
 import com.intellij.lang.ASTNode;
@@ -25,7 +26,7 @@ public final class GherkinFoldingBuilder extends FoldingBuilderEx implements Dum
   private static final TokenSet BLOCKS_TO_FOLD = TokenSet.create(GherkinElementTypes.SCENARIO,
     GherkinElementTypes.SCENARIO_OUTLINE,
     GherkinElementTypes.EXAMPLES_BLOCK,
-    KarateTokenTypes.PYSTRING, JSON, JAVASCRIPT, XML);
+    KarateTokenTypes.PYSTRING, JSON, JAVASCRIPT, XML, TEXT_BLOCK);
 
 
   @Override public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document,

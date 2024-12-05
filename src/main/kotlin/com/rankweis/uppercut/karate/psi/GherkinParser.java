@@ -2,11 +2,13 @@ package com.rankweis.uppercut.karate.psi;
 
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.TEXT_BLOCK;
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.XML;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.CLOSE_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DOUBLE_QUOTED_STRING;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPEN_PAREN;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPERATOR;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING_QUOTES;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.SINGLE_QUOTED_STRING;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT_LIKE;
@@ -15,8 +17,10 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
 import com.intellij.json.JsonLanguage;
 import com.intellij.json.json5.Json5Language;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.lang.PsiParser;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.tree.IElementType;
@@ -26,12 +30,14 @@ import com.rankweis.uppercut.parser.KarateJsonParser;
 import java.util.LinkedList;
 import java.util.Optional;
 import java.util.function.Consumer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GherkinParser implements PsiParser {
 
   private final ParserDefinition parserDefinition;
+  private @NonNls @Nullable String overrideInjection;
 
   public GherkinParser(ParserDefinition parserDefinition) {
     this.parserDefinition = parserDefinition;
@@ -234,6 +240,7 @@ public class GherkinParser implements PsiParser {
 
   private void parseStep(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
+    overrideInjection = null;
     builder.advanceLexer();
     parseTextLikeObjects(builder);
     final IElementType tokenTypeAfterName = builder.getTokenType();
@@ -266,6 +273,21 @@ public class GherkinParser implements PsiParser {
       if (isPystring(builder.getTokenType())) {
         parsePystring(builder);
         continue;
+      }
+      if (KarateTokenTypes.TEXT == builder.getTokenType()) {
+        Marker reset = builder.mark();
+        String overridenType = builder.getTokenText();;
+        builder.advanceLexer();
+        if (KarateTokenTypes.TEXT == builder.getTokenType()) {
+          builder.advanceLexer();
+          if (OPERATOR == builder.getTokenType()) {
+            overrideInjection = overridenType;
+          } else {
+            overrideInjection = null;
+          }
+          builder.advanceLexer();
+        }
+        reset.rollbackTo();
       }
       if (hadLineBreakBefore(builder, prevTokenEnd) || builder.eof()) {
         if (!parens.isEmpty()) {
@@ -322,20 +344,30 @@ public class GherkinParser implements PsiParser {
     }
     Optional<KarateJavascriptParsingExtensionPoint> jsExt =
       KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList().stream().findFirst();
-    if (jsExt.map(j -> j.isJSLanguage(builder.getTokenType().getLanguage())).orElse(false)) {
-      parseLanguage(builder, JAVASCRIPT,
-        jsExt.map(KarateJavascriptParsingExtensionPoint::parseJs).orElseThrow());
-    } else if (builder.getTokenType() != null && (builder.getTokenType().getLanguage() == Json5Language.INSTANCE
-      || builder.getTokenType().getLanguage() == JsonLanguage.INSTANCE)) {
-      new KarateJsonParser().parseLight(JSON, builder);
-    } else if (builder.getTokenType() != null && builder.getTokenType().getLanguage() == XMLLanguage.INSTANCE) {
-      parseLanguage(builder, XML, (b) -> {
-        while (!b.eof() && b.getTokenType().getLanguage() == XMLLanguage.INSTANCE) {
-          builder.advanceLexer();
-        }
-      });
+    if(overrideInjection != null && overrideInjection.equalsIgnoreCase("text")) {
+      Language l = builder.getTokenType().getLanguage();
+      Marker mark = builder.mark();
+      while (builder.getTokenType().getLanguage() == l) {
+        builder.remapCurrentToken(TEXT_BLOCK);
+        builder.advanceLexer();
+      }
+      mark.done(TEXT_BLOCK);
     } else {
-      builder.advanceLexer();
+      if (jsExt.map(j -> j.isJSLanguage(builder.getTokenType().getLanguage())).orElse(false)) {
+        parseLanguage(builder, JAVASCRIPT,
+          jsExt.map(KarateJavascriptParsingExtensionPoint::parseJs).orElseThrow());
+      } else if (builder.getTokenType() != null && (builder.getTokenType().getLanguage() == Json5Language.INSTANCE
+        || builder.getTokenType().getLanguage() == JsonLanguage.INSTANCE)) {
+        new KarateJsonParser().parseLight(JSON, builder);
+      } else if (builder.getTokenType() != null && builder.getTokenType().getLanguage() == XMLLanguage.INSTANCE) {
+        parseLanguage(builder, XML, (b) -> {
+          while (!b.eof() && b.getTokenType().getLanguage() == XMLLanguage.INSTANCE) {
+            builder.advanceLexer();
+          }
+        });
+      } else {
+        builder.advanceLexer();
+      }
     }
     if (builder.getTokenType() == PYSTRING_QUOTES) {
       builder.advanceLexer();

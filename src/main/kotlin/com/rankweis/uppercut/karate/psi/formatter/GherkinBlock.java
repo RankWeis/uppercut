@@ -8,6 +8,7 @@ import static com.intellij.json.JsonElementTypes.R_CURLY;
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.STEP;
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.TEXT_BLOCK;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.CLOSE_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.COLON;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.IDENTIFIERS;
@@ -82,7 +83,7 @@ public class GherkinBlock implements ASTBlock {
     GherkinElementTypes.SCENARIO_OUTLINE, JAVASCRIPT);
 
   private static final TokenSet READ_ONLY_BLOCKS =
-    TokenSet.create(JAVASCRIPT, GherkinElementTypes.PYSTRING, KarateTokenTypes.COMMENT);
+    TokenSet.create(JAVASCRIPT, GherkinElementTypes.PYSTRING, KarateTokenTypes.COMMENT, TEXT_BLOCK);
 
   public GherkinBlock(ASTNode node) {
     this(node, Indent.getAbsoluteNoneIndent());
