@@ -10,7 +10,6 @@
 - Ability to auto-complete action keywords.
 - Most requested feature! Javascript highlighting in IntelliJ Community
 - Formatting for JavaScript, JSON and XML snippets.
-- Major overhaul of the parsing for a hopefully more stable experience. Please reach out to me if you have any issues.
 
 ### Request
 
