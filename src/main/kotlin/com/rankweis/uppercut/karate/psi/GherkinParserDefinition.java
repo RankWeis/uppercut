@@ -45,7 +45,7 @@ public final class GherkinParserDefinition implements ParserDefinition {
 
   @Override
   public @NotNull PsiParser createParser(Project project) {
-    return new GherkinParser(this);
+    return new GherkinParser();
   }
 
   @Override
