@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class KarateJsFileImpl extends PsiFileBase {
-  private PlainKarateKeywordProvider keywordProvider = new PlainKarateKeywordProvider();
+  private final PlainKarateKeywordProvider keywordProvider = new PlainKarateKeywordProvider();
   public KarateJsFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, KarateLanguage.INSTANCE);
   }

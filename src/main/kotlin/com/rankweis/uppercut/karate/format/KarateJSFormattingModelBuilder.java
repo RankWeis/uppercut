@@ -10,12 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class KarateJSFormattingModelBuilder implements FormattingModelBuilder {
 
-//  private static SpacingBuilder createSpaceBuilder(CodeStyleSettings settings) {
-//    return new SpacingBuilder(settings, KarateLanguage.INSTANCE)
-//      .around(KarateTokenTypes.DECLARATION)
-//      .spaceIf(settings.getCommonSettings(KarateLanguage.INSTANCE.getID()).SPACE_AROUND_ASSIGNMENT_OPERATORS);
-//  }
-
   @Override
   public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
     final CodeStyleSettings codeStyleSettings = formattingContext.getCodeStyleSettings();

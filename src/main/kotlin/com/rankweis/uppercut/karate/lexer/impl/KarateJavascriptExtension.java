@@ -23,7 +23,7 @@ public class KarateJavascriptExtension implements KarateJavascriptParsingExtensi
 
 
   static class CustomJSLanguageOptionHolder extends DialectOptionHolder {
-    private static CustomJSLanguageOptionHolder INSTANCE = new CustomJSLanguageOptionHolder();
+    private static final CustomJSLanguageOptionHolder INSTANCE = new CustomJSLanguageOptionHolder();
     public static DialectOptionHolder getInstance() {
       return INSTANCE;
     }
@@ -33,7 +33,7 @@ public class KarateJavascriptExtension implements KarateJavascriptParsingExtensi
   }
 
   static class CustomJSLanguageDialect extends JSLanguageDialect {
-    private static CustomJSLanguageDialect INSTANCE = new CustomJSLanguageDialect();
+    private static final CustomJSLanguageDialect INSTANCE = new CustomJSLanguageDialect();
     public static JSLanguageDialect getInstance() {
       return INSTANCE;
     }
@@ -55,13 +55,14 @@ public class KarateJavascriptExtension implements KarateJavascriptParsingExtensi
   }
 
   @Override public List<Block> getJsSubBlocks(ASTNode astNode, Alignment alignment) {
-    return new KarateJavascriptFormat(dialect, holder).getJsSubBlocks(astNode, alignment);
+    return new KarateJavascriptFormat(dialect).getJsSubBlocks(astNode, alignment);
   }
 
   @Override public Consumer<PsiBuilder> parseJs() {
     return (builder) -> {
-      while (!builder.eof() && builder.getTokenType().getLanguage() == dialect.getBaseLanguage()) {
-        if (  builder.getTokenType() == JSTokenTypes.FUNCTION_KEYWORD) {
+      while (!builder.eof() && builder.getTokenType() != null
+        && builder.getTokenType().getLanguage() == dialect.getBaseLanguage()) {
+        if (builder.getTokenType() == JSTokenTypes.FUNCTION_KEYWORD) {
           new JSXParser(dialect, builder).getFunctionParser().parseFunctionExpression();
         } else {
           new JSXParser(dialect, builder).getStatementParser().parseStatement();

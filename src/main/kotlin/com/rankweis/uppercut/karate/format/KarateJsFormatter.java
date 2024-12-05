@@ -13,10 +13,9 @@ public class KarateJsFormatter {
 
   public List<Block> getJsSubBlocks(ASTNode astNode, Alignment alignment) {
     List<Block> result = new ArrayList<>();
-    boolean isSingleLine = false;
-    if(astNode.getTreeParent().getElementType().getLanguage() != KarateJsLanguage.INSTANCE && !astNode.getText().contains("\n")) {
-      isSingleLine = true;
-    }
+    boolean isSingleLine =
+      astNode.getTreeParent().getElementType().getLanguage() != KarateJsLanguage.INSTANCE && !astNode.getText()
+        .contains("\n");
     for (ASTNode child : astNode.getChildren(null)) {
       if (!child.getText().isBlank()) {
         result.add(new KarateJsBlock(child, null, isSingleLine));

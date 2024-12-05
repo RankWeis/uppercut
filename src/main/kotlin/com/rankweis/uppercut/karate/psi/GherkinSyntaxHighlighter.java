@@ -103,7 +103,7 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase {
     } else if (XML_HIGHLIGHTER.getTokenHighlights(tokenType).length > 0) {
       return XML_HIGHLIGHTER.getTokenHighlights(tokenType);
     } else {
-      return SyntaxHighlighterBase.EMPTY;
+      return TextAttributesKey.EMPTY_ARRAY;
     }
   }
 }

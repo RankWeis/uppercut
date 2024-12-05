@@ -18,7 +18,6 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.json.json5.Json5Language;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.lang.PsiParser;
@@ -28,6 +27,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
 import com.rankweis.uppercut.parser.KarateJsonParser;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.jetbrains.annotations.NonNls;
@@ -36,12 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class GherkinParser implements PsiParser {
 
-  private final ParserDefinition parserDefinition;
   private @NonNls @Nullable String overrideInjection;
-
-  public GherkinParser(ParserDefinition parserDefinition) {
-    this.parserDefinition = parserDefinition;
-  }
 
   LinkedList<PsiBuilder.Marker> parens = new LinkedList<>();
   private final TokenSet SCENARIO_END_TOKENS =
@@ -55,8 +50,7 @@ public class GherkinParser implements PsiParser {
     final PsiBuilder.Marker marker = builder.mark();
     parseFileTopLevel(builder);
     marker.done(GherkinParserDefinition.GHERKIN_FILE);
-    ASTNode treeBuilt = builder.getTreeBuilt();
-    return treeBuilt;
+    return builder.getTreeBuilt();
   }
 
   private void parseFileTopLevel(PsiBuilder builder) {
@@ -276,7 +270,7 @@ public class GherkinParser implements PsiParser {
       }
       if (KarateTokenTypes.TEXT == builder.getTokenType()) {
         Marker reset = builder.mark();
-        String overridenType = builder.getTokenText();;
+        String overridenType = builder.getTokenText();
         builder.advanceLexer();
         if (KarateTokenTypes.TEXT == builder.getTokenType()) {
           builder.advanceLexer();
@@ -345,7 +339,7 @@ public class GherkinParser implements PsiParser {
     Optional<KarateJavascriptParsingExtensionPoint> jsExt =
       KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList().stream().findFirst();
     if(overrideInjection != null && overrideInjection.equalsIgnoreCase("text")) {
-      Language l = builder.getTokenType().getLanguage();
+      Language l = Objects.requireNonNull(builder.getTokenType()).getLanguage();
       Marker mark = builder.mark();
       while (builder.getTokenType().getLanguage() == l) {
         builder.remapCurrentToken(TEXT_BLOCK);
@@ -353,7 +347,7 @@ public class GherkinParser implements PsiParser {
       }
       mark.done(TEXT_BLOCK);
     } else {
-      if (jsExt.map(j -> j.isJSLanguage(builder.getTokenType().getLanguage())).orElse(false)) {
+      if (jsExt.map(j -> j.isJSLanguage(Objects.requireNonNull(builder.getTokenType()).getLanguage())).orElse(false)) {
         parseLanguage(builder, JAVASCRIPT,
           jsExt.map(KarateJavascriptParsingExtensionPoint::parseJs).orElseThrow());
       } else if (builder.getTokenType() != null && (builder.getTokenType().getLanguage() == Json5Language.INSTANCE
@@ -361,7 +355,7 @@ public class GherkinParser implements PsiParser {
         new KarateJsonParser().parseLight(JSON, builder);
       } else if (builder.getTokenType() != null && builder.getTokenType().getLanguage() == XMLLanguage.INSTANCE) {
         parseLanguage(builder, XML, (b) -> {
-          while (!b.eof() && b.getTokenType().getLanguage() == XMLLanguage.INSTANCE) {
+          while (!b.eof() && Objects.requireNonNull(b.getTokenType()).getLanguage() == XMLLanguage.INSTANCE) {
             builder.advanceLexer();
           }
         });

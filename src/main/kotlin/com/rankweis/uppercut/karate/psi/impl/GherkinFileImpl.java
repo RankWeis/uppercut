@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class GherkinFileImpl extends PsiFileBase implements GherkinFile {
-  private PlainKarateKeywordProvider keywordProvider = new PlainKarateKeywordProvider();
+  private final PlainKarateKeywordProvider keywordProvider = new PlainKarateKeywordProvider();
   public GherkinFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, KarateLanguage.INSTANCE);
   }

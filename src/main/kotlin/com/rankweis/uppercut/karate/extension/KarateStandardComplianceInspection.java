@@ -65,7 +65,6 @@ public class KarateStandardComplianceInspection extends JsonStandardComplianceIn
 
     @Override
     public void visitReferenceExpression(@NotNull JsonReferenceExpression reference) {
-      return;
     }
   }
 

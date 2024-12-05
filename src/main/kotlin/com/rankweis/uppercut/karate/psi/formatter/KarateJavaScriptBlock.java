@@ -1,10 +1,5 @@
 package com.rankweis.uppercut.karate.psi.formatter;
 
-import static com.intellij.json.JsonElementTypes.COMMA;
-import static com.intellij.json.JsonElementTypes.L_BRACKET;
-import static com.intellij.json.JsonElementTypes.L_CURLY;
-import static com.intellij.json.JsonElementTypes.R_BRACKET;
-import static com.intellij.json.JsonElementTypes.R_CURLY;
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.STEP;
@@ -24,16 +19,12 @@ import com.intellij.formatting.Spacing;
 import com.intellij.formatting.SpacingBuilder;
 import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
-import com.intellij.json.JsonElementTypes;
-import com.intellij.json.JsonLanguage;
 import com.intellij.json.formatter.JsonBlock;
 import com.intellij.json.formatter.JsonCodeStyleSettings;
-import com.intellij.json.json5.Json5Language;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -352,19 +343,6 @@ public class KarateJavaScriptBlock implements ASTBlock {
   }
 
   static @NotNull SpacingBuilder createJsonSpacingBuilder(CodeStyleSettings settings) {
-    final JsonCodeStyleSettings jsonSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
-    final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JsonLanguage.INSTANCE);
-
-    final int spacesBeforeComma = commonSettings.SPACE_BEFORE_COMMA ? 1 : 0;
-    final int spacesBeforeColon = jsonSettings.SPACE_BEFORE_COLON ? 1 : 0;
-    final int spacesAfterColon = jsonSettings.SPACE_AFTER_COLON ? 1 : 0;
-
-    return new SpacingBuilder(settings, Json5Language.INSTANCE)
-      .before(JsonElementTypes.COLON).spacing(spacesBeforeColon, spacesBeforeColon, 0, false, 0)
-      .after(JsonElementTypes.COLON).spacing(spacesAfterColon, spacesAfterColon, 0, false, 0)
-      .withinPair(L_BRACKET, R_BRACKET).spaces(1, true)
-      .withinPair(L_CURLY, R_CURLY).spaces(1, true)
-      .before(COMMA).spacing(spacesBeforeComma, spacesBeforeComma, 0, false, 0)
-      .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA);
+    return GherkinBlock.createJsonSpacingBuilder(settings);
   }
 }

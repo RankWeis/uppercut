@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter;
 import com.rankweis.uppercut.karate.psi.KarateJsLanguage;
 import com.rankweis.uppercut.karate.psi.parser.KarateJsParserDefinition;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,29 +29,23 @@ public class KarateJsParser implements PsiParser {
     do {
       sb.append(b.getTokenText());
       b.rawAdvanceLexer(1);
-    } while (!b.eof() && b.getTokenType().getLanguage() == KarateJsLanguage.INSTANCE);
+    } while (!b.eof() && Objects.requireNonNull(b.getTokenType()).getLanguage() == KarateJsLanguage.INSTANCE);
     if (!sb.toString().trim().isEmpty()) {
       Node parsedNode;
       try {
         parsedNode = new Parser(new Source(sb.toString())).parse();
       } catch (Exception e) {
-        mark.error("Invalid JavaScript");
-        while (!b.eof() && b.getTokenType().getLanguage() == KarateJsLanguage.INSTANCE) {
+        mark.error("Invalid javaScript");
+        while (!b.eof() && Objects.requireNonNull(b.getTokenType()).getLanguage() == KarateJsLanguage.INSTANCE) {
           b.advanceLexer();
         }
         markRoot.done(root);
         return b;
       }
       mark.rollbackTo();
-//      b.setTokenTypeRemapper((e, startInt, end, charSequence) -> {
-//        if (e == KarateLexerAdapter.getElement(Token.WS) || e == KarateLexerAdapter.getElement(Token.WS_LF)) {
-//          return TokenType.WHITE_SPACE;
-//        }
-//        return e;
-//      });
       doParseRecursive(b, parsedNode, 0);
       // Get rid of any lingering whitespace.
-      while (!b.eof() && b.getTokenType().getLanguage() == KarateJsLanguage.INSTANCE) {
+      while (!b.eof() && Objects.requireNonNull(b.getTokenType()).getLanguage() == KarateJsLanguage.INSTANCE) {
         b.advanceLexer();
       }
       markRoot.done(root);
@@ -60,7 +55,7 @@ public class KarateJsParser implements PsiParser {
   }
 
   private StringBuilder doParseRecursive(PsiBuilder b, Node node, int level) {
-    while (b.isWhitespaceOrComment(b.getTokenType()) || karateJsParserDefinition.getWhitespaceTokens()
+    while (b.isWhitespaceOrComment(Objects.requireNonNull(b.getTokenType())) || karateJsParserDefinition.getWhitespaceTokens()
       .contains(b.getTokenType()) || karateJsParserDefinition.getCommentTokens().contains(b.getTokenType())) {
       b.advanceLexer();
     }
@@ -68,7 +63,7 @@ public class KarateJsParser implements PsiParser {
     StringBuilder sb = new StringBuilder();
 
     if (node.isChunk()) {
-      sb.append(b.getTokenText().strip());
+      sb.append(Objects.requireNonNull(b.getTokenText()).strip());
       b.advanceLexer();
       mark.drop();
 //      mark.done(KarateLexerAdapter.getType(node.type));
@@ -92,7 +87,7 @@ public class KarateJsParser implements PsiParser {
       if (!sb.isEmpty()) {
         sb.append(" ");
       }
-      sb.append(b.getTokenText().strip());
+      sb.append(Objects.requireNonNull(b.getTokenText()).strip());
     }
     mark.done(KarateLexerAdapter.getType(node.type));
     return sb;

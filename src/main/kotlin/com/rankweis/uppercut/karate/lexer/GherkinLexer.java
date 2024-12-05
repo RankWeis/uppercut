@@ -68,9 +68,8 @@ public class GherkinLexer extends LexerBase {
   List<String> stepKeywords;
   List<String> interruptions;
 
-  private final boolean highlighting;
+
   private String myCurLanguage;
-  private int myEndInject = 0;
 
   private final Lexer jsLexer;
   Lexer jsonLexer = null;
@@ -82,7 +81,6 @@ public class GherkinLexer extends LexerBase {
 
   public GherkinLexer(GherkinKeywordProvider provider, boolean highlighting) {
     myKeywordProvider = provider;
-    this.highlighting = highlighting;
     this.jsLexer =
       KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().map(l -> l.getLexer(highlighting))
         .orElse(null);
@@ -586,7 +584,6 @@ public class GherkinLexer extends LexerBase {
     if (endPos > myEndOffset) {
       endPos = myEndOffset;
     }
-    myEndInject = endPos;
     jsLexer.start(myBuffer, startPos, endPos);
     myState = INJECTING_JAVASCRIPT;
     injectJs();

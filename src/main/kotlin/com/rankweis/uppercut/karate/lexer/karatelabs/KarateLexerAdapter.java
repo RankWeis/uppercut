@@ -94,6 +94,6 @@ public class KarateLexerAdapter extends LexerBase {
   }
 
   public static IElementType getToken(IElementType e) {
-    return TOKEN_TO_ELEMENT.get(STRING_TOKEN_MAP.get(e.getDebugName()));
+    return TOKEN_TO_ELEMENT.get(STRING_TOKEN_MAP.get(e.toString()));
   }
 }

@@ -2,15 +2,9 @@
 package com.rankweis.uppercut.karate.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.rankweis.uppercut.karate.CucumberUtil;
 import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
 import com.rankweis.uppercut.karate.psi.GherkinStep;
-import com.rankweis.uppercut.karate.psi.GherkinStepsHolder;
-import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
-import com.rankweis.uppercut.karate.steps.CucumberStepHelper;
-import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -33,27 +27,6 @@ public final class KarateStepInspection extends GherkinInspection {
       @Override
       public void visitStep(GherkinStep step) {
         super.visitStep(step);
-
-        final PsiElement parent = step.getParent();
-        if (parent instanceof GherkinStepsHolder) {
-          CucumberStepReference reference = CucumberUtil.getCucumberStepReference(step);
-          if (reference == null) {
-            return;
-          }
-          final AbstractStepDefinition definition = reference.resolveToDefinition();
-          if (definition == null) {
-            CucumberCreateStepFix createStepFix = null;
-            CucumberCreateAllStepsFix createAllStepsFix = null;
-            if (CucumberStepHelper.getExtensionCount() > 0) {
-              createStepFix = new CucumberCreateStepFix();
-              createAllStepsFix = new CucumberCreateAllStepsFix();
-            }
-            // steps all are undefined
-//            holder.registerProblem(reference.getElement(), reference.getRangeInElement(),
-//                                   MyBundle.message("karate.inspection.undefined.step.msg.name"),
-//                                   createStepFix, createAllStepsFix);
-          }
-        }
       }
     };
   }

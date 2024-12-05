@@ -8,7 +8,6 @@ import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.javascript.DialectOptionHolder;
 import com.intellij.lang.javascript.JSLanguageDialect;
 import com.intellij.lang.javascript.formatter.JSBlockContext;
 import com.intellij.lang.javascript.formatter.JSCodeStyleSettings;
@@ -20,12 +19,10 @@ import java.util.List;
 public class KarateJavascriptFormat {
 
   private final JSLanguageDialect dialect;
-  private final DialectOptionHolder holder;
   private final JSBlockContext jsBlockContext;
 
-  public KarateJavascriptFormat(JSLanguageDialect dialect, DialectOptionHolder holder) {
+  public KarateJavascriptFormat(JSLanguageDialect dialect) {
     this.dialect = dialect;
-    this.holder = holder;
     this.jsBlockContext = new JSBlockContext(CodeStyleSettings.getDefaults(), dialect, null,
       FormattingMode.REFORMAT);
   }
@@ -35,7 +32,7 @@ public class KarateJavascriptFormat {
     List<Block> result = new ArrayList<>();
     final ASTNode[] children = astNode.getChildren(null);
     JSBlockContext context = jsBlockContext;
-      Wrap wrap = null;
+      Wrap wrap;
     Wrap childWrap = null;
     context.getCommonSettings().SPACE_BEFORE_METHOD_PARENTHESES = false;
     context.getDialectSettings().SPACE_BEFORE_FUNCTION_LEFT_PARENTH = false;

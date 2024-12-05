@@ -87,8 +87,8 @@ public class KarateJsBlock implements ASTBlock {
   );
 
   static {
-    List<IElementType> types = new ArrayList<>();
-      types.addAll(getTypes(EQ, EQ_GT, LT_LT_EQ, EQ_EQ, EQ_EQ_EQ, GT_EQ, GT, LT, LT_EQ, LT_LT_EQ, GT_GT_EQ, GT_GT_GT, RETURN));
+    List<IElementType> types = new ArrayList<>(
+      getTypes(EQ, EQ_GT, LT_LT_EQ, EQ_EQ, EQ_EQ_EQ, GT_EQ, GT, LT, LT_EQ, LT_LT_EQ, GT_GT_EQ, GT_GT_GT, RETURN));
     types.add(getType(STATEMENT));
     types.add(getType(BLOCK));
 
@@ -215,20 +215,19 @@ public class KarateJsBlock implements ASTBlock {
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     ASTBlock block1 = (ASTBlock) child1;
     ASTBlock block2 = (ASTBlock) child2;
+    if (block1 == null) {
+      return null;
+    }
     ASTNode node1 = block1.getNode();
     ASTNode node2 = block2.getNode();
     boolean makeChange = false;
     int spaces = 0;
     int lineFeeds = 0;
-    if (child1 == null) {
-      return null;
-    }
-    if (BLOCKS_TO_NOT_SPACE_BEFORE.contains(node2.getElementType()) || BLOCKS_TO_NOT_SPACE_AFTER.contains(
-      node1.getElementType())) {
+    if (BLOCKS_TO_NOT_SPACE_BEFORE.contains(node2 != null ? node2.getElementType() : null) ||
+      BLOCKS_TO_NOT_SPACE_AFTER.contains(node1 != null ? node1.getElementType() : null)) {
       makeChange = true;
-      spaces = 0;
     }
-    if (BLOCKS_TO_SPACE_AFTER.contains(node1.getElementType())) {
+    if (node1 != null && BLOCKS_TO_SPACE_AFTER.contains(node1.getElementType())) {
       makeChange = true;
       spaces = 1;
     }
@@ -247,11 +246,6 @@ public class KarateJsBlock implements ASTBlock {
       makeChange = true;
       lineFeeds = 1;
     }
-    //    if (BLOCKS_TO_LINE_FEED.contains(node1.getElementType()) && BLOCKS_TO_LINE_FEED.contains(node2
-    //    .getElementType())
-    //      && !isSingleLine) {
-    //      return Spacing.createSpacing(1, 1, 1, true, 1);
-    //    }
     if (isSingleLine) {
       lineFeeds = 0;
     }
