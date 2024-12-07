@@ -42,10 +42,6 @@ public class KarateJavascriptFormat {
       childWrap = Formatter.getInstance().createChildWrap(wrap, WrapType.NONE, false);
       JSCodeStyleSettings commonSettings = JSCodeStyleSettings.getSettings(astNode.getPsi());
       commonSettings.VAR_DECLARATION_WRAP = 0;
-      commonSettings.FUNCTION_PARAMETER_DECORATOR_WRAP = 0;
-      commonSettings.CLASS_DECORATOR_WRAP = 0;
-      commonSettings.CLASS_FIELD_DECORATOR_WRAP = 0;
-      commonSettings.CLASS_METHOD_DECORATOR_WRAP = 0;
       commonSettings.OBJECT_LITERAL_WRAP = 0;
       commonSettings.OBJECT_TYPES_WRAP = 0;
       commonSettings.IMPORTS_WRAP = 0;
@@ -62,11 +58,8 @@ public class KarateJavascriptFormat {
       context =
         new JSBlockContext(defaults, dialect, commonSettings,
           FormattingMode.REFORMAT);
-      context.getDialectSettings().FUNCTION_PARAMETER_DECORATOR_WRAP = 0;
-      context.getDialectSettings().CLASS_DECORATOR_WRAP = 0;
       context.getDialectSettings().IMPORTS_WRAP = 0;
       context.getDialectSettings().OBJECT_LITERAL_WRAP = 0;
-      context.getDialectSettings().CLASS_METHOD_DECORATOR_WRAP = 0;
       context.getDialectSettings().VAR_DECLARATION_WRAP = 0;
       context.getDialectSettings().BLANK_LINES_AROUND_FUNCTION = 0;
       context.getCommonSettings().FIELD_ANNOTATION_WRAP = 0;
