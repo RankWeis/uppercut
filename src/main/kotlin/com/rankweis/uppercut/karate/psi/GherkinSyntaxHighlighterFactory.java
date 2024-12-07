@@ -2,11 +2,12 @@
 // found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
+import static com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider.getKeywordProvider;
+
 import com.intellij.json.highlighting.JsonSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -15,8 +16,10 @@ public final class GherkinSyntaxHighlighterFactory extends JsonSyntaxHighlighter
   @Override
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(Project project, VirtualFile virtualFile) {
-    return new GherkinSyntaxHighlighter(JsonGherkinKeywordProvider.getKeywordProvider(true));
+    return new GherkinSyntaxHighlighter(project, virtualFile, getKeywordProvider(true));
   }
 
-
+  @Override protected boolean isCanEscapeEol() {
+    return true;
+  }
 }

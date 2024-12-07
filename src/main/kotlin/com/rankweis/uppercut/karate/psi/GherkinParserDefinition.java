@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.TEXT_BLOCK;
+
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
@@ -13,6 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
+import com.rankweis.uppercut.karate.lexer.GherkinLexer;
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
 import com.rankweis.uppercut.karate.psi.impl.GherkinFeatureHeaderImpl;
@@ -78,11 +82,21 @@ public final class GherkinParserDefinition implements ParserDefinition {
     if (node.getElementType() == GherkinElementTypes.TAG) return new GherkinTagImpl(node);
     if (node.getElementType() == GherkinElementTypes.STEP_PARAMETER) return new GherkinStepParameterImpl(node);
     if (node.getElementType() == GherkinElementTypes.PYSTRING) return new GherkinPystringImpl(node);
-    if (node.getElementType() == GherkinElementTypes.DECLARATION) {
+    if (node.getElementType() == GherkinElementTypes.DECLARATION
+      || node.getElementType() == GherkinElementTypes.VARIABLE) {
       return new KarateDeclaration(node);
     }
     if (node.getElementType() == GherkinElementTypes.PAREN_ELEMENT) {
       return new KarateParenElement(node);
+    }
+    if ( node.getElementType() == GherkinElementTypes.JAVASCRIPT) {
+      return new KarateEmbeddedJavascriptElement(node);
+    } else if (node.getElementType() == JSON) {
+      return new KarateEmbeddedJsonElement(node);
+    } else if (node.getElementType() == GherkinElementTypes.XML) {
+      return new KarateEmbeddedJavascriptElement(node);
+    } else if (node.getElementType() == TEXT_BLOCK) {
+      return new GherkinPystringImpl(node);
     }
     return PsiUtilCore.NULL_PSI_ELEMENT;
   }

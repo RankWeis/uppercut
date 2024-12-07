@@ -1,17 +1,16 @@
 package com.rankweis.uppercut.karate.psi;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.ILazyParseableElementTypeBase;
+import com.rankweis.uppercut.karate.psi.impl.GherkinPsiElementBase;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonEmbeddedContentTokenType implements ILazyParseableElementTypeBase {
-  
+public class JsonEmbeddedContentTokenType extends GherkinPsiElementBase {
 
-  @Override public ASTNode parseContents(@NotNull ASTNode chameleon) {
-    return null;
+  public JsonEmbeddedContentTokenType(@NotNull ASTNode node) {
+    super(node);
   }
 
-  @Override public boolean reuseCollapsedTokens() {
-    return ILazyParseableElementTypeBase.super.reuseCollapsedTokens();
+  @Override protected void acceptGherkin(GherkinElementVisitor gherkinElementVisitor) {
+    gherkinElementVisitor.visitElement(this);
   }
 }

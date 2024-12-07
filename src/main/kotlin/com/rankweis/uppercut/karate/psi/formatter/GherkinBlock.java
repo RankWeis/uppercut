@@ -1,6 +1,14 @@
 package com.rankweis.uppercut.karate.psi.formatter;
 
+import static com.intellij.json.JsonElementTypes.COMMA;
+import static com.intellij.json.JsonElementTypes.L_BRACKET;
+import static com.intellij.json.JsonElementTypes.L_CURLY;
+import static com.intellij.json.JsonElementTypes.R_BRACKET;
+import static com.intellij.json.JsonElementTypes.R_CURLY;
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
 import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.STEP;
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.TEXT_BLOCK;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.CLOSE_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.COLON;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.IDENTIFIERS;
@@ -14,13 +22,23 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.ChildAttributes;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Spacing;
+import com.intellij.formatting.SpacingBuilder;
 import com.intellij.formatting.Wrap;
+import com.intellij.formatting.WrapType;
+import com.intellij.json.JsonElementTypes;
+import com.intellij.json.JsonLanguage;
+import com.intellij.json.formatter.JsonBlock;
+import com.intellij.json.formatter.JsonCodeStyleSettings;
+import com.intellij.json.json5.Json5Language;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
 import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
 import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
 import com.rankweis.uppercut.karate.psi.GherkinParserDefinition;
@@ -41,11 +59,14 @@ public class GherkinBlock implements ASTBlock {
 
   private final ASTNode myNode;
   private final Indent myIndent;
+  private Alignment alignment;
   private final TextRange myTextRange;
   private final boolean myLeaf;
   private List<Block> myChildren = null;
   private final GherkinKeywordProvider myKeywordProvider = JsonGherkinKeywordProvider.getKeywordProvider();
   private final GherkinKeywordProvider myActionKeywordProvider = new PlainKarateKeywordProvider();
+  private final JsonCodeStyleSettings jsonCustomSettings =
+    CodeStyleSettings.getDefaults().getCustomSettings(JsonCodeStyleSettings.class);
 
   private static final TokenSet BLOCKS_TO_INDENT = TokenSet.create(GherkinElementTypes.FEATURE_HEADER,
     GherkinElementTypes.RULE,
@@ -59,10 +80,10 @@ public class GherkinBlock implements ASTBlock {
     GherkinElementTypes.FEATURE,
     GherkinElementTypes.SCENARIO,
     GherkinElementTypes.RULE,
-    GherkinElementTypes.SCENARIO_OUTLINE);
+    GherkinElementTypes.SCENARIO_OUTLINE, JAVASCRIPT);
 
   private static final TokenSet READ_ONLY_BLOCKS =
-    TokenSet.create(GherkinElementTypes.PYSTRING, KarateTokenTypes.COMMENT);
+    TokenSet.create(JAVASCRIPT, GherkinElementTypes.PYSTRING, KarateTokenTypes.COMMENT, TEXT_BLOCK);
 
   public GherkinBlock(ASTNode node) {
     this(node, Indent.getAbsoluteNoneIndent());
@@ -113,6 +134,43 @@ public class GherkinBlock implements ASTBlock {
     }
 
     List<Block> result = new ArrayList<>();
+
+    if (myNode.getElementType() == JAVASCRIPT) {
+      return KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList()
+        .stream().findFirst()
+        .map(extension -> extension.getJsSubBlocks(myNode, alignment))
+        .orElse(result);
+    }
+    if (myNode.getElementType() == JSON) {
+      JsonBlock parentblock =
+        new JsonBlock(null, myNode, jsonCustomSettings, getAlignment(),
+          Indent.getContinuationWithoutFirstIndent(), Wrap.createWrap(WrapType.NORMAL, true),
+          createJsonSpacingBuilder(CodeStyleSettings.getDefaults()));
+
+      if (!myNode.getText().strip().contains("\n")) {
+        jsonCustomSettings.OBJECT_WRAPPING = 0;
+        jsonCustomSettings.ARRAY_WRAPPING = 0;
+        setAlignment(Alignment.createAlignment());
+        parentblock =
+          new JsonBlock(null, myNode, jsonCustomSettings, getAlignment(),
+            Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false),
+            createJsonSpacingBuilder(CodeStyleSettings.getDefaults()));
+      } else {
+        jsonCustomSettings.OBJECT_WRAPPING = 2;
+        jsonCustomSettings.ARRAY_WRAPPING = 2;
+      }
+      for (ASTNode jsChild : children) {
+        if (jsChild.getElementType() == TokenType.WHITE_SPACE) {
+          continue;
+        }
+        JsonBlock jsonBlock =
+          new JsonBlock(parentblock, jsChild, jsonCustomSettings, getAlignment(),
+            Indent.getContinuationWithoutFirstIndent(), Wrap.createWrap(WrapType.NORMAL, true),
+            createJsonSpacingBuilder(CodeStyleSettings.getDefaults()));
+        result.add(jsonBlock);
+      }
+      return result;
+    }
     for (ASTNode child : children) {
       if (child.getElementType() == TokenType.WHITE_SPACE) {
         continue;
@@ -122,6 +180,7 @@ public class GherkinBlock implements ASTBlock {
         myNode.getElementType() == GherkinElementTypes.SCENARIO_OUTLINE &&
         child.getStartOffset() > myNode.getStartOffset();
       Indent indent;
+      Alignment blockAlignment = null;
       if (BLOCKS_TO_INDENT.contains(child.getElementType()) || isTagInsideScenario) {
         indent = Indent.getNormalIndent();
       } else {
@@ -133,6 +192,9 @@ public class GherkinBlock implements ASTBlock {
           continue;
         }
       }
+      if (child.getElementType() == JAVASCRIPT) {
+        blockAlignment = Alignment.createAlignment();
+      }
       if (child.getElementType() == KarateTokenTypes.COMMENT) {
         final ASTNode commentIndentElement = child.getTreePrev();
         if (commentIndentElement != null && (commentIndentElement.getText().contains("\n")
@@ -143,7 +205,9 @@ public class GherkinBlock implements ASTBlock {
           indent = Indent.getSpaceIndent(whiteSpaceText.length() - lineBreakIndex - 1);
         }
       }
-      result.add(new GherkinBlock(child, indent));
+      GherkinBlock e = new GherkinBlock(child, indent);
+      e.setAlignment(blockAlignment);
+      result.add(e);
     }
     return result;
   }
@@ -161,8 +225,13 @@ public class GherkinBlock implements ASTBlock {
 
   @Override
   public Alignment getAlignment() {
-    return null;
+    return alignment;
   }
+
+  public void setAlignment(Alignment alignment) {
+    this.alignment = alignment;
+  }
+
 
   @Override
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
@@ -174,7 +243,7 @@ public class GherkinBlock implements ASTBlock {
     ASTBlock block2 = (ASTBlock) child2;
     ASTNode node1 = block1.getNode();
     ASTNode node2 = block2.getNode();
-    if(node1 == null || node2 == null) {
+    if (node1 == null || node2 == null) {
       return null;
     }
     final IElementType parent1 = node1.getTreeParent() != null ? node1.getTreeParent().getElementType() : null;
@@ -281,5 +350,22 @@ public class GherkinBlock implements ASTBlock {
   @Override
   public boolean isLeaf() {
     return myLeaf || getSubBlocks().isEmpty();
+  }
+
+  static @NotNull SpacingBuilder createJsonSpacingBuilder(CodeStyleSettings settings) {
+    final JsonCodeStyleSettings jsonSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
+    final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JsonLanguage.INSTANCE);
+
+    final int spacesBeforeComma = commonSettings.SPACE_BEFORE_COMMA ? 1 : 0;
+    final int spacesBeforeColon = jsonSettings.SPACE_BEFORE_COLON ? 1 : 0;
+    final int spacesAfterColon = jsonSettings.SPACE_AFTER_COLON ? 1 : 0;
+
+    return new SpacingBuilder(settings, Json5Language.INSTANCE)
+      .before(JsonElementTypes.COLON).spacing(spacesBeforeColon, spacesBeforeColon, 0, false, 0)
+      .after(JsonElementTypes.COLON).spacing(spacesAfterColon, spacesAfterColon, 0, false, 0)
+      .withinPair(L_BRACKET, R_BRACKET).spaces(1, true)
+      .withinPair(L_CURLY, R_CURLY).spaces(1, true)
+      .before(COMMA).spacing(spacesBeforeComma, spacesBeforeComma, 0, false, 0)
+      .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA);
   }
 }

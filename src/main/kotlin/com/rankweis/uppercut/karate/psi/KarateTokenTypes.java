@@ -2,9 +2,6 @@
 // found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
-import static com.intellij.json.JsonElementTypes.DOUBLE_QUOTED_STRING;
-import static com.intellij.json.JsonElementTypes.SINGLE_QUOTED_STRING;
-
 import com.intellij.psi.tree.TokenSet;
 
 public interface KarateTokenTypes {
@@ -30,6 +27,8 @@ public interface KarateTokenTypes {
   KarateElementType PYSTRING_QUOTES = new KarateElementType("PYSTRING_QUOTES");
   KarateElementType PYSTRING = new KarateElementType("PYSTRING_ELEMENT");
   KarateElementType PYSTRING_INCOMPLETE = new KarateElementType("PYSTRING_INCOMPLETE");
+  KarateElementType SINGLE_QUOTED_STRING = new KarateElementType("SINGLE_QUOTED_STRING");
+  KarateElementType DOUBLE_QUOTED_STRING = new KarateElementType("DOUBLE_QUOTED_STRING");
 
   KarateElementType PIPE = new KarateElementType("PIPE");
   KarateElementType OPEN_PAREN = new KarateElementType("OPEN_PAREN");

@@ -7,6 +7,7 @@ fun environment(key: String) = providers.environmentVariable(key)
 
 plugins {
     id("java") // Java support
+    id("com.github.johnrengelman.shadow") version "8.1.1"
     alias(libs.plugins.kotlin) // Kotlin support
     alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
@@ -18,6 +19,9 @@ plugins {
 configure<SourceSetContainer> {
     named("main") {
         java.srcDir("src/main/kotlin")
+    }
+    named("test") {
+        java.srcDir("src/test/kotlin")
     }
 }
 group = properties("pluginGroup").get()
@@ -33,19 +37,25 @@ repositories {
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
-    compileOnly("io.karatelabs:karate-junit5:" + properties("karateVersion").get())
-    implementation("ch.qos.logback:logback-classic:" + properties("logbackVersion").get())
+    compileOnly("io.karatelabs:karate-junit5:${properties("karateVersion").get()}")
+    implementation("ch.qos.logback:logback-classic:${properties("logbackVersion").get()}")
+    implementation(libs.karatejs)
+    testImplementation(libs.mockito)
 }
 
 // Set the JVM language level used to build the project.
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 dependencies {
     testImplementation(libs.junit)
-    
+    testImplementation(libs.junit5api)
+    testRuntimeOnly(libs.junit5engine)
+    testImplementation(libs.mockito)
+    implementation(libs.karatejs)
+
     intellijPlatform {
         val version = properties("platformVersion")
 

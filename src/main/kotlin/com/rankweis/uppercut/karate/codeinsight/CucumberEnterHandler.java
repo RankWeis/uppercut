@@ -40,7 +40,7 @@ public final class CucumberEnterHandler extends EnterHandlerDelegateAdapter {
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     final PsiElement probableQuotes = file.findElementAt(caretOffsetValue - 1);
     IElementType elementType = probableQuotes != null ? probableQuotes.getNode().getElementType() : null;
-    if (elementType == KarateTokenTypes.PYSTRING_INCOMPLETE || elementType == KarateTokenTypes.PYSTRING_QUOTES) {
+    if (elementType == KarateTokenTypes.PYSTRING_INCOMPLETE) {
       final PsiElement probablePyStringText =
         document.getTextLength() == PYSTRING_QUOTES.length() ? null : file.findElementAt(caretOffsetValue - 1 - PYSTRING_QUOTES.length());
       if (probablePyStringText == null || probablePyStringText.getNode().getElementType() != KarateTokenTypes.PYSTRING) {
