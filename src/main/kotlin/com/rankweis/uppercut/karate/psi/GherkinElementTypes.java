@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
-import com.intellij.json.JsonElementTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
@@ -21,9 +20,12 @@ public interface GherkinElementTypes {
   IElementType TABLE_CELL = new KarateElementType("table cell");
   IElementType TAG = new KarateElementType("tag");
   IElementType PYSTRING = new KarateElementType("pystring");
+  IElementType JAVASCRIPT = new KarateElementType("javascript_element");
+  IElementType JSON = new KarateElementType("json_element");
+  IElementType TEXT_BLOCK = new KarateElementType("json_element");
+  IElementType XML = new KarateElementType("xml_element");
   IElementType DECLARATION = new KarateElementType("declaration");
   IElementType VARIABLE = new KarateElementType("variable");
-  IElementType JSON = JsonElementTypes.BLOCK_COMMENT;
   IElementType PAREN_ELEMENT = new KarateElementType("paren element");
 
   TokenSet SCENARIOS = TokenSet.create(SCENARIO, SCENARIO_OUTLINE);

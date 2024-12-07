@@ -53,11 +53,6 @@ public class KarateGoToSymbolProvider implements GotoDeclarationHandler {
         return new PsiElement[]{PsiManager.getInstance(sourceElement.getProject()).findFile(potentialFilePath)};
       }
     }
-    //    final Lookup activeLookup =
-    //      LookupManager.getInstance(sourceElement.getProject()).getActiveLookup();
-    //    final LookupElement item = activeLookup != null ? activeLookup.getCurrentItem() : null;
-    //    final Object lookupObject = item != null && item.isValid() ? item.getObject() : null;
-    //    return lookupObject instanceof DartLookupObject ? ((DartLookupObject)lookupObject).findPsiElement() : null;
     return new PsiElement[0];
   }
 

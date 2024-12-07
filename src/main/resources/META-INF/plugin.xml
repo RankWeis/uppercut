@@ -16,17 +16,39 @@
     <fileType name="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinFileType"
       fieldName="INSTANCE" language="Karate" extensions="feature"/>
+    <fileType name="KarateJs"
+      implementationClass="com.rankweis.uppercut.karate.psi.KarateJsFileType"
+      fieldName="INSTANCE" language="KarateJs" extensions="featurejs"/>
     <lang.syntaxHighlighterFactory language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="KarateJs"
+      implementationClass="com.rankweis.uppercut.karate.highlight.KarateJsSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="JSON"
+      implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
+    <json.jsonLikePsiWalkerFactory implementation="com.rankweis.uppercut.karate.extension.KarateJson5PsiWalkerFactory" order="first"/>
+    <json.jsonLiteralChecker
+      implementation="com.rankweis.uppercut.karate.extension.KarateJsonLiteralChecker" order="first"/>
+<!--    <localInspection language="JSON" shortName="JsonStandardCompliance" bundle="messages.JsonBundle" key="inspection.compliance.name" groupKey="json.inspection.group" enabledByDefault="false" level="ERROR" implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection" />-->
+    <localInspection language="JSON" shortName="KarateJsonStandardCompliance" bundle="messages.JsonBundle" key="inspection.compliance.name" groupKey="json.inspection.group" enabledByDefault="true" level="ERROR" implementationClass="com.rankweis.uppercut.karate.extension.KarateStandardComplianceInspection" order="last" />
+    <localInspection language="Karate"
+      enabledByDefault="true"
+      shortName="KarateJavascriptStandardCompliance"
+      displayName="Karate Javascript standard compliance"
+      groupName="Karate suppressions"
+      implementationClass="com.rankweis.uppercut.karate.extension.KarateInspectionTool" order="last"/>
 
     <lang.parserDefinition language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinParserDefinition"/>
+    <lang.parserDefinition language="KarateJs"
+      implementationClass="com.rankweis.uppercut.karate.psi.parser.KarateJsParserDefinition"/>
     <lang.commenter language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinCommenter"/>
     <lang.psiStructureViewFactory language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.structure.GherkinStructureViewFactory"/>
     <lang.formatter language="Karate"
       implementationClass="com.rankweis.uppercut.karate.format.KarateFormattingModelBuilder"/>
+    <lang.formatter language="KarateJs"
+      implementationClass="com.rankweis.uppercut.karate.format.KarateJSFormattingModelBuilder"/>
     <annotator language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.annotator.GherkinAnnotator"/>
     <lang.foldingBuilder language="Karate"
@@ -146,9 +168,14 @@
       implementation="com.rankweis.uppercut.karate.navigation.KarateGoToSymbolProvider"/>
     <gotoSymbolContributor
       implementation="com.rankweis.uppercut.karate.navigation.KarateChooseByNameContributor"/>
-    <multiHostInjector
-      implementation="com.rankweis.uppercut.karate.injector.GherkinLanguageInjectorNoJS"/>
-    <formatting.injectedOptions implementation="com.rankweis.uppercut.karate.injector.KarateInjectedFormattingOptionsProvider"/>
+<!--    <multiHostInjector-->
+<!--      implementation="com.rankweis.uppercut.karate.injector.GherkinLanguageInjectorNoJS"/>-->
+<!--    <formatting.injectedOptions implementation="com.rankweis.uppercut.karate.injector.KarateInjectedFormattingOptionsProvider"/>-->
+  </extensions>
+
+  <extensions defaultExtensionNs="com.rankweis.uppercut">
+    <karateJavascriptParsingExtensionPoint
+      implementation="io.karatelabs.js.KarateJsNoPluginExtension" order="last"/>
   </extensions>
 
   <extensionPoints>
@@ -156,8 +183,8 @@
       interface="com.rankweis.uppercut.karate.CucumberJvmExtensionPoint"
       dynamic="true" name="cucumberJvmExtensionPoint"/>
     <extensionPoint
-      interface="com.rankweis.uppercut.karate.injector.GherkinInjectorExtensionPoint"
-      dynamic="true" name="injectorExtensionPoint"/>
+      interface="com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint"
+      dynamic="true" name="uppercut.karateJavascriptParsingExtensionPoint"/>
   </extensionPoints>
 
 
