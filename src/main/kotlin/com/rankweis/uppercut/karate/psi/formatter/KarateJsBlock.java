@@ -26,6 +26,7 @@ import static io.karatelabs.js.Token.SEMI;
 import static io.karatelabs.js.Token.WS;
 import static io.karatelabs.js.Token.WS_LF;
 import static io.karatelabs.js.Type.BLOCK;
+import static io.karatelabs.js.Type.OBJECT_ELEM;
 import static io.karatelabs.js.Type.STATEMENT;
 
 import com.intellij.formatting.ASTBlock;
@@ -65,7 +66,7 @@ public class KarateJsBlock implements ASTBlock {
     getType(STATEMENT));
 
   private static final TokenSet BLOCKS_TO_INDENT_CHILDREN = TokenSet.create(
-    getType(STATEMENT));
+    getTypes(STATEMENT, OBJECT_ELEM).toArray(IElementType[]::new));
 
   private static final TokenSet BLOCKS_TO_LINE_FEED_BEFORE = TokenSet.create();
 
