@@ -11,6 +11,7 @@ changelog = "2.2.1"
 gradleIntelliJPlugin = "2.2.0"
 qodana = "2024.2.6"
 kover = "0.8.3"
+lombok = "8.11"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -25,3 +26,4 @@ gradleIntelliJPlugin = { id = "org.jetbrains.intellij.platform", version.ref = "
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 qodana = { id = "org.jetbrains.qodana", version.ref = "qodana" }
+lombok = { id = "io.freefair.lombok", version.ref = "lombok"}
