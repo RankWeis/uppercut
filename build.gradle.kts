@@ -7,7 +7,6 @@ fun environment(key: String) = providers.environmentVariable(key)
 
 plugins {
     id("java") // Java support
-    id("com.github.johnrengelman.shadow") version "8.1.1"
     alias(libs.plugins.kotlin) // Kotlin support
     alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
@@ -32,6 +31,7 @@ repositories {
     mavenCentral()
     intellijPlatform {
         defaultRepositories()
+        jetbrainsRuntime()
     }
 }
 
@@ -68,6 +68,8 @@ dependencies {
 
         pluginVerifier()
         zipSigner()
+        instrumentationTools()
+        jetbrainsRuntime()
         testFramework(TestFrameworkType.Platform)
     }
 }
