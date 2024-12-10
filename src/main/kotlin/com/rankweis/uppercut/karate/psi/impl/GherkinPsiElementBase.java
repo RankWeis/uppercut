@@ -14,12 +14,14 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
 import com.rankweis.uppercut.karate.psi.GherkinPsiElement;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import groovy.transform.EqualsAndHashCode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
 
-
+@EqualsAndHashCode
 public abstract class GherkinPsiElementBase extends ASTWrapperPsiElement implements GherkinPsiElement {
 
   private static final TokenSet TEXT_FILTER = TokenSet.create(KarateTokenTypes.TEXT);
@@ -92,4 +94,12 @@ public abstract class GherkinPsiElementBase extends ASTWrapperPsiElement impleme
   }
 
   protected abstract void acceptGherkin(GherkinElementVisitor gherkinElementVisitor);
+
+  @Override public boolean equals(Object o) {
+    if (!(o instanceof GherkinPsiElementBase that)) {
+      return false;
+    }
+    return Objects.equals(getNode().getText(), that.getNode().getText()) && Objects.equals(getNode().getTextRange(),
+      that.getNode().getTextRange()) && getContainingFile().equals(that.getContainingFile());
+  }
 }
