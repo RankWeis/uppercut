@@ -11,21 +11,25 @@ import static io.karatelabs.js.Token.EQ;
 import static io.karatelabs.js.Token.EQ_EQ;
 import static io.karatelabs.js.Token.EQ_EQ_EQ;
 import static io.karatelabs.js.Token.EQ_GT;
+import static io.karatelabs.js.Token.FUNCTION;
 import static io.karatelabs.js.Token.GT;
 import static io.karatelabs.js.Token.GT_EQ;
 import static io.karatelabs.js.Token.GT_GT_EQ;
 import static io.karatelabs.js.Token.GT_GT_GT;
+import static io.karatelabs.js.Token.IDENT;
 import static io.karatelabs.js.Token.LT;
 import static io.karatelabs.js.Token.LT_EQ;
 import static io.karatelabs.js.Token.LT_LT_EQ;
 import static io.karatelabs.js.Token.L_COMMENT;
 import static io.karatelabs.js.Token.L_CURLY;
+import static io.karatelabs.js.Token.L_PAREN;
 import static io.karatelabs.js.Token.RETURN;
 import static io.karatelabs.js.Token.R_CURLY;
 import static io.karatelabs.js.Token.SEMI;
 import static io.karatelabs.js.Token.WS;
 import static io.karatelabs.js.Token.WS_LF;
 import static io.karatelabs.js.Type.BLOCK;
+import static io.karatelabs.js.Type.LIT_OBJECT;
 import static io.karatelabs.js.Type.STATEMENT;
 
 import com.intellij.formatting.ASTBlock;
@@ -40,8 +44,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
-import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import io.karatelabs.js.Token;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,8 +53,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class KarateJsBlock implements ASTBlock {
 
-  private static final List<Character> NON_SPACED_CHARACTERS = List.of(',', '.', '[', ']');
-
   private final ASTNode myNode;
   private final Indent myIndent;
   private Alignment alignment;
@@ -61,11 +61,11 @@ public class KarateJsBlock implements ASTBlock {
   private final Wrap myWrap;
   private List<Block> myChildren = null;
 
-  private static final TokenSet BLOCKS_TO_INDENT = TokenSet.create(
-    getType(STATEMENT));
+  private static final TokenSet BLOCKS_TO_NOT_INDENT = TokenSet.create(
+    getElements(R_CURLY, L_CURLY).toArray(IElementType[]::new));
 
   private static final TokenSet BLOCKS_TO_INDENT_CHILDREN = TokenSet.create(
-    getTypes(STATEMENT).toArray(IElementType[]::new));
+    getTypes(STATEMENT, LIT_OBJECT).toArray(IElementType[]::new));
 
   private static final TokenSet BLOCKS_TO_LINE_FEED_BEFORE = TokenSet.create();
 
@@ -96,9 +96,7 @@ public class KarateJsBlock implements ASTBlock {
         .toArray(IElementType[]::new));
   }
 
-  private static final TokenSet READ_ONLY_BLOCKS =
-    TokenSet.create(JAVASCRIPT, GherkinElementTypes.PYSTRING, KarateTokenTypes.COMMENT);
-  private boolean isSingleLine;
+  private final boolean isSingleLine;
 
   public KarateJsBlock(ASTNode node, Indent indent, boolean isSingleLine) {
     this(node, indent, node.getTextRange(), isSingleLine);
@@ -164,22 +162,14 @@ public class KarateJsBlock implements ASTBlock {
 
       Indent indent;
       Alignment blockAlignment = null;
-      if (BLOCKS_TO_INDENT_CHILDREN.contains(myNode.getElementType())) {
+      if (BLOCKS_TO_INDENT_CHILDREN.contains(myNode.getElementType()) && child.getElementType() != getType(BLOCK)
+        && !BLOCKS_TO_NOT_INDENT.contains(child.getElementType())) {
         indent = Indent.getNormalIndent();
       } else {
         indent = Indent.getNoneIndent();
       }
-      // skip epmty cells
-      if (child.getElementType() == GherkinElementTypes.TABLE_CELL) {
-        if (child.getChildren(null).length == 0) {
-          continue;
-        }
-      }
       if (child.getElementType() == JAVASCRIPT) {
         blockAlignment = Alignment.createAlignment();
-      }
-      if (child.getElementType() == getElement(L_COMMENT) || child.getElementType() == getElement(B_COMMENT)) {
-        indent = Indent.getNormalIndent();
       }
       KarateJsBlock e = new KarateJsBlock(child, indent, isSingleLine);
       e.setAlignment(blockAlignment);
@@ -217,33 +207,46 @@ public class KarateJsBlock implements ASTBlock {
     }
     ASTNode node1 = block1.getNode();
     ASTNode node2 = block2.getNode();
+    if (node1 == null || node2 == null) {
+      return null;
+    }
+    IElementType elem1 = node1.getElementType();
+    IElementType elem2 = node2.getElementType();
     boolean makeChange = false;
     int spaces = 0;
     int lineFeeds = 0;
-    if (BLOCKS_TO_NOT_SPACE_BEFORE.contains(node2 != null ? node2.getElementType() : null) ||
-      BLOCKS_TO_NOT_SPACE_AFTER.contains(node1 != null ? node1.getElementType() : null)) {
+    if (BLOCKS_TO_NOT_SPACE_BEFORE.contains(elem2) ||
+      BLOCKS_TO_NOT_SPACE_AFTER.contains(elem1)) {
       makeChange = true;
     }
-    if (node1 != null && BLOCKS_TO_SPACE_AFTER.contains(node1.getElementType())) {
+    if ((elem1 == getElement(FUNCTION) || elem1 == getElement(IDENT))
+      && elem2 == getElement(L_PAREN)) {
+
+      makeChange = true;
+    }
+    if (BLOCKS_TO_SPACE_AFTER.contains(node1.getElementType())) {
       makeChange = true;
       spaces = 1;
     }
 
-    if (BLOCKS_TO_SPACE.contains(node1.getElementType()) || BLOCKS_TO_SPACE.contains(node2.getElementType())
+    if (BLOCKS_TO_SPACE.contains(elem1) || BLOCKS_TO_SPACE.contains(elem2)
       || BLOCKS_TO_SPACE_AFTER.contains(node1.getElementType())) {
 
       makeChange = true;
       spaces = 1;
     }
 
-    if ((BLOCKS_TO_LINE_FEED_BEFORE.contains(node2.getElementType())
-      || (BLOCKS_TO_LINE_FEED_AFTER.contains(node1.getElementType()) && node2.getElementType() != getElement(L_COMMENT))
-      || (node1.getElementType() == getElement(L_CURLY) && node1.getTreeParent().getElementType() == getType(BLOCK)))
-      && !(node1.getElementType() == getType(STATEMENT) && (node2.getElementType() == getElement(ELSE)))) {
+    if ((BLOCKS_TO_LINE_FEED_BEFORE.contains(elem2)
+      || (BLOCKS_TO_LINE_FEED_AFTER.contains(elem1) && elem2 != getElement(L_COMMENT))
+      || (elem1 == getElement(L_CURLY) && node1.getTreeParent().getElementType() == getType(BLOCK)))
+      && !(elem1 == getType(STATEMENT) && (elem2 == getElement(ELSE)))) {
       makeChange = true;
       lineFeeds = 1;
     }
     if (isSingleLine) {
+      lineFeeds = 0;
+    }
+    if (elem1 == getElement(L_COMMENT) || elem2 == getElement(L_COMMENT)) {
       lineFeeds = 0;
     }
     if (makeChange) {
@@ -264,10 +267,6 @@ public class KarateJsBlock implements ASTBlock {
 
   @Override public boolean isIncomplete() {
     return false;
-  }
-
-  public void setSingleLine(boolean singleLine) {
-    isSingleLine = singleLine;
   }
 
   @Override public boolean isLeaf() {

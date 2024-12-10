@@ -33,7 +33,7 @@ public class KarateJsParser implements PsiParser {
     boolean hasError = false;
     do {
       sb.append(b.getTokenText());
-      if(b.lookAhead(1) == TokenType.ERROR_ELEMENT) {
+      if (b.lookAhead(1) == TokenType.ERROR_ELEMENT) {
         hasError = true;
         PsiBuilder.Marker errorMark = b.mark();
         b.rawAdvanceLexer(1);
@@ -44,7 +44,7 @@ public class KarateJsParser implements PsiParser {
     } while (!b.eof() && (Objects.requireNonNull(b.getTokenType()).getLanguage() == KarateJsLanguage.INSTANCE
       || b.getTokenType().getLanguage() == Language.ANY));
 
-    if(hasError) {
+    if (hasError) {
       mark.done(TEXT_BLOCK);
       markRoot.done(root);
       return b;
@@ -74,10 +74,10 @@ public class KarateJsParser implements PsiParser {
   }
 
   private StringBuilder doParseRecursive(PsiBuilder b, Node node, int level) {
-    while (b.isWhitespaceOrComment(Objects.requireNonNull(b.getTokenType())) && b.getTokenText().equals("\n")) {
+    while (karateJsParserDefinition.getWhitespaceTokens().contains(Objects.requireNonNull(b.getTokenType()))) {
       b.advanceLexer();
     }
-    PsiBuilder.Marker mark = b.mark();
+    PsiBuilder.Marker mark = advanceComments(b, b.mark());
     StringBuilder sb = new StringBuilder();
 
     if (node.isChunk()) {
@@ -98,10 +98,13 @@ public class KarateJsParser implements PsiParser {
       }
       sb.append(doParseRecursive(b, n, level + 1).toString().strip());
     });
-    while ((!node.toString().equals(sb.toString().trim())) && !b.eof()) {
+    PsiBuilder.Marker lastElem = b.mark();
+    while (((!node.toString().equals(sb.toString().trim())) && !b.eof())) {
+      lastElem.drop();
+      lastElem = b.mark();
       b.advanceLexer();
-      if (b.isWhitespaceOrComment(b.getTokenType()) || karateJsParserDefinition.getWhitespaceTokens()
-        .contains(b.getTokenType()) || karateJsParserDefinition.getCommentTokens().contains(b.getTokenType())) {
+      if (karateJsParserDefinition.getWhitespaceTokens()
+        .contains(b.getTokenType())) {
         continue;
       }
       if (b.getTokenType().getLanguage() != KarateJsLanguage.INSTANCE || sb.length() > node.toString().length()) {
@@ -113,12 +116,17 @@ public class KarateJsParser implements PsiParser {
       sb.append(Objects.requireNonNull(b.getTokenText()).strip());
     }
     mark.done(KarateLexerAdapter.getType(node.type));
+    advanceComments(b, lastElem).drop();
     return sb;
   }
 
-  private boolean isWhitespaceOrComment(IElementType e) {
-    return karateJsParserDefinition.getCommentTokens().contains(e) || karateJsParserDefinition.getWhitespaceTokens()
-      .contains(e);
-
+  private PsiBuilder.Marker advanceComments(PsiBuilder b, PsiBuilder.Marker lastElem) {
+    while (karateJsParserDefinition.getCommentTokens().contains(b.getTokenType())) {
+      IElementType type = b.getTokenType();
+      b.advanceLexer();
+      lastElem.done(type);
+      lastElem = b.mark();
+    }
+    return lastElem;
   }
 }

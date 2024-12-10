@@ -5,8 +5,8 @@ Feature: Nested JSON and Dynamic Expressions
     * def input = { "outer": { "inner": { "key": "#[randomString(5)]" } } }
     * def expected = karate.jsonPath(input, '$.outer.inner.key')
     * def dynamicResult = function() {
-        var result = karate.jsonPath(input, '$.outer.inner.key');
-        return result == expected;
+      var result = karate.jsonPath(input, '$.outer.inner.key');
+      return result == expected;
     }
     * match dynamicResult() == true
     * print 'Dynamic result validation passed!'
@@ -14,13 +14,13 @@ Feature: Nested JSON and Dynamic Expressions
   Scenario: Use a custom Java class to manipulate data
     * def MyJavaClass = Java.type('com.example.MyJavaClass')
     * def instance = new MyJavaClass()
-    * def complexOperation = function (data) { return instance.processData(data); }
+    * def complexOperation = function(data) { return instance.processData(data); }
     * def input = [ 1, 2, 3, 4 ]
     * def result = complexOperation(input)
     * match result == [ 2, 4, 6, 8 ]
 
   Scenario Outline: Test with edge-case data inputs
-    * def calculate = function (a, b) { return a / b; }
+    * def calculate = function(a, b) { return a / b; }
     Given a = <a> and b = <b>
     When result = call calculate(a, b)
     Then match result == <expected>
@@ -35,13 +35,13 @@ Feature: Nested JSON and Dynamic Expressions
 
   Scenario: Retry API call until success
     * def retryApiCall = function() {
-        var maxAttempts = 3;
-        for (var i = 0; i < maxAttempts; i++) {
-            var response = karate.call('myApi.feature');
-            if (response.status == 200) return response;
-            karate.sleep(2000);
-        }
-        throw 'API call failed after ' + maxAttempts + ' attempts';
+      var maxAttempts = 3;
+      for (var i = 0; i < maxAttempts; i++) {
+        var response = karate.call('myApi.feature');
+        if (response.status == 200) return response;
+        karate.sleep(2000);
+      }
+      throw 'API call failed after ' + maxAttempts + ' attempts';
     }
     * def result = retryApiCall()
     * match result.status == 200
@@ -51,10 +51,10 @@ Feature: Nested JSON and Dynamic Expressions
     And path 'create'
     And request { "name": "test", "value": 123 }
     And r = function() {
-        document.querySelectorAll('.ruResponseButtons ._42ft._4jy0._4jy3._4jy1');
-        for (i = 0; i < r.length; i++) {
-            r[i].click();
-        }
+      document.querySelectorAll('.ruResponseButtons ._42ft._4jy0._4jy3._4jy1');
+      for (i = 0; i < r.length; i++) {
+        r[i].click();
+      }
     }
     When method POST
     Then status 201
@@ -74,15 +74,15 @@ Feature: Nested JSON and Dynamic Expressions
   Scenario: Perform nested operations on a JSON structure
     * def data = { "users": [ { "id": 1, "name": "Alice" }, { "id": 2, "name": "Bob" } ] }
     * def transformData = function(input) {
-        var output = [];
-        input.users.forEach(function(user) {
-            var transformed = {userId: user.id, details: []};
-            for (var i = 1; i <= 3; i++) {
-                transformed.details.push({detailId: i, info: user.name + '_info' + i});
-            }
-            output.push(transformed);
-        });
-        return output;
+      var output = [];
+      input.users.forEach(function(user) {
+        var transformed = {userId: user.id, details: []};
+        for (var i = 1; i <= 3; i++) {
+          transformed.details.push({detailId: i, info: user.name + '_info' + i});
+        }
+        output.push(transformed);
+      });
+      return output;
     }
     * def result = transformData(data)
     * print 'Transformed Data:', result
@@ -126,7 +126,7 @@ Feature: Nested JSON and Dynamic Expressions
 
   Scenario: Parallel processing of API requests
     * def makeRequest = function(id) {
-        return karate.call('singleRequest.feature', {id: id});
+      return karate.call('singleRequest.feature', {id: id});
     }
     * def ids = [ 1, 2, 3, 4, 5 ]
     * def results = karate.parallel(ids, makeRequest)
@@ -135,11 +135,11 @@ Feature: Nested JSON and Dynamic Expressions
   Scenario: Combine Karate DSL with embedded JavaScript
     * def id = 23
     * def data = [ { id: 1, name: 'A' }, { id: 2, name: 'B' } ]
-    * def results = karate.filter(data, function (x) { return x.id > 1; })
+    * def results = karate.filter(data, function(x) { return x.id > 1; })
     * match results == [ { id: 2, name: 'B' } ]
 
     * def calculateSum = function(a, b) {
-        return a + b;
+      return a + b;
     }
     * def sum = calculateSum(10, 20)
     * match sum == 30
@@ -157,16 +157,16 @@ Feature: Nested JSON and Dynamic Expressions
     }
   }
     * def flattenJson = function(obj, prefix) {
-        var result = {};
-        for (var key in obj) {
-            var prefixedKey = prefix ? prefix + '.' + key : key;
-            if (typeof obj[key] === 'object' && obj[key] !== null) {
-                Object.assign(result, flattenJson(obj[key], prefixedKey));
-            } else {
-                result[prefixedKey] = obj[key];
-            }
+      var result = {};
+      for (var key in obj) {
+        var prefixedKey = prefix ? prefix + '.' + key : key;
+        if (typeof obj[key] === 'object' && obj[key] !== null) {
+          Object.assign(result, flattenJson(obj[key], prefixedKey));
+        } else {
+          result[prefixedKey] = obj[key];
         }
-        return result;
+      }
+      return result;
     }
     * def flattened = flattenJson(nestedJson, '')
     * print 'Flattened JSON:', flattened
@@ -203,11 +203,11 @@ Feature: Nested JSON and Dynamic Expressions
       ]
     ]
     * def mergeArrays = function(arrays) {
-        var merged = [];
-        arrays.forEach(function(array) {
-            merged = merged.concat(array);
-        });
-        return merged;
+      var merged = [];
+      arrays.forEach(function(array) {
+        merged = merged.concat(array);
+      });
+      return merged;
     }
     * def result = mergeArrays(arrays)
     * print 'Merged JSON Array:', result
@@ -237,11 +237,11 @@ Feature: Nested JSON and Dynamic Expressions
 
   Scenario: Generate JSON dynamically using embedded JavaScript
     * def generateDynamicJson = function() {
-        var result = {};
-        for (var i = 1; i <= 5; i++) {
-            result['key' + i] = {value: i * 10, nested: {id: 'item' + i}};
-        }
-        return result;
+      var result = {};
+      for (var i = 1; i <= 5; i++) {
+        result['key' + i] = {value: i * 10, nested: {id: 'item' + i}};
+      }
+      return result;
     }
     * def dynamicJson = generateDynamicJson()
     * print 'Generated JSON:', dynamicJson
