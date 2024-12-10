@@ -4,6 +4,27 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Potential crash when parsing js files in non-ultimate versions.
+
+### From 2.0.0
+
+### Added
+
+- Major rewrite of parsing algorithm.
+- Ability to auto-complete action keywords.
+- Most requested feature! Javascript highlighting in IntelliJ Community
+- Formatting for JavaScript, JSON and XML snippets.
+
+### Request
+
+- I have tested this to the best of my ability, but please create an issue at [here](https://github.com/RankWeis/uppercut) if you notice something amiss!
+
+### Mentions
+
+- Another special thanks to @calvario-31 on GitHub for contributing time and effort into making this plugin better! These features were all requests by him.
+
 ## [2.0.0-2024.2] - 2024-12-07
 
 ### Added

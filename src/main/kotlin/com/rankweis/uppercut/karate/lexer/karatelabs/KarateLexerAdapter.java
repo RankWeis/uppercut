@@ -55,8 +55,8 @@ public class KarateLexerAdapter extends LexerBase {
     try {
       currentToken = lexer.yylex();
     } catch (IOException | Error e) {
-      log.error("Error in lexer", e);
-      throw new RuntimeException(e);
+      log.warn("Error in lexer", e);
+      throw new RuntimeException(e.initCause(e));
     }
   }
 
