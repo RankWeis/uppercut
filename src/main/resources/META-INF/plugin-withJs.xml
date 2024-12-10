@@ -3,7 +3,7 @@
   <extensions defaultExtensionNs="com.rankweis.uppercut">
     <karateJavascriptParsingExtensionPoint
       implementation="com.rankweis.uppercut.karate.lexer.impl.KarateJavascriptExtension"
-      order="first"/>
+      order="last"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <lang.inspectionSuppressor language="Karate" implementationClass="com.rankweis.uppercut.karate.inspections.JSInspector"/>

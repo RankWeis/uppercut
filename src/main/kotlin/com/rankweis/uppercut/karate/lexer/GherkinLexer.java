@@ -258,6 +258,9 @@ public class GherkinLexer extends LexerBase {
     if (isStringAtPosition(PYSTRING_MARKER)) {
       myCurrentToken = KarateTokenTypes.PYSTRING_QUOTES;
       myPosition += PYSTRING_MARKER.length();
+      if(isStringAtPosition("\n")) {
+        myPosition++;
+      }
       if (injecting()) {
         myState = STATE_DEFAULT;
       } else {
@@ -592,7 +595,7 @@ public class GherkinLexer extends LexerBase {
   private void injectJs() {
     try {
       jsLexer.advance();
-    } catch (Exception e) {
+    } catch (Throwable e) {
       myCurrentToken = TokenType.ERROR_ELEMENT;
       myPosition = jsLexer.getBufferEnd();
       return;

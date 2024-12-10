@@ -18,7 +18,7 @@ public class KarateJsFormatter {
         .contains("\n");
     for (ASTNode child : astNode.getChildren(null)) {
       if (!child.getText().isBlank()) {
-        result.add(new KarateJsBlock(child, null, isSingleLine));
+        result.add(new KarateJsBlock(child, null, isSingleLine, alignment));
       }
     }
     return result;

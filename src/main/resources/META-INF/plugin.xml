@@ -20,6 +20,10 @@
     <fileType name="KarateJs"
       implementationClass="com.rankweis.uppercut.karate.psi.KarateJsFileType"
       fieldName="INSTANCE" language="KarateJs" extensions="featurejs"/>
+    <langCodeStyleSettingsProvider
+      implementation="com.rankweis.uppercut.karate.format.settings.KarateLanguageCodeStyleSettingsProvider"/>
+    <codeStyleSettingsProvider
+      implementation="com.rankweis.uppercut.karate.format.settings.KarateCodeStyleSettingsProvider"/>
     <lang.syntaxHighlighterFactory language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="KarateJs"
@@ -54,10 +58,6 @@
       implementationClass="com.rankweis.uppercut.karate.psi.annotator.GherkinAnnotator"/>
     <lang.foldingBuilder language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinFoldingBuilder"/>
-    <langCodeStyleSettingsProvider
-      implementation="com.rankweis.uppercut.karate.psi.formatter.GherkinLanguageCodeStyleSettingsProvider"/>
-    <codeStyleSettingsProvider
-      implementation="com.rankweis.uppercut.karate.psi.formatter.GherkinCodeStyleSettingsProvider"/>
 
     <lang.findUsagesProvider language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.KarateFindUsagesProvider"/>

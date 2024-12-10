@@ -4,7 +4,6 @@ import static com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter.g
 import static com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter.getElements;
 import static com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter.getType;
 import static com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter.getTypes;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
 import static io.karatelabs.js.Token.B_COMMENT;
 import static io.karatelabs.js.Token.ELSE;
 import static io.karatelabs.js.Token.EQ;
@@ -42,7 +41,6 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
-import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import io.karatelabs.js.Token;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,14 +54,11 @@ public class KarateJsBlock implements ASTBlock {
 
   private final ASTNode myNode;
   private final Indent myIndent;
-  private Alignment alignment;
+  private final Alignment alignment;
   private final TextRange myTextRange;
   private final boolean myLeaf;
   private final Wrap myWrap;
   private List<Block> myChildren = null;
-
-  private static final TokenSet BLOCKS_TO_INDENT = TokenSet.create(
-    getType(STATEMENT));
 
   private static final TokenSet BLOCKS_TO_INDENT_CHILDREN = TokenSet.create(
     getTypes(STATEMENT, OBJECT_ELEM).toArray(IElementType[]::new));
@@ -97,27 +92,27 @@ public class KarateJsBlock implements ASTBlock {
         .toArray(IElementType[]::new));
   }
 
-  private static final TokenSet READ_ONLY_BLOCKS =
-    TokenSet.create(JAVASCRIPT, GherkinElementTypes.PYSTRING, KarateTokenTypes.COMMENT);
   private boolean isSingleLine;
 
-  public KarateJsBlock(ASTNode node, Indent indent, boolean isSingleLine) {
-    this(node, indent, node.getTextRange(), isSingleLine);
+  public KarateJsBlock(ASTNode node, Indent indent, boolean isSingleLine, Alignment alignment) {
+    this(node, indent, node.getTextRange(), isSingleLine, alignment);
   }
 
-  public KarateJsBlock(ASTNode node, Indent indent, final TextRange textRange, boolean isSingleLine) {
-    this(node, indent, textRange, false, isSingleLine);
+  public KarateJsBlock(ASTNode node, Indent indent, final TextRange textRange, boolean isSingleLine,
+    Alignment alignment) {
+    this(node, indent, textRange, false, isSingleLine, alignment);
   }
 
   public KarateJsBlock(ASTNode node, Indent indent, final TextRange textRange, final boolean leaf,
-    boolean isSingleLine) {
-    this(node, indent, textRange, leaf, null, isSingleLine);
+    boolean isSingleLine, Alignment alignment) {
+    this(node, indent, alignment, textRange, leaf, null, isSingleLine);
   }
 
-  public KarateJsBlock(ASTNode myNode, Indent myIndent, TextRange myTextRange, boolean myLeaf, Wrap myWrap,
+  public KarateJsBlock(ASTNode myNode, Indent myIndent, Alignment alignment, TextRange myTextRange, boolean myLeaf, Wrap myWrap,
     boolean isSingleLine) {
     this.myNode = myNode;
     this.myIndent = myIndent;
+    this.alignment = alignment;
     this.myTextRange = myTextRange;
     this.myLeaf = myLeaf;
     this.myWrap = myWrap;
@@ -154,6 +149,7 @@ public class KarateJsBlock implements ASTBlock {
     }
 
     List<Block> result = new ArrayList<>();
+    Alignment childAlignment = Alignment.createChildAlignment(alignment);
 
     for (ASTNode child : children) {
       if (child.getElementType() == TokenType.WHITE_SPACE
@@ -167,11 +163,12 @@ public class KarateJsBlock implements ASTBlock {
         myNode.getElementType() == GherkinElementTypes.SCENARIO_OUTLINE &&
         child.getStartOffset() > myNode.getStartOffset();
       Indent indent;
-      Alignment blockAlignment = null;
+      Alignment blockAlignment = childAlignment;
       if (BLOCKS_TO_INDENT_CHILDREN.contains(myNode.getElementType()) || isTagInsideScenario) {
-        indent = Indent.getNormalIndent();
+        indent = Indent.getNormalIndent(true);
       } else {
         indent = Indent.getNoneIndent();
+        blockAlignment = alignment;
       }
       // skip epmty cells
       if (child.getElementType() == GherkinElementTypes.TABLE_CELL) {
@@ -179,14 +176,10 @@ public class KarateJsBlock implements ASTBlock {
           continue;
         }
       }
-      if (child.getElementType() == JAVASCRIPT) {
-        blockAlignment = Alignment.createAlignment();
-      }
       if (child.getElementType() == getElement(L_COMMENT) || child.getElementType() == getElement(B_COMMENT)) {
         indent = Indent.getNormalIndent();
       }
-      KarateJsBlock e = new KarateJsBlock(child, indent, isSingleLine);
-      e.setAlignment(blockAlignment);
+      KarateJsBlock e = new KarateJsBlock(child, indent, isSingleLine, blockAlignment);
       result.add(e);
     }
     return result;
@@ -206,10 +199,6 @@ public class KarateJsBlock implements ASTBlock {
   @Override
   public Alignment getAlignment() {
     return alignment;
-  }
-
-  public void setAlignment(Alignment alignment) {
-    this.alignment = alignment;
   }
 
   @Override

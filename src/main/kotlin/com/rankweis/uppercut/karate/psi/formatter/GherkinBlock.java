@@ -14,6 +14,7 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.COLON;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.IDENTIFIERS;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPEN_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPERATOR;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING_QUOTES;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT_LIKE;
 
 import com.intellij.formatting.ASTBlock;
@@ -180,20 +181,20 @@ public class GherkinBlock implements ASTBlock {
         myNode.getElementType() == GherkinElementTypes.SCENARIO_OUTLINE &&
         child.getStartOffset() > myNode.getStartOffset();
       Indent indent;
-      Alignment blockAlignment = null;
+      Alignment blockAlignment = alignment;
       if (BLOCKS_TO_INDENT.contains(child.getElementType()) || isTagInsideScenario) {
         indent = Indent.getNormalIndent();
       } else {
         indent = Indent.getNoneIndent();
+      }
+      if(child.getElementType() == PYSTRING_QUOTES) {
+        blockAlignment = Alignment.createChildAlignment(getAlignment());
       }
       // skip epmty cells
       if (child.getElementType() == GherkinElementTypes.TABLE_CELL) {
         if (child.getChildren(null).length == 0) {
           continue;
         }
-      }
-      if (child.getElementType() == JAVASCRIPT) {
-        blockAlignment = Alignment.createAlignment();
       }
       if (child.getElementType() == KarateTokenTypes.COMMENT) {
         final ASTNode commentIndentElement = child.getTreePrev();

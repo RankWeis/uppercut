@@ -327,18 +327,19 @@ public class GherkinParser implements PsiParser {
       marker.done(GherkinElementTypes.PYSTRING);
       return;
     }
+    Marker quotes = null;
     if (builder.getTokenType() == PYSTRING_QUOTES) {
-      if (builder.getTokenType() == KarateTokenTypes.PYSTRING_QUOTES) {
-        builder.advanceLexer();
-        if (builder.eof()) {
-          marker.done(GherkinElementTypes.PYSTRING);
-          return;
-        }
+      quotes = builder.mark();
+      builder.advanceLexer();
+      if (builder.eof()) {
+        quotes.done(PYSTRING_QUOTES);
+        marker.done(GherkinElementTypes.PYSTRING);
+        return;
       }
     }
     Optional<KarateJavascriptParsingExtensionPoint> jsExt =
       KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList().stream().findFirst();
-    if(overrideInjection != null && overrideInjection.equalsIgnoreCase("text")) {
+    if (overrideInjection != null && overrideInjection.equalsIgnoreCase("text")) {
       Language l = Objects.requireNonNull(builder.getTokenType()).getLanguage();
       Marker mark = builder.mark();
       while (builder.getTokenType().getLanguage() == l) {
@@ -364,7 +365,12 @@ public class GherkinParser implements PsiParser {
       }
     }
     if (builder.getTokenType() == PYSTRING_QUOTES) {
+      if (quotes != null) {
+        quotes.done(PYSTRING_QUOTES);
+      }
       builder.advanceLexer();
+    } else if (quotes != null) {
+      quotes.drop();
     }
     marker.done(GherkinElementTypes.PYSTRING);
   }
