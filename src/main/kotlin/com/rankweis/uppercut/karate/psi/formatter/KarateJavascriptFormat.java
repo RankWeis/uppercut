@@ -1,5 +1,6 @@
 package com.rankweis.uppercut.karate.psi.formatter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.Formatter;
@@ -19,19 +20,18 @@ import java.util.List;
 public class KarateJavascriptFormat {
 
   private final JSLanguageDialect dialect;
-  private final JSBlockContext jsBlockContext;
 
   public KarateJavascriptFormat(JSLanguageDialect dialect) {
     this.dialect = dialect;
-    this.jsBlockContext = new JSBlockContext(CodeStyleSettings.getDefaults(), dialect, null,
-      FormattingMode.REFORMAT);
   }
 
 
   public List<Block> getJsSubBlocks(ASTNode astNode, Alignment alignment) {
     List<Block> result = new ArrayList<>();
     final ASTNode[] children = astNode.getChildren(null);
-    JSBlockContext context = jsBlockContext;
+    CodeStyleSettings settings = CodeStyle.getSettings(astNode.getPsi().getContainingFile());
+    JSBlockContext context = new JSBlockContext(settings, dialect, null,
+      FormattingMode.REFORMAT);
       Wrap wrap;
     Wrap childWrap = null;
     context.getCommonSettings().SPACE_BEFORE_METHOD_PARENTHESES = false;

@@ -68,7 +68,6 @@ dependencies {
 
         pluginVerifier()
         zipSigner()
-        instrumentationTools()
         testFramework(TestFrameworkType.Platform)
     }
 }

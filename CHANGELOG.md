@@ -7,6 +7,7 @@
 ### Fixed
 
 - Potential crash when parsing js files in non-ultimate versions.
+- Better formatting of javascript files in non-ultimate versions.
 
 ### From 2.0.0
 
