@@ -1,8 +1,12 @@
 package io.karatelabs.js;
 
+import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.TEXT_BLOCK;
+
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter;
 import com.rankweis.uppercut.karate.psi.KarateJsLanguage;
@@ -26,10 +30,25 @@ public class KarateJsParser implements PsiParser {
     StringBuilder sb = new StringBuilder();
     PsiBuilder.Marker markRoot = b.mark();
     PsiBuilder.Marker mark = b.mark();
+    boolean hasError = false;
     do {
       sb.append(b.getTokenText());
+      if(b.lookAhead(1) == TokenType.ERROR_ELEMENT) {
+        hasError = true;
+        PsiBuilder.Marker errorMark = b.mark();
+        b.rawAdvanceLexer(1);
+        errorMark.error("Invalid javaScript");
+        continue;
+      }
       b.rawAdvanceLexer(1);
-    } while (!b.eof() && Objects.requireNonNull(b.getTokenType()).getLanguage() == KarateJsLanguage.INSTANCE);
+    } while (!b.eof() && (Objects.requireNonNull(b.getTokenType()).getLanguage() == KarateJsLanguage.INSTANCE
+      || b.getTokenType().getLanguage() == Language.ANY));
+
+    if(hasError) {
+      mark.done(TEXT_BLOCK);
+      markRoot.done(root);
+      return b;
+    }
     if (!sb.toString().trim().isEmpty()) {
       Node parsedNode;
       try {
@@ -55,18 +74,22 @@ public class KarateJsParser implements PsiParser {
   }
 
   private StringBuilder doParseRecursive(PsiBuilder b, Node node, int level) {
-    while (b.isWhitespaceOrComment(Objects.requireNonNull(b.getTokenType())) || karateJsParserDefinition.getWhitespaceTokens()
-      .contains(b.getTokenType()) || karateJsParserDefinition.getCommentTokens().contains(b.getTokenType())) {
+    while (b.isWhitespaceOrComment(Objects.requireNonNull(b.getTokenType())) && b.getTokenText().equals("\n")) {
       b.advanceLexer();
     }
     PsiBuilder.Marker mark = b.mark();
     StringBuilder sb = new StringBuilder();
 
     if (node.isChunk()) {
+      while (b.isWhitespaceOrComment(Objects.requireNonNull(b.getTokenType()))
+        || karateJsParserDefinition.getWhitespaceTokens()
+        .contains(b.getTokenType()) || karateJsParserDefinition.getCommentTokens().contains(b.getTokenType())) {
+        b.advanceLexer();
+      }
       sb.append(Objects.requireNonNull(b.getTokenText()).strip());
       b.advanceLexer();
       mark.drop();
-//      mark.done(KarateLexerAdapter.getType(node.type));
+      //      mark.done(KarateLexerAdapter.getType(node.type));
       return sb;
     }
     node.children.forEach(n -> {
