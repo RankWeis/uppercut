@@ -14,7 +14,7 @@ Feature: Nested JSON and Dynamic Expressions
   Scenario: Use a custom Java class to manipulate data
     * def MyJavaClass = Java.type('com.example.MyJavaClass')
     * def instance = new MyJavaClass()
-    * def complexOperation = function (data) { return instance.processData(data); }
+    * def complexOperation = function (data){return instance.processData(data);}
     * def input = [ 1, 2, 3, 4 ]
     * def result = complexOperation(input)
     * match result == [ 2, 4, 6, 8 ]

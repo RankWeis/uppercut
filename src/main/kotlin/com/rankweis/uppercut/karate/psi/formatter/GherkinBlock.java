@@ -80,10 +80,10 @@ public class GherkinBlock implements ASTBlock {
     GherkinElementTypes.FEATURE,
     GherkinElementTypes.SCENARIO,
     GherkinElementTypes.RULE,
-    GherkinElementTypes.SCENARIO_OUTLINE, JAVASCRIPT);
+    GherkinElementTypes.SCENARIO_OUTLINE);
 
   private static final TokenSet READ_ONLY_BLOCKS =
-    TokenSet.create(JAVASCRIPT, GherkinElementTypes.PYSTRING, KarateTokenTypes.COMMENT, TEXT_BLOCK);
+    TokenSet.create(GherkinElementTypes.PYSTRING, KarateTokenTypes.COMMENT, TEXT_BLOCK);
 
   public GherkinBlock(ASTNode node) {
     this(node, Indent.getAbsoluteNoneIndent());
@@ -192,8 +192,12 @@ public class GherkinBlock implements ASTBlock {
           continue;
         }
       }
-      if (child.getElementType() == JAVASCRIPT) {
+      if (child.getElementType() == GherkinElementTypes.PYSTRING) {
         blockAlignment = Alignment.createAlignment();
+        alignment = blockAlignment;
+      }
+      if (child.getElementType() == JAVASCRIPT || myNode.getElementType() == GherkinElementTypes.PYSTRING) {
+        blockAlignment = alignment;
       }
       if (child.getElementType() == KarateTokenTypes.COMMENT) {
         final ASTNode commentIndentElement = child.getTreePrev();

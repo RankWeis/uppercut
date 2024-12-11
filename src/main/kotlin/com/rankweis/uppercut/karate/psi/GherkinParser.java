@@ -380,11 +380,7 @@ public class GherkinParser implements PsiParser {
       && builder.getTokenType() != KarateTokenTypes.PYSTRING_QUOTES) {
       doParse.accept(builder);
       if (languageMarker != null) {
-        if (builder.eof()) {
-          languageMarker.drop();
-        } else {
           languageMarker.done(closingTag);
-        }
       }
     }
   }
