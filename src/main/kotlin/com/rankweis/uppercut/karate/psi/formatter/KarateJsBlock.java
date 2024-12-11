@@ -4,7 +4,6 @@ import static com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter.g
 import static com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter.getElements;
 import static com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter.getType;
 import static com.rankweis.uppercut.karate.lexer.karatelabs.KarateLexerAdapter.getTypes;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
 import static io.karatelabs.js.Token.B_COMMENT;
 import static io.karatelabs.js.Token.ELSE;
 import static io.karatelabs.js.Token.EQ;
@@ -30,6 +29,7 @@ import static io.karatelabs.js.Token.WS;
 import static io.karatelabs.js.Token.WS_LF;
 import static io.karatelabs.js.Type.BLOCK;
 import static io.karatelabs.js.Type.LIT_OBJECT;
+import static io.karatelabs.js.Type.PROGRAM;
 import static io.karatelabs.js.Type.STATEMENT;
 
 import com.intellij.formatting.ASTBlock;
@@ -48,6 +48,7 @@ import io.karatelabs.js.Token;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,7 @@ public class KarateJsBlock implements ASTBlock {
 
   private final ASTNode myNode;
   private final Indent myIndent;
-  private Alignment alignment;
+  @Setter private Alignment alignment;
   private final TextRange myTextRange;
   private final boolean myLeaf;
   private final Wrap myWrap;
@@ -92,8 +93,8 @@ public class KarateJsBlock implements ASTBlock {
     types.add(getType(STATEMENT));
     types.add(getType(BLOCK));
 
-     BLOCKS_TO_SPACE = TokenSet.create(types
-        .toArray(IElementType[]::new));
+    BLOCKS_TO_SPACE = TokenSet.create(types
+      .toArray(IElementType[]::new));
   }
 
   private final boolean isSingleLine;
@@ -162,14 +163,15 @@ public class KarateJsBlock implements ASTBlock {
 
       Indent indent;
       Alignment blockAlignment = null;
-      if (BLOCKS_TO_INDENT_CHILDREN.contains(myNode.getElementType()) && child.getElementType() != getType(BLOCK)
+      if (BLOCKS_TO_INDENT_CHILDREN.contains(myNode.getElementType())
+        && child.getElementType() != getType(BLOCK)
         && !BLOCKS_TO_NOT_INDENT.contains(child.getElementType())) {
         indent = Indent.getNormalIndent();
       } else {
         indent = Indent.getNoneIndent();
       }
-      if (child.getElementType() == JAVASCRIPT) {
-        blockAlignment = Alignment.createAlignment();
+      if (child.getElementType() == getType(PROGRAM) || myNode.getElementType() == getType(PROGRAM)) {
+        blockAlignment = alignment;
       }
       KarateJsBlock e = new KarateJsBlock(child, indent, isSingleLine);
       e.setAlignment(blockAlignment);
@@ -192,10 +194,6 @@ public class KarateJsBlock implements ASTBlock {
   @Override
   public Alignment getAlignment() {
     return alignment;
-  }
-
-  public void setAlignment(Alignment alignment) {
-    this.alignment = alignment;
   }
 
   @Override
@@ -252,7 +250,7 @@ public class KarateJsBlock implements ASTBlock {
     if (makeChange) {
       return Spacing.createSpacing(spaces, spaces, lineFeeds, true, 1);
     }
-     return Spacing.createSafeSpacing(true, 1);
+    return Spacing.createSafeSpacing(true, 1);
   }
 
   @Override

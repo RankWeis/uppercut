@@ -10,6 +10,7 @@
 
 - Potential crash when parsing js files in non-ultimate versions.
 - Better formatting of javascript files in non-ultimate versions.
+- Better formatting of javascript files in ultimate.
 
 ### Added
 
