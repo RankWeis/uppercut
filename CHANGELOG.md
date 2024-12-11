@@ -4,12 +4,12 @@
 
 ## [Unreleased]
 
+## [2.0.1-2024.2] - 2024-12-10
+
 ### Fixed
 
 - Potential crash when parsing js files in non-ultimate versions.
 - Better formatting of javascript files in non-ultimate versions.
-
-### From 2.0.0
 
 ### Added
 
@@ -246,7 +246,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.0.0-2024.2...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.0.1-2024.2...HEAD
+[2.0.1-2024.2]: https://github.com/rankweis/uppercut/compare/v2.0.0-2024.2...v2.0.1-2024.2
 [2.0.0-2024.2]: https://github.com/rankweis/uppercut/compare/v1.3.4-2024.2...v2.0.0-2024.2
 [1.3.4-2024.2]: https://github.com/rankweis/uppercut/compare/v1.3.3-2024.2...v1.3.4-2024.2
 [1.3.3-2024.2]: https://github.com/rankweis/uppercut/compare/v1.3.2...v1.3.3-2024.2
