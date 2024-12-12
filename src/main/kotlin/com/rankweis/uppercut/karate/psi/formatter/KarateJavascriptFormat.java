@@ -30,7 +30,6 @@ public class KarateJavascriptFormat {
 
   public List<Block> getJsSubBlocks(ASTNode astNode, Alignment alignment) {
     List<Block> result = new ArrayList<>();
-    final ASTNode[] children = astNode.getChildren(null);
     PsiFile file = astNode.getPsi().getContainingFile();
     CodeStyleSettings settings = CodeStyle.getSettings(file);
     CodeStyle.runWithLocalSettings(file.getProject(), settings, (s) -> {

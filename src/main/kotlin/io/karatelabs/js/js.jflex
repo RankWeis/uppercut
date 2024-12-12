@@ -23,10 +23,12 @@
  */
 package io.karatelabs.js;
 
+import io.karatelabs.js.Token;
 import static io.karatelabs.js.Token.*;
 import java.util.ArrayDeque;
 %%
 
+%public
 %class Lexer
 %unicode
 %type Token
@@ -165,3 +167,7 @@ T_STRING = [^`$]+ ("$"[^{])?
     "${"                        { kkPush(); yybegin(PLACEHOLDER); return DOLLAR_L_CURLY; }
     {T_STRING}                  { return T_STRING; }
 }
+
+  /* error fallback */
+  [^]                           { throw new Error("Illegal character <"+
+                                                          yytext()+">"); }

@@ -31,13 +31,15 @@ import com.intellij.util.PathUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class KarateRunConfiguration extends ApplicationConfiguration implements ModuleRunProfile,
   TargetEnvironmentAwareRunProfile {
 
-  private String relPath;
+  @Getter @Setter private String relPath;
 
   public enum PreferredTest {
     WHOLE_FILE("WHOLE_FILE"),
@@ -52,15 +54,15 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     }
   }
 
-  private int lineNumber = 0;
-  private Optional<String> testName = Optional.empty();
-  private String testDescription;
-  private String featureName;
-  private String scenarioName;
-  private String tag;
-  private String path;
-  private PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
-  private String parallelism = "5";
+  @Getter @Setter private int lineNumber = 0;
+  @Getter private Optional<String> testName = Optional.empty();
+  @Getter @Setter private String testDescription;
+  @Getter @Setter private String featureName;
+  @Getter @Setter private String scenarioName;
+  @Getter @Setter private String tag;
+  @Getter @Setter private String path;
+  @Getter @Setter private PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
+  @Getter @Setter private String parallelism = "5";
   private String environment;
 
 
@@ -179,10 +181,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   @Override public void checkConfiguration() {
   }
 
-  public void setLineNumber(int lineNumber) {
-    this.lineNumber = lineNumber;
-  }
-
   @Override public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
     return true;
   }
@@ -198,80 +196,8 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   @Override public void setDefaultTargetName(@Nullable String targetName) {
   }
 
-  public int getLineNumber() {
-    return lineNumber;
-  }
-
-  public Optional<String> getTestName() {
-    return testName;
-  }
-
   public void setTestName(String testName) {
     this.testName = Optional.ofNullable(testName);
-  }
-
-  public String getFeatureName() {
-    return featureName;
-  }
-
-  public void setFeatureName(String featureName) {
-    this.featureName = featureName;
-  }
-
-  public String getScenarioName() {
-    return scenarioName;
-  }
-
-  public void setScenarioName(String scenarioName) {
-    this.scenarioName = scenarioName;
-  }
-
-  public String getTestDescription() {
-    return testDescription;
-  }
-
-  public void setTestDescription(String testDescription) {
-    this.testDescription = testDescription;
-  }
-
-  public PreferredTest getPreferredTest() {
-    return preferredTest;
-  }
-
-  public void setPreferredTest(PreferredTest preferredTest) {
-    this.preferredTest = preferredTest;
-  }
-
-  public String getTag() {
-    return tag;
-  }
-
-  public void setTag(String tag) {
-    this.tag = tag;
-  }
-
-  public String getPath() {
-    return path;
-  }
-
-  public void setPath(String path) {
-    this.path = path;
-  }
-
-  public void setRelPath(String relPath) {
-    this.relPath = relPath;
-  }
-
-  public String getRelPath() {
-    return relPath;
-  }
-
-  public String getParallelism() {
-    return parallelism;
-  }
-
-  public void setParallelism(String parallelism) {
-    this.parallelism = parallelism;
   }
 
   public String getEnv() {

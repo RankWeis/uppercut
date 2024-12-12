@@ -28,6 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
 import com.rankweis.uppercut.karate.lexer.GherkinLexer;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
+import com.rankweis.uppercut.karate.lexer.impl.KarateJavascriptExtension;
+import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -86,8 +88,15 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase {
 
   @Override
   public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+    Optional<KarateJavascriptParsingExtensionPoint> jsExt;
+    boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
+    if (useInternalEngine) {
+      jsExt = Optional.ofNullable(KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast());
+    } else {
+      jsExt = KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst();
+    }
     Optional<TextAttributesKey[]> jsTextAttributesKeys =
-      KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList().stream().findFirst()
+      jsExt
         .filter(ep -> ep.isJSLanguage(tokenType.getLanguage()))
         .map(KarateJavascriptParsingExtensionPoint::getJsSyntaxHighlighter)
         .map(h -> h.getTokenHighlights(tokenType))

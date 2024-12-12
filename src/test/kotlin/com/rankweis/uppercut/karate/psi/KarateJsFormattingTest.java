@@ -32,6 +32,11 @@ public class KarateJsFormattingTest extends FormatterTestCase {
     doTest();
   }
 
+  public void testUnformattedkaratejs() {
+    doTest();
+  }
+
+
   @Override protected void doTest() {
     CodeStyleSettingsManager.getInstance(getProject()).runWithLocalSettings(getSettings(), () -> {
       try {
