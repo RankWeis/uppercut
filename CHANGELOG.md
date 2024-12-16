@@ -10,8 +10,6 @@
 - Better handling of running tests (better tree and the right messages go to the right scenario)
 - Better handling of running tagged tests (Doesn't run things from target/ directory now) 
 
-## [2.0.2] - 2024-12-11
-
 ### Fixed
 
 - Potential crash when parsing js files in non-ultimate versions.
@@ -22,6 +20,7 @@ The state of this plugin is now what I imagined it as when I started building it
 Every feature I've wanted to add has been added and it is working in the state that I wanted it to (bugs notwithstanding) 
 However, as always, *please* report bugs and I will continue to fix them, and I will always consider feature requests.
 
+## [2.0.2] - 2024-12-11
 
 ### Added
 
