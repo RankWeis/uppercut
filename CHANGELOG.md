@@ -9,11 +9,16 @@
 - Better formatting of JavaScript files in ultimate.
 - Better handling of running tests (better tree and the right messages go to the right scenario)
 - Better handling of running tagged tests (Doesn't run things from target/ directory now) 
-- 
 
 ### Fixed
 
 - Potential crash when parsing js files in non-ultimate versions.
+
+### Note
+
+The state of this plugin is now what I imagined it as when I started building it. 
+Every feature I've wanted to add has been added and it is working in the state that I wanted it to (bugs notwithstanding) 
+However, as always, *please* report bugs and I will continue to fix them, and I will always consider feature requests.
 
 
 ### From 2.0.0
