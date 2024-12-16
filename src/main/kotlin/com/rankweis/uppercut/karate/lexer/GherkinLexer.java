@@ -27,6 +27,8 @@ import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -311,9 +313,13 @@ public class GherkinLexer extends LexerBase {
     }
     if (myState == STATE_AFTER_OPERATOR) {
       if (c == '<') {
-        // Probably is attempting xml
-        startInjectXml(myPosition, getPositionOfNextLine());
-        return;
+        Matcher matcher =
+          Pattern.compile("<[^<>]+>[^<]*").matcher(myBuffer.subSequence(myPosition, getPositionOfNextLine()));
+        if (!matcher.matches()) {
+          // Probably is attempting xml
+          startInjectXml(myPosition, getPositionOfNextLine());
+          return;
+        }
       }
       if (!Character.isWhitespace(c)) {
         myState = STATE_DEFAULT;

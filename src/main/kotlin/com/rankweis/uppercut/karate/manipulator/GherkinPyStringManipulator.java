@@ -24,7 +24,8 @@ public final class GherkinPyStringManipulator extends AbstractElementManipulator
 
   @Override
   public @NotNull TextRange getRangeInElement(@NotNull GherkinPystring element) {
-    return TextRange.create(PYSTRING_MARKER.length(), element.getTextLength() - PYSTRING_MARKER.length());
+    int subtractedPystring = element.getText().contains(PYSTRING_MARKER) ? PYSTRING_MARKER.length() : 0;
+    return TextRange.create(PYSTRING_MARKER.length(), element.getTextLength() - subtractedPystring);
   }
 
   @Override

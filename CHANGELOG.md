@@ -4,11 +4,17 @@
 
 ## [Unreleased]
 
+### Added
+- Better formatting of JavaScript files in non-ultimate versions.
+- Better formatting of JavaScript files in ultimate.
+- Better handling of running tests (better tree and the right messages go to the right scenario)
+- Better handling of running tagged tests (Doesn't run things from target/ directory now) 
+- 
+
 ### Fixed
 
 - Potential crash when parsing js files in non-ultimate versions.
-- Better formatting of javascript files in non-ultimate versions.
-- Better formatting of javascript files in ultimate.
+
 
 ### From 2.0.0
 

@@ -29,10 +29,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +65,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   @Getter @Setter private String path;
   @Getter @Setter private PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
   @Getter @Setter private String parallelism = "5";
+  @Getter @Setter private boolean allInFolderAreFeature = false;
   private String environment;
 
 
@@ -194,6 +197,39 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   }
 
   @Override public void setDefaultTargetName(@Nullable String targetName) {
+  }
+
+  @Override public void writeExternal(@NotNull Element element) {
+    element.setAttribute("lineNumber", String.valueOf(lineNumber));
+    element.setAttribute("testName", testName.orElse(""));
+    element.setAttribute("testDescription", Optional.ofNullable(testDescription).orElse(""));
+    element.setAttribute("featureName", Optional.ofNullable(featureName).orElse(""));
+    element.setAttribute("scenarioName", Optional.ofNullable(scenarioName).orElse(""));
+    element.setAttribute("tag", Optional.ofNullable(tag).orElse(""));
+    element.setAttribute("path", Optional.ofNullable(path).orElse(""));
+    element.setAttribute("preferredTest", preferredTest.name);
+    element.setAttribute("parallelism", Optional.ofNullable(parallelism).orElse("1"));
+    element.setAttribute("allInFolderAreFeature", String.valueOf(allInFolderAreFeature));
+    element.setAttribute("relPath", Optional.ofNullable(relPath).orElse(""));
+    super.writeExternal(element);
+  }
+
+  @Override
+  public void readExternal(@NotNull Element element) {
+    super.readExternal(element);
+    lineNumber = Integer.parseInt(Optional.ofNullable(element.getAttributeValue("lineNumber")).orElse("0"));
+    testName = Optional.ofNullable(element.getAttributeValue("testName"));
+    testDescription = element.getAttributeValue("testDescription");
+    featureName = element.getAttributeValue("featureName");
+    scenarioName = element.getAttributeValue("scenarioName");
+    tag = element.getAttributeValue("tag");
+    path = element.getAttributeValue("path");
+    preferredTest =
+      Arrays.stream(PreferredTest.values()).filter(s -> s.name.equals(element.getAttributeValue("preferredTest")))
+        .findFirst().orElse(PreferredTest.WHOLE_FILE);
+    parallelism = element.getAttributeValue("parallelism");
+    allInFolderAreFeature = Boolean.parseBoolean(element.getAttributeValue("allInFolderAreFeature"));
+    relPath = element.getAttributeValue("relPath");
   }
 
   public void setTestName(String testName) {
