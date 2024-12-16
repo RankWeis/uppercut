@@ -25,7 +25,9 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
+import com.rankweis.uppercut.karate.lexer.impl.KarateJavascriptExtension;
 import com.rankweis.uppercut.parser.KarateJsonParser;
+import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Optional;
@@ -336,9 +338,14 @@ public class GherkinParser implements PsiParser {
         }
       }
     }
-    Optional<KarateJavascriptParsingExtensionPoint> jsExt =
-      KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList().stream().findFirst();
-    if(overrideInjection != null && overrideInjection.equalsIgnoreCase("text")) {
+    Optional<KarateJavascriptParsingExtensionPoint> jsExt;
+    boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
+    if (useInternalEngine) {
+      jsExt = Optional.ofNullable(KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast());
+    } else {
+      jsExt = KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst();
+    }
+    if (overrideInjection != null && overrideInjection.equalsIgnoreCase("text")) {
       Language l = Objects.requireNonNull(builder.getTokenType()).getLanguage();
       Marker mark = builder.mark();
       while (builder.getTokenType().getLanguage() == l) {
@@ -380,7 +387,7 @@ public class GherkinParser implements PsiParser {
       && builder.getTokenType() != KarateTokenTypes.PYSTRING_QUOTES) {
       doParse.accept(builder);
       if (languageMarker != null) {
-          languageMarker.done(closingTag);
+        languageMarker.done(closingTag);
       }
     }
   }
@@ -461,9 +468,16 @@ public class GherkinParser implements PsiParser {
     if (tokenType == null) {
       return false;
     }
+    boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
+    KarateJavascriptParsingExtensionPoint ex;
+    if (useInternalEngine) {
+        ex = KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast();
+    } else {
+      ex =
+        KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().get();
+    }
     return tokenType == KarateTokenTypes.PYSTRING || tokenType == PYSTRING_QUOTES
-      || KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList().stream().findFirst()
-      .map(j -> j.isJSLanguage(tokenType.getLanguage())).orElse(false) || tokenType.getLanguage()
+      || ex.isJSLanguage(tokenType.getLanguage()) || tokenType.getLanguage()
       .is(Json5Language.INSTANCE) || tokenType.getLanguage()
       .is(JsonLanguage.INSTANCE) || tokenType.getLanguage().is(XMLLanguage.INSTANCE);
   }

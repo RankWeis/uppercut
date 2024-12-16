@@ -39,6 +39,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
+import com.rankweis.uppercut.karate.lexer.impl.KarateJavascriptExtension;
 import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
 import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
 import com.rankweis.uppercut.karate.psi.GherkinParserDefinition;
@@ -46,10 +47,12 @@ import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.rankweis.uppercut.karate.psi.PlainKarateKeywordProvider;
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
+import com.rankweis.uppercut.settings.KarateSettingsState;
 import io.netty.util.internal.StringUtil;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,10 +138,16 @@ public class GherkinBlock implements ASTBlock {
 
     List<Block> result = new ArrayList<>();
 
-    if (myNode.getElementType() == JAVASCRIPT) {
-      return KarateJavascriptParsingExtensionPoint.EP_NAME.getExtensionList()
-        .stream().findFirst()
-        .map(extension -> extension.getJsSubBlocks(myNode, alignment))
+      Optional<KarateJavascriptParsingExtensionPoint> jsExt;
+      boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
+      if (useInternalEngine) {
+        jsExt = Optional.ofNullable(KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast());
+      } else {
+        jsExt = KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst();
+      }
+    if (myNode.getElementType() == JAVASCRIPT
+      || jsExt.map(ext -> ext.isJSLanguage(myNode.getElementType().getLanguage())).orElse(false)) {
+      return jsExt.map(extension -> extension.getJsSubBlocks(myNode, alignment))
         .orElse(result);
     }
     if (myNode.getElementType() == JSON) {

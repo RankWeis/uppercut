@@ -22,13 +22,17 @@ import static io.karatelabs.js.Token.LT_LT_EQ;
 import static io.karatelabs.js.Token.L_COMMENT;
 import static io.karatelabs.js.Token.L_CURLY;
 import static io.karatelabs.js.Token.L_PAREN;
+import static io.karatelabs.js.Token.PLUS_PLUS;
 import static io.karatelabs.js.Token.RETURN;
 import static io.karatelabs.js.Token.R_CURLY;
 import static io.karatelabs.js.Token.SEMI;
 import static io.karatelabs.js.Token.WS;
 import static io.karatelabs.js.Token.WS_LF;
+import static io.karatelabs.js.Type.ASSIGN_EXPR;
 import static io.karatelabs.js.Type.BLOCK;
+import static io.karatelabs.js.Type.FN_EXPR;
 import static io.karatelabs.js.Type.LIT_OBJECT;
+import static io.karatelabs.js.Type.LOGIC_EXPR;
 import static io.karatelabs.js.Type.PROGRAM;
 import static io.karatelabs.js.Type.STATEMENT;
 
@@ -48,6 +52,7 @@ import io.karatelabs.js.Token;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +61,7 @@ public class KarateJsBlock implements ASTBlock {
 
   private final ASTNode myNode;
   private final Indent myIndent;
+  @Setter private Indent myChildrenIndent;
   @Setter private Alignment alignment;
   private final TextRange myTextRange;
   private final boolean myLeaf;
@@ -66,21 +72,27 @@ public class KarateJsBlock implements ASTBlock {
     getElements(R_CURLY, L_CURLY).toArray(IElementType[]::new));
 
   private static final TokenSet BLOCKS_TO_INDENT_CHILDREN = TokenSet.create(
-    getTypes(STATEMENT, LIT_OBJECT).toArray(IElementType[]::new));
+    getTypes(BLOCK, LIT_OBJECT).toArray(IElementType[]::new));
 
-  private static final TokenSet BLOCKS_TO_LINE_FEED_BEFORE = TokenSet.create();
+  private static final TokenSet BLOCKS_TO_NOT_LINE_FEED_BEFORE =
+    TokenSet.create(getTypes(L_CURLY).toArray(IElementType[]::new));
+
+  private static final TokenSet BLOCKS_TO_LINE_FEED_BEFORE =
+    TokenSet.create(getTypes(FN_EXPR).toArray(IElementType[]::new));
 
   private static final TokenSet BLOCKS_TO_LINE_FEED_AFTER = TokenSet.create(
-    getType(STATEMENT), getElement(L_COMMENT), getElement(B_COMMENT));
+    getType(STATEMENT), getElement(L_COMMENT), getElement(B_COMMENT), getType(FN_EXPR));
 
   private static final TokenSet BLOCKS_TO_SPACE;
 
+  private static final TokenSet BLOCKS_TO_SPACE_BEFORE = TokenSet.create(
+    getType(LOGIC_EXPR));
+
   private static final TokenSet BLOCKS_TO_SPACE_AFTER = TokenSet.create(
-    getElement(SEMI)
-  );
+    getElements(SEMI, PLUS_PLUS).toArray(IElementType[]::new));
 
   private static final TokenSet BLOCKS_TO_NOT_SPACE_AFTER = TokenSet.create(
-    getElement(L_CURLY)
+    getElements(L_CURLY, PLUS_PLUS).toArray(IElementType[]::new)
   );
 
   private static final TokenSet BLOCKS_TO_NOT_SPACE_BEFORE = TokenSet.create(
@@ -92,6 +104,7 @@ public class KarateJsBlock implements ASTBlock {
       getTypes(EQ, EQ_GT, LT_LT_EQ, EQ_EQ, EQ_EQ_EQ, GT_EQ, GT, LT, LT_EQ, LT_LT_EQ, GT_GT_EQ, GT_GT_GT, RETURN));
     types.add(getType(STATEMENT));
     types.add(getType(BLOCK));
+    types.add(getType(ASSIGN_EXPR));
 
     BLOCKS_TO_SPACE = TokenSet.create(types
       .toArray(IElementType[]::new));
@@ -133,6 +146,7 @@ public class KarateJsBlock implements ASTBlock {
     return myTextRange;
   }
 
+
   @Override
   @NotNull
   public List<Block> getSubBlocks() {
@@ -164,7 +178,6 @@ public class KarateJsBlock implements ASTBlock {
       Indent indent;
       Alignment blockAlignment = null;
       if (BLOCKS_TO_INDENT_CHILDREN.contains(myNode.getElementType())
-        && child.getElementType() != getType(BLOCK)
         && !BLOCKS_TO_NOT_INDENT.contains(child.getElementType())) {
         indent = Indent.getNormalIndent();
       } else {
@@ -173,6 +186,7 @@ public class KarateJsBlock implements ASTBlock {
       if (child.getElementType() == getType(PROGRAM) || myNode.getElementType() == getType(PROGRAM)) {
         blockAlignment = alignment;
       }
+
       KarateJsBlock e = new KarateJsBlock(child, indent, isSingleLine);
       e.setAlignment(blockAlignment);
       result.add(e);
@@ -205,12 +219,13 @@ public class KarateJsBlock implements ASTBlock {
     }
     ASTNode node1 = block1.getNode();
     ASTNode node2 = block2.getNode();
-    if (node1 == null || node2 == null) {
+    if (node1 == null) {
       return null;
     }
     IElementType elem1 = node1.getElementType();
     IElementType elem2 = node2.getElementType();
     boolean makeChange = false;
+    boolean keepLineFeeds = true;
     int spaces = 0;
     int lineFeeds = 0;
     if (BLOCKS_TO_NOT_SPACE_BEFORE.contains(elem2) ||
@@ -222,7 +237,8 @@ public class KarateJsBlock implements ASTBlock {
 
       makeChange = true;
     }
-    if (BLOCKS_TO_SPACE_AFTER.contains(node1.getElementType())) {
+    if (BLOCKS_TO_SPACE_AFTER.contains(
+      node1.getElementType()) || BLOCKS_TO_SPACE_BEFORE.contains(node2.getElementType())) {
       makeChange = true;
       spaces = 1;
     }
@@ -241,6 +257,12 @@ public class KarateJsBlock implements ASTBlock {
       makeChange = true;
       lineFeeds = 1;
     }
+
+    if (BLOCKS_TO_NOT_LINE_FEED_BEFORE.contains(elem2)) {
+      keepLineFeeds = false;
+      lineFeeds = 0;
+    }
+
     if (isSingleLine) {
       lineFeeds = 0;
     }
@@ -248,7 +270,7 @@ public class KarateJsBlock implements ASTBlock {
       lineFeeds = 0;
     }
     if (makeChange) {
-      return Spacing.createSpacing(spaces, spaces, lineFeeds, true, 1);
+      return Spacing.createSpacing(spaces, spaces, lineFeeds, keepLineFeeds, 1);
     }
     return Spacing.createSafeSpacing(true, 1);
   }
@@ -269,5 +291,22 @@ public class KarateJsBlock implements ASTBlock {
 
   @Override public boolean isLeaf() {
     return false;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof KarateJsBlock that)) {
+      return false;
+    }
+    return myLeaf == that.myLeaf && isSingleLine == that.isSingleLine && Objects.equals(myNode, that.myNode) &&
+      Objects.equals(myIndent, that.myIndent) && Objects.equals(myChildrenIndent, that.myChildrenIndent) &&
+      Objects.equals(alignment, that.alignment) && Objects.equals(myTextRange, that.myTextRange) && Objects.equals(
+      myWrap, that.myWrap) && Objects.equals(myChildren, that.myChildren);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myNode, myIndent, myChildrenIndent, alignment, myTextRange, myLeaf, myWrap, myChildren,
+      isSingleLine);
   }
 }

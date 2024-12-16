@@ -2,6 +2,8 @@ package com.rankweis.uppercut.karate.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.javascript.JavascriptLanguage;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -30,6 +32,17 @@ public class KarateJavascriptFormattingTest extends FormatterTestCase {
 
   public void testJs() {
     doTest();
+  }
+
+  public void testUnformattedjs() throws Exception {
+    String before = loadFile("unformattedjs.feature", null);
+    String after2 = loadFile("unformattedjs_after2.feature", null);
+
+    PsiFile file =
+      createFileFromText(before, getName() + "." + getFileExtension(), PsiFileFactory.getInstance(getProject()));
+    CodeStyleSettingsManager.getInstance(getProject()).runWithLocalSettings(getSettings(), () -> {
+      checkDocument(file, before, after2);
+    });
   }
 
   @Override protected void doTest() {
@@ -61,6 +74,7 @@ public class KarateJavascriptFormattingTest extends FormatterTestCase {
   public String getFileExtension() {
     return "feature";
   }
+
 
   @Override protected CodeStyleSettings getSettings() {
     CodeStyleSettings settings = super.getSettings();

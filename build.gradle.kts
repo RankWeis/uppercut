@@ -7,6 +7,7 @@ fun environment(key: String) = providers.environmentVariable(key)
 
 plugins {
     id("java") // Java support
+    alias(libs.plugins.grammarkit)
     alias(libs.plugins.lombok)
     alias(libs.plugins.kotlin) // Kotlin support
     alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
@@ -40,7 +41,6 @@ repositories {
 dependencies {
     compileOnly("io.karatelabs:karate-junit5:${properties("karateVersion").get()}")
     implementation("ch.qos.logback:logback-classic:${properties("logbackVersion").get()}")
-    implementation(libs.karatejs)
     testImplementation(libs.mockito)
 }
 
@@ -55,7 +55,6 @@ dependencies {
     testImplementation(libs.junit5api)
     testRuntimeOnly(libs.junit5engine)
     testImplementation(libs.mockito)
-    implementation(libs.karatejs)
 
     intellijPlatform {
         val version = properties("platformVersion")
@@ -130,6 +129,21 @@ intellijPlatform {
         }
     }
 }
+
+grammarKit {
+    tasks {
+        generateLexer {
+            sourceFile.set(file("src/main/kotlin/io/karatelabs/js/js.jflex"))
+            targetOutputDir.set(file("src/main/kotlin/io/karatelabs/js"))
+        }
+    }
+}
+
+tasks.withType<Copy> {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
 changelog {

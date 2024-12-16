@@ -108,7 +108,6 @@ public abstract class GherkinPsiElementBase extends ASTWrapperPsiElement impleme
     }
 
     return thisNode.getElementType().equals(otherNode.getElementType()) &&
-      thisNode.getPsi().getContainingFile() == other.getNode().getPsi().getContainingFile() &&
       thisNode.getTextRange().equals(otherNode.getTextRange()) &&
       thisNode.getText().equals(otherNode.getText());
   }
