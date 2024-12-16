@@ -4,7 +4,10 @@
 
 ## [Unreleased]
 
+## [2.1.0] - 2024-12-16
+
 ### Added
+
 - Better formatting of JavaScript files in non-ultimate versions.
 - Better formatting of JavaScript files in ultimate.
 - Better handling of running tests (better tree and the right messages go to the right scenario)
@@ -13,12 +16,6 @@
 ### Fixed
 
 - Potential crash when parsing js files in non-ultimate versions.
-
-### Note
-
-The state of this plugin is now what I imagined it as when I started building it. 
-Every feature I've wanted to add has been added and it is working in the state that I wanted it to (bugs notwithstanding) 
-However, as always, *please* report bugs and I will continue to fix them, and I will always consider feature requests.
 
 ## [2.0.2] - 2024-12-11
 
@@ -257,7 +254,8 @@ However, as always, *please* report bugs and I will continue to fix them, and I 
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.0.2...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/rankweis/uppercut/compare/v2.0.2...v2.1.0
 [2.0.2]: https://github.com/rankweis/uppercut/compare/v2.0.0...v2.0.2
 [2.0.0]: https://github.com/rankweis/uppercut/compare/v1.3.4...v2.0.0
 [1.3.4]: https://github.com/rankweis/uppercut/compare/v1.3.3...v1.3.4
