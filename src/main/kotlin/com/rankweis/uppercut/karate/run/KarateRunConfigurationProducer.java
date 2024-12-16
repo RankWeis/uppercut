@@ -7,6 +7,7 @@ import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Ref;
@@ -22,6 +23,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.rankweis.uppercut.karate.run.KarateRunConfiguration.PreferredTest;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
@@ -33,9 +35,43 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     return KarateConfigurationType.INSTANCE;
   }
 
+  @Override public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+    return super.isPreferredConfiguration(self, other);
+  }
+
+  @Override
+  public boolean shouldReplace(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
+    return ((KarateRunConfiguration) self.getConfiguration()).isAllInFolderAreFeature();
+  }
+
   @Override public boolean isConfigurationFromContext(@NotNull KarateRunConfiguration configuration,
     @NotNull ConfigurationContext context) {
-    return false;
+    VirtualFile virtualFile = context.getLocation().getVirtualFile();
+    final String name = virtualFile.getName();
+    final String path = virtualFile.getPath();
+    String relPath = getRelativePathFromModule(context.getModule(), path, name);
+
+    PsiElement psiElement = context.getLocation().getPsiElement();
+    PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile == null) {
+      return false;
+    }
+    Project project = containingFile.getProject();
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    Document document = psiDocumentManager.getDocument(containingFile);
+    int textOffset = psiElement.getTextOffset();
+    if (document == null) {
+      return false;
+    }
+    int lineNumber = document.getLineNumber(textOffset) + 1;
+    PreferredTest preferredTest = configuration.getPreferredTest();
+    if (preferredTest == PreferredTest.ALL_TAGS) {
+      return configuration.getName().equals(context.getPsiLocation().getText());
+    } else if (preferredTest == PreferredTest.SINGLE_SCENARIO) {
+      return configuration.getName().equals(virtualFile.get() + ":" + lineNumber);
+    } else {
+      return configuration.getName().equals(virtualFile.getName());
+    }
   }
 
   @Override
@@ -84,6 +120,10 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     IElementType elementType = PsiUtilCore.getElementType(psiElement);
     if (elementType == KarateTokenTypes.TAG) {
       preferredTest = PreferredTest.ALL_TAGS;
+      Arrays.stream(ModuleManager.getInstance(context.getProject()).getModules())
+        .flatMap(m -> Arrays.stream(ModuleRootManager.getInstance(m).getSourceRoots()))
+        .map(root -> path.contains(root.getPath()) ? root : null).filter(Objects::nonNull).findFirst()
+        .ifPresent(vf -> configuration.setWorkingDirectory(vf.getPath()));
       configuration.setTag(psiElement.getText());
     } else if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType)) {
       preferredTest = PreferredTest.SINGLE_SCENARIO;
@@ -113,6 +153,9 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     @NotNull final VirtualFile dir) {
     if (module == null) {
       return false;
+    }
+    if(Arrays.stream(dir.getChildren()).map(VirtualFile::getName).allMatch(s -> s.endsWith(".feature"))) {
+      configuration.setAllInFolderAreFeature(true);
     }
     configuration.setPath(getRelativePathFromModule(module, dir.getPath(), dir.getPath()));
     configuration.setPreferredTest(PreferredTest.ALL_IN_FOLDER);

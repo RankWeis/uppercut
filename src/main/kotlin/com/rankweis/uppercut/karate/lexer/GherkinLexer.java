@@ -24,8 +24,11 @@ import com.intellij.psi.tree.IElementType;
 import com.rankweis.uppercut.karate.lexer.impl.KarateJavascriptExtension;
 import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
+import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,9 +84,15 @@ public class GherkinLexer extends LexerBase {
 
   public GherkinLexer(GherkinKeywordProvider provider, boolean highlighting) {
     myKeywordProvider = provider;
-    this.jsLexer =
-      KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().map(l -> l.getLexer(highlighting))
-        .orElse(null);
+    boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
+    if (useInternalEngine) {
+      this.jsLexer =
+              KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast().getLexer(highlighting);
+    } else {
+      this.jsLexer =
+              KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().map(l -> l.getLexer(highlighting))
+                      .orElse(null);
+    }
     updateLanguage("en");
     stepKeywords = myKeywords.stream().filter(myKeywordProvider::isStepKeyword).toList();
     interruptions = new ArrayList<>();
@@ -304,9 +313,13 @@ public class GherkinLexer extends LexerBase {
     }
     if (myState == STATE_AFTER_OPERATOR) {
       if (c == '<') {
-        // Probably is attempting xml
-        startInjectXml(myPosition, getPositionOfNextLine());
-        return;
+        Matcher matcher =
+          Pattern.compile("<[^<>]+>[^<]*").matcher(myBuffer.subSequence(myPosition, getPositionOfNextLine()));
+        if (!matcher.matches()) {
+          // Probably is attempting xml
+          startInjectXml(myPosition, getPositionOfNextLine());
+          return;
+        }
       }
       if (!Character.isWhitespace(c)) {
         myState = STATE_DEFAULT;

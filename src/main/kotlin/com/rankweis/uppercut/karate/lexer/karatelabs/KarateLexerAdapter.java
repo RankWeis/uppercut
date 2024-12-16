@@ -4,6 +4,7 @@ import com.intellij.lexer.LexerBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharSequenceReader;
 import com.rankweis.uppercut.parser.types.KarateJsElementType;
+import io.karatelabs.js.Lexer;
 import io.karatelabs.js.Token;
 import io.karatelabs.js.Type;
 import java.io.IOException;
@@ -56,7 +57,7 @@ public class KarateLexerAdapter extends LexerBase {
       currentToken = lexer.yylex();
     } catch (IOException | Error e) {
       log.warn("Error in lexer", e);
-      throw new RuntimeException(e.initCause(e));
+      throw new LexerError(e.getMessage(), lexer.yytext().toString(), lexer.getTokenStart(), lexer.getTokenEnd());
     }
   }
 

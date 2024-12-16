@@ -18,6 +18,6 @@ public class KarateConfigurationType extends SimpleConfigurationType {
     
 
   @Override public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-    return new KarateRunConfiguration(project, this, "");
+    return new KarateRunConfiguration(project, this, "Karate Run Template");
   }
 }
