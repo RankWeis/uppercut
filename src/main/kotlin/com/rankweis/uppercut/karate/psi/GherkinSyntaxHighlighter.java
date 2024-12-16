@@ -32,6 +32,7 @@ import com.rankweis.uppercut.karate.lexer.impl.KarateJavascriptExtension;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
@@ -90,10 +91,11 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase {
   public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     Optional<KarateJavascriptParsingExtensionPoint> jsExt;
     boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
+    List<KarateJavascriptParsingExtensionPoint> extensionList = KarateJavascriptExtension.EP_NAME.getExtensionList();
     if (useInternalEngine) {
-      jsExt = Optional.ofNullable(KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast());
+      jsExt = Optional.ofNullable(extensionList.stream().toList().get(extensionList.size() - 1));
     } else {
-      jsExt = KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst();
+      jsExt = extensionList.stream().findFirst();
     }
     Optional<TextAttributesKey[]> jsTextAttributesKeys =
       jsExt

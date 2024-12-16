@@ -85,12 +85,13 @@ public class GherkinLexer extends LexerBase {
   public GherkinLexer(GherkinKeywordProvider provider, boolean highlighting) {
     myKeywordProvider = provider;
     boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
+    List<KarateJavascriptParsingExtensionPoint> extensionList = KarateJavascriptExtension.EP_NAME.getExtensionList();
     if (useInternalEngine) {
       this.jsLexer =
-              KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast().getLexer(highlighting);
+              extensionList.stream().toList().get(extensionList.size() - 1).getLexer(highlighting);
     } else {
       this.jsLexer =
-              KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().map(l -> l.getLexer(highlighting))
+              extensionList.stream().findFirst().map(l -> l.getLexer(highlighting))
                       .orElse(null);
     }
     updateLanguage("en");

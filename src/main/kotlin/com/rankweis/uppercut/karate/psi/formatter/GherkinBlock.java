@@ -140,10 +140,11 @@ public class GherkinBlock implements ASTBlock {
 
       Optional<KarateJavascriptParsingExtensionPoint> jsExt;
       boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
-      if (useInternalEngine) {
-        jsExt = Optional.ofNullable(KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast());
+    List<KarateJavascriptParsingExtensionPoint> extensionList = KarateJavascriptExtension.EP_NAME.getExtensionList();
+    if (useInternalEngine) {
+        jsExt = Optional.ofNullable(extensionList.stream().toList().get(extensionList.size() - 1));
       } else {
-        jsExt = KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst();
+        jsExt = extensionList.stream().findFirst();
       }
     if (myNode.getElementType() == JAVASCRIPT
       || jsExt.map(ext -> ext.isJSLanguage(myNode.getElementType().getLanguage())).orElse(false)) {

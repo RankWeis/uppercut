@@ -166,15 +166,15 @@ public class Parser {
             Node node = marker.node;
             switch (shift) {
                 case LEFT:
-                    Node prev = parent.children.removeFirst(); // remove previous sibling
-                    node.children.addFirst(prev); // and make it the first child
+                    Node prev = parent.children.remove(0); // remove previous sibling
+                    node.children.add(0, prev); // and make it the first child
                     parent.children.add(node);
                     break;
                 case NONE:
                     parent.children.add(node);
                     break;
                 case RIGHT:
-                    Node prevSibling = parent.children.removeFirst(); // remove previous sibling
+                    Node prevSibling = parent.children.remove(0); // remove previous sibling
                     if (prevSibling.type == node.type) {
                         advanceWsComment();
                         Node newNode = new Node(node.type, builder);
@@ -188,7 +188,7 @@ public class Parser {
                         newRhs.children.add(node.children.get(0)); // operator
                         newRhs.children.add(node.children.get(1)); // current rhs
                     } else {
-                        node.children.addFirst(prevSibling); // move previous sibling to first child
+                        node.children.add(0, prevSibling); // move previous sibling to first child
                         parent.children.add(node);
                     }
             }

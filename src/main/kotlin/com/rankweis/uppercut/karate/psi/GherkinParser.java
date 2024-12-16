@@ -29,6 +29,7 @@ import com.rankweis.uppercut.karate.lexer.impl.KarateJavascriptExtension;
 import com.rankweis.uppercut.parser.KarateJsonParser;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -340,10 +341,11 @@ public class GherkinParser implements PsiParser {
     }
     Optional<KarateJavascriptParsingExtensionPoint> jsExt;
     boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
+    List<KarateJavascriptParsingExtensionPoint> extensionList = KarateJavascriptExtension.EP_NAME.getExtensionList();
     if (useInternalEngine) {
-      jsExt = Optional.ofNullable(KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast());
+      jsExt = Optional.ofNullable(extensionList.stream().toList().get(extensionList.size() - 1));
     } else {
-      jsExt = KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst();
+      jsExt = extensionList.stream().findFirst();
     }
     if (overrideInjection != null && overrideInjection.equalsIgnoreCase("text")) {
       Language l = Objects.requireNonNull(builder.getTokenType()).getLanguage();
@@ -470,11 +472,12 @@ public class GherkinParser implements PsiParser {
     }
     boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
     KarateJavascriptParsingExtensionPoint ex;
+    List<KarateJavascriptParsingExtensionPoint> extensionList = KarateJavascriptExtension.EP_NAME.getExtensionList();
     if (useInternalEngine) {
-        ex = KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast();
+        ex = extensionList.stream().toList().get(extensionList.size() - 1);
     } else {
       ex =
-        KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().get();
+        extensionList.stream().findFirst().get();
     }
     return tokenType == KarateTokenTypes.PYSTRING || tokenType == PYSTRING_QUOTES
       || ex.isJSLanguage(tokenType.getLanguage()) || tokenType.getLanguage()
