@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Updated
+
+Ensuring compatibility with future intellij versions.
+
 ## [2.1.0] - 2024-12-16
 
 ### Added
