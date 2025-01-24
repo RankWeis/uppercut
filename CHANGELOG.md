@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Updated
+
+- Compatibility changes for intellij 2025.*
+
 ## [2.1.1] - 2025-01-18
 
 ### Updated
