@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.1.2] - 2025-01-24
+
 ### Updated
 
 - Compatibility changes for intellij 2025.*
@@ -264,7 +266,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.1.2...HEAD
+[2.1.2]: https://github.com/rankweis/uppercut/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/rankweis/uppercut/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/rankweis/uppercut/compare/v2.0.2...v2.1.0
 [2.0.2]: https://github.com/rankweis/uppercut/compare/v2.0.0...v2.0.2
