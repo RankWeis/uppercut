@@ -7,7 +7,7 @@ karate-js = "0.1.1"
 grammarkit = "2022.3.2.2"
 
 # plugins
-kotlin = "2.1.0"
+kotlin = "2.1.10"
 changelog = "2.2.1"
 gradleIntelliJPlugin = "2.2.1"
 qodana = "2024.3.4"
