@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.1.3] - 2025-01-28
+
 ### Updated
 
 - Fixed issue where java 21 was necessary to run certain tests (Java 17+ is now required)
@@ -270,7 +272,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.1.2...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.1.3...HEAD
+[2.1.3]: https://github.com/rankweis/uppercut/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/rankweis/uppercut/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/rankweis/uppercut/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/rankweis/uppercut/compare/v2.0.2...v2.1.0
