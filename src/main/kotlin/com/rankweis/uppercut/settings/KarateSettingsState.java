@@ -4,9 +4,11 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
-@State(
+@Setter @Getter @State(
         name = "KarateSettingsState",
         storages = @Storage("KaratePluginSettings.xml")
 )
@@ -14,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public final class KarateSettingsState implements PersistentStateComponent<KarateSettingsState> {
 
     private String defaultEnvironment = "";
+    private Integer defaultParallelism = 1;
     private boolean useKarateJavaScriptEngine = false;
 
     public static KarateSettingsState getInstance() {
@@ -31,21 +34,7 @@ public final class KarateSettingsState implements PersistentStateComponent<Karat
     public void loadState(KarateSettingsState state) {
         this.defaultEnvironment = state.defaultEnvironment;
         this.useKarateJavaScriptEngine = state.useKarateJavaScriptEngine;
+        this.defaultParallelism = state.defaultParallelism == null ? 1 : state.defaultParallelism;
     }
 
-    public String getDefaultEnvironment() {
-        return defaultEnvironment;
-    }
-
-    public void setDefaultEnvironment(String defaultEnvironment) {
-        this.defaultEnvironment = defaultEnvironment;
-    }
-
-    public boolean isUseKarateJavaScriptEngine() {
-        return useKarateJavaScriptEngine;
-    }
-
-    public void setUseKarateJavaScriptEngine(boolean useKarateJavaScriptEngine) {
-        this.useKarateJavaScriptEngine = useKarateJavaScriptEngine;
-    }
 }

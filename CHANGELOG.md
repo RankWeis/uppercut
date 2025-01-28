@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Updated
+
+- Made default parallelism configurable (Settings -> Tools -> Karate)
+- Made default parallelism 1 instead of 5
+
 ## [2.1.3] - 2025-01-28
 
 ### Updated
