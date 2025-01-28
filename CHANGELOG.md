@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Updated
+
+- Fixed issue where java 21 was necessary to run certain tests (Java 17+ is now required)
+
 ## [2.1.2] - 2025-01-24
 
 ### Updated
