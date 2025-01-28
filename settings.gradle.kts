@@ -3,3 +3,4 @@ plugins {
 }
 
 rootProject.name = "uppercut"
+include("uppercut", "KarateTestRunner")

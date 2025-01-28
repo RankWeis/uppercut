@@ -28,6 +28,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.rankweis.uppercut.testrunner.KarateTestRunner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -98,7 +99,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         ClassLoader pluginClassLoader = this.getClass().getClassLoader();
         try {
           currentThread.setContextClassLoader(pluginClassLoader);
-          params.getClassPath().add(PathUtil.getJarPathForClass(this.getClass()));
+          params.getClassPath().add(PathUtil.getJarPathForClass(KarateTestRunner.class));
           // code working with ServiceLoader here
         } finally {
           currentThread.setContextClassLoader(originalClassLoader);
@@ -238,7 +239,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
 
   public String getEnv() {
     return StringUtil.isEmpty(environment) ?
-    PropertiesComponent.getInstance().getValue("uppercut.settings.defaultEnvironment") : environment;
+      PropertiesComponent.getInstance().getValue("uppercut.settings.defaultEnvironment") : environment;
   }
 
   public void setEnv(String environment) {

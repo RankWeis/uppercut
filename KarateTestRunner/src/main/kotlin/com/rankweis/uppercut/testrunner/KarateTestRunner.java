@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 public class KarateTestRunner {
@@ -200,7 +199,7 @@ public class KarateTestRunner {
     return outputStreamAppender;
   }
 
-  private static @NotNull OutputStreamAppender<ILoggingEvent> getOutputStreamAppender() {
+  private static OutputStreamAppender<ILoggingEvent> getOutputStreamAppender() {
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
     OutputStreamAppender<ILoggingEvent> outputStreamAppender = new OutputStreamAppender<>();
     outputStreamAppender.setContext(context);

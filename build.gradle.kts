@@ -28,6 +28,14 @@ configure<SourceSetContainer> {
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
 
+abstract class InstrumentedJarsRule: AttributeCompatibilityRule<LibraryElements> {
+    override fun execute(details: CompatibilityCheckDetails<LibraryElements>) = details.run {
+        if (consumerValue?.name == "instrumented-jar" && producerValue?.name == "jar") {
+            compatible()
+        }
+    }
+}
+
 // Configure project's dependencies
 repositories {
     mavenCentral()
@@ -42,6 +50,7 @@ dependencies {
     compileOnly("io.karatelabs:karate-junit5:${properties("karateVersion").get()}")
     implementation("ch.qos.logback:logback-classic:${properties("logbackVersion").get()}")
     testImplementation(libs.mockito)
+    implementation(project(":KarateTestRunner"))
 }
 
 // Set the JVM language level used to build the project.
