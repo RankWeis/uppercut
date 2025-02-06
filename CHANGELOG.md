@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Updated
+
+- Default env no longer set to 'DEV'
+
 ## [2.2.0] - 2025-01-28
 
 ### Updated

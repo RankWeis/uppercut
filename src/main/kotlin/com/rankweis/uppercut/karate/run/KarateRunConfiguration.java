@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +66,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   @Getter @Setter private String tag;
   @Getter @Setter private String path;
   @Getter @Setter private PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
-  @Getter @Setter private String parallelism;
+  @Setter private String parallelism;
   @Getter @Setter private boolean allInFolderAreFeature = false;
   private String environment;
 
@@ -143,7 +144,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         if (getParallelism() != null) {
           params.getProgramParametersList().add("--parallelism", getParallelism());
         }
-        if (getEnv() != null) {
+        if (StringUtils.isNotEmpty(getEnv())) {
           params.getProgramParametersList().add("--environment", getEnv());
         }
         ReadAction.run(() -> JavaRunConfigurationExtensionManager.getInstance()

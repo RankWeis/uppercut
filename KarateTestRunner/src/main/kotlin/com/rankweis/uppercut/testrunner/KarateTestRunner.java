@@ -40,11 +40,10 @@ public class KarateTestRunner {
         .map(s -> !s.startsWith("@") ? "@" + s : s)
         .toList()
         .toArray(new String[0]);
-    String env =
+    Optional<String> env =
       Optional.ofNullable(params.get("environment")).orElse(List.of())
         .stream().filter(s -> !s.isBlank())
-        .findFirst()
-        .orElse("DEV");
+        .findFirst();
     int parallelism =
       Optional.ofNullable(params.get("parallelism"))
         .map(l -> l.get(0))
@@ -73,7 +72,9 @@ public class KarateTestRunner {
         invoke = mRun.invoke(invoke, new Object[]{testNames});
       }
       invoke = mWorkingDir.invoke(invoke, new File(workingDirectories[0]));
-      invoke = mKarateEnv.invoke(invoke, env);
+      if (env.isPresent()) {
+        mKarateEnv.invoke(invoke, env.get());
+      }
       invoke = mSetHook.invoke(invoke, hook);
       mParallel.invoke(invoke, parallelism);
       return 0;
