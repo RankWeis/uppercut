@@ -8,38 +8,12 @@
 
 - Major bug that would run each karate process twice
 
-## [2.2.1] - 2025-02-06
-
 ### Updated
 
 - Default env no longer set to 'DEV'
-
-## [2.2.0] - 2025-01-28
-
-### Updated
-
 - Made default parallelism configurable (Settings -> Tools -> Karate)
 - Made default parallelism 1 instead of 5
-
-## [2.1.3] - 2025-01-28
-
-### Updated
-
 - Fixed issue where java 21 was necessary to run certain tests (Java 17+ is now required)
-
-## [2.1.2] - 2025-01-24
-
-### Updated
-
-- Compatibility changes for intellij 2025.*
-
-## [2.1.1] - 2025-01-18
-
-### Updated
-
-- Ensuring compatibility with future intellij versions.
-
-## [2.1.0] - 2024-12-16
 
 ## [2.1.0-2024.2] - 2024-12-16
 
