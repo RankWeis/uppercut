@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.3.0-2024.2] - 2025-02-07
+
 ### Fixed
 
 - Major bug that would run each karate process twice
@@ -267,7 +269,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.1.0-2024.2...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.3.0-2024.2...HEAD
+[2.3.0-2024.2]: https://github.com/rankweis/uppercut/compare/v2.1.0-2024.2...v2.3.0-2024.2
 [2.1.0-2024.2]: https://github.com/rankweis/uppercut/compare/v2.0.1-2024.2...v2.1.0-2024.2
 [2.0.2]: https://github.com/rankweis/uppercut/compare/v2.0.0-2024.2...v2.0.2
 [2.0.1-2024.2]: https://github.com/rankweis/uppercut/compare/v2.0.2...v2.0.1-2024.2
