@@ -8,7 +8,7 @@
 
 ### Fixed
 
-- Issue where karate-config tests would not terminate on test runs.
+- Issue where karate-config tests would not terminate on test runs. 
 
 ## [2.3.0] - 2025-02-07
 
