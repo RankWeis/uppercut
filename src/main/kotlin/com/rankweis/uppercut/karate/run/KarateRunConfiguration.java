@@ -166,13 +166,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
           SMTRunnerConsoleView console =
             SMTestRunnerConnectionUtil.createConsole(consoleProperties);
           console.initUI();
-          OSProcessHandler processHandler;
-          try {
-            processHandler = startProcess();
-          } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-          }
-          console.attachToProcess(processHandler);
           console.addMessageFilter(new UrlFilter(getProject()));
           consoles.add(console);
         }, ModalityState.any());

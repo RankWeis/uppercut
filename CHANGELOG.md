@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Major bug that would run each karate process twice
+
 ## [2.2.1] - 2025-02-06
 
 ### Updated
