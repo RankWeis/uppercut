@@ -4,9 +4,11 @@
 
 ## [Unreleased]
 
+## [2.3.1] - 2025-02-07
+
 ### Fixed
 
-- Issue where karate-config tests would not terminate on test runs.
+- Issue where karate-config tests would not terminate on test runs. 
 
 ## [2.3.0] - 2025-02-07
 
@@ -295,7 +297,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.3.1...HEAD
+[2.3.1]: https://github.com/rankweis/uppercut/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/rankweis/uppercut/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/rankweis/uppercut/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/rankweis/uppercut/compare/v2.1.3...v2.2.0
