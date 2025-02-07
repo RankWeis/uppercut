@@ -29,7 +29,8 @@ jobs:
   # Prepare environment and build the plugin
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    if: ${{ github.actor_id == 'rankweis' }}
     outputs:
       version: ${{ steps.properties.outputs.version }}
       changelog: ${{ steps.properties.outputs.changelog }}
@@ -97,7 +98,8 @@ jobs:
   test:
     name: Test
     needs: [ build ]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    if: ${{ github.actor_id == 'rankweis' }}
     steps:
 
       # Check out the current repository
@@ -137,7 +139,8 @@ jobs:
   inspectCode:
     name: Inspect code
     needs: [ build ]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    if: ${{ github.actor_id == 'rankweis' }}
     permissions:
       contents: write
       checks: write
@@ -169,7 +172,8 @@ jobs:
   verify:
     name: Verify plugin
     needs: [ build ]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    if: ${{ github.actor_id == 'rankweis' }}
     steps:
 
       # Free GitHub Actions Environment Disk Space
@@ -217,9 +221,9 @@ jobs:
   # If accepted and published, release workflow would be triggered
   releaseDraft:
     name: Release draft
-    if: github.event_name != 'pull_request'
+    runs-on: self-hosted
+    if: ${{ github.actor_id == 'rankweis' && github.event_name != 'pull_request' }}
     needs: [ build, test, inspectCode, verify ]
-    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
