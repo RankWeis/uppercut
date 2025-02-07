@@ -20,7 +20,6 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -28,12 +27,15 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.rankweis.uppercut.settings.KarateSettingsState;
+import com.rankweis.uppercut.testrunner.KarateTestRunner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +66,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   @Getter @Setter private String tag;
   @Getter @Setter private String path;
   @Getter @Setter private PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
-  @Getter @Setter private String parallelism = "5";
+  @Setter private String parallelism;
   @Getter @Setter private boolean allInFolderAreFeature = false;
   private String environment;
 
@@ -98,7 +100,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         ClassLoader pluginClassLoader = this.getClass().getClassLoader();
         try {
           currentThread.setContextClassLoader(pluginClassLoader);
-          params.getClassPath().add(PathUtil.getJarPathForClass(this.getClass()));
+          params.getClassPath().add(PathUtil.getJarPathForClass(KarateTestRunner.class));
           // code working with ServiceLoader here
         } finally {
           currentThread.setContextClassLoader(originalClassLoader);
@@ -142,7 +144,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         if (getParallelism() != null) {
           params.getProgramParametersList().add("--parallelism", getParallelism());
         }
-        if (getEnv() != null) {
+        if (StringUtils.isNotEmpty(getEnv())) {
           params.getProgramParametersList().add("--environment", getEnv());
         }
         ReadAction.run(() -> JavaRunConfigurationExtensionManager.getInstance()
@@ -164,13 +166,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
           SMTRunnerConsoleView console =
             SMTestRunnerConnectionUtil.createConsole(consoleProperties);
           console.initUI();
-          OSProcessHandler processHandler;
-          try {
-            processHandler = startProcess();
-          } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-          }
-          console.attachToProcess(processHandler);
           console.addMessageFilter(new UrlFilter(getProject()));
           consoles.add(console);
         }, ModalityState.any());
@@ -208,7 +203,8 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     element.setAttribute("tag", Optional.ofNullable(tag).orElse(""));
     element.setAttribute("path", Optional.ofNullable(path).orElse(""));
     element.setAttribute("preferredTest", preferredTest.name);
-    element.setAttribute("parallelism", Optional.ofNullable(parallelism).orElse("1"));
+    element.setAttribute("parallelism", Optional.ofNullable(parallelism).orElse(
+      Optional.ofNullable(KarateSettingsState.getInstance().getDefaultParallelism()).map(String::valueOf).orElse("1")));
     element.setAttribute("allInFolderAreFeature", String.valueOf(allInFolderAreFeature));
     element.setAttribute("relPath", Optional.ofNullable(relPath).orElse(""));
     super.writeExternal(element);
@@ -238,7 +234,12 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
 
   public String getEnv() {
     return StringUtil.isEmpty(environment) ?
-    PropertiesComponent.getInstance().getValue("uppercut.settings.defaultEnvironment") : environment;
+       String.valueOf(KarateSettingsState.getInstance().getDefaultEnvironment()) : environment;
+  }
+
+  public String getParallelism() {
+    return StringUtil.isEmpty(parallelism) ?
+       String.valueOf(KarateSettingsState.getInstance().getDefaultParallelism()) : parallelism;
   }
 
   public void setEnv(String environment) {

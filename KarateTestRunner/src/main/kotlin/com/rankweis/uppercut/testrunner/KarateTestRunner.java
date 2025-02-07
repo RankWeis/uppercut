@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 public class KarateTestRunner {
@@ -41,11 +40,10 @@ public class KarateTestRunner {
         .map(s -> !s.startsWith("@") ? "@" + s : s)
         .toList()
         .toArray(new String[0]);
-    String env =
+    Optional<String> env =
       Optional.ofNullable(params.get("environment")).orElse(List.of())
         .stream().filter(s -> !s.isBlank())
-        .findFirst()
-        .orElse("DEV");
+        .findFirst();
     int parallelism =
       Optional.ofNullable(params.get("parallelism"))
         .map(l -> l.get(0))
@@ -74,7 +72,9 @@ public class KarateTestRunner {
         invoke = mRun.invoke(invoke, new Object[]{testNames});
       }
       invoke = mWorkingDir.invoke(invoke, new File(workingDirectories[0]));
-      invoke = mKarateEnv.invoke(invoke, env);
+      if (env.isPresent()) {
+        mKarateEnv.invoke(invoke, env.get());
+      }
       invoke = mSetHook.invoke(invoke, hook);
       mParallel.invoke(invoke, parallelism);
       return 0;
@@ -200,7 +200,7 @@ public class KarateTestRunner {
     return outputStreamAppender;
   }
 
-  private static @NotNull OutputStreamAppender<ILoggingEvent> getOutputStreamAppender() {
+  private static OutputStreamAppender<ILoggingEvent> getOutputStreamAppender() {
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
     OutputStreamAppender<ILoggingEvent> outputStreamAppender = new OutputStreamAppender<>();
     outputStreamAppender.setContext(context);

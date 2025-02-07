@@ -1,18 +1,18 @@
 [versions]
 # libraries
 junit = "4.13.2"
-junit5 = "5.11.3"
-mockito = "5.14.2"
+junit5 = "5.11.4"
+mockito = "5.15.2"
 karate-js = "0.1.1"
 grammarkit = "2022.3.2.2"
 
 # plugins
-kotlin = "2.1.0"
+kotlin = "2.1.10"
 changelog = "2.2.1"
-gradleIntelliJPlugin = "2.1.0"
-qodana = "2024.2.6"
-kover = "0.8.3"
-lombok = "8.11"
+gradleIntelliJPlugin = "2.2.1"
+qodana = "2024.3.4"
+kover = "0.9.1"
+lombok = "8.12.1"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }

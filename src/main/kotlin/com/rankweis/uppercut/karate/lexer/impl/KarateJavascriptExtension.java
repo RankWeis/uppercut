@@ -51,7 +51,7 @@ public class KarateJavascriptExtension implements KarateJavascriptParsingExtensi
   }
 
   public SyntaxHighlighterBase getJsSyntaxHighlighter() {
-    return new JSHighlighter(holder, false);
+    return new JSHighlighter(holder);
   }
 
   @Override public List<Block> getJsSubBlocks(ASTNode astNode, Alignment alignment) {

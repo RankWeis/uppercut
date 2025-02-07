@@ -47,9 +47,6 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
   @Override public boolean isConfigurationFromContext(@NotNull KarateRunConfiguration configuration,
     @NotNull ConfigurationContext context) {
     VirtualFile virtualFile = context.getLocation().getVirtualFile();
-    final String name = virtualFile.getName();
-    final String path = virtualFile.getPath();
-    String relPath = getRelativePathFromModule(context.getModule(), path, name);
 
     PsiElement psiElement = context.getLocation().getPsiElement();
     PsiFile containingFile = psiElement.getContainingFile();
