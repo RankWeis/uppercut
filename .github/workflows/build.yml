@@ -30,7 +30,7 @@ jobs:
   build:
     name: Build
     runs-on: self-hosted
-    if: ${{ github.actor_id == 'rankweis' }}
+    if: ${{ github.actor_id == '733691' }}
     outputs:
       version: ${{ steps.properties.outputs.version }}
       changelog: ${{ steps.properties.outputs.changelog }}
@@ -99,7 +99,7 @@ jobs:
     name: Test
     needs: [ build ]
     runs-on: self-hosted
-    if: ${{ github.actor_id == 'rankweis' }}
+    if: ${{ github.actor_id == '733691' }}
     steps:
 
       # Check out the current repository
@@ -140,7 +140,7 @@ jobs:
     name: Inspect code
     needs: [ build ]
     runs-on: self-hosted
-    if: ${{ github.actor_id == 'rankweis' }}
+    if: ${{ github.actor_id == '733691' }}
     permissions:
       contents: write
       checks: write
@@ -173,7 +173,7 @@ jobs:
     name: Verify plugin
     needs: [ build ]
     runs-on: self-hosted
-    if: ${{ github.actor_id == 'rankweis' }}
+    if: ${{ github.actor_id == '733691' }}
     steps:
 
       # Free GitHub Actions Environment Disk Space
@@ -222,7 +222,7 @@ jobs:
   releaseDraft:
     name: Release draft
     runs-on: self-hosted
-    if: ${{ github.actor_id == 'rankweis' && github.event_name != 'pull_request' }}
+    if: ${{ github.actor_id == '733691' && github.event_name != 'pull_request' }}
     needs: [ build, test, inspectCode, verify ]
     permissions:
       contents: write
