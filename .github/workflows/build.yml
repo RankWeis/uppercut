@@ -29,7 +29,7 @@ jobs:
   # Prepare environment and build the plugin
   build:
     name: Build
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' }}
     outputs:
       version: ${{ steps.properties.outputs.version }}
@@ -98,7 +98,7 @@ jobs:
   test:
     name: Test
     needs: [ build ]
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' }}
     steps:
 
@@ -129,17 +129,12 @@ jobs:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
 
-      # Upload the Kover report to CodeCov
-      - name: Upload Code Coverage Report
-        uses: codecov/codecov-action@v5
-        with:
-          files: ${{ github.workspace }}/build/reports/kover/report.xml
 
   # Run Qodana inspections and provide report
   inspectCode:
     name: Inspect code
     needs: [ build ]
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' }}
     permissions:
       contents: write
@@ -147,13 +142,13 @@ jobs:
       pull-requests: write
     steps:
 
-#      # Free GitHub Actions Environment Disk Space
-#      - name: Maximize Build Space
-#        uses: jlumbroso/free-disk-space@main
-#        with:
-#          tool-cache: false
-#          large-packages: false
-#
+      # Free GitHub Actions Environment Disk Space
+      - name: Maximize Build Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          large-packages: false
+
       # Check out the current repository
       - name: Fetch Sources
         uses: actions/checkout@v4
@@ -172,7 +167,7 @@ jobs:
   verify:
     name: Verify plugin
     needs: [ build ]
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' }}
     steps:
 
@@ -221,7 +216,7 @@ jobs:
   # If accepted and published, release workflow would be triggered
   releaseDraft:
     name: Release draft
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' && github.event_name != 'pull_request' }}
     needs: [ build, test, inspectCode, verify ]
     permissions:
@@ -244,6 +239,7 @@ jobs:
         run: |
           gh api repos/{owner}/{repo}/releases \
             --jq '.[] | select(.draft == true and .name == "v${{ needs.build.outputs.version }}") | .id' \
+          
             | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
 
       # Create a new release draft which is not publicly visible and requires manual acceptance
