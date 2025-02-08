@@ -29,7 +29,8 @@ jobs:
   # Prepare environment and build the plugin
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    if: ${{ github.actor_id == '733691' }}
     outputs:
       version: ${{ steps.properties.outputs.version }}
       changelog: ${{ steps.properties.outputs.changelog }}
@@ -97,7 +98,8 @@ jobs:
   test:
     name: Test
     needs: [ build ]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    if: ${{ github.actor_id == '733691' }}
     steps:
 
       # Check out the current repository
@@ -137,20 +139,21 @@ jobs:
   inspectCode:
     name: Inspect code
     needs: [ build ]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    if: ${{ github.actor_id == '733691' }}
     permissions:
       contents: write
       checks: write
       pull-requests: write
     steps:
 
-      # Free GitHub Actions Environment Disk Space
-      - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          large-packages: false
-
+#      # Free GitHub Actions Environment Disk Space
+#      - name: Maximize Build Space
+#        uses: jlumbroso/free-disk-space@main
+#        with:
+#          tool-cache: false
+#          large-packages: false
+#
       # Check out the current repository
       - name: Fetch Sources
         uses: actions/checkout@v4
@@ -169,15 +172,16 @@ jobs:
   verify:
     name: Verify plugin
     needs: [ build ]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    if: ${{ github.actor_id == '733691' }}
     steps:
 
       # Free GitHub Actions Environment Disk Space
-      - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          large-packages: false
+#      - name: Maximize Build Space
+#        uses: jlumbroso/free-disk-space@main
+#        with:
+#          tool-cache: false
+#          large-packages: false
 
       # Check out the current repository
       - name: Fetch Sources
@@ -217,9 +221,9 @@ jobs:
   # If accepted and published, release workflow would be triggered
   releaseDraft:
     name: Release draft
-    if: github.event_name != 'pull_request'
+    runs-on: self-hosted
+    if: ${{ github.actor_id == '733691' && github.event_name != 'pull_request' }}
     needs: [ build, test, inspectCode, verify ]
-    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
