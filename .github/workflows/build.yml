@@ -51,7 +51,6 @@ jobs:
         with:
           distribution: zulu
           java-version: 17
-          cache: gradle
 
       # Setup Gradle
       - name: Setup Gradle
@@ -113,7 +112,6 @@ jobs:
         with:
           distribution: zulu
           java-version: 17
-          cache: gradle
 
       # Setup Gradle
       - name: Setup Gradle
@@ -169,7 +167,6 @@ jobs:
         with:
           distribution: zulu
           java-version: 17
-          cache: gradle
 
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
