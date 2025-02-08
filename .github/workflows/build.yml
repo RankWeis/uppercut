@@ -129,11 +129,6 @@ jobs:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
 
-      # Upload the Kover report to CodeCov
-      - name: Upload Code Coverage Report
-        uses: codecov/codecov-action@v5
-        with:
-          files: ${{ github.workspace }}/build/reports/kover/report.xml
 
   # Run Qodana inspections and provide report
   inspectCode:
@@ -244,6 +239,7 @@ jobs:
         run: |
           gh api repos/{owner}/{repo}/releases \
             --jq '.[] | select(.draft == true and .name == "v${{ needs.build.outputs.version }}") | .id' \
+          
             | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
 
       # Create a new release draft which is not publicly visible and requires manual acceptance
