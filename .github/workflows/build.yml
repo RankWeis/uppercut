@@ -29,7 +29,7 @@ jobs:
   # Prepare environment and build the plugin
   build:
     name: Build
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' }}
     outputs:
       version: ${{ steps.properties.outputs.version }}
@@ -98,7 +98,7 @@ jobs:
   test:
     name: Test
     needs: [ build ]
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' }}
     steps:
 
@@ -139,7 +139,7 @@ jobs:
   inspectCode:
     name: Inspect code
     needs: [ build ]
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' }}
     permissions:
       contents: write
@@ -172,7 +172,7 @@ jobs:
   verify:
     name: Verify plugin
     needs: [ build ]
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' }}
     steps:
 
@@ -221,7 +221,7 @@ jobs:
   # If accepted and published, release workflow would be triggered
   releaseDraft:
     name: Release draft
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' && github.event_name != 'pull_request' }}
     needs: [ build, test, inspectCode, verify ]
     permissions:
