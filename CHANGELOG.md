@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Logs should now display in full when testing.
+- No longer overrides your logging settings.
+
 ## [2.3.1] - 2025-02-07
 
 ### Fixed

@@ -22,13 +22,13 @@ jobs:
         run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
         id: extract_branch
 
-#      - name: free disk space
-#        run: |
-#          sudo swapoff -a
-#          sudo rm -f /swapfile
-#          sudo apt clean
-#          docker rmi $(docker image ls -aq)
-#          df -h
+      - name: free disk space
+        run: |
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          sudo apt clean
+          docker rmi $(docker image ls -aq)
+          df -h
 
       # Check out the current repository
       - name: Fetch Sources
