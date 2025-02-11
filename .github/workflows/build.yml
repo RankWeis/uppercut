@@ -40,16 +40,17 @@ jobs:
       - name: Fetch Sources
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      # Set up Java environment for the next steps
-      - name: Setup Java
-        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
-        with:
-          distribution: zulu
-          java-version: 17
 
-      # Setup Gradle
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
+      # Build plugin
+      - name: Build plugin
+        uses: burrunan/gradle-cache-action@3bf23b8dd95e7d2bacf2470132454fe893a178a1
+        with:
+          job-id: jdk17
+          gradle-version: wrapper
+          # Properties are passed as -Pname=value
+          properties: |
+            kotlin.js.compiler=ir
+            kotlin.parallel.tasks.in.project=true
 
       # Set environment variables
       - name: Export Properties
@@ -69,7 +70,15 @@ jobs:
 
       # Build plugin
       - name: Build plugin
-        run: ./gradlew buildPlugin
+        uses: burrunan/gradle-cache-action@3bf23b8dd95e7d2bacf2470132454fe893a178a1
+        with:
+          job-id: jdk17
+          arguments: build
+          gradle-version: wrapper
+          # Properties are passed as -Pname=value
+          properties: |
+            kotlin.js.compiler=ir
+            kotlin.parallel.tasks.in.project=true
 
       # Prepare plugin archive content for creating artifact
       - name: Prepare Plugin Artifact
@@ -100,20 +109,18 @@ jobs:
       - name: Fetch Sources
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      # Set up Java environment for the next steps
-      - name: Setup Java
-        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
+      # Build plugin
+      - name: Build plugin
+        uses: burrunan/gradle-cache-action@3bf23b8dd95e7d2bacf2470132454fe893a178a1
         with:
-          distribution: zulu
-          java-version: 17
+          job-id: jdk17
+          arguments: check
+          gradle-version: wrapper
+          # Properties are passed as -Pname=value
+          properties: |
+            kotlin.js.compiler=ir
+            kotlin.parallel.tasks.in.project=true
 
-      # Setup Gradle
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
-
-      # Run tests
-      - name: Run Tests
-        run: ./gradlew check
 
       # Collect Tests Result of failed tests
       - name: Collect Tests Result
@@ -123,78 +130,38 @@ jobs:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
 
-
-  # Run Qodana inspections and provide report
-  inspectCode:
-    name: Inspect code
-    needs: [ build ]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      checks: write
-      pull-requests: write
-    steps:
-
-      # Free GitHub Actions Environment Disk Space
-      - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
-        with:
-          tool-cache: false
-          large-packages: false
-
-      # Check out the current repository
-      - name: Fetch Sources
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
-          fetch-depth: 0  # a full history is required for pull request analysis
-
-      # Set up Java environment for the next steps
-      - name: Setup Java
-        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
-        with:
-          distribution: zulu
-          java-version: 17
-
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
     name: Verify plugin
     needs: [ build ]
     runs-on: ubuntu-latest
     steps:
-
-      # Free GitHub Actions Environment Disk Space
-      - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
-        with:
-          tool-cache: false
-          large-packages: false
-
       # Check out the current repository
       - name: Fetch Sources
         uses: actions/checkout@v4
 
-      # Set up Java environment for the next steps
-      - name: Setup Java
-        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
+      # Build plugin
+      - name: Build plugin
+        uses: burrunan/gradle-cache-action@3bf23b8dd95e7d2bacf2470132454fe893a178a1
         with:
-          distribution: zulu
-          java-version: 17
+          job-id: jdk17
+          arguments: verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
+          gradle-version: wrapper
+          # Properties are passed as -Pname=value
+          properties: |
+            kotlin.parallel.tasks.in.project=true
 
-      # Setup Gradle
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
 
-#      # Cache Plugin Verifier IDEs
-#      - name: Setup Plugin Verifier IDEs Cache
-#        uses: actions/cache@v4
-#        with:
-#          path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
-#          key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
-
-      # Run Verify Plugin task and IntelliJ Plugin Verifier tool
-      - name: Run Plugin Verification tasks
-        run: ./gradlew verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
+      # Build plugin
+      - name: Build plugin
+        uses: burrunan/gradle-cache-action@3bf23b8dd95e7d2bacf2470132454fe893a178a1
+        with:
+          job-id: jdk17
+          arguments: verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
+          gradle-version: wrapper
+          # Properties are passed as -Pname=value
+          properties: |
+            kotlin.parallel.tasks.in.project=true
 
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
@@ -204,29 +171,16 @@ jobs:
           name: pluginVerifier-result
           path: ${{ github.workspace }}/build/reports/pluginVerifier
 
-  contrib-readme-job:
-      runs-on: ubuntu-latest
-      name: A job to automate contrib in readme
-      permissions:
-        contents: write
-        pull-requests: write
-      steps:
-        - name: Contribute List
-          uses: akhilmhdh/contributors-readme-action@1ff4c56187458b34cd602aee93e897344ce34bfc
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   # Prepare a draft release for GitHub Releases page for the manual verification
   # If accepted and published, release workflow would be triggered
   releaseDraft:
     name: Release draft
     runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' && github.event_name != 'pull_request' }}
-    needs: [ build, test, inspectCode, verify ]
+    needs: [ build, test, verify ]
     permissions:
       contents: write
     steps:
-
       - name: Extract branch name
         shell: bash
         run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
