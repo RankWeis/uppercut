@@ -30,7 +30,6 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    if: ${{ github.actor_id == '733691' }}
     outputs:
       version: ${{ steps.properties.outputs.version }}
       changelog: ${{ steps.properties.outputs.changelog }}
@@ -39,22 +38,18 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
-
-      # Validate wrapper
-      - name: Gradle Wrapper Validation
-        uses: gradle/actions/wrapper-validation@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       # Set up Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
         with:
           distribution: zulu
           java-version: 17
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
 
       # Set environment variables
       - name: Export Properties
@@ -99,23 +94,22 @@ jobs:
     name: Test
     needs: [ build ]
     runs-on: ubuntu-latest
-    if: ${{ github.actor_id == '733691' }}
     steps:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       # Set up Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
         with:
           distribution: zulu
           java-version: 17
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
 
       # Run tests
       - name: Run Tests
@@ -124,7 +118,7 @@ jobs:
       # Collect Tests Result of failed tests
       - name: Collect Tests Result
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
@@ -135,7 +129,6 @@ jobs:
     name: Inspect code
     needs: [ build ]
     runs-on: ubuntu-latest
-    if: ${{ github.actor_id == '733691' }}
     permissions:
       contents: write
       checks: write
@@ -144,21 +137,21 @@ jobs:
 
       # Free GitHub Actions Environment Disk Space
       - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
         with:
           tool-cache: false
           large-packages: false
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
           fetch-depth: 0  # a full history is required for pull request analysis
 
       # Set up Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
         with:
           distribution: zulu
           java-version: 17
@@ -168,15 +161,14 @@ jobs:
     name: Verify plugin
     needs: [ build ]
     runs-on: ubuntu-latest
-    if: ${{ github.actor_id == '733691' }}
     steps:
 
       # Free GitHub Actions Environment Disk Space
-#      - name: Maximize Build Space
-#        uses: jlumbroso/free-disk-space@main
-#        with:
-#          tool-cache: false
-#          large-packages: false
+      - name: Maximize Build Space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        with:
+          tool-cache: false
+          large-packages: false
 
       # Check out the current repository
       - name: Fetch Sources
@@ -184,21 +176,21 @@ jobs:
 
       # Set up Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
         with:
           distribution: zulu
           java-version: 17
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
 
-      # Cache Plugin Verifier IDEs
-      - name: Setup Plugin Verifier IDEs Cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
-          key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
+#      # Cache Plugin Verifier IDEs
+#      - name: Setup Plugin Verifier IDEs Cache
+#        uses: actions/cache@v4
+#        with:
+#          path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
+#          key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
 
       # Run Verify Plugin task and IntelliJ Plugin Verifier tool
       - name: Run Plugin Verification tasks
@@ -207,16 +199,22 @@ jobs:
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
           name: pluginVerifier-result
           path: ${{ github.workspace }}/build/reports/pluginVerifier
 
-      # add required write permission
-      - name: Name Contributors
-        uses: akhilmhdh/contributors-readme-action@v2.3.10
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  contrib-readme-job:
+      runs-on: ubuntu-latest
+      name: A job to automate contrib in readme
+      permissions:
+        contents: write
+        pull-requests: write
+      steps:
+        - name: Contribute List
+          uses: akhilmhdh/contributors-readme-action@1ff4c56187458b34cd602aee93e897344ce34bfc
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Prepare a draft release for GitHub Releases page for the manual verification
   # If accepted and published, release workflow would be triggered
@@ -236,7 +234,7 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       # Remove old release drafts by using the curl request for the available releases with a draft flag
       - name: Remove Old Release Drafts
