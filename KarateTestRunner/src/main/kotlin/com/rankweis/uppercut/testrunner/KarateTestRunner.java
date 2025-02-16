@@ -4,7 +4,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.OutputStreamAppender;
+import ch.qos.logback.core.ConsoleAppender;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -41,6 +41,12 @@ public class KarateTestRunner {
       Optional.ofNullable(params.get("environment")).orElse(List.of())
         .stream().filter(s -> !s.isBlank())
         .findFirst();
+    boolean debug =
+      Optional.ofNullable(params.get("debug")).flatMap(d -> d.stream().findFirst().map(Boolean::parseBoolean))
+        .orElse(false);
+    int debugPort =
+      Optional.ofNullable(params.get("debug-port")).flatMap(d -> d.stream().findFirst().map(Integer::parseInt))
+        .orElse(-1);
     int parallelism =
       Optional.ofNullable(params.get("parallelism"))
         .map(l -> l.get(0))
@@ -52,37 +58,37 @@ public class KarateTestRunner {
       tags = new String[]{"@Test"};
     }
 
-      Object hook = createRuntimeHook();
-      Class<?> clazz = Class.forName("com.intuit.karate.junit5.Karate",
-        true, Thread.currentThread().getContextClassLoader());
-      Object invoke = clazz.getDeclaredConstructor().newInstance();
-      Method mSetHook = clazz.getMethod("hook", Class.forName("com.intuit.karate.RuntimeHook"));
-      Method mRun = clazz.getMethod("path", String[].class);
-      Method mTags = clazz.getMethod("tags", String[].class);
-      Method mWorkingDir = clazz.getMethod("workingDir", File.class);
-      Method mKarateEnv = clazz.getMethod("karateEnv", String.class);
-      Method mParallel = clazz.getMethod("parallel", int.class);
-      if (tags.length > 0) {
-        invoke = mRun.invoke(invoke, new Object[]{workingDirectories});
-        invoke = mTags.invoke(invoke, new Object[]{tags});
-      } else {
-        invoke = mRun.invoke(invoke, new Object[]{testNames});
-      }
-      invoke = mWorkingDir.invoke(invoke, new File(workingDirectories[0]));
-      if (env.isPresent()) {
-        mKarateEnv.invoke(invoke, env.get());
-      }
-      invoke = mSetHook.invoke(invoke, hook);
-      mParallel.invoke(invoke, parallelism);
+    Object hook = createRuntimeHook();
+    Class<?> clazz = Class.forName("com.intuit.karate.junit5.Karate");
+    Object invoke = clazz.getDeclaredConstructor().newInstance();
+    Method mSetHook = clazz.getMethod("hook", Class.forName("com.intuit.karate.RuntimeHook"));
+    Method mRun = clazz.getMethod("path", String[].class);
+    Method mTags = clazz.getMethod("tags", String[].class);
+    Method mWorkingDir = clazz.getMethod("workingDir", File.class);
+    Method mKarateEnv = clazz.getMethod("karateEnv", String.class);
+    Method mParallel = clazz.getMethod("parallel", int.class);
+    Method mDebug = clazz.getMethod("debugMode", boolean.class);
+    if (tags.length > 0) {
+      invoke = mRun.invoke(invoke, new Object[]{workingDirectories});
+      invoke = mTags.invoke(invoke, new Object[]{tags});
+    } else {
+      invoke = mRun.invoke(invoke, new Object[]{testNames});
+    }
+    invoke = mWorkingDir.invoke(invoke, new File(workingDirectories[0]));
+    if (env.isPresent()) {
+      mKarateEnv.invoke(invoke, env.get());
+    }
+    invoke = mSetHook.invoke(invoke, hook);
+    mParallel.invoke(invoke, parallelism);
   }
 
   Object createRuntimeHook() {
-      Logger myLogger = (Logger) LoggerFactory.getLogger(KarateTestRunner.class);
-      // Load the RuntimeHook class using reflection
+    Logger myLogger = (Logger) LoggerFactory.getLogger(KarateTestRunner.class);
+    // Load the RuntimeHook class using reflection
     Class<?> runtimeHookClass;
     try {
       runtimeHookClass =
-        Class.forName("com.intuit.karate.RuntimeHook", true, Thread.currentThread().getContextClassLoader());
+        Class.forName("com.intuit.karate.RuntimeHook");
     } catch (ClassNotFoundException e) {
       throw new RuntimeException("Must have karate on the classpath", e);
     }
@@ -95,8 +101,7 @@ public class KarateTestRunner {
       (proxy, method, args) -> {
         if ("beforeScenario".equals(method.getName())
           || "afterScenario".equals(method.getName()) && args.length == 1) {
-          Class<?> scenarioRuntimeClass = Class.forName("com.intuit.karate.core.ScenarioRuntime", true,
-            Thread.currentThread().getContextClassLoader());
+          Class<?> scenarioRuntimeClass = Class.forName("com.intuit.karate.core.ScenarioRuntime");
           Object scenarioRuntime = args[0];
           Integer scenarioId =
             scenarioIdMap.computeIfAbsent(scenarioRuntime, (o -> random.nextInt(0, Integer.MAX_VALUE)));
@@ -132,8 +137,7 @@ public class KarateTestRunner {
           } else {
             startOrFinish = "START";
           }
-          Class<?> featureRuntimeClass = Class.forName("com.intuit.karate.core.FeatureRuntime", true,
-            Thread.currentThread().getContextClassLoader());
+          Class<?> featureRuntimeClass = Class.forName("com.intuit.karate.core.FeatureRuntime");
           Object featureRuntime = args[0];
 
           // Access 'parentRuntime' field from caller
@@ -156,23 +160,29 @@ public class KarateTestRunner {
     runner.parseArgs(args);
     try {
       runner.doTest();
-    } catch(ClassNotFoundException e) {
+    } catch (ClassNotFoundException e) {
       throw new RuntimeException("Must have karate on the classpath", e);
     }
   }
 
   public void parseArgs(String[] args) {
-    if (args.length % 2 != 0) {
-      throw new RuntimeException("Invalid number of arguments");
-    }
     for (int i = 0; i < args.length; i += 2) {
       String key = args[i].toLowerCase();
       key = key.startsWith("--") ? key.substring(2) : key.substring(1);
+      String val;
+      if (key.contains("=")) {
+        String[] split = key.split("=");
+        key = split[0];
+        val = split[1];
+        i--;
+      } else {
+        val = args[i + 1];
+      }
       if (params.containsKey(key)) {
-        params.get(key).add(args[i + 1]);
+        params.get(key).add(val);
       } else {
         List<String> list = new ArrayList<>();
-        list.add(args[i + 1]);
+        list.add(val);
         params.put(key, list);
       }
     }
@@ -180,10 +190,9 @@ public class KarateTestRunner {
 
   private static void getOutputStreamAppender() {
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    Logger logger = context.getLogger(KarateTestRunner.class);
     Logger intuitLogger = context.getLogger("com.intuit");
 
-    OutputStreamAppender<ILoggingEvent> outputStreamAppender = new OutputStreamAppender<>();
+    ConsoleAppender<ILoggingEvent> outputStreamAppender = new ConsoleAppender<>();
     outputStreamAppender.setContext(context);
     PatternLayoutEncoder encoder = new PatternLayoutEncoder();
     encoder.setContext(context);
@@ -191,9 +200,7 @@ public class KarateTestRunner {
     encoder.start();
     outputStreamAppender.setName("KarateAppender");
     outputStreamAppender.setEncoder(encoder);
-    outputStreamAppender.setOutputStream(System.out);
     outputStreamAppender.start();
-    logger.addAppender(outputStreamAppender);
     intuitLogger.addAppender(outputStreamAppender);
   }
 
