@@ -8,6 +8,7 @@
 
 - Logs should now display in full when testing.
 - No longer overrides your logging settings.
+- Debugger no longer suspends job (unless you want it to)
 
 ## [2.3.1] - 2025-02-07
 

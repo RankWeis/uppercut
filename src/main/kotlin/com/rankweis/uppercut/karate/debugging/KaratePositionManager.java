@@ -8,7 +8,6 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.CompoundPositionManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.PositionManagerAsync;
 import com.intellij.debugger.engine.PositionManagerImpl.JavaSourcePosition;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
@@ -34,7 +33,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("ALL") @Slf4j
-public class KaratePositionManager implements PositionManagerAsync, PositionManager {
+public class KaratePositionManager implements PositionManager {
 
   Cache<SourcePosition, Location> karateToJava = CacheBuilder.newBuilder()
     .expireAfterAccess(Duration.ofMinutes(60))
@@ -70,16 +68,16 @@ public class KaratePositionManager implements PositionManagerAsync, PositionMana
     this.debugProcess = (DebugProcessImpl) debugProcess;
   }
 
-  @Override public @NotNull CompletableFuture<SourcePosition> getSourcePositionAsync(@Nullable Location location) {
-    return CompletableFuture.supplyAsync(() -> {
-      try {
-        return getSourcePosition(location);
-      } catch (NoDataException e) {
-        throw new RuntimeException(e);
-      }
-    });
-  }
-
+//  @Override public @NotNull CompletableFuture<SourcePosition> getSourcePositionAsync(@Nullable Location location) {
+//    return CompletableFuture.supplyAsync(() -> {
+//      try {
+//        return getSourcePosition(location);
+//      } catch (NoDataException e) {
+//        throw new RuntimeException(e);
+//      }
+//    });
+//  }
+//
   @Override public @Nullable SourcePosition getSourcePosition(@Nullable Location location) throws NoDataException {
     try {
       LinkedHashSet<JavaSourcePosition> sourcePositions = null;
