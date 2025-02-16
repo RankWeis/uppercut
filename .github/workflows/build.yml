@@ -30,6 +30,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    if: ${{ github.actor_id == '733691' }}
     outputs:
       version: ${{ steps.properties.outputs.version }}
       changelog: ${{ steps.properties.outputs.changelog }}
@@ -38,19 +39,22 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
+      # Validate wrapper
+      - name: Gradle Wrapper Validation
+        uses: gradle/actions/wrapper-validation@v4
 
-      # Build plugin
-      - name: Build plugin
-        uses: burrunan/gradle-cache-action@3bf23b8dd95e7d2bacf2470132454fe893a178a1
+      # Set up Java environment for the next steps
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          job-id: jdk17
-          gradle-version: wrapper
-          # Properties are passed as -Pname=value
-          properties: |
-            kotlin.js.compiler=ir
-            kotlin.parallel.tasks.in.project=true
+          distribution: zulu
+          java-version: 17
+
+      # Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       # Set environment variables
       - name: Export Properties
@@ -70,15 +74,7 @@ jobs:
 
       # Build plugin
       - name: Build plugin
-        uses: burrunan/gradle-cache-action@3bf23b8dd95e7d2bacf2470132454fe893a178a1
-        with:
-          job-id: jdk17
-          arguments: build
-          gradle-version: wrapper
-          # Properties are passed as -Pname=value
-          properties: |
-            kotlin.js.compiler=ir
-            kotlin.parallel.tasks.in.project=true
+        run: ./gradlew buildPlugin
 
       # Prepare plugin archive content for creating artifact
       - name: Prepare Plugin Artifact
@@ -103,70 +99,115 @@ jobs:
     name: Test
     needs: [ build ]
     runs-on: ubuntu-latest
+    if: ${{ github.actor_id == '733691' }}
     steps:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
-      # Build plugin
-      - name: Build plugin
-        uses: burrunan/gradle-cache-action@3bf23b8dd95e7d2bacf2470132454fe893a178a1
+      # Set up Java environment for the next steps
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          job-id: jdk17
-          arguments: check
-          gradle-version: wrapper
-          # Properties are passed as -Pname=value
-          properties: |
-            kotlin.js.compiler=ir
-            kotlin.parallel.tasks.in.project=true
+          distribution: zulu
+          java-version: 17
 
+      # Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Run tests
+      - name: Run Tests
+        run: ./gradlew check
 
       # Collect Tests Result of failed tests
       - name: Collect Tests Result
         if: ${{ failure() }}
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        uses: actions/upload-artifact@v4
         with:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
+
+
+  # Run Qodana inspections and provide report
+  inspectCode:
+    name: Inspect code
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    if: ${{ github.actor_id == '733691' }}
+    permissions:
+      contents: write
+      checks: write
+      pull-requests: write
+    steps:
+
+#      # Free GitHub Actions Environment Disk Space
+#      - name: Maximize Build Space
+#        uses: jlumbroso/free-disk-space@main
+#        with:
+#          tool-cache: false
+#          large-packages: false
+#
+      # Check out the current repository
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
+          fetch-depth: 0  # a full history is required for pull request analysis
+
+      # Set up Java environment for the next steps
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
 
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
     name: Verify plugin
     needs: [ build ]
     runs-on: ubuntu-latest
+    if: ${{ github.actor_id == '733691' }}
     steps:
+
+      # Free GitHub Actions Environment Disk Space
+#      - name: Maximize Build Space
+#        uses: jlumbroso/free-disk-space@main
+#        with:
+#          tool-cache: false
+#          large-packages: false
+
       # Check out the current repository
       - name: Fetch Sources
         uses: actions/checkout@v4
 
-      # Build plugin
-      - name: Build plugin
-        uses: burrunan/gradle-cache-action@3bf23b8dd95e7d2bacf2470132454fe893a178a1
+      # Set up Java environment for the next steps
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          job-id: jdk17
-          arguments: verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
-          gradle-version: wrapper
-          # Properties are passed as -Pname=value
-          properties: |
-            kotlin.parallel.tasks.in.project=true
+          distribution: zulu
+          java-version: 17
 
+      # Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
-      # Build plugin
-      - name: Build plugin
-        uses: burrunan/gradle-cache-action@3bf23b8dd95e7d2bacf2470132454fe893a178a1
+      # Cache Plugin Verifier IDEs
+      - name: Setup Plugin Verifier IDEs Cache
+        uses: actions/cache@v4
         with:
-          job-id: jdk17
-          arguments: verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
-          gradle-version: wrapper
-          # Properties are passed as -Pname=value
-          properties: |
-            kotlin.parallel.tasks.in.project=true
+          path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
+          key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
+
+      # Run Verify Plugin task and IntelliJ Plugin Verifier tool
+      - name: Run Plugin Verification tasks
+        run: ./gradlew verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
 
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
         if: ${{ always() }}
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        uses: actions/upload-artifact@v4
         with:
           name: pluginVerifier-result
           path: ${{ github.workspace }}/build/reports/pluginVerifier
@@ -177,10 +218,11 @@ jobs:
     name: Release draft
     runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' && github.event_name != 'pull_request' }}
-    needs: [ build, test, verify ]
+    needs: [ build, test, inspectCode, verify ]
     permissions:
       contents: write
     steps:
+
       - name: Extract branch name
         shell: bash
         run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
@@ -188,7 +230,7 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
       # Remove old release drafts by using the curl request for the available releases with a draft flag
       - name: Remove Old Release Drafts
