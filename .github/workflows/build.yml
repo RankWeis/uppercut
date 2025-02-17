@@ -239,7 +239,6 @@ jobs:
         run: |
           gh api repos/{owner}/{repo}/releases \
             --jq '.[] | select(.draft == true and .name == "v${{ needs.build.outputs.version }}") | .id' \
-          
             | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
 
       # Create a new release draft which is not publicly visible and requires manual acceptance
