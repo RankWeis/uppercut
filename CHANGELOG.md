@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.3.2] - 2025-02-19
+
 ### Fixed
 
 - Logs should now display in full when testing.
@@ -14,7 +16,7 @@
 
 ### Fixed
 
-- Issue where karate-config tests would not terminate on test runs. 
+- Issue where karate-config tests would not terminate on test runs.
 
 ## [2.3.0] - 2025-02-07
 
@@ -303,7 +305,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.3.1...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.3.2...HEAD
+[2.3.2]: https://github.com/rankweis/uppercut/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/rankweis/uppercut/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/rankweis/uppercut/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/rankweis/uppercut/compare/v2.2.0...v2.2.1
