@@ -12,7 +12,7 @@ changelog = "2.2.1"
 gradleIntelliJPlugin = "2.2.1"
 qodana = "2024.3.4"
 kover = "0.9.1"
-lombok = "8.12.1"
+lombok = "8.12.2"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
