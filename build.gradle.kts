@@ -192,6 +192,10 @@ tasks {
     publishPlugin {
         dependsOn("patchChangelog")
     }
+
+    patchChangelog {
+        dependsOn(incrementPatch)
+    }
 }
 
 intellijPlatformTesting {
