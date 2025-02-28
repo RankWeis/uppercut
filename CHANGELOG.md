@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.3.2] - 2025-02-28
+
 ### Fixed
 
 - Logs should now display in full when testing.
