@@ -194,16 +194,17 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
 
-      # Cache Plugin Verifier IDEs
-      - name: Setup Plugin Verifier IDEs Cache
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57
-        with:
-          path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
-          key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
-
-      # Run Verify Plugin task and IntelliJ Plugin Verifier tool
-      - name: Run Plugin Verification tasks
-        run: ./gradlew verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
+#      IntelliJ will verify Plugin for us and this is a lot of downloading.
+#      # Cache Plugin Verifier IDEs
+#      - name: Setup Plugin Verifier IDEs Cache
+#        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57
+#        with:
+#          path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
+#          key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
+#
+#      # Run Verify Plugin task and IntelliJ Plugin Verifier tool
+#      - name: Run Plugin Verification tasks
+#        run: ./gradlew verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
 
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
