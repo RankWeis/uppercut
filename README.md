@@ -38,3 +38,53 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
 
 [template]: https://github.com/JetBrains/intellij-platform-plugin-template
 [docs:plugin-description]: https://plugins.jetbrains.com/docs/intellij/plugin-user-experience.html#plugin-description-and-presentation
+
+## Collaborators
+
+<!-- readme: calvario31,collaborators -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/calvario31">
+                    <img src="https://avatars.githubusercontent.com/u/39682391?v=4" width="100;" alt="calvario31"/>
+                    <br />
+                    <sub><b>calvario31</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/RankWeis">
+                    <img src="https://avatars.githubusercontent.com/u/733691?v=4" width="100;" alt="RankWeis"/>
+                    <br />
+                    <sub><b>RankWeis</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
+<!-- readme: calvario31,collaborators -end -->
+
+## Contributors
+
+<!-- readme: contributors -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/RankWeis">
+                    <img src="https://avatars.githubusercontent.com/u/733691?v=4" width="100;" alt="RankWeis"/>
+                    <br />
+                    <sub><b>RankWeis</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/qodana-bot">
+                    <img src="https://avatars.githubusercontent.com/u/139879315?v=4" width="100;" alt="qodana-bot"/>
+                    <br />
+                    <sub><b>Qodana</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
+<!-- readme: contributors -end -->

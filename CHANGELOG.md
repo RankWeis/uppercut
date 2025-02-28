@@ -4,7 +4,20 @@
 
 ## [Unreleased]
 
-## [2.3.0-2024.2] - 2025-02-07
+
+### Fixed
+
+- Logs should now display in full when testing.
+- No longer overrides your logging settings.
+- Debugger no longer suspends job (unless you want it to)
+
+## [2.3.1] - 2025-02-07
+
+### Fixed
+
+- Issue where karate-config tests would not terminate on test runs.
+
+## [2.3.0] - 2025-02-07
 
 ### Fixed
 
@@ -17,16 +30,26 @@
 - Made default parallelism 1 instead of 5
 - Fixed issue where java 21 was necessary to run certain tests (Java 17+ is now required)
 
-## [2.1.0-2024.2] - 2024-12-16
+## [2.1.2] - 2025-01-24
+
+### Updated
+
+- Compatibility changes for intellij 2025.*
+
+## [2.1.1] - 2025-01-18
+
+### Updated
+
+- Ensuring compatibility with future intellij versions.
+
+## [2.1.0] - 2024-12-16
 
 ### Added
 
 - Better formatting of JavaScript files in non-ultimate versions.
 - Better formatting of JavaScript files in ultimate.
 - Better handling of running tests (better tree and the right messages go to the right scenario)
-- Better handling of running tagged tests (Doesn't run things from target/ directory now)
-
-## [2.0.1-2024.2] - 2024-12-10
+- Better handling of running tagged tests (Doesn't run things from target/ directory now) 
 
 ### Fixed
 
@@ -49,7 +72,7 @@
 
 - Another special thanks to @calvario-31 on GitHub for contributing time and effort into making this plugin better! These features were all requests by him.
 
-## [2.0.0-2024.2] - 2024-12-07
+## [2.0.0] - 2024-12-07
 
 ### Added
 
@@ -71,13 +94,13 @@
 - Auto rename functionality
 - Exception that could sometimes occur during formatting.
 
-## [1.3.4-2024.2] - 2024-11-28
+## [1.3.4] - 2024-11-28
 
 ### Fixed
 
 - Exception that could sometimes occur during formatting.
 
-## [1.3.3-2024.2] - 2024-11-27
+## [1.3.3] - 2024-11-27
 
 ### Added
 

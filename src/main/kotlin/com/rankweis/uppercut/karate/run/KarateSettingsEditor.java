@@ -23,6 +23,7 @@ public class KarateSettingsEditor extends JavaSettingsEditorBase<KarateRunConfig
     fragments.add(getTagsField());
     fragments.add(getParallelism());
     fragments.add(getEnv());
+    fragments.add(getDebugPort());
   }
 
   private SettingsEditorFragment<KarateRunConfiguration, SettingsEditorLabeledComponent<JTextField>> getTestNameField() {
@@ -64,5 +65,15 @@ public class KarateSettingsEditor extends JavaSettingsEditorBase<KarateRunConfig
       x -> true
     );
   }
-  
+
+  private SettingsEditorFragment<KarateRunConfiguration, SettingsEditorLabeledComponent<JTextField>> getDebugPort() {
+    JTextField textField = new JTextField();
+    return new SettingsEditorFragment<>("karate.test.debugPort", "Debug port", "Tests",
+      new SettingsEditorLabeledComponent<>("Debug port (will suspend if set)", textField),
+      6, (settings, component) -> component.getComponent().setText(settings.getDebugPort()),
+      (settings, component) -> settings.setDebugPort(component.getComponent().getText()),
+      x -> true
+    );
+  }
+
 }

@@ -30,6 +30,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    if: ${{ github.actor_id == '733691' }}
     outputs:
       version: ${{ steps.properties.outputs.version }}
       changelog: ${{ steps.properties.outputs.changelog }}
@@ -38,22 +39,22 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       # Validate wrapper
       - name: Gradle Wrapper Validation
-        uses: gradle/actions/wrapper-validation@v4
+        uses: gradle/actions/wrapper-validation@94baf225fe0a508e581a564467443d0e2379123b
 
       # Set up Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
         with:
           distribution: zulu
           java-version: 17
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
 
       # Set environment variables
       - name: Export Properties
@@ -88,7 +89,7 @@ jobs:
 
       # Store already-built plugin as an artifact for downloading
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
         with:
           name: ${{ steps.artifact.outputs.filename }}
           path: ./build/distributions/content/*/*
@@ -98,22 +99,23 @@ jobs:
     name: Test
     needs: [ build ]
     runs-on: ubuntu-latest
+    if: ${{ github.actor_id == '733691' }}
     steps:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       # Set up Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
         with:
           distribution: zulu
           java-version: 17
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
 
       # Run tests
       - name: Run Tests
@@ -122,22 +124,18 @@ jobs:
       # Collect Tests Result of failed tests
       - name: Collect Tests Result
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
         with:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
 
-      # Upload the Kover report to CodeCov
-      - name: Upload Code Coverage Report
-        uses: codecov/codecov-action@v5
-        with:
-          files: ${{ github.workspace }}/build/reports/kover/report.xml
 
   # Run Qodana inspections and provide report
   inspectCode:
     name: Inspect code
     needs: [ build ]
     runs-on: ubuntu-latest
+    if: ${{ github.actor_id == '733691' }}
     permissions:
       contents: write
       checks: write
@@ -146,21 +144,22 @@ jobs:
 
       # Free GitHub Actions Environment Disk Space
       - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
         with:
           tool-cache: false
           large-packages: false
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
         with:
           ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
           fetch-depth: 0  # a full history is required for pull request analysis
 
       # Set up Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
         with:
           distribution: zulu
           java-version: 17
@@ -170,33 +169,34 @@ jobs:
     name: Verify plugin
     needs: [ build ]
     runs-on: ubuntu-latest
+    if: ${{ github.actor_id == '733691' }}
     steps:
 
-      # Free GitHub Actions Environment Disk Space
+     #  Free GitHub Actions Environment Disk Space
       - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
         with:
           tool-cache: false
           large-packages: false
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       # Set up Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
         with:
           distribution: zulu
           java-version: 17
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
 
       # Cache Plugin Verifier IDEs
       - name: Setup Plugin Verifier IDEs Cache
-        uses: actions/cache@v4
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57
         with:
           path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
           key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
@@ -208,7 +208,7 @@ jobs:
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
         with:
           name: pluginVerifier-result
           path: ${{ github.workspace }}/build/reports/pluginVerifier
@@ -217,9 +217,9 @@ jobs:
   # If accepted and published, release workflow would be triggered
   releaseDraft:
     name: Release draft
-    if: github.event_name != 'pull_request'
-    needs: [ build, test, inspectCode, verify ]
     runs-on: ubuntu-latest
+    if: ${{ github.actor_id == '733691' && github.event_name != 'pull_request' }}
+    needs: [ build, test, inspectCode, verify ]
     permissions:
       contents: write
     steps:
@@ -231,7 +231,7 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       # Remove old release drafts by using the curl request for the available releases with a draft flag
       - name: Remove Old Release Drafts

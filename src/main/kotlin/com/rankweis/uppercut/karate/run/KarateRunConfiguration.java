@@ -1,10 +1,9 @@
 package com.rankweis.uppercut.karate.run;
 
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaParameters;
@@ -14,7 +13,6 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
@@ -22,17 +20,21 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.util.PathUtil;
+import com.rankweis.uppercut.karate.debugging.UppercutClassLoader;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import com.rankweis.uppercut.testrunner.KarateTestRunner;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -63,11 +65,13 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   @Getter @Setter private String testDescription;
   @Getter @Setter private String featureName;
   @Getter @Setter private String scenarioName;
+  @Getter @Setter private String debugPort;
   @Getter @Setter private String tag;
   @Getter @Setter private String path;
   @Getter @Setter private PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
   @Setter private String parallelism;
   @Getter @Setter private boolean allInFolderAreFeature = false;
+  @Getter @Setter private int remotePort = 0;
   private String environment;
 
 
@@ -84,32 +88,16 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
 
-    if (env.getRunnerSettings() instanceof GenericDebuggerRunnerSettings genericDebuggerRunnerSettings) {
-      genericDebuggerRunnerSettings.setLocal(true);
-      genericDebuggerRunnerSettings.setTransport(DebuggerSettings.SOCKET_TRANSPORT);
-      genericDebuggerRunnerSettings.setDebugPort("8091");
-    }
-
     return new JavaApplicationCommandLineState<>(this, env) {
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
+        UppercutClassLoader.INSTANCE.setProject(getProject());
+        //        Thread.currentThread().setContextClassLoader(UppercutClassLoader.INSTANCE.getClassLoader());
         final JavaParameters params = super.createJavaParameters();
+        String jarPathForClass = PathUtil.getJarPathForClass(KarateTestRunner.class);
+        params.setUseDynamicClasspath(true);
+        params.getClassPath().add(jarPathForClass);
 
-        Thread currentThread = Thread.currentThread();
-        ClassLoader originalClassLoader = currentThread.getContextClassLoader();
-        ClassLoader pluginClassLoader = this.getClass().getClassLoader();
-        try {
-          currentThread.setContextClassLoader(pluginClassLoader);
-          params.getClassPath().add(PathUtil.getJarPathForClass(KarateTestRunner.class));
-          // code working with ServiceLoader here
-        } finally {
-          currentThread.setContextClassLoader(originalClassLoader);
-        }
-        if (env.getRunnerSettings() instanceof GenericDebuggerRunnerSettings genericDebuggerRunnerSettings) {
-          params.getVMParametersList()
-            .addParametersString(String.format("-agentlib:jdwp=transport=dt_socket,server=y,address=%s,suspend=y",
-              genericDebuggerRunnerSettings.getDebugPort()));
-        }
         if (getTestName().map(String::isBlank).orElse(false)) {
           String[] split = getName().split(":");
           if (split.length == 2) {
@@ -132,28 +120,43 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
             Optional.ofNullable(myConfiguration.getPath())
               .orElse(escapedName));
         }
-        if (getTag() != null) {
+        if (!StringUtils.isBlank(getTag())) {
           params.getProgramParametersList().add("--tag", getTag());
         }
-        if (getWorkingDirectory() != null) {
+        if (!StringUtils.isBlank(getWorkingDirectory())) {
           params.getProgramParametersList().add("--working-dir", getWorkingDirectory());
         }
-        if (getPath() != null) {
+        if (!StringUtils.isBlank(getPath())) {
           params.getProgramParametersList().add("--relpath", getPath());
         }
-        if (getParallelism() != null) {
+        if (!StringUtils.isBlank(getParallelism())) {
           params.getProgramParametersList().add("--parallelism", getParallelism());
         }
-        if (StringUtils.isNotEmpty(getEnv())) {
+        if (!StringUtils.isBlank(getEnv())) {
           params.getProgramParametersList().add("--environment", getEnv());
         }
-        ReadAction.run(() -> JavaRunConfigurationExtensionManager.getInstance()
-          .updateJavaParameters(KarateRunConfiguration.this, params, getRunnerSettings(), executor));
 
         return params;
       }
 
+      @Override protected boolean shouldPrepareDebuggerConnection() {
+        return false;
+      }
+
       @Override protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
+        JavaParameters params = this.getJavaParameters();
+        if (env.getRunnerSettings() instanceof GenericDebuggerRunnerSettings genericDebuggerRunnerSettings) {
+          boolean customDebugPort = !StringUtils.isBlank(getDebugPort());
+          if (customDebugPort) {
+            String debugStr = "-agentlib:jdwp=transport=dt_socket,address=*:%s,server=y,suspend=y";
+            genericDebuggerRunnerSettings.setDebugPort(getDebugPort());
+            params.getVMParametersList()
+              .replaceOrPrepend("-agentlib:jdwp", String.format(debugStr, getDebugPort()));
+            params.getClassPath()
+              .add(UppercutClassLoader.INSTANCE.getManagedUrls().stream().map(URL::toString).collect(
+                Collectors.joining(":")));
+          }
+        }
         return super.startProcess();
       }
 
@@ -176,22 +179,19 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   }
 
 
+  public void setMainClass(@NotNull PsiClass psiClass) {
+    Module originalModule = this.getConfigurationModule().getModule();
+    this.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
+    this.setModule(JavaExecutionUtil.findModule(psiClass));
+    this.restoreOriginalModule(originalModule);
+  }
+
+
   @Override public void checkConfiguration() {
   }
 
   @Override public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
     return true;
-  }
-
-  @Override public @Nullable LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
-    return null;
-  }
-
-  @Override public @Nullable String getDefaultTargetName() {
-    return "";
-  }
-
-  @Override public void setDefaultTargetName(@Nullable String targetName) {
   }
 
   @Override public void writeExternal(@NotNull Element element) {
@@ -200,6 +200,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     element.setAttribute("testDescription", Optional.ofNullable(testDescription).orElse(""));
     element.setAttribute("featureName", Optional.ofNullable(featureName).orElse(""));
     element.setAttribute("scenarioName", Optional.ofNullable(scenarioName).orElse(""));
+    element.setAttribute("debugPort", Optional.ofNullable(debugPort).orElse(""));
     element.setAttribute("tag", Optional.ofNullable(tag).orElse(""));
     element.setAttribute("path", Optional.ofNullable(path).orElse(""));
     element.setAttribute("preferredTest", preferredTest.name);
@@ -218,6 +219,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     testDescription = element.getAttributeValue("testDescription");
     featureName = element.getAttributeValue("featureName");
     scenarioName = element.getAttributeValue("scenarioName");
+    debugPort = element.getAttributeValue("debugPort");
     tag = element.getAttributeValue("tag");
     path = element.getAttributeValue("path");
     preferredTest =
@@ -234,12 +236,12 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
 
   public String getEnv() {
     return StringUtil.isEmpty(environment) ?
-       String.valueOf(KarateSettingsState.getInstance().getDefaultEnvironment()) : environment;
+      String.valueOf(KarateSettingsState.getInstance().getDefaultEnvironment()) : environment;
   }
 
   public String getParallelism() {
     return StringUtil.isEmpty(parallelism) ?
-       String.valueOf(KarateSettingsState.getInstance().getDefaultParallelism()) : parallelism;
+      String.valueOf(KarateSettingsState.getInstance().getDefaultParallelism()) : parallelism;
   }
 
   public void setEnv(String environment) {
