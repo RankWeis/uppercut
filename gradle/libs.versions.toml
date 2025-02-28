@@ -12,7 +12,6 @@ gradleIntelliJPlugin = "2.3.0"
 qodana = "2024.3.4"
 kover = "0.9.1"
 lombok = "8.12.2"
-semver = "1.0.4"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -28,4 +27,3 @@ kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 qodana = { id = "org.jetbrains.qodana", version.ref = "qodana" }
 lombok = { id = "io.freefair.lombok", version.ref = "lombok"}
 grammarkit = { id = "org.jetbrains.grammarkit", version.ref = "grammarkit" }
-semver = { id = "net.thauvin.erik.gradle.semver", version.ref="semver"}

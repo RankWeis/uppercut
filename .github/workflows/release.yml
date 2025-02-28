@@ -67,12 +67,8 @@ jobs:
         env:
           CHANGELOG: ${{ steps.properties.outputs.changelog }}
         run: |
+          sed -i -E 's/(pluginVersion[[:space:]]*=[[:space:]]*[0-9]+\.[0-9]+\.)([0-9]+)/echo "\1$((\2 + 1))"/e' gradle.properties
           ./gradlew patchChangelog --release-note="$CHANGELOG"
-
-      # Update the Unreleased section with the current release note
-      - name: Increment SemVer patch version
-        run: |
-          ./gradlew incrementPatch
 
       # Publish the plugin to JetBrains Marketplace
       - name: Publish Plugin
