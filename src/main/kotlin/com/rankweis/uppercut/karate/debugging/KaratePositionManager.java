@@ -82,7 +82,7 @@ public class KaratePositionManager implements PositionManager {
     try {
       LinkedHashSet<JavaSourcePosition> sourcePositions = null;
       sourcePositions = javaToKarate.get(location, () -> new LinkedHashSet<>());
-      return sourcePositions.isEmpty() ? null : sourcePositions.getFirst();
+      return sourcePositions.isEmpty() ? null : sourcePositions.iterator().next();
     } catch (ExecutionException e) {
       throw new RuntimeException(e);
     }

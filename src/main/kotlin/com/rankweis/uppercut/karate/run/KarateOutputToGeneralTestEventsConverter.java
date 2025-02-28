@@ -110,7 +110,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
       if (!karateItems.isEmpty()) {
         KarateItem scenario = karateItems.peek();
         text = text.replace("<<UPPERCUT>>", "");
-        for (String s : text.splitWithDelimiters("\n", 2)) {
+        for (String s : text.split("(?<=\\n)", 2)) {
           ServiceMessageBuilder msgScenario;
           if (stdOut) {
             msgScenario = ServiceMessageBuilder.testStdOut(scenario.getName()).addAttribute("out", s);
