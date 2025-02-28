@@ -165,34 +165,34 @@ jobs:
           java-version: 17
 
   # Run plugin structure verification along with IntelliJ Plugin Verifier
-  verify:
-    name: Verify plugin
-    needs: [ build ]
-    runs-on: ubuntu-latest
-    if: ${{ github.actor_id == '733691' }}
-    steps:
+#  verify:
+#    name: Verify plugin
+#    needs: [ build ]
+#    runs-on: ubuntu-latest
+#    if: ${{ github.actor_id == '733691' }}
+#    steps:
+#
+#     #  Free GitHub Actions Environment Disk Space
+#      - name: Maximize Build Space
+#        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+#        with:
+#          tool-cache: false
+#          large-packages: false
+#
+#      # Check out the current repository
+#      - name: Fetch Sources
+#        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-     #  Free GitHub Actions Environment Disk Space
-      - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
-        with:
-          tool-cache: false
-          large-packages: false
-
-      # Check out the current repository
-      - name: Fetch Sources
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-
-      # Set up Java environment for the next steps
-      - name: Setup Java
-        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
-        with:
-          distribution: zulu
-          java-version: 17
-
-      # Setup Gradle
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
+#      # Set up Java environment for the next steps
+#      - name: Setup Java
+#        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
+#        with:
+#          distribution: zulu
+#          java-version: 17
+#
+#      # Setup Gradle
+#      - name: Setup Gradle
+#        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
 
 #      IntelliJ will verify Plugin for us and this is a lot of downloading.
 #      # Cache Plugin Verifier IDEs
@@ -206,13 +206,13 @@ jobs:
 #      - name: Run Plugin Verification tasks
 #        run: ./gradlew verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
 
-      # Collect Plugin Verifier Result
-      - name: Collect Plugin Verifier Result
-        if: ${{ always() }}
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
-        with:
-          name: pluginVerifier-result
-          path: ${{ github.workspace }}/build/reports/pluginVerifier
+#      # Collect Plugin Verifier Result
+#      - name: Collect Plugin Verifier Result
+#        if: ${{ always() }}
+#        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+#        with:
+#          name: pluginVerifier-result
+#          path: ${{ github.workspace }}/build/reports/pluginVerifier
 
   # Prepare a draft release for GitHub Releases page for the manual verification
   # If accepted and published, release workflow would be triggered
@@ -220,7 +220,7 @@ jobs:
     name: Release draft
     runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' && github.event_name != 'pull_request' }}
-    needs: [ build, test, inspectCode, verify ]
+    needs: [ build, test, inspectCode ]
     permissions:
       contents: write
     steps:
