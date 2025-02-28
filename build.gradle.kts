@@ -8,6 +8,7 @@ fun environment(key: String) = providers.environmentVariable(key)
 
 plugins {
     id("java") // Java support
+    alias(libs.plugins.semver)
     alias(libs.plugins.grammarkit)
     alias(libs.plugins.lombok)
     alias(libs.plugins.kotlin) // Kotlin support
@@ -27,9 +28,9 @@ configure<SourceSetContainer> {
     }
 }
 group = properties("pluginGroup").get()
-version = properties("pluginVersion").get()
+//version = properties("pluginVersion").get()
 
-abstract class InstrumentedJarsRule: AttributeCompatibilityRule<LibraryElements> {
+abstract class InstrumentedJarsRule : AttributeCompatibilityRule<LibraryElements> {
     override fun execute(details: CompatibilityCheckDetails<LibraryElements>) = details.run {
         if (consumerValue?.name == "instrumented-jar" && producerValue?.name == "jar") {
             compatible()
@@ -85,7 +86,7 @@ dependencies {
 
 intellijPlatform {
     pluginConfiguration {
-        version = properties("pluginVersion")
+        version = semver.version
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
             untilBuild = providers.gradleProperty("pluginUntilBuild")
@@ -107,15 +108,13 @@ intellijPlatform {
 
         val changelog = project.changelog // local variable for configuration cache compatibility
         // Get the latest available change notes from the changelog file
-        changeNotes = properties("pluginVersion").map { pluginVersion ->
-            with(changelog) {
-                renderItem(
-                    (getOrNull(pluginVersion) ?: getUnreleased())
-                        .withHeader(false)
-                        .withEmptySections(false),
-                    Changelog.OutputType.HTML,
-                )
-            }
+        changeNotes = with(changelog) {
+            renderItem(
+                (getOrNull(semver.version) ?: getUnreleased())
+                    .withHeader(false)
+                    .withEmptySections(false),
+                Changelog.OutputType.HTML,
+            )
         }
     }
     signing {
@@ -125,12 +124,12 @@ intellijPlatform {
     }
 
     publishing {
+        val semverStr = semver.version
         token = providers.environmentVariable("PUBLISH_TOKEN")
         // The pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
         // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
-        channels = providers.gradleProperty("pluginVersion")
-            .map { listOf(it.substringAfter("-ch", "").substringBefore('.').ifEmpty { "default" }) }
+        channels =  listOf(semverStr.substringAfter("-ch", "").substringBefore('.').ifEmpty { "default" })
     }
     pluginVerification {
         ides {
@@ -153,7 +152,6 @@ grammarKit {
 tasks.withType<Copy> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
-
 
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin

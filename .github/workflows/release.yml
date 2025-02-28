@@ -69,9 +69,13 @@ jobs:
         run: |
           ./gradlew patchChangelog --release-note="$CHANGELOG"
 
+      # Update the Unreleased section with the current release note
+      - name: Increment SemVer patch version
+        run: |
+          ./gradlew incrementPatch
+
       # Publish the plugin to JetBrains Marketplace
       - name: Publish Plugin
-        continue-on-error: true
         env:
           PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
           CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
