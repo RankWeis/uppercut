@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTestEventsConverter {
 
   TestConsoleProperties testConsoleProperties;
-  private Key myCurrentOutputType;
+  private Key<?> myCurrentOutputType;
   private ServiceMessageVisitor myCurrentVisitor;
   private final Map<String, LinkedList<KarateItem>> threadToScenarioStack = new HashMap<>();
   private final Map<Integer, KarateItem> idToItem = new HashMap<>();
@@ -90,9 +90,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
       return false;
     }
     try {
-      //      for(String s : text.splitWithDelimiters("\n", 2)) {
       super.processServiceMessages(text, this.myCurrentOutputType, this.myCurrentVisitor);
-      //      }
       return true;
     } catch (ParseException e) {
       throw new RuntimeException(e);
@@ -100,37 +98,23 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
   }
 
   private boolean process(String text) {
-    boolean stdOut = true;
-    if (text.contains("ERROR com.intuit.karate")) {
-      stdOut = false;
-    }
-    if (!currentThreadGroup.equals("main")) {
-      LinkedList<KarateItem> karateItems =
-        threadToScenarioStack.computeIfAbsent(currentThreadGroup, k -> new LinkedList<>());
-      if (!karateItems.isEmpty()) {
-        KarateItem scenario = karateItems.peek();
-        text = text.replace("<<UPPERCUT>>", "");
-        for (String s : text.splitWithDelimiters("\n", 2)) {
-          ServiceMessageBuilder msgScenario;
-          if (stdOut) {
-            msgScenario = ServiceMessageBuilder.testStdOut(scenario.getName()).addAttribute("out", s);
-          } else {
-            msgScenario = ServiceMessageBuilder.testStdErr(scenario.getName()).addAttribute("out", s);
-          }
-          finishMessage(msgScenario, scenario);
+    boolean stdOut = !text.contains("ERROR com.intuit.karate");
+    LinkedList<KarateItem> karateItems =
+      threadToScenarioStack.computeIfAbsent(currentThreadGroup, k -> new LinkedList<>());
+    if (!karateItems.isEmpty()) {
+      KarateItem scenario = karateItems.peek();
+      text = text.replace("<<UPPERCUT>>", "");
+      for (String s : text.splitWithDelimiters("\n", 2)) {
+        ServiceMessageBuilder msgScenario;
+        if (stdOut) {
+          msgScenario = ServiceMessageBuilder.testStdOut(scenario.getName()).addAttribute("out", s);
+        } else {
+          msgScenario = ServiceMessageBuilder.testStdErr(scenario.getName()).addAttribute("out", s);
         }
-        return true;
+        finishMessage(msgScenario, scenario);
       }
     }
-    return handleUppercutLog(text);
-  }
-
-  private boolean handleUppercutLog(String text) {
-    if (text.startsWith("<<UPPERCUT>>")) {
-      doProcessServiceMessages(text.substring("<<UPPERCUT>>".length()));
-      return true;
-    }
-    return false;
+    return true;
   }
 
   private boolean featureStartEnd(String text) {
@@ -273,10 +257,8 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     KarateItem item = idToItem.get(featureNameToId.get(feature));
     if (result.equals("pass")) {
       message = ServiceMessageBuilder.testStdOut(feature);
-      //.addAttribute("captureStandardOutput", "true");;
     } else if (result.equals("fail")) {
       message = ServiceMessageBuilder.testSuiteFinished(feature);
-      //        .addAttribute("captureStandardOutput", "true");
     } else {
       throw new RuntimeException("Unknown result: " + result);
     }

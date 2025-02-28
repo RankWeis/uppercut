@@ -1,5 +1,6 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 fun properties(key: String) = providers.gradleProperty(key)
@@ -133,7 +134,9 @@ intellijPlatform {
     }
     pluginVerification {
         ides {
-            recommended()
+            ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("platformVersion").get())
+            ide(IntelliJPlatformType.IntellijIdeaCommunity, properties("platformVersion").get())
+            ide(IntelliJPlatformType.Aqua, properties("platformVersion").get())
         }
     }
 }
