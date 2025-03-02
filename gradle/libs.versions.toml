@@ -2,28 +2,45 @@
 # libraries
 junit = "4.13.2"
 junit5 = "5.12.0"
+junitPlatform = "1.12.0"
 mockito = "5.15.2"
 grammarkit = "2022.3.2.2"
+intellijStarter = "243.24978.46"
 
 # plugins
 kotlin = "2.1.10"
 changelog = "2.2.1"
-gradleIntelliJPlugin = "2.3.0"
+gradleIntelliJPlugin = "2.2.1"
 qodana = "2024.3.4"
 kover = "0.9.1"
 lombok = "8.12.2"
+robot = "0.11.23"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 junit5api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit5" }
 junit5engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit5" }
+junitPlatformLauncher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitPlatform" }
 mockito = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
+robot = { group = "com.intellij.remoterobot", name = "remote-robot", version.ref = "robot" }
+robotfixtures = { group = "com.intellij.remoterobot", name = "remote-fixtures", version.ref = "robot" }
+starterSquashed = { group = "com.jetbrains.intellij.tools", name = "ide-starter-squashed", version.ref = "intellijStarter" }
+starterJunit5 = { group = "com.jetbrains.intellij.tools", name = "ide-starter-junit5", version.ref = "intellijStarter" }
+starterDriver = { group = "com.jetbrains.intellij.tools", name = "ide-starter-driver", version.ref = "intellijStarter" }
+driverClient = { group = "com.jetbrains.intellij.driver", name = "driver-client", version.ref = "intellijStarter" }
+driverSdk = { group = "com.jetbrains.intellij.driver", name = "driver-sdk", version.ref = "intellijStarter" }
+driverModel = { group = "com.jetbrains.intellij.driver", name = "driver-model", version.ref = "intellijStarter" }
+metricsCollector = { group = "com.jetbrains.intellij.tools", name = "ide-metrics-collector", version.ref = "intellijStarter" }
+metricsCollectorStarter = { group = "com.jetbrains.intellij.tools", name = "ide-metrics-collector-starter", version.ref = "intellijStarter" }
+ijPerformance = { group = "com.jetbrains.intellij.tools", name = "ide-performance-testing-commands", version.ref = "intellijStarter" }
+
 
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
 gradleIntelliJPlugin = { id = "org.jetbrains.intellij.platform", version.ref = "gradleIntelliJPlugin" }
+gradleIntelliJModulePlugin = { id = "org.jetbrains.intellij.platform.modules", version.ref = "gradleIntelliJPlugin" }
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 qodana = { id = "org.jetbrains.qodana", version.ref = "qodana" }
-lombok = { id = "io.freefair.lombok", version.ref = "lombok"}
+lombok = { id = "io.freefair.lombok", version.ref = "lombok" }
 grammarkit = { id = "org.jetbrains.grammarkit", version.ref = "grammarkit" }
