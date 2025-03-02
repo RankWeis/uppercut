@@ -25,9 +25,6 @@ import kotlin.time.Duration.Companion.minutes
 class UppercutPerformanceTest {
     companion object {
         @JvmStatic
-        var testResults: List<String> = listOf();
-
-        @JvmStatic
         val uppercutTests = TestCase(
             IdeProductProvider.IU,
             GitHubProject.fromGithub(branchName = "main", repoRelativeUrl = "RankWeis/uppercutTestProject.git")
