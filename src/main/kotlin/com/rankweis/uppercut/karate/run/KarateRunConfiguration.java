@@ -29,12 +29,10 @@ import com.intellij.util.PathUtil;
 import com.rankweis.uppercut.karate.debugging.UppercutClassLoader;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import com.rankweis.uppercut.testrunner.KarateTestRunner;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -152,9 +150,9 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
             genericDebuggerRunnerSettings.setDebugPort(getDebugPort());
             params.getVMParametersList()
               .replaceOrPrepend("-agentlib:jdwp", String.format(debugStr, getDebugPort()));
-            params.getClassPath()
-              .add(UppercutClassLoader.INSTANCE.getManagedUrls().stream().map(URL::toString).collect(
-                Collectors.joining(":")));
+//            params.getClassPath()
+//              .add(UppercutClassLoader.INSTANCE.getManagedUrls().stream().map(URL::toString).collect(
+//                Collectors.joining(":")));
           }
         }
         return super.startProcess();

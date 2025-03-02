@@ -8,33 +8,13 @@ fun environment(key: String) = providers.environmentVariable(key)
 
 plugins {
     id("java") // Java support
+    alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
     alias(libs.plugins.grammarkit)
     alias(libs.plugins.lombok)
     alias(libs.plugins.kotlin) // Kotlin support
-    alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
     alias(libs.plugins.qodana) // Gradle Qodana Plugin
     alias(libs.plugins.kover) // Gradle Kover Plugin
-}
-
-
-configure<SourceSetContainer> {
-    named("main") {
-        java.srcDir("src/main/kotlin")
-    }
-    named("test") {
-        java.srcDir("src/test/kotlin")
-    }
-}
-group = properties("pluginGroup").get()
-version = properties("pluginVersion").get()
-
-abstract class InstrumentedJarsRule: AttributeCompatibilityRule<LibraryElements> {
-    override fun execute(details: CompatibilityCheckDetails<LibraryElements>) = details.run {
-        if (consumerValue?.name == "instrumented-jar" && producerValue?.name == "jar") {
-            compatible()
-        }
-    }
 }
 
 // Configure project's dependencies
@@ -46,26 +26,8 @@ repositories {
     }
 }
 
-// Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
+
 dependencies {
-    compileOnly("io.karatelabs:karate-junit5:${properties("karateVersion").get()}")
-    implementation("ch.qos.logback:logback-classic:${properties("logbackVersion").get()}")
-    testImplementation(libs.mockito)
-    implementation(project(":KarateTestRunner"))
-}
-
-// Set the JVM language level used to build the project.
-kotlin {
-    jvmToolchain(21)
-}
-
-// Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
-dependencies {
-    testImplementation(libs.junit)
-    testImplementation(libs.junit5api)
-    testRuntimeOnly(libs.junit5engine)
-    testImplementation(libs.mockito)
-
     intellijPlatform {
         val version = properties("platformVersion")
 
@@ -81,14 +43,67 @@ dependencies {
         jetbrainsRuntime()
         testFramework(TestFrameworkType.Platform)
     }
+
+    compileOnly("io.karatelabs:karate-junit5:${properties("karateVersion").get()}")
+    implementation("ch.qos.logback:logback-classic:${properties("logbackVersion").get()}")
+    testImplementation(libs.mockito)
+    testImplementation(libs.mockito)
+    testImplementation(libs.junitPlatformLauncher)
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+    implementation(project(":KarateTestRunner"))
+    testImplementation(libs.junit)
+    testImplementation(libs.junit5api)
+    testRuntimeOnly(libs.junit5engine)
+    testImplementation("com.jetbrains.intellij.tools:ide-starter-squashed:LATEST-EAP-SNAPSHOT")
+    testImplementation("com.jetbrains.intellij.tools:ide-starter-junit5:LATEST-EAP-SNAPSHOT")
+    testImplementation("com.jetbrains.intellij.tools:ide-starter-driver:LATEST-EAP-SNAPSHOT")
+    testImplementation("com.jetbrains.intellij.driver:driver-client:LATEST-EAP-SNAPSHOT")
+    testImplementation("com.jetbrains.intellij.driver:driver-sdk:LATEST-EAP-SNAPSHOT")
+    testImplementation("com.jetbrains.intellij.driver:driver-model:LATEST-EAP-SNAPSHOT")
+    testImplementation("com.jetbrains.intellij.tools:ide-metrics-collector:LATEST-EAP-SNAPSHOT")
+    testImplementation("com.jetbrains.intellij.tools:ide-metrics-collector-starter:LATEST-EAP-SNAPSHOT")
+    testImplementation("com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-EAP-SNAPSHOT")
+    testImplementation(libs.starterSquashed)
+    testImplementation(libs.starterJunit5)
+    testImplementation(libs.starterDriver)
+    testImplementation(libs.driverClient)
+    testImplementation(libs.driverSdk)
+    testImplementation(libs.driverModel)
+    testImplementation(libs.driverClient)
+    testImplementation(libs.metricsCollectorStarter)
+    testImplementation(libs.metricsCollector)
+    testImplementation(libs.ijPerformance)
 }
+group = properties("pluginGroup").get()
+version = properties("pluginVersion").get()
+
+abstract class InstrumentedJarsRule : AttributeCompatibilityRule<LibraryElements> {
+    override fun execute(details: CompatibilityCheckDetails<LibraryElements>) = details.run {
+        if (consumerValue?.name == "instrumented-jar" && producerValue?.name == "jar") {
+            compatible()
+        }
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+// Set the JVM language level used to build the project.
+kotlin {
+    jvmToolchain(21)
+}
+
+// Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
+// Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 
 intellijPlatform {
     pluginConfiguration {
         version = properties("pluginVersion")
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
-            untilBuild = providers.gradleProperty("pluginUntilBuild")
         }
         // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
         description =
@@ -134,9 +149,7 @@ intellijPlatform {
     }
     pluginVerification {
         ides {
-            ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("platformVersion").get())
-            ide(IntelliJPlatformType.IntellijIdeaCommunity, properties("platformVersion").get())
-            ide(IntelliJPlatformType.Aqua, properties("platformVersion").get())
+            ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("platformVersion").get(), useInstaller = false)
         }
     }
 }
@@ -150,10 +163,10 @@ grammarKit {
     }
 }
 
+
 tasks.withType<Copy> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
-
 
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
@@ -193,6 +206,15 @@ tasks {
 
     publishPlugin {
         dependsOn("patchChangelog")
+    }
+
+    test {
+        dependsOn("buildPlugin")
+        useJUnitPlatform {
+            includeEngines("junit-vintage", "junit-jupiter")
+        }
+
+        systemProperty("path.to.build.plugin", buildPlugin.get().archiveFile.get().asFile.absolutePath)
     }
 }
 
