@@ -26,6 +26,15 @@ repositories {
     }
 }
 
+configure<SourceSetContainer> {
+    named("main") {
+        java.srcDir("src/main/kotlin")
+    }
+    named("test") {
+        java.srcDir("src/test/kotlin")
+    }
+}
+
 
 dependencies {
     intellijPlatform {
@@ -74,6 +83,7 @@ dependencies {
     testImplementation(libs.metricsCollectorStarter)
     testImplementation(libs.metricsCollector)
     testImplementation(libs.ijPerformance)
+    testImplementation(libs.ijCommon)
 }
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
