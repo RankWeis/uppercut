@@ -2,6 +2,7 @@ import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 
 fun properties(key: String) = providers.gradleProperty(key)
 fun environment(key: String) = providers.environmentVariable(key)
@@ -218,6 +219,12 @@ tasks {
         dependsOn("patchChangelog")
     }
 
+//    patchPluginXml {
+//        (":KarateTestRunner:karateTestRunnerJar") {
+//            into("lib/")
+//        }
+//    }
+
     test {
         dependsOn("buildPlugin")
         useJUnitPlatform {
@@ -225,6 +232,12 @@ tasks {
         }
 
         systemProperty("path.to.build.plugin", buildPlugin.get().archiveFile.get().asFile.absolutePath)
+    }
+    printProductsReleases {
+        channels = listOf(ProductRelease.Channel.EAP)
+        types = listOf(IntelliJPlatformType.IntellijIdeaUltimate)
+//        sinceBuild = "251"
+        untilBuild = "251.*"
     }
 }
 
@@ -243,6 +256,7 @@ intellijPlatformTesting {
             }
 
             plugins {
+                plugin("164", "2.19.0" ) // IdeaViu
                 robotServerPlugin()
             }
         }
