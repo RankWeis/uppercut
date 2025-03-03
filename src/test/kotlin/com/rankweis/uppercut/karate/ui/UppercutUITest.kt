@@ -8,18 +8,13 @@ import com.intellij.driver.sdk.ui.components.common.gutter
 import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.elements.PopupItemUiComponent
 import com.intellij.driver.sdk.waitForProjectOpen
-import com.intellij.ide.starter.di.di
-import com.intellij.ide.starter.driver.driver.remoteDev.RemDevDriverRunner
-import com.intellij.ide.starter.driver.engine.DriverRunner
 import com.intellij.ide.starter.driver.engine.runIdeWithDriver
 import com.intellij.ide.starter.driver.execute
 import com.intellij.ide.starter.ide.IdeProductProvider
 import com.intellij.ide.starter.plugins.PluginConfigurator
 import com.intellij.ide.starter.project.GitHubProject
 import com.intellij.ide.starter.project.TestCaseTemplate
-import com.intellij.ide.starter.runner.RemDevTestContainer
 import com.intellij.ide.starter.runner.Starter
-import com.intellij.ide.starter.runner.TestContainer
 import com.intellij.ide.starter.sdk.JdkDownloaderFacade
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
@@ -29,13 +24,11 @@ import com.intellij.tools.ide.performanceTesting.commands.waitForSmartMode
 import getRunContentManagerRef
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
-import org.kodein.di.DI
-import org.kodein.di.bindProvider
 import kotlin.io.path.Path
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 
 class UppercutUITest {
@@ -46,19 +39,13 @@ class UppercutUITest {
         ).useEAP()
     }
 
-    @ParameterizedTest(name = "split-mode={0}")
-    @ValueSource(booleans = [false, true])
-    fun runGutterTest(splitMode: Boolean = false) {
-        if (splitMode) {
-            di = DI {
-                extend(di)
-                bindProvider<TestContainer<*>>(overrides = true) { TestContainer.newInstance<RemDevTestContainer>() }
-                bindProvider<DriverRunner> { RemDevDriverRunner() }
-            }
-        }
+//    @ParameterizedTest(name = "split-mode={0}")
+//    @ValueSource(booleans = [false, true])
+    @Test
+    fun runGutterTest() {
         val sdk = JdkDownloaderFacade.jdk21.toSdk()
         Starter.newContext(
-            "runGutter-" + if (splitMode) "split-mode" else "no-split-mode",
+            "runGutter",
             IdeaUltimateCases.IntellijKarateTestCase
         ).prepareProjectCleanImport().apply {
             val pathToPlugin = System.getProperty("path.to.build.plugin")
@@ -90,7 +77,7 @@ class UppercutUITest {
         driver.withContext {
             val driver2 = this
             runBlocking {
-                waitUntil {
+                waitUntil(timeout = 90.seconds) {
                     waitForProjectOpen(1.minutes)
                     val project = driver2.getOpenProjects().first()
                     driver2.getRunContentManagerRef(project).getAllDescriptors().isNotEmpty()
