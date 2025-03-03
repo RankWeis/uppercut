@@ -25,6 +25,7 @@ import getRunContentManagerRef
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import kotlin.io.path.Path
@@ -99,8 +100,9 @@ class UppercutUITest {
             assertNotNull(instance)
             assertNotNull(processHandler)
             runBlocking {
-                waitUntil(timeout = 1.minutes) { processHandler.isProcessTerminated() }
+                waitUntil(timeout = 2.minutes) { processHandler.isProcessTerminated() }
             }
+            assertTrue(processHandler.isProcessTerminated())
             val base = this.cast(instance, SMTRunnerConsoleViewRef::class)
             val results = base.getResultsViewer()
             assertEquals(0, results.getFailedTestCount())
