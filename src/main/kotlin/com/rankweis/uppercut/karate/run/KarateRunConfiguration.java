@@ -92,9 +92,9 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
 //        UppercutClassLoader.INSTANCE.setProject(getProject());
         //        Thread.currentThread().setContextClassLoader(UppercutClassLoader.INSTANCE.getClassLoader());
         final JavaParameters params = super.createJavaParameters();
-//        String jarPathForClass = PathUtil.getJarPathForClass(KarateTestRunner.class);
+        String jarPathForClass = PathUtil.getJarPathForClass(KarateTestRunner.class);
         params.setUseDynamicClasspath(true);
-//        params.getClassPath().add(jarPathForClass);
+        params.getClassPath().add(jarPathForClass);
 
         if (getTestName().map(String::isBlank).orElse(false)) {
           String[] split = getName().split(":");

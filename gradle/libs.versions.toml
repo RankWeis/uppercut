@@ -5,7 +5,8 @@ junit5 = "5.12.0"
 junitPlatform = "1.12.0"
 mockito = "5.15.2"
 grammarkit = "2022.3.2.2"
-intellijStarter = "243.22562.218"
+intellijStarter = "LATEST-EAP-SNAPSHOT"
+kodein = "7.20.2"
 
 # plugins
 kotlin = "2.1.10"
@@ -19,19 +20,23 @@ robot = "0.11.23"
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 junit5api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit5" }
+junit5Params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit5" }
 junit5engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit5" }
 junitPlatformLauncher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitPlatform" }
 mockito = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 starterSquashed = { group = "com.jetbrains.intellij.tools", name = "ide-starter-squashed", version.ref = "intellijStarter" }
 starterJunit5 = { group = "com.jetbrains.intellij.tools", name = "ide-starter-junit5", version.ref = "intellijStarter" }
 starterDriver = { group = "com.jetbrains.intellij.tools", name = "ide-starter-driver", version.ref = "intellijStarter" }
-ijCommon = { group = "com.jetbrains.intellij.tools", name = "ide-util-common", version.ref = "intellijStarter" }
 driverClient = { group = "com.jetbrains.intellij.driver", name = "driver-client", version.ref = "intellijStarter" }
+ijCommon = { group = "com.jetbrains.intellij.tools", name = "ide-util-common", version.ref = "intellijStarter" }
 driverSdk = { group = "com.jetbrains.intellij.driver", name = "driver-sdk", version.ref = "intellijStarter" }
 driverModel = { group = "com.jetbrains.intellij.driver", name = "driver-model", version.ref = "intellijStarter" }
+
+metricsSquashed = { group = "com.jetbrains.intellij.tools", name = "ide-metrics-collector-starter-squashed", version.ref = "intellijStarter" }
 metricsCollector = { group = "com.jetbrains.intellij.tools", name = "ide-metrics-collector", version.ref = "intellijStarter" }
 metricsCollectorStarter = { group = "com.jetbrains.intellij.tools", name = "ide-metrics-collector-starter", version.ref = "intellijStarter" }
 ijPerformance = { group = "com.jetbrains.intellij.tools", name = "ide-performance-testing-commands", version.ref = "intellijStarter" }
+kodein = { group = "org.kodein.di", name = "kodein-di-jvm", version.ref = "kodein"}
 
 
 [plugins]

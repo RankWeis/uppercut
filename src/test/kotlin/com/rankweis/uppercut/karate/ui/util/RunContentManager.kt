@@ -3,23 +3,22 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.ProcessHandlerRef
 import com.intellij.driver.sdk.Project
+import com.intellij.driver.sdk.ui.remote.AccessibleContextRef
 import org.jetbrains.annotations.NotNull
 
 object State {
+    @JvmStatic
     val stdout = StringBuilder()
+
+    @JvmStatic
     val stderr = StringBuilder()
 }
 
 fun Driver.getRunContentManagerRef(project: Project): RunContentManagerRef =
-    service(RunContentManagerRef::class, project, RdTarget.BACKEND)
+    service(RunContentManagerRef::class, project, RdTarget.DEFAULT)
 
-fun Driver.newProcessListener(project: Project): ProcessListenerRef =
+fun Driver.newProcessListener(): ProcessListenerRef =
     new(OutputListenerRef::class, State.stdout, State.stderr)
-fun Driver.getProcessListener(): OutputListenerRef =
-    service(OutputListenerRef::class)
-
-fun Driver.getProcessHandler(project: Project): ProcessHandler =
-    service(KillableColoredProcessHandlerRef.SilentRef::class, project, RdTarget.BACKEND)
 
 
 object StateHolder {
@@ -35,11 +34,57 @@ interface RunContentManagerRef {
 @Remote("com.intellij.execution.ui.RunContentDescriptor")
 interface RunContentDescriptor {
     fun getDisplayName(): String
-    fun getProcessHandler(): KillableColoredProcessHandlerRef.SilentRef?
+    fun getProcessHandler(): ProcessHandler?
+    fun getExecutionConsole(): ExecutionConsoleRef?
+}
+
+@Remote("com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView")
+interface BaseTestConsoleViewRef : ExecutionConsoleRef {
+    fun getConsole(): ConsoleViewRef
+    fun getPrinter(): TestsOutputConsolePrinterRef;
+}
+
+@Remote("com.intellij.execution.testframework.ui.TestsOutputConsolePrinterRef")
+interface TestsOutputConsolePrinterRef {
+    fun getConsole(): ConsoleViewRef
+}
+
+@Remote("com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView")
+interface SMTRunnerConsoleViewRef : ConsoleViewRef {
+    fun getConsole(): ConsoleViewRef
+    fun getPrinter(): TestsOutputConsolePrinterRef;
+    fun getResultsViewer(): SMTestRunnerResultsFormRef
+}
+
+@Remote("com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm")
+interface SMTestRunnerResultsFormRef {
+    fun getIgnoredTestCount(): Int
+    fun getFinishedTestCount(): Int
+    fun getFailedTestCount(): Int
+}
+
+@Remote("com.intellij.ui.ConsoleView")
+interface ConsoleViewRef : ExecutionConsoleRef {
+}
+
+@Remote("com.intellij.execution.ui.ExecutionConsole")
+interface ExecutionConsoleRef {
+    fun getComponent(): JComponentRef;
+}
+
+@Remote("javax.swing.JTextArea")
+interface JTextAreaRef {
+    fun getText(): String;
+
+}
+
+@Remote("javax.swing.JComponent")
+interface JComponentRef {
+    fun getAccessibleContext(): AccessibleContextRef;
 }
 
 @Remote("com.intellij.execution.process.ProcessHandler")
-interface ProcessHandler  {
+interface ProcessHandler {
     fun isProcessTerminated(): Boolean
     fun isProcessTerminating(): Boolean
     fun waitFor(millis: Long): Boolean
@@ -48,33 +93,29 @@ interface ProcessHandler  {
 }
 
 @Remote("com.intellij.openapi.Disposable")
-interface DisposableRef 
+interface DisposableRef
 
 @Remote("com.intellij.execution.process.ProcessAdapter")
-interface ProcessAdapterRef:  ProcessListenerRef
+interface ProcessAdapterRef : ProcessListenerRef
 
 @Remote("java.util.EventListener")
 interface EventListenerRef
 
 @Remote("com.intellij.execution.process.ProcessListener")
 interface ProcessListenerRef : EventListenerRef {
-    fun onTextAvailable(event: ProcessEventRef, outputType: KeyRef<*>) {
-    }
+    fun onTextAvailable(event: ProcessEventRef, outputType: KeyRef<*>)
 
-    fun startNotified(event: ProcessEventRef) {
-    }
+    fun startNotified(event: ProcessEventRef)
 
-    fun processTerminated(event: ProcessEventRef) {
-    }
+    fun processTerminated(event: ProcessEventRef)
 
-    fun processWillTerminate(event: ProcessEventRef, willBeDestroyed: Boolean) {
-    }
+    fun processWillTerminate(event: ProcessEventRef, willBeDestroyed: Boolean)
 
-    fun processNotStarted() {}
+    fun processNotStarted()
 }
 
 @Remote("com.intellij.execution.process.ProcessEvent")
-interface ProcessEventRef  {
+interface ProcessEventRef {
     fun getProcessHandler(): ProcessHandlerRef
 
     fun getText(): String
@@ -83,30 +124,30 @@ interface ProcessEventRef  {
 }
 
 @Remote("com.intellij.openapi.util.Key")
-interface KeyRef<T> 
+interface KeyRef<T>
 
 @Remote("com.intellij.openapi.util.UserDataHolder")
 interface UserDataHolderRef
 
 @Remote("com.intellij.execution.OutputListener")
-interface OutputListenerRef:  ProcessAdapterRef {
+interface OutputListenerRef : ProcessAdapterRef {
     override fun onTextAvailable(@NotNull event: ProcessEventRef, @NotNull outputType: KeyRef<*>)
-    override fun processTerminated(@NotNull event: ProcessEventRef )
+    override fun processTerminated(@NotNull event: ProcessEventRef)
     fun getOutput(): OutputRef
 }
 
 @Remote("com.intellij.execution.Output")
-interface OutputRef  {
+interface OutputRef {
     fun getStdout(): String
     fun getStderr(): String
     fun getExitCode(): Int
 }
-
-@Remote("java.lang.StringBuilder")
-interface StringBuilderRef {
-    fun String.substring(startIndex: Int): String;
-    fun append(str: String): StringBuilderRef
-}
+//
+//@Remote("java.lang.StringBuilder")
+//interface StringBuilderRef {
+//    fun String.substring(startIndex: Int): String;
+//    fun append(str: String): StringBuilderRef
+//}
 
 
 @Remote("com.intellij.util.io.BaseOutputReader.Options")
@@ -125,11 +166,11 @@ enum class OptionsRef {
     NON_BLOCKING
 }
 
-@Remote("com.intellij.execution.process.KillableColoredProcessHandler")
-interface KillableColoredProcessHandlerRef : ProcessHandler {
-    fun readerOptions(): OptionsProviderRef
-    @Remote("com.intellij.execution.process.KillableColoredProcessHandler\$Silent")
-    interface SilentRef : KillableColoredProcessHandlerRef {
-        fun notifyTextAvailable(text: String, outputType: KeyRef<*>)
-    }
-}
+//@Remote("com.intellij.execution.process.KillableColoredProcessHandler")
+//interface KillableColoredProcessHandlerRef : ProcessHandler {
+//    fun readerOptions(): OptionsProviderRef
+//    @Remote("com.intellij.execution.process.KillableColoredProcessHandler\$Silent")
+//    interface SilentRef : KillableColoredProcessHandlerRef {
+//        fun notifyTextAvailable(text: String, outputType: KeyRef<*>)
+//    }
+//}
