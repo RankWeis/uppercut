@@ -23,6 +23,7 @@ import com.intellij.tools.ide.performanceTesting.commands.waitForCodeAnalysisFin
 import com.intellij.tools.ide.performanceTesting.commands.waitForSmartMode
 import getRunContentManagerRef
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
@@ -39,37 +40,39 @@ class UppercutUITest {
         ).useEAP()
     }
 
-//    @ParameterizedTest(name = "split-mode={0}")
+    //    @ParameterizedTest(name = "split-mode={0}")
 //    @ValueSource(booleans = [false, true])
     @Test
     fun runGutterTest() {
-        val sdk = JdkDownloaderFacade.jdk21.toSdk()
-        Starter.newContext(
-            "runGutter",
-            IdeaUltimateCases.IntellijKarateTestCase
-        ).prepareProjectCleanImport().apply {
-            val pathToPlugin = System.getProperty("path.to.build.plugin")
-            PluginConfigurator(this).installPluginFromPath(Path(pathToPlugin))
-        }.setupSdk(sdk).runIdeWithDriver().useDriverAndCloseIde {
-            execute(
-                CommandChain().openFile("src/test/java/nested/test.feature")
-                    .waitForCodeAnalysisFinished()
-                    .waitForSmartMode()
-            )
-            ideFrame {
-                val gutter = gutter().getGutterIcons().first { it.getIconPath() == GutterIcon.RERUN.path }
-                assertEquals(0, gutter.line)
-                gutter.click()
-                val popupItems = xx(
-                    "//div[@class='ActionMenuItem' or @class='ActionMenu']",
-                    PopupItemUiComponent::class.java
+        runTest {
+            val sdk = JdkDownloaderFacade.jdk21.toSdk()
+            Starter.newContext(
+                "runGutter",
+                IdeaUltimateCases.IntellijKarateTestCase
+            ).prepareProjectCleanImport().apply {
+                val pathToPlugin = System.getProperty("path.to.build.plugin")
+                PluginConfigurator(this).installPluginFromPath(Path(pathToPlugin))
+            }.setupSdk(sdk).runIdeWithDriver().useDriverAndCloseIde {
+                execute(
+                    CommandChain().openFile("src/test/java/nested/test.feature")
+                        .waitForCodeAnalysisFinished()
+                        .waitForSmartMode()
                 )
-                runBlocking { waitUntil { popupItems.list().isNotEmpty() } }
-                popupItems
-                    .list().first().click()
+                ideFrame {
+                    val gutter = gutter().getGutterIcons().first { it.getIconPath() == GutterIcon.RERUN.path }
+                    assertEquals(0, gutter.line)
+                    gutter.click()
+                    val popupItems = xx(
+                        "//div[@class='ActionMenuItem' or @class='ActionMenu']",
+                        PopupItemUiComponent::class.java
+                    )
+                    runBlocking { waitUntil { popupItems.list().isNotEmpty() } }
+                    popupItems
+                        .list().first().click()
+                }
+                runTests(this)
+                verifyConsoleResults(this)
             }
-            runTests(this)
-            verifyConsoleResults(this)
         }
     }
 
