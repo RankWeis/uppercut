@@ -29,12 +29,10 @@ import com.intellij.util.PathUtil;
 import com.rankweis.uppercut.karate.debugging.UppercutClassLoader;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import com.rankweis.uppercut.testrunner.KarateTestRunner;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -91,8 +89,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     return new JavaApplicationCommandLineState<>(this, env) {
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
-        UppercutClassLoader.INSTANCE.setProject(getProject());
-        //        Thread.currentThread().setContextClassLoader(UppercutClassLoader.INSTANCE.getClassLoader());
         final JavaParameters params = super.createJavaParameters();
         String jarPathForClass = PathUtil.getJarPathForClass(KarateTestRunner.class);
         params.setUseDynamicClasspath(true);
@@ -152,9 +148,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
             genericDebuggerRunnerSettings.setDebugPort(getDebugPort());
             params.getVMParametersList()
               .replaceOrPrepend("-agentlib:jdwp", String.format(debugStr, getDebugPort()));
-            params.getClassPath()
-              .add(UppercutClassLoader.INSTANCE.getManagedUrls().stream().map(URL::toString).collect(
-                Collectors.joining(":")));
           }
         }
         return super.startProcess();
@@ -176,14 +169,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         return consoles.get(0);
       }
     };
-  }
-
-
-  public void setMainClass(@NotNull PsiClass psiClass) {
-    Module originalModule = this.getConfigurationModule().getModule();
-    this.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
-    this.setModule(JavaExecutionUtil.findModule(psiClass));
-    this.restoreOriginalModule(originalModule);
   }
 
 

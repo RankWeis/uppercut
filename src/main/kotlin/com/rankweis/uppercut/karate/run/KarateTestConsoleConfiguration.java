@@ -21,8 +21,6 @@ public class KarateTestConsoleConfiguration extends SMTRunnerConsoleProperties i
 
   @Override public OutputToGeneralTestEventsConverter createTestEventsConverter(@NotNull String testFrameworkName,
     @NotNull TestConsoleProperties consoleProperties) {
-    final KarateRunConfiguration runConfiguration = (KarateRunConfiguration)getConfiguration();
-//    final VirtualFile file = runConfiguration.getRunnerParameters().getKarateFileOrDirectory();
       return new KarateOutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties);
   }
   
