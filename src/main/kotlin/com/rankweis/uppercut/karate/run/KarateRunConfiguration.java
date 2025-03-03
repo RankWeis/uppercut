@@ -89,8 +89,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     return new JavaApplicationCommandLineState<>(this, env) {
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
-//        UppercutClassLoader.INSTANCE.setProject(getProject());
-        //        Thread.currentThread().setContextClassLoader(UppercutClassLoader.INSTANCE.getClassLoader());
         final JavaParameters params = super.createJavaParameters();
         String jarPathForClass = PathUtil.getJarPathForClass(KarateTestRunner.class);
         params.setUseDynamicClasspath(true);
@@ -150,9 +148,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
             genericDebuggerRunnerSettings.setDebugPort(getDebugPort());
             params.getVMParametersList()
               .replaceOrPrepend("-agentlib:jdwp", String.format(debugStr, getDebugPort()));
-//            params.getClassPath()
-//              .add(UppercutClassLoader.INSTANCE.getManagedUrls().stream().map(URL::toString).collect(
-//                Collectors.joining(":")));
           }
         }
         return super.startProcess();
@@ -174,14 +169,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         return consoles.get(0);
       }
     };
-  }
-
-
-  public void setMainClass(@NotNull PsiClass psiClass) {
-    Module originalModule = this.getConfigurationModule().getModule();
-    this.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
-    this.setModule(JavaExecutionUtil.findModule(psiClass));
-    this.restoreOriginalModule(originalModule);
   }
 
 
