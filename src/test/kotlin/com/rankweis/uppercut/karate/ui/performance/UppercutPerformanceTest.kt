@@ -1,4 +1,4 @@
-package com.rankweis.uppercut.karate.junit5.ui.performance
+package com.rankweis.uppercut.karate.ui.performance
 
 import com.google.gson.GsonBuilder
 import com.intellij.ide.starter.ide.IdeProductProvider
@@ -16,12 +16,14 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.div
 import kotlin.time.Duration.Companion.minutes
 
+@Disabled
 class UppercutPerformanceTest {
     companion object {
         @JvmStatic

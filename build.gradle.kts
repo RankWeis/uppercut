@@ -23,7 +23,6 @@ repositories {
     mavenCentral()
     intellijPlatform {
         defaultRepositories()
-        jetbrainsRuntime()
     }
 }
 
@@ -44,47 +43,49 @@ dependencies {
         intellijIdeaUltimate(version, useInstaller = false)
         // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
+        bundledModules("intellij.json.split")
 
         // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
         plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
 
-        pluginVerifier()
-        zipSigner()
         jetbrainsRuntime()
         testFramework(TestFrameworkType.Platform)
     }
 
-    compileOnly("io.karatelabs:karate-junit5:${properties("karateVersion").get()}")
-    implementation("ch.qos.logback:logback-classic:${properties("logbackVersion").get()}")
-    testImplementation(libs.mockito)
-    testImplementation(libs.mockito)
-    testImplementation(libs.junitPlatformLauncher)
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
-    implementation(project(":KarateTestRunner"))
-    testImplementation(libs.junit)
-    testImplementation(libs.junit5api)
-    testRuntimeOnly(libs.junit5engine)
-    testImplementation("com.jetbrains.intellij.tools:ide-starter-squashed:LATEST-EAP-SNAPSHOT")
-    testImplementation("com.jetbrains.intellij.tools:ide-starter-junit5:LATEST-EAP-SNAPSHOT")
-    testImplementation("com.jetbrains.intellij.tools:ide-starter-driver:LATEST-EAP-SNAPSHOT")
-    testImplementation("com.jetbrains.intellij.driver:driver-client:LATEST-EAP-SNAPSHOT")
-    testImplementation("com.jetbrains.intellij.driver:driver-sdk:LATEST-EAP-SNAPSHOT")
-    testImplementation("com.jetbrains.intellij.driver:driver-model:LATEST-EAP-SNAPSHOT")
-    testImplementation("com.jetbrains.intellij.tools:ide-metrics-collector:LATEST-EAP-SNAPSHOT")
-    testImplementation("com.jetbrains.intellij.tools:ide-metrics-collector-starter:LATEST-EAP-SNAPSHOT")
-    testImplementation("com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-EAP-SNAPSHOT")
+    // Plugin Module
+    implementation(project(":KarateTestRunner")) // Project-specific support for Karate tests
+
+    // --- Core Dependencies ---
+    implementation("ch.qos.logback:logback-classic:${properties("logbackVersion").get()}") // Logging framework
+
+    // --- JUnit Testing Framework ---
+    testImplementation(libs.junit) // JUnit 4 support
+    testImplementation(libs.junit5api) // JUnit 5 API
+    testImplementation(libs.junit5Params) // JUnit 5 API
+    testImplementation(libs.junitPlatformLauncher) // JUnit Platform launcher
+    testRuntimeOnly(libs.junit5engine) // JUnit 5 runtime engine
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine") // JUnit 4 compatibility engine for JUnit 5
+
+
+    // --- IntelliJ Testing Tools (IDE Starter + Driver) ---
     testImplementation(libs.starterSquashed)
     testImplementation(libs.starterJunit5)
     testImplementation(libs.starterDriver)
     testImplementation(libs.driverClient)
     testImplementation(libs.driverSdk)
     testImplementation(libs.driverModel)
-    testImplementation(libs.driverClient)
-    testImplementation(libs.metricsCollectorStarter)
+    testImplementation(libs.metricsSquashed)
     testImplementation(libs.metricsCollector)
     testImplementation(libs.ijPerformance)
     testImplementation(libs.ijCommon)
+
+    // --- Mocking and Coroutines Testing ---
+    testImplementation(libs.mockito) // Mockito for mocking in tests
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1") // Kotlin Coroutines testing library
+    testImplementation(libs.kodein)
+
+    // When you don't want to only run with reflection.
+    compileOnly("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") // Karate testing framework for JUnit 5
 }
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
@@ -198,6 +199,7 @@ kover {
 }
 
 idea {
+
     module {
         isDownloadJavadoc = true
         isDownloadSources = true
@@ -219,11 +221,6 @@ tasks {
         dependsOn("patchChangelog")
     }
 
-//    patchPluginXml {
-//        (":KarateTestRunner:karateTestRunnerJar") {
-//            into("lib/")
-//        }
-//    }
 
     test {
         dependsOn("buildPlugin")
@@ -256,8 +253,8 @@ intellijPlatformTesting {
             }
 
             plugins {
-                plugin("164", "2.19.0" ) // IdeaViu
                 robotServerPlugin()
+//                plugin("IdeaVIM", "2.19.0") // IdeaViu
             }
         }
     }
