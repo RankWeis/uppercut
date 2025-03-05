@@ -7,7 +7,6 @@ import com.intellij.driver.sdk.ui.components.common.GutterIcon
 import com.intellij.driver.sdk.ui.components.common.gutter
 import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.elements.PopupItemUiComponent
-import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitForProjectOpen
 import com.intellij.ide.starter.driver.engine.runIdeWithDriver
 import com.intellij.ide.starter.driver.execute
@@ -27,6 +26,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import kotlin.io.path.Path
@@ -42,8 +42,7 @@ class UppercutUITest {
         ).useEAP()
     }
 
-    //    @ParameterizedTest(name = "split-mode={0}")
-//    @ValueSource(booleans = [false, true])
+    @Disabled("Run locally only")
     @Test
     fun runGutterTest() {
         runTest {
