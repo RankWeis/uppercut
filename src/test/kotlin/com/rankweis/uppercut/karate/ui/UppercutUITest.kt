@@ -7,6 +7,7 @@ import com.intellij.driver.sdk.ui.components.common.GutterIcon
 import com.intellij.driver.sdk.ui.components.common.gutter
 import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.elements.PopupItemUiComponent
+import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitForProjectOpen
 import com.intellij.ide.starter.driver.engine.runIdeWithDriver
 import com.intellij.ide.starter.driver.execute
@@ -105,7 +106,10 @@ class UppercutUITest {
             assertTrue(processHandler.isProcessTerminated())
             val base = this.cast(instance, SMTRunnerConsoleViewRef::class)
             val results = base.getResultsViewer()
-            assertEquals(0, results.getFailedTestCount())
+            driver.takeScreenshot("build/reports/tests/screenshots/")
+            assertEquals(
+                0, results.getFailedTestCount()
+            )
             assertEquals(0, results.getIgnoredTestCount())
             assertEquals(6, results.getFinishedTestCount())
         }
