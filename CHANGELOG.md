@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.3.4] - 2025-03-24
+
 ### Fixed
 
 - Prematurely loading of classes should no longer happen
@@ -309,7 +311,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.3.3...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.3.4...HEAD
+[2.3.4]: https://github.com/rankweis/uppercut/compare/v2.3.3...v2.3.4
 [2.3.3]: https://github.com/rankweis/uppercut/compare/v2.3.1...v2.3.3
 [2.3.2]: https://github.com/rankweis/uppercut/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/rankweis/uppercut/compare/v2.3.0...v2.3.1
