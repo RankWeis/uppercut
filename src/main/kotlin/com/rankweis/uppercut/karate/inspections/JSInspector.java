@@ -16,6 +16,11 @@ public class JSInspector implements InspectionSuppressor {
   }
 
   @Override public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId) {
+    if ("karate".equals(element.getText())) {
+      if (toolId.equals("JSUnresolvedReference")) {
+        return true;
+      }
+    }
     return SUPPRESSED_INSPECTIONS.contains(toolId)
       && element.getContainingFile().getLanguage() == KarateLanguage.INSTANCE;
   }

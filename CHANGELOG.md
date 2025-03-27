@@ -7,6 +7,7 @@
 ### Fixed
 
 - Prematurely loading of classes should no longer happen
+- karate local variable no longer marks as unresolved
 
 ## [2.3.3] - 2025-02-28
 
