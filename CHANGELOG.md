@@ -4,8 +4,6 @@
 
 ## [Unreleased]
 
-## [2.3.5] - 2025-03-27
-
 ### Fixed
 
 - Prematurely loading of classes should no longer happen
