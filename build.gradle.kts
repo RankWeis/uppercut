@@ -43,7 +43,7 @@ dependencies {
         intellijIdeaUltimate(version, useInstaller = false)
         // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
-        bundledModules("intellij.json.split")
+//        bundledModules("intellij.json.split")
 
         // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
         plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
@@ -68,16 +68,16 @@ dependencies {
 
 
     // --- IntelliJ Testing Tools (IDE Starter + Driver) ---
-    testImplementation(libs.starterSquashed)
-    testImplementation(libs.starterJunit5)
-    testImplementation(libs.starterDriver)
-    testImplementation(libs.driverClient)
-    testImplementation(libs.driverSdk)
-    testImplementation(libs.driverModel)
-    testImplementation(libs.metricsSquashed)
-    testImplementation(libs.metricsCollector)
-    testImplementation(libs.ijPerformance)
-    testImplementation(libs.ijCommon)
+//    testImplementation(libs.starterSquashed)
+//    testImplementation(libs.starterJunit5)
+//    testImplementation(libs.starterDriver)
+//    testImplementation(libs.driverClient)
+//    testImplementation(libs.driverSdk)
+//    testImplementation(libs.driverModel)
+//    testImplementation(libs.metricsSquashed)
+//    testImplementation(libs.metricsCollector)
+//    testImplementation(libs.ijPerformance)
+//    testImplementation(libs.ijCommon)
 
     // --- Mocking and Coroutines Testing ---
     testImplementation(libs.mockito) // Mockito for mocking in tests
