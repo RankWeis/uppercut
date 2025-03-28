@@ -113,8 +113,12 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
         }
         finishMessage(msgScenario, scenario);
       }
+      return true;
     }
-    return true;
+    if (text.startsWith("<<UPPERCUT>>")) {
+      return true;
+    }
+    return false;
   }
 
   private boolean featureStartEnd(String text) {
@@ -155,7 +159,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
 
   private boolean scenarioStartEnd(String text) {
     Matcher matcher =
-      Pattern.compile(UPPERCUT_LOG + "\\[([^]]*)].* Scenario name: (.*), featureFileName: (.*), id ([\\d]+), (.*)")
+      Pattern.compile(UPPERCUT_LOG + "\\[([^]]*)].* Scenario name: (.*), featureFileName: (.*), id (\\d+), (.*)")
         .matcher(text.trim());
     if (!matcher.matches()) {
       return false;
@@ -225,7 +229,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
 
   private void setCurrentThread(String text) {
     Matcher matcher =
-      Pattern.compile(UPPERCUT_LOG + "\\[([^]]*)] ([\\d:.,]+) ([\\w]+).*").matcher(text.trim());
+      Pattern.compile(UPPERCUT_LOG + "\\[([^]]*)] ([\\d:.,]+) (\\w+).*").matcher(text.trim());
     String threadGroup;
     if (matcher.matches()) {
       threadGroup = matcher.group(1);

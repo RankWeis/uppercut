@@ -3,7 +3,6 @@ package com.rankweis.uppercut.karate.run;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaParameters;
@@ -20,13 +19,13 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
-import com.rankweis.uppercut.karate.debugging.UppercutClassLoader;
+import com.intuit.karate.junit5.Karate;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import com.rankweis.uppercut.testrunner.KarateTestRunner;
 import java.util.ArrayList;
@@ -35,11 +34,13 @@ import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Slf4j
 public class KarateRunConfiguration extends ApplicationConfiguration implements ModuleRunProfile,
   TargetEnvironmentAwareRunProfile {
 
@@ -91,6 +92,14 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
       protected JavaParameters createJavaParameters() throws ExecutionException {
         final JavaParameters params = super.createJavaParameters();
         String jarPathForClass = PathUtil.getJarPathForClass(KarateTestRunner.class);
+        List<String> karateJunit5 = Arrays.stream(LibraryUtil.getLibraryRoots(env.getProject()))
+          .filter(v -> v.getName().contains("karate-junit5"))
+          .map(VirtualFile::getPath).toList();
+        if (karateJunit5.isEmpty()) {
+          log.warn("No junit5 in classpath");
+          params.getProgramParametersList().add("--karate-provided", "true");
+          params.getClassPath().add(PathUtil.getJarPathForClass(Karate.class));
+        }
         params.setUseDynamicClasspath(true);
         params.getClassPath().add(jarPathForClass);
 

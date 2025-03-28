@@ -84,8 +84,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1") // Kotlin Coroutines testing library
     testImplementation(libs.kodein)
 
-    // When you don't want to only run with reflection.
-    compileOnly("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") // Karate testing framework for JUnit 5
+    implementation("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") // Karate testing framework for JUnit 5
 }
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()

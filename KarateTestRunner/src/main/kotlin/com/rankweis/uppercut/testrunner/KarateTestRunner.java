@@ -85,6 +85,15 @@ public class KarateTestRunner {
   Object createRuntimeHook() {
     Logger myLogger = (Logger) LoggerFactory.getLogger(KarateTestRunner.class);
     // Load the RuntimeHook class using reflection
+    boolean uppercutProvidedKarate =
+      Optional.ofNullable(params.get("karate-provided")).orElse(List.of())
+        .stream().anyMatch(Boolean::parseBoolean);
+    if (uppercutProvidedKarate) {
+      myLogger.error(
+        "Uppercut could not find a version of karate-junit5 in the classpath. It is using a provided one - this can "
+          + "cause inconsistent results or errors. For the best experience, please include karate-junit5 in your "
+          + "project");
+    }
     Class<?> runtimeHookClass;
     try {
       runtimeHookClass =

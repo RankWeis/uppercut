@@ -4,7 +4,10 @@
 
 ## [Unreleased]
 
-## [2.3.6] - 2025-03-27
+### Added
+
+- If karate-junit5 is not in the classpath, adds a default one (for version 1.5.1) into the classpath
+- NOTE: This can cause inconsistent results, and you should attempt to provide a default karate-junit5 of your own.
 
 ### Fixed
 
