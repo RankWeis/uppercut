@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Better nesting structure for running tests.
+
 ## [2.3.7] - 2025-03-28
 
 ### Added
