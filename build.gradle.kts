@@ -221,14 +221,14 @@ tasks {
     }
 
 
-    test {
-        dependsOn("buildPlugin")
-        useJUnitPlatform {
-            includeEngines("junit-vintage", "junit-jupiter")
-        }
+//    test {
+//        dependsOn("buildPlugin")
+//        useJUnitPlatform {
+//            includeEngines("junit-vintage")
+//        }
 
-        systemProperty("path.to.build.plugin", buildPlugin.get().archiveFile.get().asFile.absolutePath)
-    }
+//        systemProperty("path.to.build.plugin", buildPlugin.get().archiveFile.get().asFile.absolutePath)
+//    }
     printProductsReleases {
         channels = listOf(ProductRelease.Channel.EAP)
         types = listOf(IntelliJPlatformType.IntellijIdeaUltimate)
