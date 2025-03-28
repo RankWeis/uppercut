@@ -5,6 +5,8 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
+import com.intuit.karate.core.FeatureRuntime;
+import com.intuit.karate.core.ScenarioCall;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -122,6 +124,18 @@ public class KarateTestRunner {
           Field featureRuntime = scenarioRuntimeClass.getField("featureRuntime");
           Object loggerInstance = logger.get(scenarioRuntime);
           Object featureRuntimeInstance = featureRuntime.get(scenarioRuntime);
+          FeatureRuntime fr = (FeatureRuntime) featureRuntimeInstance;
+          ScenarioCall caller = fr.caller;
+          String scenarioNameWithCallers = scenarioInfo.get("scenarioName").toString();
+          while (caller != null && caller.parentRuntime != null) {
+            Object parentScenarioId = scenarioIdMap.get(caller.parentRuntime);
+            if (parentScenarioId == null) {
+              break;
+            }
+            scenarioNameWithCallers =
+              parentScenarioId + "##" + scenarioNameWithCallers;
+            caller = caller.parentRuntime.caller;
+          }
           String featureName = featureRuntimeInstance.toString().replace("classpath:", "");
           Method loggerInfoMethod = loggerClass.getMethod("info", String.class, Object[].class);
           String startOrFinish;
@@ -133,8 +147,8 @@ public class KarateTestRunner {
             startOrFinish = "START";
           }
           loggerInfoMethod.invoke(loggerInstance,
-            "Scenario name: {}, featureFileName: {}, id {}, {}", new Object[]{scenarioInfo.get("scenarioName"),
-              featureName, scenarioId, startOrFinish});
+            "Scenario name: {}, featureFileName: {}, id {}, {}", new Object[]{
+              scenarioNameWithCallers, featureName, scenarioId, startOrFinish});
 
           return true;
         }

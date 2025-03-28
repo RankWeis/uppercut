@@ -169,11 +169,18 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     String featureName = matcher.group(3);
     Integer scenarioId = Integer.parseInt(matcher.group(4));
     String startOrFinish = matcher.group(5);
+    Integer parentId = featureNameToId.getOrDefault(featureName, 0);
+    String[] splitScenarioName = scenarioName.split("##");
+    if (splitScenarioName.length > 1) {
+      parentId = Integer.parseInt(splitScenarioName[splitScenarioName.length - 2]);
+      scenarioName = splitScenarioName[splitScenarioName.length - 1];
+    }
     KarateItem item = idToItem.getOrDefault(scenarioId,
-      KarateItem.builder().id(scenarioId).name(scenarioName).parentId(featureNameToId.getOrDefault(featureName, 0))
+      KarateItem.builder().id(scenarioId).name(scenarioName).parentId(parentId)
         .build());
     if (startOrFinish.equals("START")) {
       ServiceMessageBuilder scenarioStarted = ServiceMessageBuilder.testStarted(scenarioName);
+      String finalScenarioName = scenarioName;
       Arrays.stream(ModuleManager.getInstance(testConsoleProperties.getProject()).getModules())
         .flatMap(m -> {
           ArrayList<VirtualFile> vfs =
@@ -189,7 +196,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
               if (psiFile == null) {
                 return -1;
               }
-              int index = psiFile.getText().indexOf(scenarioName);
+              int index = psiFile.getText().indexOf(finalScenarioName);
               int num = 1;
               if (index > 0) {
                 num = Objects.requireNonNull(
