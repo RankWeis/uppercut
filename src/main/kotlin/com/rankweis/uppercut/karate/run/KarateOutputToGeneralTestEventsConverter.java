@@ -155,10 +155,6 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
       if (item != null) {
         finishMessage(message, item);
       }
-//      LinkedList<KarateItem> karateItems = threadToScenarioStack.get(currentThreadGroup);
-//      if (!CollectionUtils.isEmpty(karateItems)) {
-//        karateItems.pop();
-//      }
       return true;
     }
     return false;

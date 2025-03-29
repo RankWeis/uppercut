@@ -172,11 +172,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
           SMTRunnerConsoleView console =
             SMTestRunnerConnectionUtil.createConsole(consoleProperties);
           console.initUI();
-
-//          ConsoleViewUtil.computeConsoleFilters(
-//            this.getEnvironment().getProject(), console,
-//            GlobalSearchScope.allScope(this.getEnvironment().getProject()))
-//              .forEach(console::addMessageFilter);
           console.addMessageFilter(new UppercutConsoleFilter(getProject()));
           consoles.add(console);
         }, ModalityState.any());

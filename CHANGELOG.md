@@ -8,6 +8,7 @@
 
 - Display of test results in console
 - Nesting structure for running tests (If feature A calls feature B, B will nest under A)
+- Test Runner Console links to classpath files
 
 ## [2.3.7] - 2025-03-28
 
@@ -20,7 +21,6 @@
 
 - Prematurely loading of classes should no longer happen
 - karate local variable no longer marks as unresolved
-- Test Runner Console links to classpath files
 
 ## [2.3.3] - 2025-02-28
 
