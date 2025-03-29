@@ -89,8 +89,6 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     }
     if (text.contains("karate.env is:")) {
       return doProcessServiceMessages(ServiceMessageBuilder.testsStarted().toString());
-//    } else if (processStartFinishText(text)) {
-//      return true;
     } else {
       return process(text);
     }
@@ -142,7 +140,6 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     int id = Integer.parseInt(matcher.group(2));
     String startOrFinish = matcher.group(3);
     if (startOrFinish.equals("START")) {
-//      addFeatureToTree(featureName, id);
       return true;
     } else if (startOrFinish.equals("FINISH")) {
       ServiceMessageBuilder message =
@@ -235,14 +232,12 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
         (k) -> KarateItem.builder().id(scenarioId).name(finalScenarioName).parentId(parentId).build());
       karateItems.push(item);
       finishMessage(scenarioStarted, item);
-//      process(text);
     } else if (startOrFinish.equals("FINISH")) {
       ServiceMessageBuilder scenarioFinished = ServiceMessageBuilder.testSuiteFinished(scenarioName);
       if(idToItem.containsKey(scenarioId)) {
         finishMessage(scenarioFinished, idToItem.get(scenarioId));
         idToItem.remove(scenarioId);
       }
-//      process(text);
       LinkedList<KarateItem> karateItems = threadToScenarioStack.get(threadGroup);
       if (!CollectionUtils.isEmpty(karateItems)) {
         karateItems.pop();
@@ -251,10 +246,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
       if(idToItem.containsKey(scenarioId)) {
         ServiceMessageBuilder scenarioFailed =
           ServiceMessageBuilder.testFailed(scenarioName).addAttribute("message", startOrFinish.replace("<<NEWLINE>>", "\n"));
-//        ServiceMessageBuilder featureFailed =
-//          ServiceMessageBuilder.testFailed(featureName).addAttribute("message", startOrFinish.replace("<<NEWLINE>>", "\n"));
         finishMessage(scenarioFailed, idToItem.get(scenarioId));
-//        finishMessage(featureFailed, idToItem.get(featureId));
         idToItem.remove(scenarioId);
       }
     }
@@ -281,27 +273,6 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
       threadGroup = matcher.group(1);
       this.currentThreadGroup = threadGroup;
     }
-  }
-
-  private boolean processStartFinishText(@NotNull final String statement) {
-    Matcher matcher =
-      FEATURES_REMAINING.matcher(statement.trim());
-    if (!matcher.matches()) {
-      return false;
-    }
-//    String result = matcher.group(1);
-//    String feature = matcher.group(4).replace("classpath:", "");
-//    ServiceMessageBuilder message;
-//    KarateItem item = idToItem.get(featureNameToId.get(feature));
-//    if (result.equals("pass")) {
-//      message = ServiceMessageBuilder.testStdOut(feature);
-//    } else if (result.equals("fail")) {
-//      message = ServiceMessageBuilder.testSuiteFinished(feature);
-//    } else {
-//      throw new RuntimeException("Unknown result: " + result);
-//    }
-//    finishMessage(message, threadToScenarioStack.get("main").peek());
-    return true;
   }
 
   private void finishMessage(@NotNull ServiceMessageBuilder msg, KarateItem item) {

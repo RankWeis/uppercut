@@ -4,9 +4,10 @@
 
 ## [Unreleased]
 
-### Added
+### Modified
 
-- Better nesting structure for running tests.
+- Display of test results in console
+- Nesting structure for running tests (If feature A calls feature B, B will nest under A)
 
 ## [2.3.7] - 2025-03-28
 

@@ -177,8 +177,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
             this.getEnvironment().getProject(), console,
             GlobalSearchScope.allScope(this.getEnvironment().getProject()))
               .forEach(console::addMessageFilter);
-//          console.addMessageFilter(new UrlFilter(getProject()));
-//          console.addMessageFilter(new ErrorLogConsoleFilter());
           consoles.add(console);
         }, ModalityState.any());
 

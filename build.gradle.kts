@@ -86,7 +86,7 @@ dependencies {
 
     implementation("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") {
         isTransitive = false
-    }// Karate testing framework for JUnit 5
+    }
     implementation("io.karatelabs:karate-core:${properties("karateVersion").get()}") {
         isTransitive = false
     }
