@@ -141,7 +141,7 @@ public class KarateTestRunner {
           Method loggerInfoMethod = loggerClass.getMethod("info", String.class, Object[].class);
           String startOrFinish;
           if (scenarioInfo.get("errorMessage") != null) {
-            startOrFinish = scenarioInfo.get("errorMessage").toString();
+            startOrFinish = scenarioInfo.get("errorMessage").toString().replace("\n", "<<NEWLINE>>");
           } else if ("afterScenario".equals(method.getName())) {
             startOrFinish = "FINISH";
           } else {
