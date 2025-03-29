@@ -20,6 +20,7 @@
 
 - Prematurely loading of classes should no longer happen
 - karate local variable no longer marks as unresolved
+- Test Runner Console links to classpath files
 
 ## [2.3.3] - 2025-02-28
 
