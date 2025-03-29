@@ -125,6 +125,7 @@ public class KarateTestRunner {
           Object loggerInstance = logger.get(scenarioRuntime);
           Object featureRuntimeInstance = featureRuntime.get(scenarioRuntime);
           FeatureRuntime fr = (FeatureRuntime) featureRuntimeInstance;
+          Integer frId = scenarioIdMap.get(fr);
           ScenarioCall caller = fr.caller;
           String scenarioNameWithCallers = scenarioInfo.get("scenarioName").toString();
           while (caller != null && caller.parentRuntime != null) {
@@ -147,8 +148,8 @@ public class KarateTestRunner {
             startOrFinish = "START";
           }
           loggerInfoMethod.invoke(loggerInstance,
-            "Scenario name: {}, featureFileName: {}, id {}, {}", new Object[]{
-              scenarioNameWithCallers, featureName, scenarioId, startOrFinish});
+            "Scenario name: {}, featureFileName: {}, id {}, featureId {}, {} <<UPPERCUT>>", new Object[]{
+              scenarioNameWithCallers, featureName, scenarioId, frId, startOrFinish});
 
           return true;
         }
@@ -162,13 +163,16 @@ public class KarateTestRunner {
           }
           Class<?> featureRuntimeClass = Class.forName("com.intuit.karate.core.FeatureRuntime");
           Object featureRuntime = args[0];
+          Integer featureId =
+            scenarioIdMap.computeIfAbsent(featureRuntime, (o -> random.nextInt(0, Integer.MAX_VALUE)));
 
           // Access 'parentRuntime' field from caller
           Field resultField = featureRuntimeClass.getDeclaredField("result");
           Object resultInstance = resultField.get(featureRuntime);
           Method displayField = resultInstance.getClass().getMethod("getDisplayName");
           String featureName = (String) displayField.invoke(resultInstance);
-          myLogger.info("FeatureFileName: {}, {}", new Object[]{featureName, startOrFinish});
+
+          myLogger.info("FeatureFileName: {}, id: {}, {} <<UPPERCUT>>", new Object[]{featureName, featureId, startOrFinish});
         }
         if ("toString".equals(method.getName())) {
           return "Proxy for Interface";
@@ -178,13 +182,13 @@ public class KarateTestRunner {
   }
 
   public static void main(String[] args) throws Exception {
-    getOutputStreamAppender();
-    KarateTestRunner runner = new KarateTestRunner();
-    runner.parseArgs(args);
     try {
+      getOutputStreamAppender();
+      KarateTestRunner runner = new KarateTestRunner();
+      runner.parseArgs(args);
       runner.doTest();
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException("Must have karate on the classpath", e);
+    } catch (ClassNotFoundException | NoClassDefFoundError e) {
+      throw new RuntimeException("Must have karate-core on the classpath to use uppercut", e);
     }
   }
 

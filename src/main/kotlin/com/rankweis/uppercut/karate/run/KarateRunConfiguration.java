@@ -9,7 +9,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.filters.UrlFilter;
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.intuit.karate.junit5.Karate;
 import com.rankweis.uppercut.settings.KarateSettingsState;
@@ -171,7 +172,13 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
           SMTRunnerConsoleView console =
             SMTestRunnerConnectionUtil.createConsole(consoleProperties);
           console.initUI();
-          console.addMessageFilter(new UrlFilter(getProject()));
+
+          ConsoleViewUtil.computeConsoleFilters(
+            this.getEnvironment().getProject(), console,
+            GlobalSearchScope.allScope(this.getEnvironment().getProject()))
+              .forEach(console::addMessageFilter);
+//          console.addMessageFilter(new UrlFilter(getProject()));
+//          console.addMessageFilter(new ErrorLogConsoleFilter());
           consoles.add(console);
         }, ModalityState.any());
 
