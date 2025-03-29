@@ -26,7 +26,7 @@ public final class GherkinFoldingBuilder extends FoldingBuilderEx implements Dum
   private static final TokenSet BLOCKS_TO_FOLD = TokenSet.create(GherkinElementTypes.SCENARIO,
     GherkinElementTypes.SCENARIO_OUTLINE,
     GherkinElementTypes.EXAMPLES_BLOCK,
-    KarateTokenTypes.PYSTRING, JSON, JAVASCRIPT, XML, TEXT_BLOCK);
+    GherkinElementTypes.PYSTRING, JSON, JAVASCRIPT, XML, TEXT_BLOCK);
 
 
   @Override public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document,
