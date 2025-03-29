@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Modified
+
+- Display of test results in console
+- Nesting structure for running tests (If feature A calls feature B, B will nest under A)
+- Test Runner Console links to classpath files
+
 ## [2.3.7] - 2025-03-28
 
 ### Added

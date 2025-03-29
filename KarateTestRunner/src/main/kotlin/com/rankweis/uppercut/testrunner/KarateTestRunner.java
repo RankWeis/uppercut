@@ -4,7 +4,10 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
+import com.intuit.karate.core.FeatureRuntime;
+import com.intuit.karate.core.ScenarioCall;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -122,19 +125,32 @@ public class KarateTestRunner {
           Field featureRuntime = scenarioRuntimeClass.getField("featureRuntime");
           Object loggerInstance = logger.get(scenarioRuntime);
           Object featureRuntimeInstance = featureRuntime.get(scenarioRuntime);
+          FeatureRuntime fr = (FeatureRuntime) featureRuntimeInstance;
+          Integer frId = scenarioIdMap.get(fr);
+          ScenarioCall caller = fr.caller;
+          String scenarioNameWithCallers = scenarioInfo.get("scenarioName").toString();
+          while (caller != null && caller.parentRuntime != null) {
+            Object parentScenarioId = scenarioIdMap.get(caller.parentRuntime);
+            if (parentScenarioId == null) {
+              break;
+            }
+            scenarioNameWithCallers =
+              parentScenarioId + "##" + scenarioNameWithCallers;
+            caller = caller.parentRuntime.caller;
+          }
           String featureName = featureRuntimeInstance.toString().replace("classpath:", "");
           Method loggerInfoMethod = loggerClass.getMethod("info", String.class, Object[].class);
           String startOrFinish;
           if (scenarioInfo.get("errorMessage") != null) {
-            startOrFinish = scenarioInfo.get("errorMessage").toString();
+            startOrFinish = scenarioInfo.get("errorMessage").toString().replace("\n", "<<NEWLINE>>");
           } else if ("afterScenario".equals(method.getName())) {
             startOrFinish = "FINISH";
           } else {
             startOrFinish = "START";
           }
           loggerInfoMethod.invoke(loggerInstance,
-            "Scenario name: {}, featureFileName: {}, id {}, {}", new Object[]{scenarioInfo.get("scenarioName"),
-              featureName, scenarioId, startOrFinish});
+            "Scenario name: {}, featureFileName: {}, id {}, featureId {}, {} <<UPPERCUT>>", new Object[]{
+              scenarioNameWithCallers, featureName, scenarioId, frId, startOrFinish});
 
           return true;
         }
@@ -148,13 +164,16 @@ public class KarateTestRunner {
           }
           Class<?> featureRuntimeClass = Class.forName("com.intuit.karate.core.FeatureRuntime");
           Object featureRuntime = args[0];
+          Integer featureId =
+            scenarioIdMap.computeIfAbsent(featureRuntime, (o -> random.nextInt(0, Integer.MAX_VALUE)));
 
           // Access 'parentRuntime' field from caller
           Field resultField = featureRuntimeClass.getDeclaredField("result");
           Object resultInstance = resultField.get(featureRuntime);
           Method displayField = resultInstance.getClass().getMethod("getDisplayName");
           String featureName = (String) displayField.invoke(resultInstance);
-          myLogger.info("FeatureFileName: {}, {}", new Object[]{featureName, startOrFinish});
+
+          myLogger.info("FeatureFileName: {}, id: {}, {} <<UPPERCUT>>", new Object[]{featureName, featureId, startOrFinish});
         }
         if ("toString".equals(method.getName())) {
           return "Proxy for Interface";
@@ -164,13 +183,13 @@ public class KarateTestRunner {
   }
 
   public static void main(String[] args) throws Exception {
-    getOutputStreamAppender();
-    KarateTestRunner runner = new KarateTestRunner();
-    runner.parseArgs(args);
     try {
+      getOutputStreamAppender();
+      KarateTestRunner runner = new KarateTestRunner();
+      runner.parseArgs(args);
       runner.doTest();
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException("Must have karate on the classpath", e);
+    } catch (ClassNotFoundException | NoClassDefFoundError e) {
+      throw new RuntimeException("Must have karate-core on the classpath to use uppercut", e);
     }
   }
 
@@ -199,7 +218,7 @@ public class KarateTestRunner {
 
   private static void getOutputStreamAppender() {
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    Logger intuitLogger = context.getLogger("com.intuit");
+    Logger intuitLogger = context.getLogger(Logger.ROOT_LOGGER_NAME);
 
     ConsoleAppender<ILoggingEvent> outputStreamAppender = new ConsoleAppender<>();
     outputStreamAppender.setContext(context);
@@ -210,7 +229,13 @@ public class KarateTestRunner {
     outputStreamAppender.setName("KarateAppender");
     outputStreamAppender.setEncoder(encoder);
     outputStreamAppender.start();
+    List<Appender<ILoggingEvent>> appenders = new ArrayList<>();
+    intuitLogger.iteratorForAppenders().forEachRemaining(appender -> {
+      appenders.add(appender);
+      intuitLogger.detachAppender(appender);
+    });
     intuitLogger.addAppender(outputStreamAppender);
+    appenders.forEach(intuitLogger::addAppender);
   }
 
 }

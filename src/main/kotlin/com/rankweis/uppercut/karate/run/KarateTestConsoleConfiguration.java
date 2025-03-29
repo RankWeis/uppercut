@@ -14,7 +14,7 @@ public class KarateTestConsoleConfiguration extends SMTRunnerConsoleProperties i
   public KarateTestConsoleConfiguration(@NotNull RunConfiguration config,
     @NotNull String testFrameworkName, @NotNull Executor executor) {
     super(config, testFrameworkName, executor);
-    setUsePredefinedMessageFilter(false);
+    setUsePredefinedMessageFilter(true);
     setIdBasedTestTree(true);
   }
   

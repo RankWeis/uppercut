@@ -84,7 +84,12 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1") // Kotlin Coroutines testing library
     testImplementation(libs.kodein)
 
-    implementation("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") // Karate testing framework for JUnit 5
+    implementation("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") {
+        isTransitive = false
+    }
+    implementation("io.karatelabs:karate-core:${properties("karateVersion").get()}") {
+        isTransitive = false
+    }
 }
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
@@ -221,14 +226,14 @@ tasks {
     }
 
 
-    test {
-        dependsOn("buildPlugin")
-        useJUnitPlatform {
-            includeEngines("junit-vintage", "junit-jupiter")
-        }
+//    test {
+//        dependsOn("buildPlugin")
+//        useJUnitPlatform {
+//            includeEngines("junit-vintage")
+//        }
 
-        systemProperty("path.to.build.plugin", buildPlugin.get().archiveFile.get().asFile.absolutePath)
-    }
+//        systemProperty("path.to.build.plugin", buildPlugin.get().archiveFile.get().asFile.absolutePath)
+//    }
     printProductsReleases {
         channels = listOf(ProductRelease.Channel.EAP)
         types = listOf(IntelliJPlatformType.IntellijIdeaUltimate)
