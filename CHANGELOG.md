@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.4.0] - 2025-03-30
+
 ### Modified
 
 - Display of test results in console
@@ -323,7 +325,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.3.7...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/rankweis/uppercut/compare/v2.3.7...v2.4.0
 [2.3.7]: https://github.com/rankweis/uppercut/compare/v2.3.3...v2.3.7
 [2.3.6]: https://github.com/rankweis/uppercut/compare/v2.3.3...v2.3.6
 [2.3.5]: https://github.com/rankweis/uppercut/compare/v2.3.3...v2.3.5
