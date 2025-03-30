@@ -1,7 +1,6 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
-import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 
 fun properties(key: String) = providers.gradleProperty(key)
@@ -252,10 +251,6 @@ idea {
         isDownloadJavadoc = true
         isDownloadSources = true
     }
-}
-
-tasks.named("test") {
-    dependsOn(integrationTests)
 }
 
 tasks {
