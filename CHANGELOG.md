@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.4.2] - 2025-03-30
+
 ### Added
 
 - If karate-junit5 is not in the classpath, adds a default one (for version 1.5.1) into the classpath
@@ -322,7 +324,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.1...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.2...HEAD
+[2.4.2]: https://github.com/rankweis/uppercut/compare/v2.3.3...v2.4.2
 [2.4.1]: https://github.com/rankweis/uppercut/compare/v2.3.7...v2.4.1
 [2.4.0]: https://github.com/rankweis/uppercut/compare/v2.3.7...v2.4.0
 [2.3.7]: https://github.com/rankweis/uppercut/compare/v2.3.3...v2.3.7
