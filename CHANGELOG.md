@@ -4,20 +4,6 @@
 
 ## [Unreleased]
 
-## [2.4.1] - 2025-03-30
-
-### Fixed
-
-- Syntax highlight issue.
-
-### Modified
-
-- Display of test results in console
-- Nesting structure for running tests (If feature A calls feature B, B will nest under A)
-- Test Runner Console links to classpath files
-
-## [2.3.7] - 2025-03-28
-
 ### Added
 
 - If karate-junit5 is not in the classpath, adds a default one (for version 1.5.1) into the classpath
@@ -25,8 +11,15 @@
 
 ### Fixed
 
+- Syntax highlight issue.
 - Prematurely loading of classes should no longer happen
 - karate local variable no longer marks as unresolved
+
+### Modified
+
+- Display of test results in console
+- Nesting structure for running tests (If feature A calls feature B, B will nest under A)
+- Test Runner Console links to classpath files
 
 ## [2.3.3] - 2025-02-28
 
