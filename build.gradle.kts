@@ -21,6 +21,10 @@ plugins {
 // Configure project's dependencies
 repositories {
     mavenCentral()
+    maven("https://www.jetbrains.com/intellij-repository/releases")
+    maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
+    maven("https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/")
+    maven("https://download.jetbrains.com/teamcity-repository")
     intellijPlatform {
         defaultRepositories()
     }
@@ -33,8 +37,22 @@ configure<SourceSetContainer> {
     named("test") {
         java.srcDir("src/test/kotlin")
     }
+    create("integrationTest") {
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output
+    }
+    create("platformTest") {
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+    }
 }
 
+val integrationTestImplementation by configurations.getting {
+    extendsFrom(configurations.testImplementation.get())
+}
+val platformTestImplementation by configurations.getting {
+    extendsFrom(configurations.testImplementation.get())
+}
 
 dependencies {
     intellijPlatform {
@@ -48,7 +66,7 @@ dependencies {
         plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
 
         jetbrainsRuntime()
-        testFramework(TestFrameworkType.Platform)
+//        testFramework(TestFrameworkType.Platform)
     }
 
     // Plugin Module
@@ -58,31 +76,35 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:${properties("logbackVersion").get()}") // Logging framework
 
     // --- JUnit Testing Framework ---
-    testImplementation(libs.junit) // JUnit 4 support
     testImplementation(libs.junit5api) // JUnit 5 API
     testImplementation(libs.junit5Params) // JUnit 5 API
     testImplementation(libs.junitPlatformLauncher) // JUnit Platform launcher
-    testRuntimeOnly(libs.junit5engine) // JUnit 5 runtime engine
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine") // JUnit 4 compatibility engine for JUnit 5
+    integrationTestImplementation(libs.junit5engine) // JUnit 5 runtime engine
+    testImplementation("com.jetbrains.intellij.platform:test-framework:243.26053.27")
 
+    testImplementation(libs.junit) // JUnit 4 support
+    testImplementation("org.junit.vintage:junit-vintage-engine") // JUnit 4 compatibility engine for JUnit 5
 
     // --- IntelliJ Testing Tools (IDE Starter + Driver) ---
-//    testImplementation(libs.starterSquashed)
-//    testImplementation(libs.starterJunit5)
-//    testImplementation(libs.starterDriver)
-//    testImplementation(libs.driverClient)
-//    testImplementation(libs.driverSdk)
-//    testImplementation(libs.driverModel)
-//    testImplementation(libs.metricsSquashed)
-//    testImplementation(libs.metricsCollector)
-//    testImplementation(libs.ijPerformance)
-//    testImplementation(libs.ijCommon)
+    integrationTestImplementation(libs.starterSquashed)
+    integrationTestImplementation(libs.starterJunit5)
+    integrationTestImplementation(libs.starterDriver)
+    integrationTestImplementation(libs.driverClient)
+    integrationTestImplementation(libs.driverSdk)
+    integrationTestImplementation(libs.driverModel)
+    integrationTestImplementation(libs.metricsSquashed)
+    integrationTestImplementation(libs.metricsCollector)
+    integrationTestImplementation(libs.ijPerformance)
+    integrationTestImplementation(libs.ijCommon)
 
     // --- Mocking and Coroutines Testing ---
     testImplementation(libs.mockito) // Mockito for mocking in tests
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1") // Kotlin Coroutines testing library
-    testImplementation(libs.kodein)
+    integrationTestImplementation(libs.junitJupiter)
+    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.1") // Kotlin Coroutines testing library
+    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1") // Kotlin Coroutines testing library
+    integrationTestImplementation(libs.kodein)
 
+//    integrationTestImplementation("com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-EAP-SNAPSHOT")
     implementation("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") {
         isTransitive = false
     }
@@ -90,6 +112,28 @@ dependencies {
         isTransitive = false
     }
 }
+
+val integrationTests = tasks.register<Test>("integrationTest") {
+    val integrationTestSourceSet = sourceSets.getByName("integrationTest")
+    testClassesDirs = integrationTestSourceSet.output.classesDirs
+    classpath = integrationTestSourceSet.runtimeClasspath
+    systemProperty("path.to.build.plugin", tasks.prepareSandbox.get().pluginDirectory.get().asFile)
+    useJUnitPlatform {
+        excludeEngines("junit-vintage")
+        includeEngines("junit-jupiter")
+    }
+    dependsOn(tasks.prepareSandbox)
+}
+
+tasks.register<Test>("platformTest") {
+    val integrationTestSourceSet = sourceSets.getByName("platformTest")
+    testClassesDirs = integrationTestSourceSet.output.classesDirs
+    classpath = integrationTestSourceSet.runtimeClasspath
+    useJUnitPlatform {
+        includeEngines("junit-vintage")
+    }
+}
+
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
 
@@ -119,6 +163,7 @@ intellijPlatform {
         version = properties("pluginVersion")
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
+            untilBuild = providers.gradleProperty("pluginUntilBuild")
         }
         // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
         description =
@@ -172,8 +217,8 @@ intellijPlatform {
 grammarKit {
     tasks {
         generateLexer {
-            sourceFile.set(file("src/main/kotlin/io/karatelabs/js/js.jflex"))
-            targetOutputDir.set(file("src/main/kotlin/io/karatelabs/js"))
+            sourceFile.set(file("src/main/java/io/karatelabs/js/js.jflex"))
+            targetOutputDir.set(file("src/main/java/io/karatelabs/js"))
         }
     }
 }
@@ -209,6 +254,10 @@ idea {
     }
 }
 
+tasks.named("test") {
+    dependsOn(integrationTests)
+}
+
 tasks {
     wrapper {
         gradleVersion = properties("gradleVersion").get()
@@ -225,40 +274,9 @@ tasks {
     }
 
 
-//    test {
-//        dependsOn("buildPlugin")
-//        useJUnitPlatform {
-//            includeEngines("junit-vintage")
-//        }
-
-//        systemProperty("path.to.build.plugin", buildPlugin.get().archiveFile.get().asFile.absolutePath)
-//    }
     printProductsReleases {
         channels = listOf(ProductRelease.Channel.EAP)
         types = listOf(IntelliJPlatformType.IntellijIdeaUltimate)
-//        sinceBuild = "251"
         untilBuild = "251.*"
-    }
-}
-
-intellijPlatformTesting {
-    runIde {
-        register("runIdeForUiTests") {
-            task {
-                jvmArgumentProviders += CommandLineArgumentProvider {
-                    listOf(
-                        "-Drobot-server.port=8082",
-                        "-Dide.mac.message.dialogs.as.sheets=false",
-                        "-Djb.privacy.policy.text=<!--999.999-->",
-                        "-Djb.consents.confirmation.enabled=false",
-                    )
-                }
-            }
-
-            plugins {
-                robotServerPlugin()
-//                plugin("IdeaVIM", "2.19.0") // IdeaViu
-            }
-        }
     }
 }
