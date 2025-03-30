@@ -82,4 +82,16 @@ public class GherkinLexerTest extends LightPlatformTestCase {
     assertNull(lexer.getTokenType());
   }
 
+  public void testContainsCharEarlierInLine() {
+    String buffer = "* def functions = read(callme)";
+    lexer.start(buffer, 0, buffer.length(), 0);
+    assertFalse(lexer.containsCharEarlierInLine('='));
+    lexer.advance();
+    assertNotNull(lexer.getTokenType());
+    lexer.start(buffer, buffer.indexOf("function"), buffer.length(), 0);
+    assertFalse(lexer.containsCharEarlierInLine('='));
+    lexer.start(buffer, buffer.indexOf("read"), buffer.length(), 0);
+    assertTrue(lexer.containsCharEarlierInLine('='));
+  }
+
 }

@@ -385,7 +385,7 @@ public class GherkinLexer extends LexerBase {
       while (myPosition > 0 && Character.isWhitespace(myBuffer.charAt(myPosition - 1))) {
         myPosition--;
       }
-    } else if (isStringAtPosition("function") && jsLexer != null) {
+    } else if (isStringAtPosition("function") && containsCharEarlierInLine('=') && jsLexer != null) {
       int endOfFunction = findNextMatchingClosingBrace();
       if (endOfFunction < 0) {
         endOfFunction = getPositionOfNextLine();
@@ -732,6 +732,18 @@ public class GherkinLexer extends LexerBase {
     }
 
     returnWhitespace(mark);
+  }
+
+  @VisibleForTesting
+  boolean containsCharEarlierInLine(char token) {
+    int pos = myPosition;
+    while(pos >= 0 && myBuffer.charAt(pos) != '\n') {
+      if(myBuffer.charAt(pos) == token) {
+        return true;
+      }
+      pos--;
+    }
+    return false;
   }
 
   private void advanceToNextLine() {

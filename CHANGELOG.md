@@ -4,7 +4,9 @@
 
 ## [Unreleased]
 
-## [2.4.0] - 2025-03-30
+### Fixed
+
+- Syntax highlight issue.
 
 ### Modified
 
