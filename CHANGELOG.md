@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.4.3] - 2025-04-03
+
 ### Fixed
 
 - karate-config.js would sometimes fail silently, now it provides explicit warnings.
@@ -329,7 +331,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.2...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.3...HEAD
+[2.4.3]: https://github.com/rankweis/uppercut/compare/v2.4.2...v2.4.3
 [2.4.2]: https://github.com/rankweis/uppercut/compare/v2.3.3...v2.4.2
 [2.4.1]: https://github.com/rankweis/uppercut/compare/v2.3.7...v2.4.1
 [2.4.0]: https://github.com/rankweis/uppercut/compare/v2.3.7...v2.4.0
