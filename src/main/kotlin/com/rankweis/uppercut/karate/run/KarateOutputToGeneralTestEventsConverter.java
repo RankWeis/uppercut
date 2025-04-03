@@ -1,5 +1,9 @@
 package com.rankweis.uppercut.karate.run;
 
+import static com.rankweis.uppercut.karate.run.KarateOutputToGeneralTestEventsConverter.KarateConfigState.FAILED;
+import static com.rankweis.uppercut.karate.run.KarateOutputToGeneralTestEventsConverter.KarateConfigState.NO_RESULT;
+import static com.rankweis.uppercut.karate.run.KarateOutputToGeneralTestEventsConverter.KarateConfigState.SUCCEEDED;
+
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
@@ -22,6 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor;
@@ -33,17 +38,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTestEventsConverter {
 
+  enum KarateConfigState {
+    SUCCEEDED,
+    FAILED,
+    NO_RESULT
+  }
+
   TestConsoleProperties testConsoleProperties;
   private Key<?> myCurrentOutputType;
+  private KarateItem karateConfigItem;
+  private KarateConfigState karateConfigState = NO_RESULT;
   private ServiceMessageVisitor myCurrentVisitor;
   private final Map<String, LinkedList<KarateItem>> threadToScenarioStack = new HashMap<>();
   private final Map<Integer, KarateItem> idToItem = new HashMap<>();
   private String currentThreadGroup = "main";
   public static final String UPPERCUT_LOG = "^<<UPPERCUT>>";
   public static final Pattern UPPERCUT_LOG_PATTERN =
-    Pattern.compile(UPPERCUT_LOG + "\\[([^]]+)] ([\\d:.,]+) (\\w+).*\n?");
+    Pattern.compile(UPPERCUT_LOG + "\\[([^]]+)] ([\\d:.,]+) (\\w+) ?(.*)\n?");
   public static final Pattern SCENARIO_NAME =
-    Pattern.compile(UPPERCUT_LOG + "\\[([^]]*)].* Scenario name: (.*), featureFileName: (.*), id (\\d+), featureId (\\d+), (.*) <<UPPERCUT>>\n?$");
+    Pattern.compile(UPPERCUT_LOG
+      + "\\[([^]]*)].* Scenario name: (.*), featureFileName: (.*), id (\\d+), featureId (\\d+), (.*) <<UPPERCUT>>\n?$");
   public static final Pattern FEATURE_FILE_NAME =
     Pattern.compile(".*KarateTestRunner - FeatureFileName: ([^,]*), id: (\\d+), (.*) <<UPPERCUT>>\n?");
 
@@ -88,7 +102,25 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
   }
 
   private boolean processEventText(final String text) {
-    if (!UPPERCUT_LOG_PATTERN.matcher(text).matches()) {
+    Matcher matcher = UPPERCUT_LOG_PATTERN.matcher(text);
+    if (text.contains("[config]") || (karateConfigItem != null && text.contains(
+      ">> " + karateConfigItem.getName() + " failed"))) {
+
+      if (karateJsStartedFailed(text)) {
+        return true;
+      }
+    }
+
+    if (karateConfigState == NO_RESULT && karateConfigItem != null) {
+      if (text.replace("<<NEWLINE>>", "\n").matches("feature: \\S+\n?")) {
+        ServiceMessageBuilder karateConfig =
+          ServiceMessageBuilder.testSuiteFinished(karateConfigItem.getName());
+        finishMessage(karateConfig, karateConfigItem);
+        karateConfigState = SUCCEEDED;
+      }
+    }
+
+    if (!matcher.matches()) {
       return process(text);
     }
     setCurrentThread(text);
@@ -112,6 +144,28 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     } catch (ParseException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private boolean karateJsStartedFailed(String text) {
+    Pattern p = Pattern.compile("\\[config] (\\S+)\n?");
+    String karateConfigName = karateConfigItem == null ? "null" : karateConfigItem.getName();
+    Pattern failedPattern = Pattern.compile("\n>> " + karateConfigName + " failed\n");
+    Matcher m = p.matcher(text);
+    if (karateConfigItem == null && m.find()) {
+      karateConfigName = Arrays.stream(m.group(1).split(":")).toList().getLast();
+      int rand = new Random().nextInt();
+      karateConfigItem = addFeatureToTree(karateConfigName, rand);
+      return true;
+    } else if (karateConfigState == NO_RESULT && failedPattern.matcher(text.replace("<<NEWLINE>>", "\n")).find()) {
+      ServiceMessageBuilder scenarioFailed =
+        ServiceMessageBuilder.testFailed(karateConfigName)
+          .addAttribute("message", "Running config " + karateConfigName + " failed");
+      finishMessage(scenarioFailed, karateConfigItem);
+      karateConfigState = FAILED;
+      return true;
+    }
+    return false;
+
   }
 
   private boolean process(String text) {
@@ -151,6 +205,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     } else if (startOrFinish.equals("FINISH")) {
       ServiceMessageBuilder message =
         ServiceMessageBuilder.testSuiteFinished(featureName);
+
       KarateItem item = idToItem.get(id);
       if (item != null) {
         finishMessage(message, item);
@@ -160,18 +215,19 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     return false;
   }
 
-  private void addFeatureToTree(String featureName, int id) {
+  private KarateItem addFeatureToTree(String featureName, int id) {
+    KarateItem item = KarateItem.builder().id(id).name(featureName).parentId(0).build();
     ServiceMessageBuilder testStarted = ServiceMessageBuilder.testSuiteStarted(featureName);
     Arrays.stream(ModuleManager.getInstance(testConsoleProperties.getProject()).getModules())
       .flatMap(m -> Arrays.stream(ModuleRootManager.getInstance(m).getSourceRoots()))
       .map(root -> VfsUtil.findRelativeFile(featureName, root)).filter(Objects::nonNull).findFirst()
       .ifPresent(file -> testStarted.addAttribute("locationHint", "file://" + file.getPath() + ":1"));
-    KarateItem item = KarateItem.builder().id(id).name(featureName).parentId(0).build();
 
     if (!idToItem.containsKey(id)) {
       idToItem.put(id, item);
       finishMessage(testStarted, item);
     }
+    return item;
   }
 
   private boolean scenarioStartEnd(String text) {
@@ -251,6 +307,12 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
         if (!CollectionUtils.isEmpty(karateItems)) {
           karateItems.pop();
         }
+      } else if (idToItem.containsKey(featureId)) {
+        ServiceMessageBuilder scenarioFailed =
+          ServiceMessageBuilder.testFailed(featureName)
+            .addAttribute("message", startOrFinish.replace("<<NEWLINE>>", "\n"));
+        finishMessage(scenarioFailed, idToItem.get(featureId));
+        idToItem.remove(featureId);
       }
     }
     return true;

@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- karate-config.js would sometimes fail silently, now it provides explicit warnings.
+- Helpful improvements to js expression error checking.
+
 ## [2.4.2] - 2025-03-30
 
 ### Added

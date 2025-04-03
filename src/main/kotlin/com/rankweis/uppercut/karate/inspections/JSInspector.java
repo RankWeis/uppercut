@@ -10,13 +10,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JSInspector implements InspectionSuppressor {
+
   private static final Set<String> SUPPRESSED_INSPECTIONS = new HashSet<>();
 
   public void visitElement(@NotNull PsiElement element) {
   }
 
   @Override public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId) {
-    if ("karate".equals(element.getText())) {
+    if (element.getText() != null
+      && (element.getText().startsWith("karate") || element.getText().startsWith("Java"))) {
       if (toolId.equals("JSUnresolvedReference")) {
         return true;
       }
