@@ -3,6 +3,9 @@
 
 package com.rankweis.uppercut.karate.psi;
 
+import com.intellij.json.JsonElementTypes;
+import com.intellij.json.JsonTokenType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public interface KarateTokenTypes {
@@ -30,6 +33,7 @@ public interface KarateTokenTypes {
   KarateElementType PYSTRING_INCOMPLETE = new KarateElementType("PYSTRING_INCOMPLETE");
   KarateElementType SINGLE_QUOTED_STRING = new KarateElementType("SINGLE_QUOTED_STRING");
   KarateElementType DOUBLE_QUOTED_STRING = new KarateElementType("DOUBLE_QUOTED_STRING");
+  IElementType JSON_INJECTABLE = new JsonTokenType("JSON_INJECTABLE");
 
   KarateElementType PIPE = new KarateElementType("PIPE");
   KarateElementType OPEN_PAREN = new KarateElementType("OPEN_PAREN");
