@@ -5,7 +5,7 @@ junit5 = "5.12.1"
 junitPlatform = "1.12.1"
 mockito = "5.16.1"
 grammarkit = "2022.3.2.2"
-intellijStarter = "243.25659.59"
+intellijStarter = "251-EAP-SNAPSHOT"
 kodein = "7.25.0"
 
 # plugins

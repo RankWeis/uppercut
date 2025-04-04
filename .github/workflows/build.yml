@@ -122,9 +122,9 @@ jobs:
       # Run tests
       - name: Run Tests
         run: |
-          export DISPLAY=:99.0
-          Xvfb -ac :99 -screen 0 1920x1080x16 &
-          ./gradlew check -x integrationTest
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" .gradelw check
 
       # Collect Tests Result of failed tests
       - name: Collect Tests Result
