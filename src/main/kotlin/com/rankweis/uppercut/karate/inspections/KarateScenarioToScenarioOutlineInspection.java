@@ -12,13 +12,13 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.rankweis.uppercut.karate.MyBundle;
 import com.rankweis.uppercut.karate.psi.GherkinElementFactory;
-import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
 import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
 import com.rankweis.uppercut.karate.psi.GherkinFile;
 import com.rankweis.uppercut.karate.psi.GherkinKeywordTable;
 import com.rankweis.uppercut.karate.psi.GherkinScenario;
 import com.rankweis.uppercut.karate.psi.GherkinScenarioOutline;
 import com.rankweis.uppercut.karate.psi.GherkinUtil;
+import com.rankweis.uppercut.karate.psi.UppercutElementTypes;
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import java.util.Collection;
 import java.util.stream.Stream;
@@ -44,7 +44,7 @@ public final class KarateScenarioToScenarioOutlineInspection extends GherkinInsp
         }
 
         if (Stream.of(scenario.getChildren())
-          .anyMatch(p -> PsiUtilCore.getElementType(p) == GherkinElementTypes.EXAMPLES_BLOCK)) {
+          .anyMatch(p -> PsiUtilCore.getElementType(p) == UppercutElementTypes.EXAMPLES_BLOCK)) {
           holder.registerProblem(scenario, scenario.getFirstChild().getTextRangeInParent(),
             MyBundle.message("inspection.gherkin.scenario.with.examples.section.error.message"),
             Holder.CONVERT_SCENARIO_TO_OUTLINE_FIX);

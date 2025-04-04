@@ -7,7 +7,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
-import com.rankweis.uppercut.karate.lexer.GherkinLexer;
+import com.rankweis.uppercut.karate.lexer.UppercutLexer;
 import com.rankweis.uppercut.karate.psi.GherkinFeature;
 import com.rankweis.uppercut.karate.psi.GherkinFile;
 import com.rankweis.uppercut.karate.psi.GherkinFileType;
@@ -65,7 +65,7 @@ public class GherkinFileImpl extends PsiFileBase implements GherkinFile {
       if (child.getElementType() == KarateTokenTypes.COMMENT) {
         final String text = child.getText().substring(1).trim();
 
-        final String lang = GherkinLexer.fetchLocationLanguage(text);
+        final String lang = UppercutLexer.fetchLocationLanguage(text);
         if (lang != null) {
           return lang;
         }

@@ -4,9 +4,10 @@ import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.ParsingTestCase;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
 import io.karatelabs.js.KarateJsNoPluginExtension;
+import java.io.IOException;
 import java.util.List;
 
-public class KarateParserTest extends ParsingTestCase {
+public class UppercutParserTest extends ParsingTestCase {
 
   public void setUp() throws Exception {
     super.setUp();
@@ -16,15 +17,22 @@ public class KarateParserTest extends ParsingTestCase {
 
     ExtensionTestUtil.maskExtensions(KarateJavascriptParsingExtensionPoint.EP_NAME,
       List.of(new KarateJsNoPluginExtension()), getTestRootDisposable());
-
   }
 
-  public KarateParserTest() {
-    super("", "feature", true, new GherkinParserDefinition());
+  public UppercutParserTest() {
+    super("", "feature", true, new UppercutParserDefinition());
   }
 
-  public void testComplicated() {
-    doTest(false, true);
+  public void testComplicated() throws IOException {
+    try {
+      doTest(true, true);
+    } catch (Throwable t) {
+      System.out.println("UNIQUEly sITUATED");
+      String s = toParseTreeText(this.myFile, this.skipSpaces(), this.includeRanges());
+      System.out.println(s);
+      System.out.println("UNIQUELY SITUATED");
+      throw new RuntimeException(t);
+    }
   }
 
   @Override

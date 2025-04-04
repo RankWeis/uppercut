@@ -5,7 +5,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
+import com.rankweis.uppercut.karate.psi.UppercutElementTypes;
 import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
 import com.rankweis.uppercut.karate.psi.GherkinExamplesBlock;
 import com.rankweis.uppercut.karate.psi.GherkinScenarioOutline;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class GherkinScenarioOutlineImpl extends GherkinStepsHolderBase implements GherkinScenarioOutline {
-  private static final TokenSet EXAMPLES_BLOCK_FILTER = TokenSet.create(GherkinElementTypes.EXAMPLES_BLOCK);
+  private static final TokenSet EXAMPLES_BLOCK_FILTER = TokenSet.create(UppercutElementTypes.EXAMPLES_BLOCK);
 
   public GherkinScenarioOutlineImpl(@NotNull final ASTNode node) {
     super(node);

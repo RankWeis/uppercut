@@ -1,6 +1,6 @@
 package com.rankweis.uppercut.karate.psi.impl;
 
-import static com.rankweis.uppercut.karate.lexer.GherkinLexer.PYSTRING_MARKER;
+import static com.rankweis.uppercut.karate.lexer.UppercutLexer.PYSTRING_MARKER;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.LiteralTextEscaper;

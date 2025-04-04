@@ -30,6 +30,13 @@ public final class GherkinColorsPage implements ColorSettingsPage {
          Feature: Some feature
            Scenario: Some scenario
          ""\"
+         * def var = "val"
+         * def json =
+         \"""
+         {
+           "key1": "value",
+           "key2": #(var)
+         \"""
          And I want to add new cucumber step
          And Also a step with "<regexp_param>regexp</regexp_param>" parameter
          When I open <<outline_param>ruby_ide</outline_param>>
@@ -43,6 +50,8 @@ public final class GherkinColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(MyBundle.message("color.settings.gherkin.text"), GherkinHighlighter.TEXT),
     new AttributesDescriptor(MyBundle.message("color.settings.gherkin.comment"), GherkinHighlighter.COMMENT),
     new AttributesDescriptor(MyBundle.message("color.settings.gherkin.keyword"), GherkinHighlighter.KEYWORD),
+    new AttributesDescriptor(MyBundle.message("color.settings.gherkin.variable"), GherkinHighlighter.DECLARATION),
+    new AttributesDescriptor(MyBundle.message("color.settings.gherkin.json.expression"), GherkinHighlighter.KARATE_REFERENCE),
     new AttributesDescriptor("Step signifier", GherkinHighlighter.STEP_KEYWORD),
     new AttributesDescriptor(MyBundle.message("color.settings.gherkin.tag"), GherkinHighlighter.TAG),
     new AttributesDescriptor(MyBundle.message("color.settings.gherkin.pystring"), GherkinHighlighter.PYSTRING),
@@ -89,7 +98,7 @@ public final class GherkinColorsPage implements ColorSettingsPage {
   @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
-    return new GherkinSyntaxHighlighter(new PlainKarateKeywordProvider());
+    return new UppercutSyntaxHighlighter(new PlainKarateKeywordProvider());
   }
 
   @Override
