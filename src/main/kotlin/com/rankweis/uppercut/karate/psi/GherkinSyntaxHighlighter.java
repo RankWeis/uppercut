@@ -97,7 +97,7 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase {
     }
     Optional<TextAttributesKey[]> jsTextAttributesKeys =
       jsExt
-        .filter(ep -> ep.isJSLanguage(tokenType.getLanguage()))
+        .filter(ep -> ep.isJsLanguage(tokenType.getLanguage()))
         .map(KarateJavascriptParsingExtensionPoint::getJsSyntaxHighlighter)
         .map(h -> h.getTokenHighlights(tokenType))
         .filter(h -> h.length > 0);

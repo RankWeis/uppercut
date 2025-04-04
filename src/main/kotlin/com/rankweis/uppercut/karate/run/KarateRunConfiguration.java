@@ -230,13 +230,13 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   }
 
   public String getEnv() {
-    return StringUtil.isEmpty(environment) ?
-      String.valueOf(KarateSettingsState.getInstance().getDefaultEnvironment()) : environment;
+    return StringUtil.isEmpty(environment)
+      ? String.valueOf(KarateSettingsState.getInstance().getDefaultEnvironment()) : environment;
   }
 
   public String getParallelism() {
-    return StringUtil.isEmpty(parallelism) ?
-      String.valueOf(KarateSettingsState.getInstance().getDefaultParallelism()) : parallelism;
+    return StringUtil.isEmpty(parallelism)
+      ? String.valueOf(KarateSettingsState.getInstance().getDefaultParallelism()) : parallelism;
   }
 
   public void setEnv(String environment) {

@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0
+// license that can be found in the LICENSE file.
+
 package com.rankweis.uppercut.karate.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -32,6 +34,7 @@ import java.util.regex.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 public final class ScenarioToOutlineIntention implements IntentionAction {
+
   public static final String ARGUMENT = "argument";
 
   @Override
@@ -79,8 +82,9 @@ public final class ScenarioToOutlineIntention implements IntentionAction {
     assert scenario != null;
     assert file instanceof GherkinFile;
 
-    final String language = GherkinUtil.getFeatureLanguage((GherkinFile)file);
-    final GherkinKeywordTable keywordsTable = JsonGherkinKeywordProvider.getKeywordProvider().getKeywordsTable(language);
+    final String language = GherkinUtil.getFeatureLanguage((GherkinFile) file);
+    final GherkinKeywordTable keywordsTable =
+      JsonGherkinKeywordProvider.getKeywordProvider().getKeywordsTable(language);
 
     final StringBuilder newScenarioText = new StringBuilder();
     for (GherkinTag tag : scenario.getTags()) {
@@ -91,27 +95,25 @@ public final class ScenarioToOutlineIntention implements IntentionAction {
     }
     newScenarioText.append(keywordsTable.getScenarioOutlineKeyword()).append(": ").append(scenario.getScenarioName());
     Map<String, String> examples = new LinkedHashMap<>();
-    for(GherkinStep step: scenario.getSteps()) {
+    for (GherkinStep step : scenario.getSteps()) {
       CucumberStepReference reference = CucumberUtil.getCucumberStepReference(step);
       final AbstractStepDefinition definition = reference != null ? reference.resolveToDefinition() : null;
       if (definition != null) {
         String stepName = replaceVarNames(step.getName(), definition, examples);
         newScenarioText.append("\n").append(step.getKeyword().getText()).append(" ").append(stepName);
-      }
-      else {
+      } else {
         newScenarioText.append("\n").append(step.getText());
       }
     }
     newScenarioText.append("\n").append(buildExamplesSection(examples, keywordsTable.getExampleSectionKeyword()));
-
-
 
     final GherkinStepsHolder
       newScenario = GherkinElementFactory.createScenarioFromText(project, language, newScenarioText.toString());
     scenario.replace(newScenario);
   }
 
-  private static String replaceVarNames(String stepName, AbstractStepDefinition definition, Map<String, String> examples) {
+  private static String replaceVarNames(String stepName, AbstractStepDefinition definition,
+    Map<String, String> examples) {
     final List<String> varNames = definition.getVariableNames();
     if (!varNames.isEmpty()) {
       final Pattern pattern = definition.getPattern();
@@ -121,7 +123,7 @@ public final class ScenarioToOutlineIntention implements IntentionAction {
         Matcher matcher = pattern.matcher(stepName);
         if (matcher.matches()) {
           int groupCount = matcher.groupCount();
-          for(int i = 0; i < groupCount; i++) {
+          for (int i = 0; i < groupCount; i++) {
             if (matcher.group(i + 1) == null) {
               continue;
             }
@@ -131,7 +133,8 @@ public final class ScenarioToOutlineIntention implements IntentionAction {
             final int end = matcher.end(i + 1);
 
             String referencedValue = "<" + name + ">";
-            stepName = StringUtil.replaceSubstring(stepName, new TextRange(start + offset, end + offset), referencedValue);
+            stepName =
+              StringUtil.replaceSubstring(stepName, new TextRange(start + offset, end + offset), referencedValue);
             offset += referencedValue.length() - (end - start);
           }
         }

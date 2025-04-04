@@ -17,11 +17,14 @@ public class FileTypeComboboxItem {
 
   @Override
   public String toString() {
-    final String fileType = StringUtil.capitalizeWords(StringUtil.toLowerCase(myFrameworkType.getFileType().getName()), true);
+    final String fileType =
+      StringUtil.capitalizeWords(StringUtil.toLowerCase(myFrameworkType.getFileType().getName()), true);
     final String additionalInfo = myFrameworkType.getAdditionalInfo();
-    if (additionalInfo != null && (fileType.equals("Javascript") || fileType.equals("Typescript"))) return additionalInfo;
+    if (additionalInfo != null && (fileType.equals("Javascript") || fileType.equals("Typescript"))) {
+      return additionalInfo;
+    }
     // Display additional info in brackets (if exists)
-    return (additionalInfo != null ) ? String.format("%s (%s)", fileType, additionalInfo) : fileType;
+    return (additionalInfo != null) ? String.format("%s (%s)", fileType, additionalInfo) : fileType;
   }
 
   public BDDFrameworkType getFrameworkType() {

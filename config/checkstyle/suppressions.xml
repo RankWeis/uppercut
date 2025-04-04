@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC "-//Puppy Crawl//DTD Suppressions 1.1//EN"
+  "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
+<suppressions>
+  <suppress checks=".*" files=".*[\\/]io[\\/]karatelabs[\\/]js.*"/>
+  <suppress checks=".*" files=".*[Cc]ucumber.*"/>
+  <suppress checks=".*" files=".*[Gg]herkin.*"/>
+  <suppress checks=".*[Jj]ava[Dd]oc.*" files=".*.java"/>
+  <suppress checks="LocalVariableName" files=".*KarateTestRunner.*"/>
+  <suppress checks="AbbreviationAsWordInName" files=".*BDDFrameworkType.*"/>
+</suppressions>

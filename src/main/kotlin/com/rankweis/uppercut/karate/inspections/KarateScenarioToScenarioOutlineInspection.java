@@ -1,4 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.rankweis.uppercut.karate.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -26,14 +27,15 @@ import org.jetbrains.annotations.NotNull;
 public final class KarateScenarioToScenarioOutlineInspection extends GherkinInspection {
 
   private static final class Holder {
+
     static final LocalQuickFix CONVERT_SCENARIO_TO_OUTLINE_FIX = new ConvertScenarioToOutlineFix();
   }
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+    boolean isOnTheFly,
+    @NotNull LocalInspectionToolSession session) {
     return new GherkinElementVisitor() {
       @Override
       public void visitScenario(GherkinScenario scenario) {
@@ -41,16 +43,18 @@ public final class KarateScenarioToScenarioOutlineInspection extends GherkinInsp
           return;
         }
 
-        if (Stream.of(scenario.getChildren()).anyMatch(p -> PsiUtilCore.getElementType(p) == GherkinElementTypes.EXAMPLES_BLOCK)) {
+        if (Stream.of(scenario.getChildren())
+          .anyMatch(p -> PsiUtilCore.getElementType(p) == GherkinElementTypes.EXAMPLES_BLOCK)) {
           holder.registerProblem(scenario, scenario.getFirstChild().getTextRangeInParent(),
-                                 MyBundle.message("inspection.gherkin.scenario.with.examples.section.error.message"),
-                                 Holder.CONVERT_SCENARIO_TO_OUTLINE_FIX);
+            MyBundle.message("inspection.gherkin.scenario.with.examples.section.error.message"),
+            Holder.CONVERT_SCENARIO_TO_OUTLINE_FIX);
         }
       }
     };
   }
 
   private static class ConvertScenarioToOutlineFix implements LocalQuickFix {
+
     @Override
     @NotNull
     public String getFamilyName() {
@@ -59,8 +63,8 @@ public final class KarateScenarioToScenarioOutlineInspection extends GherkinInsp
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-      GherkinScenario scenario = (GherkinScenario)descriptor.getPsiElement();
-      String language = GherkinUtil.getFeatureLanguage((GherkinFile)scenario.getContainingFile());
+      GherkinScenario scenario = (GherkinScenario) descriptor.getPsiElement();
+      String language = GherkinUtil.getFeatureLanguage((GherkinFile) scenario.getContainingFile());
 
       GherkinKeywordTable keywordsTable = JsonGherkinKeywordProvider.getKeywordProvider().getKeywordsTable(language);
       Collection<String> scenarioKeywords = keywordsTable.getScenarioKeywords();

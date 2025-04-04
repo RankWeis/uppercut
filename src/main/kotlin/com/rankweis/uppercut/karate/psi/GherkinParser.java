@@ -354,7 +354,7 @@ public class GherkinParser implements PsiParser {
       }
       mark.done(TEXT_BLOCK);
     } else {
-      if (jsExt.map(j -> j.isJSLanguage(Objects.requireNonNull(builder.getTokenType()).getLanguage())).orElse(false)) {
+      if (jsExt.map(j -> j.isJsLanguage(Objects.requireNonNull(builder.getTokenType()).getLanguage())).orElse(false)) {
         parseLanguage(builder, JAVASCRIPT,
           jsExt.map(KarateJavascriptParsingExtensionPoint::parseJs).orElseThrow());
       } else if (builder.getTokenType() != null && (builder.getTokenType().getLanguage() == Json5Language.INSTANCE
@@ -477,7 +477,7 @@ public class GherkinParser implements PsiParser {
         KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().get();
     }
     return tokenType == KarateTokenTypes.PYSTRING || tokenType == PYSTRING_QUOTES
-      || ex.isJSLanguage(tokenType.getLanguage()) || tokenType.getLanguage()
+      || ex.isJsLanguage(tokenType.getLanguage()) || tokenType.getLanguage()
       .is(Json5Language.INSTANCE) || tokenType.getLanguage()
       .is(JsonLanguage.INSTANCE) || tokenType.getLanguage().is(XMLLanguage.INSTANCE);
   }

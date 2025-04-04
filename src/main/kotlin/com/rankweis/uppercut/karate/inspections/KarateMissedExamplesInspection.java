@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
+
 package com.rankweis.uppercut.karate.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -15,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public final class KarateMissedExamplesInspection extends GherkinInspection {
+
   @Override
   public boolean isEnabledByDefault() {
     return true;
@@ -40,7 +43,7 @@ public final class KarateMissedExamplesInspection extends GherkinInspection {
           if (keyword.length > 0) {
 
             holder.registerProblem(outline, keyword[0].getTextRange().shiftRight(-outline.getTextOffset()),
-                                   MyBundle.message("inspection.missed.example.msg.name"), new CucumberCreateExamplesSectionFix());
+              MyBundle.message("inspection.missed.example.msg.name"), new CucumberCreateExamplesSectionFix());
           }
         }
       }
