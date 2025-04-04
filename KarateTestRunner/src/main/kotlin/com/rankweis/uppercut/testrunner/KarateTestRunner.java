@@ -25,7 +25,8 @@ public class KarateTestRunner {
 
   final Map<String, List<String>> params = new HashMap<>();
   final Map<Object, Integer> scenarioIdMap = new ConcurrentHashMap<>();
-  final private Random random = new Random();
+
+  private final Random random = new Random();
 
   void doTest() throws Exception {
     String[] testNames =
@@ -40,36 +41,17 @@ public class KarateTestRunner {
         .map(s -> !s.startsWith("@") ? "@" + s : s)
         .toList()
         .toArray(new String[0]);
-    Optional<String> env =
-      Optional.ofNullable(params.get("environment")).orElse(List.of())
-        .stream().filter(s -> !s.isBlank())
-        .findFirst();
-    boolean debug =
-      Optional.ofNullable(params.get("debug")).flatMap(d -> d.stream().findFirst().map(Boolean::parseBoolean))
-        .orElse(false);
-    int debugPort =
-      Optional.ofNullable(params.get("debug-port")).flatMap(d -> d.stream().findFirst().map(Integer::parseInt))
-        .orElse(-1);
-    int parallelism =
-      Optional.ofNullable(params.get("parallelism"))
-        .map(l -> l.get(0))
-        .map(Integer::parseInt)
-        .orElse(1);
-
     if (tags.length == 0 && testNames.length == 0) {
       testNames = new String[]{"classpath:test-files"};
       tags = new String[]{"@Test"};
     }
 
-    Object hook = createRuntimeHook();
     Class<?> clazz = Class.forName("com.intuit.karate.junit5.Karate");
     Object invoke = clazz.getDeclaredConstructor().newInstance();
-    Method mSetHook = clazz.getMethod("hook", Class.forName("com.intuit.karate.RuntimeHook"));
     Method mRun = clazz.getMethod("path", String[].class);
     Method mTags = clazz.getMethod("tags", String[].class);
     Method mWorkingDir = clazz.getMethod("workingDir", File.class);
     Method mKarateEnv = clazz.getMethod("karateEnv", String.class);
-    Method mParallel = clazz.getMethod("parallel", int.class);
     Method mDebug = clazz.getMethod("debugMode", boolean.class);
     if (tags.length > 0) {
       invoke = mRun.invoke(invoke, new Object[]{workingDirectories});
@@ -78,10 +60,22 @@ public class KarateTestRunner {
       invoke = mRun.invoke(invoke, new Object[]{testNames});
     }
     invoke = mWorkingDir.invoke(invoke, new File(workingDirectories[0]));
+    Optional<String> env =
+      Optional.ofNullable(params.get("environment")).orElse(List.of())
+        .stream().filter(s -> !s.isBlank())
+        .findFirst();
     if (env.isPresent()) {
       mKarateEnv.invoke(invoke, env.get());
     }
+    Object hook = createRuntimeHook();
+    Method mSetHook = clazz.getMethod("hook", Class.forName("com.intuit.karate.RuntimeHook"));
     invoke = mSetHook.invoke(invoke, hook);
+    int parallelism =
+      Optional.ofNullable(params.get("parallelism"))
+        .map(l -> l.get(0))
+        .map(Integer::parseInt)
+        .orElse(1);
+    Method mParallel = clazz.getMethod("parallel", int.class);
     mParallel.invoke(invoke, parallelism);
   }
 
@@ -173,7 +167,8 @@ public class KarateTestRunner {
           Method displayField = resultInstance.getClass().getMethod("getDisplayName");
           String featureName = (String) displayField.invoke(resultInstance);
 
-          myLogger.info("FeatureFileName: {}, id: {}, {} <<UPPERCUT>>", new Object[]{featureName, featureId, startOrFinish});
+          myLogger.info("FeatureFileName: {}, id: {}, {} <<UPPERCUT>>",
+            featureName, featureId, startOrFinish);
         }
         if ("toString".equals(method.getName())) {
           return "Proxy for Interface";
@@ -218,7 +213,6 @@ public class KarateTestRunner {
 
   private static void getOutputStreamAppender() {
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    Logger intuitLogger = context.getLogger(Logger.ROOT_LOGGER_NAME);
 
     ConsoleAppender<ILoggingEvent> outputStreamAppender = new ConsoleAppender<>();
     outputStreamAppender.setContext(context);
@@ -230,6 +224,8 @@ public class KarateTestRunner {
     outputStreamAppender.setEncoder(encoder);
     outputStreamAppender.start();
     List<Appender<ILoggingEvent>> appenders = new ArrayList<>();
+
+    Logger intuitLogger = context.getLogger(Logger.ROOT_LOGGER_NAME);
     intuitLogger.iteratorForAppenders().forEachRemaining(appender -> {
       appenders.add(appender);
       intuitLogger.detachAppender(appender);

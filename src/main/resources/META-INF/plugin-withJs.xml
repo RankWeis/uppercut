@@ -6,6 +6,6 @@
       order="first"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <lang.inspectionSuppressor language="Karate" implementationClass="com.rankweis.uppercut.karate.inspections.JSInspector"/>
+    <lang.inspectionSuppressor language="Karate" implementationClass="com.rankweis.uppercut.karate.inspections.JavascriptInspector"/>
   </extensions>
 </idea-plugin>

@@ -17,12 +17,12 @@ public class KarateTestConsoleConfiguration extends SMTRunnerConsoleProperties i
     setUsePredefinedMessageFilter(true);
     setIdBasedTestTree(true);
   }
-  
+
 
   @Override public OutputToGeneralTestEventsConverter createTestEventsConverter(@NotNull String testFrameworkName,
     @NotNull TestConsoleProperties consoleProperties) {
-      return new KarateOutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties);
+    return new KarateOutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties);
   }
-  
-  
+
+
 }

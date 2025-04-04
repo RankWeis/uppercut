@@ -23,9 +23,9 @@ public class KarateParserTest extends ParsingTestCase {
     super("", "feature", true, new GherkinParserDefinition());
   }
 
-//  public void testRandom() {
-//    doTest(true, true);
-//  }
+  //  public void testRandom() {
+  //    doTest(true, true);
+  //  }
 
   public void testComplicated() {
     doTest(false, true);

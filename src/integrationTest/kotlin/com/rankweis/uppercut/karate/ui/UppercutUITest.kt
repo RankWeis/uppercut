@@ -68,8 +68,6 @@ class UppercutUITest {
             verifyConsoleResults(this, 1)
             execute(
                 CommandChain().openFile("src/test/java/karate-config.js")
-                    .waitForCodeAnalysisFinished()
-                    .waitForSmartMode()
             )
             ideFrame {
                 this.codeEditor {
@@ -78,8 +76,6 @@ class UppercutUITest {
             }
             execute(
                 CommandChain().openFile("src/test/java/nested/test.feature")
-                    .waitForCodeAnalysisFinished()
-                    .waitForSmartMode()
             )
             ideFrame {
                 val frame = this;

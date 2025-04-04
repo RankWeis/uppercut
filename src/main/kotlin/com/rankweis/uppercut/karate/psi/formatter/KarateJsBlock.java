@@ -224,12 +224,10 @@ public class KarateJsBlock implements ASTBlock {
     }
     IElementType elem1 = node1.getElementType();
     IElementType elem2 = node2.getElementType();
-    boolean makeChange = false;
-    boolean keepLineFeeds = true;
     int spaces = 0;
-    int lineFeeds = 0;
-    if (BLOCKS_TO_NOT_SPACE_BEFORE.contains(elem2) ||
-      BLOCKS_TO_NOT_SPACE_AFTER.contains(elem1)) {
+    boolean makeChange = false;
+    if (BLOCKS_TO_NOT_SPACE_BEFORE.contains(elem2)
+      || BLOCKS_TO_NOT_SPACE_AFTER.contains(elem1)) {
       makeChange = true;
     }
     if ((elem1 == getElement(FUNCTION) || elem1 == getElement(IDENT))
@@ -250,6 +248,7 @@ public class KarateJsBlock implements ASTBlock {
       spaces = 1;
     }
 
+    int lineFeeds = 0;
     if ((BLOCKS_TO_LINE_FEED_BEFORE.contains(elem2)
       || (BLOCKS_TO_LINE_FEED_AFTER.contains(elem1) && elem2 != getElement(L_COMMENT))
       || (elem1 == getElement(L_CURLY) && node1.getTreeParent().getElementType() == getType(BLOCK)))
@@ -258,6 +257,7 @@ public class KarateJsBlock implements ASTBlock {
       lineFeeds = 1;
     }
 
+    boolean keepLineFeeds = true;
     if (BLOCKS_TO_NOT_LINE_FEED_BEFORE.contains(elem2)) {
       keepLineFeeds = false;
       lineFeeds = 0;
@@ -298,10 +298,10 @@ public class KarateJsBlock implements ASTBlock {
     if (!(o instanceof KarateJsBlock that)) {
       return false;
     }
-    return myLeaf == that.myLeaf && isSingleLine == that.isSingleLine && Objects.equals(myNode, that.myNode) &&
-      Objects.equals(myIndent, that.myIndent) && Objects.equals(myChildrenIndent, that.myChildrenIndent) &&
-      Objects.equals(alignment, that.alignment) && Objects.equals(myTextRange, that.myTextRange) && Objects.equals(
-      myWrap, that.myWrap) && Objects.equals(myChildren, that.myChildren);
+    return myLeaf == that.myLeaf && isSingleLine == that.isSingleLine && Objects.equals(myNode, that.myNode)
+      && Objects.equals(myIndent, that.myIndent) && Objects.equals(myChildrenIndent, that.myChildrenIndent)
+      && Objects.equals(alignment, that.alignment) && Objects.equals(myTextRange, that.myTextRange)
+      && Objects.equals(myWrap, that.myWrap) && Objects.equals(myChildren, that.myChildren);
   }
 
   @Override

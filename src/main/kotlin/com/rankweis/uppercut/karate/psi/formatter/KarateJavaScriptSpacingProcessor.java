@@ -27,7 +27,8 @@ public class KarateJavaScriptSpacingProcessor extends JSSpacingProcessor {
     if (keepOneLine && (this.type1 == JSTokenTypes.LBRACE || this.type2 == JSTokenTypes.RBRACE)) {
       int blankLinesSetting = this.myCommonSettings.KEEP_BLANK_LINES_IN_CODE;
       int minSpaces = myCommonSettings.SPACE_WITHIN_BRACES ? 1 : 0;
-      this.myResult = Spacing.createDependentLFSpacing(minSpaces, 1, this.myParent.getTextRange(), this.myCommonSettings.KEEP_LINE_BREAKS, blankLinesSetting);
+      this.myResult = Spacing.createDependentLFSpacing(minSpaces, 1, this.myParent.getTextRange(),
+        this.myCommonSettings.KEEP_LINE_BREAKS, blankLinesSetting);
     } else {
       super.processBlock(blankLinesAroundFunction);
     }

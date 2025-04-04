@@ -146,7 +146,7 @@ public class GherkinBlock implements ASTBlock {
         jsExt = KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst();
       }
     if (myNode.getElementType() == JAVASCRIPT
-      || jsExt.map(ext -> ext.isJSLanguage(myNode.getElementType().getLanguage())).orElse(false)) {
+      || jsExt.map(ext -> ext.isJsLanguage(myNode.getElementType().getLanguage())).orElse(false)) {
       return jsExt.map(extension -> extension.getJsSubBlocks(myNode, alignment))
         .orElse(result);
     }

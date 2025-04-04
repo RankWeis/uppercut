@@ -41,7 +41,7 @@ public class KarateJsNoPluginExtension implements KarateJavascriptParsingExtensi
     }
   }
 
-  @Override public boolean isJSLanguage(Language l) {
+  @Override public boolean isJsLanguage(Language l) {
     return KarateJsLanguage.INSTANCE == l;
   }
 }

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class KarateParenElement extends GherkinPsiElementBase implements PsiNameIdentifierOwner, 
+public class KarateParenElement extends GherkinPsiElementBase implements PsiNameIdentifierOwner,
   GherkinPsiElement, GherkinSuppressionHolder, PomTarget, KarateNamedElement {
 
   ConcurrentLinkedQueue<PsiReference> references = new ConcurrentLinkedQueue<>();
@@ -42,7 +42,7 @@ public class KarateParenElement extends GherkinPsiElementBase implements PsiName
   @Override public PsiReference findReferenceAt(int offset) {
     return super.findReferenceAt(offset);
   }
-  
+
   public void addReference(PsiReference reference) {
     this.references.add(reference);
   }
@@ -50,11 +50,11 @@ public class KarateParenElement extends GherkinPsiElementBase implements PsiName
   @Override protected void acceptGherkin(GherkinElementVisitor gherkinElementVisitor) {
     gherkinElementVisitor.visitElement(this);
   }
-  
+
   @Override public @Nullable PsiElement getNameIdentifier() {
     ASTNode keyNode = getNode().findChildByType(OPEN_PAREN);
     PsiElement element = Objects.requireNonNull(keyNode).getPsi();
-    while(element != null) {
+    while (element != null) {
       element = element.getNextSibling();
       if (element instanceof PsiWhiteSpace) {
         continue;
@@ -63,7 +63,7 @@ public class KarateParenElement extends GherkinPsiElementBase implements PsiName
     }
     return element;
   }
-  
+
   @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     ASTNode keyNode = this.getNode().findChildByType(OPEN_PAREN);
