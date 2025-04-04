@@ -53,6 +53,13 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/rpiterman">
+                    <img src="https://avatars.githubusercontent.com/u/1968526?v=4" width="100;" alt="rpiterman"/>
+                    <br />
+                    <sub><b>rpiterman</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/RankWeis">
                     <img src="https://avatars.githubusercontent.com/u/733691?v=4" width="100;" alt="RankWeis"/>
                     <br />
