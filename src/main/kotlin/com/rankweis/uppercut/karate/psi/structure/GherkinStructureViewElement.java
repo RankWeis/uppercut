@@ -6,7 +6,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.PsiElement;
-import com.rankweis.uppercut.karate.KarateIcons;
+import com.rankweis.uppercut.karate.UppercutIcon;
 import com.rankweis.uppercut.karate.psi.GherkinFeature;
 import com.rankweis.uppercut.karate.psi.GherkinPsiElement;
 import com.rankweis.uppercut.karate.psi.GherkinPystring;
@@ -52,7 +52,7 @@ public class GherkinStructureViewElement extends PsiTreeElementBase<PsiElement> 
       return AllIcons.Nodes.LogFolder;
     }
     if (element instanceof GherkinStep) {
-      return KarateIcons.FILE;
+      return UppercutIcon.FILE;
     }
     return null;
   }

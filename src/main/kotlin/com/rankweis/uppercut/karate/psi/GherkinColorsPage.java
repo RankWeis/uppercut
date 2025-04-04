@@ -5,7 +5,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.rankweis.uppercut.karate.KarateIcons;
+import com.rankweis.uppercut.karate.UppercutIcon;
 import com.rankweis.uppercut.karate.MyBundle;
 import java.util.Map;
 import javax.swing.Icon;
@@ -73,7 +73,7 @@ public final class GherkinColorsPage implements ColorSettingsPage {
   @Override
   @NotNull
   public Icon getIcon() {
-    return KarateIcons.FILE;
+    return UppercutIcon.FILE;
   }
 
   @Override

@@ -2,7 +2,7 @@
 package com.rankweis.uppercut.karate.psi;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.rankweis.uppercut.karate.KarateIcons;
+import com.rankweis.uppercut.karate.UppercutIcon;
 import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +34,6 @@ public final class KarateJsFileType extends LanguageFileType {
 
   @Override
   public Icon getIcon() {
-    return KarateIcons.FILE;
+    return UppercutIcon.FILE;
   }
 }
