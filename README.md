@@ -41,7 +41,7 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
 
 ## Collaborators
 
-<!-- readme: calvario31,collaborators -start -->
+<!-- readme: calvario31,rpiterman,collaborators -start -->
 <table>
 	<tbody>
 		<tr>
@@ -62,7 +62,7 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
 		</tr>
 	<tbody>
 </table>
-<!-- readme: calvario31,collaborators -end -->
+<!-- readme: calvario31,rpiterman,collaborators -end -->
 
 ## Contributors
 
