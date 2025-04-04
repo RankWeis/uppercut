@@ -21,13 +21,13 @@ jobs:
         include:
           - os: ubuntu-latest
             runIde: |
-              export DISPLAY=:99.0
-              Xvfb -ac :99 -screen 0 1920x1080x16 &
-              gradle runIdeForUiTests &
+              sudo apt-get update
+              sudo apt-get install -y xvfb
+              xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" ./gradlew check
           - os: windows-latest
-            runIde: start gradlew.bat runIdeForUiTests
+            runIde: start gradlew.bat check
           - os: macos-latest
-            runIde: ./gradlew runIdeForUiTests &
+            runIde: ./gradlew check
 
     steps:
 
@@ -49,17 +49,5 @@ jobs:
           gradle-home-cache-cleanup: true
 
       # Run IDEA prepared for UI testing
-      - name: Run IDE
+      - name: Run Test
         run: ${{ matrix.runIde }}
-
-      # Wait for IDEA to be started
-      - name: Health Check
-        uses: jtalk/url-health-check-action@v4
-        with:
-          url: http://127.0.0.1:8082
-          max-attempts: 15
-          retry-delay: 30s
-
-      # Run tests
-      - name: Tests
-        run: ./gradlew test
