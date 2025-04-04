@@ -1,6 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
 import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.JSON;
@@ -37,7 +35,6 @@ import com.rankweis.uppercut.karate.psi.impl.GherkinTagImpl;
 import org.jetbrains.annotations.NotNull;
 
 public final class UppercutParserDefinition implements ParserDefinition {
-
   public static final IFileElementType KARATE_FILE = new IFileElementType(KarateLanguage.INSTANCE);
 
   @Override
@@ -71,48 +68,20 @@ public final class UppercutParserDefinition implements ParserDefinition {
   @Override
   @NotNull
   public PsiElement createElement(ASTNode node) {
-    if (node.getElementType() == UppercutElementTypes.FEATURE) {
-      return new GherkinFeatureImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.FEATURE_HEADER) {
-      return new GherkinFeatureHeaderImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.SCENARIO) {
-      return new GherkinScenarioImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.STEP) {
-      return new GherkinStepImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.SCENARIO_OUTLINE) {
-      return new GherkinScenarioOutlineImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.RULE) {
-      return new GherkinRuleImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.EXAMPLES_BLOCK) {
-      return new GherkinExamplesBlockImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.TABLE) {
-      return new GherkinTableImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.TABLE_ROW) {
-      return new GherkinTableRowImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.TABLE_CELL) {
-      return new GherkinTableCellImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.TABLE_HEADER_ROW) {
-      return new GherkinTableHeaderRowImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.TAG) {
-      return new GherkinTagImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.STEP_PARAMETER) {
-      return new GherkinStepParameterImpl(node);
-    }
-    if (node.getElementType() == UppercutElementTypes.PYSTRING) {
-      return new GherkinPystringImpl(node);
-    }
+    if (node.getElementType() == UppercutElementTypes.FEATURE) return new GherkinFeatureImpl(node);
+    if (node.getElementType() == UppercutElementTypes.FEATURE_HEADER) return new GherkinFeatureHeaderImpl(node);
+    if (node.getElementType() == UppercutElementTypes.SCENARIO) return new GherkinScenarioImpl(node);
+    if (node.getElementType() == UppercutElementTypes.STEP) return new GherkinStepImpl(node);
+    if (node.getElementType() == UppercutElementTypes.SCENARIO_OUTLINE) return new GherkinScenarioOutlineImpl(node);
+    if (node.getElementType() == UppercutElementTypes.RULE) return new GherkinRuleImpl(node);
+    if (node.getElementType() == UppercutElementTypes.EXAMPLES_BLOCK) return new GherkinExamplesBlockImpl(node);
+    if (node.getElementType() == UppercutElementTypes.TABLE) return new GherkinTableImpl(node);
+    if (node.getElementType() == UppercutElementTypes.TABLE_ROW) return new GherkinTableRowImpl(node);
+    if (node.getElementType() == UppercutElementTypes.TABLE_CELL) return new GherkinTableCellImpl(node);
+    if (node.getElementType() == UppercutElementTypes.TABLE_HEADER_ROW) return new GherkinTableHeaderRowImpl(node);
+    if (node.getElementType() == UppercutElementTypes.TAG) return new GherkinTagImpl(node);
+    if (node.getElementType() == UppercutElementTypes.STEP_PARAMETER) return new GherkinStepParameterImpl(node);
+    if (node.getElementType() == UppercutElementTypes.PYSTRING) return new GherkinPystringImpl(node);
     if (node.getElementType() == UppercutElementTypes.DECLARATION
       || node.getElementType() == UppercutElementTypes.VARIABLE) {
       return new KarateDeclaration(node);
@@ -120,7 +89,7 @@ public final class UppercutParserDefinition implements ParserDefinition {
     if (node.getElementType() == UppercutElementTypes.PAREN_ELEMENT) {
       return new KarateParenElement(node);
     }
-    if (node.getElementType() == UppercutElementTypes.JAVASCRIPT) {
+    if ( node.getElementType() == UppercutElementTypes.JAVASCRIPT) {
       return new KarateEmbeddedJavascriptElement(node);
     } else if (node.getElementType() == JSON) {
       return new KarateEmbeddedJsonElement(node);
