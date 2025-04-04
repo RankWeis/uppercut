@@ -118,7 +118,6 @@ class UppercutUITest {
             runBlocking {
                 delay(delay)
                 waitFor(timeout = 90.seconds) {
-                    waitForProjectOpen(1.minutes)
                     val project = driver2.getOpenProjects().first()
                     driver2.getRunContentManagerRef(project).getAllDescriptors().isNotEmpty()
                 }
