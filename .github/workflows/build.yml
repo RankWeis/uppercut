@@ -196,7 +196,7 @@ jobs:
     name: Release draft
     runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' && github.event_name != 'pull_request' }}
-    needs: [ build, test, inspectCode ]
+    needs: [ build, test, verify ]
     permissions:
       contents: write
     steps:
