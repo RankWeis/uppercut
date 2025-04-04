@@ -78,8 +78,6 @@ class UppercutUITest {
             }
             execute(
                 CommandChain().openFile("src/test/java/nested/test.feature")
-                    .waitForCodeAnalysisFinished()
-                    .waitForSmartMode()
             )
             ideFrame {
                 val frame = this;
