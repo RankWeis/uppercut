@@ -39,58 +39,56 @@ class UppercutUITest {
 
     @Test
     fun runGutterTest() {
-        runTest {
-            val sdk = JdkDownloaderFacade.jdk21.toSdk()
-            Starter.newContext(
-                "runGutter",
-                IdeaUltimateCases.IntellijKarateTestCase
-            ).prepareProjectCleanImport().apply {
-                val pathToPlugin = System.getProperty("path.to.build.plugin")
-                PluginConfigurator(this).installPluginFromFolder(File(pathToPlugin))
-            }.setupSdk(sdk).runIdeWithDriver().useDriverAndCloseIde {
-                execute(
-                    CommandChain().openFile("src/test/java/nested/test.feature")
-                        .waitForCodeAnalysisFinished()
-                        .waitForSmartMode()
-                )
-                ideFrame {
-                    clickRunTest(this)
-                }
-                runTests(this)
-                verifyConsoleResults(this)
-                ideFrame {
-                    val frame = this;
-                    this.codeEditor {
-                        this.text = this.text.replace("1e9", "1")
-                        clickRunTest(frame)
-                    }
-                }
-                runTests(this, 3000.milliseconds)
-                verifyConsoleResults(this, 1)
-                execute(
-                    CommandChain().openFile("src/test/java/karate-config.js")
-                        .waitForCodeAnalysisFinished()
-                        .waitForSmartMode()
-                )
-                ideFrame {
-                    this.codeEditor {
-                        this.text = this.text.replace("// Java.type", "Java.type")
-                    }
-                }
-                execute(
-                    CommandChain().openFile("src/test/java/nested/test.feature")
-                        .waitForCodeAnalysisFinished()
-                        .waitForSmartMode()
-                )
-                ideFrame {
-                    val frame = this;
-                    this.codeEditor {
-                        clickRunTest(frame)
-                    }
-                }
-                runTests(this, 3000.milliseconds)
-                verifyConsoleResults(this, 2, 0, 1)
+        val sdk = JdkDownloaderFacade.jdk21.toSdk()
+        Starter.newContext(
+            "runGutter",
+            IdeaUltimateCases.IntellijKarateTestCase
+        ).prepareProjectCleanImport().apply {
+            val pathToPlugin = System.getProperty("path.to.build.plugin")
+            PluginConfigurator(this).installPluginFromFolder(File(pathToPlugin))
+        }.setupSdk(sdk).runIdeWithDriver().useDriverAndCloseIde {
+            execute(
+                CommandChain().openFile("src/test/java/nested/test.feature")
+                    .waitForCodeAnalysisFinished()
+                    .waitForSmartMode()
+            )
+            ideFrame {
+                clickRunTest(this)
             }
+            runTests(this)
+            verifyConsoleResults(this)
+            ideFrame {
+                val frame = this;
+                this.codeEditor {
+                    this.text = this.text.replace("1e9", "1")
+                    clickRunTest(frame)
+                }
+            }
+            runTests(this, 3000.milliseconds)
+            verifyConsoleResults(this, 1)
+            execute(
+                CommandChain().openFile("src/test/java/karate-config.js")
+                    .waitForCodeAnalysisFinished()
+                    .waitForSmartMode()
+            )
+            ideFrame {
+                this.codeEditor {
+                    this.text = this.text.replace("// Java.type", "Java.type")
+                }
+            }
+            execute(
+                CommandChain().openFile("src/test/java/nested/test.feature")
+                    .waitForCodeAnalysisFinished()
+                    .waitForSmartMode()
+            )
+            ideFrame {
+                val frame = this;
+                this.codeEditor {
+                    clickRunTest(frame)
+                }
+            }
+            runTests(this, 3000.milliseconds)
+            verifyConsoleResults(this, 2, 0, 1)
         }
     }
 
