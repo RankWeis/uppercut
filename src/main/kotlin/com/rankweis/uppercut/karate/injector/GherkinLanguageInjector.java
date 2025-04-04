@@ -2,7 +2,7 @@
 // found in the LICENSE file.
 package com.rankweis.uppercut.karate.injector;
 
-import static com.rankweis.uppercut.karate.lexer.GherkinLexer.PYSTRING_MARKER;
+import static com.rankweis.uppercut.karate.lexer.UppercutLexer.PYSTRING_MARKER;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;

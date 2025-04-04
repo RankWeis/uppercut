@@ -4,7 +4,7 @@ package com.rankweis.uppercut.karate.psi;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
-public interface GherkinElementTypes {
+public interface UppercutElementTypes {
   IElementType FEATURE = new KarateElementType("feature");
   IElementType FEATURE_HEADER = new KarateElementType("feature header");
   IElementType SCENARIO = new KarateElementType("scenario");

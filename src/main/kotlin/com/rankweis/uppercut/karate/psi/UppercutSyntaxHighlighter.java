@@ -26,7 +26,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
-import com.rankweis.uppercut.karate.lexer.GherkinLexer;
+import com.rankweis.uppercut.karate.lexer.UppercutLexer;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
 import com.rankweis.uppercut.karate.lexer.impl.KarateJavascriptExtension;
 import com.rankweis.uppercut.settings.KarateSettingsState;
@@ -37,7 +37,7 @@ import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
 
-public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase {
+public class UppercutSyntaxHighlighter extends SyntaxHighlighterBase {
 
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<>();
   private static final Json5SyntaxHighlightingFactory JSON_HIGHLIGHTER = new Json5SyntaxHighlightingFactory();
@@ -47,11 +47,11 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase {
   private VirtualFile virtualFile;
   private final GherkinKeywordProvider myKeywordProvider;
 
-  public GherkinSyntaxHighlighter(GherkinKeywordProvider keywordProvider) {
+  public UppercutSyntaxHighlighter(GherkinKeywordProvider keywordProvider) {
     myKeywordProvider = keywordProvider;
   }
 
-  public GherkinSyntaxHighlighter(Project project, VirtualFile virtualFile, GherkinKeywordProvider keywordProvider) {
+  public UppercutSyntaxHighlighter(Project project, VirtualFile virtualFile, GherkinKeywordProvider keywordProvider) {
     this.project = project;
     this.virtualFile = virtualFile;
     myKeywordProvider = keywordProvider;
@@ -78,12 +78,13 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase {
     ATTRIBUTES.put(PIPE, GherkinHighlighter.PIPE);
     ATTRIBUTES.put(SINGLE_QUOTED_STRING, GherkinHighlighter.QUOTE);
     ATTRIBUTES.put(DOUBLE_QUOTED_STRING, GherkinHighlighter.QUOTE);
+    ATTRIBUTES.put(KarateTokenTypes.JSON_INJECTABLE, GherkinHighlighter.KARATE_REFERENCE);
   }
 
   @Override
   @NotNull
   public Lexer getHighlightingLexer() {
-    return new GherkinLexer(myKeywordProvider, true);
+    return new UppercutLexer(myKeywordProvider, true);
   }
 
   @Override

@@ -1,6 +1,6 @@
 package io.karatelabs.js;
 
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.JAVASCRIPT;
 
 import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Block;

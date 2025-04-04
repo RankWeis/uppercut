@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.TEXT_BLOCK;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.JSON;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.TEXT_BLOCK;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
@@ -16,7 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
-import com.rankweis.uppercut.karate.lexer.GherkinLexer;
+import com.rankweis.uppercut.karate.lexer.UppercutLexer;
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import com.rankweis.uppercut.karate.psi.impl.GherkinExamplesBlockImpl;
 import com.rankweis.uppercut.karate.psi.impl.GherkinFeatureHeaderImpl;
@@ -34,23 +34,23 @@ import com.rankweis.uppercut.karate.psi.impl.GherkinTableRowImpl;
 import com.rankweis.uppercut.karate.psi.impl.GherkinTagImpl;
 import org.jetbrains.annotations.NotNull;
 
-public final class GherkinParserDefinition implements ParserDefinition {
-  public static final IFileElementType GHERKIN_FILE = new IFileElementType(KarateLanguage.INSTANCE);
+public final class UppercutParserDefinition implements ParserDefinition {
+  public static final IFileElementType KARATE_FILE = new IFileElementType(KarateLanguage.INSTANCE);
 
   @Override
   @NotNull
   public Lexer createLexer(Project project) {
-    return new GherkinLexer(JsonGherkinKeywordProvider.getKeywordProvider(true));
+    return new UppercutLexer(JsonGherkinKeywordProvider.getKeywordProvider(true));
   }
 
   @Override
   public @NotNull PsiParser createParser(Project project) {
-    return new GherkinParser();
+    return new UppercutParser();
   }
 
   @Override
   public @NotNull IFileElementType getFileNodeType() {
-    return GHERKIN_FILE;
+    return KARATE_FILE;
   }
 
   @Override
@@ -68,32 +68,32 @@ public final class GherkinParserDefinition implements ParserDefinition {
   @Override
   @NotNull
   public PsiElement createElement(ASTNode node) {
-    if (node.getElementType() == GherkinElementTypes.FEATURE) return new GherkinFeatureImpl(node);
-    if (node.getElementType() == GherkinElementTypes.FEATURE_HEADER) return new GherkinFeatureHeaderImpl(node);
-    if (node.getElementType() == GherkinElementTypes.SCENARIO) return new GherkinScenarioImpl(node);
-    if (node.getElementType() == GherkinElementTypes.STEP) return new GherkinStepImpl(node);
-    if (node.getElementType() == GherkinElementTypes.SCENARIO_OUTLINE) return new GherkinScenarioOutlineImpl(node);
-    if (node.getElementType() == GherkinElementTypes.RULE) return new GherkinRuleImpl(node);
-    if (node.getElementType() == GherkinElementTypes.EXAMPLES_BLOCK) return new GherkinExamplesBlockImpl(node);
-    if (node.getElementType() == GherkinElementTypes.TABLE) return new GherkinTableImpl(node);
-    if (node.getElementType() == GherkinElementTypes.TABLE_ROW) return new GherkinTableRowImpl(node);
-    if (node.getElementType() == GherkinElementTypes.TABLE_CELL) return new GherkinTableCellImpl(node);
-    if (node.getElementType() == GherkinElementTypes.TABLE_HEADER_ROW) return new GherkinTableHeaderRowImpl(node);
-    if (node.getElementType() == GherkinElementTypes.TAG) return new GherkinTagImpl(node);
-    if (node.getElementType() == GherkinElementTypes.STEP_PARAMETER) return new GherkinStepParameterImpl(node);
-    if (node.getElementType() == GherkinElementTypes.PYSTRING) return new GherkinPystringImpl(node);
-    if (node.getElementType() == GherkinElementTypes.DECLARATION
-      || node.getElementType() == GherkinElementTypes.VARIABLE) {
+    if (node.getElementType() == UppercutElementTypes.FEATURE) return new GherkinFeatureImpl(node);
+    if (node.getElementType() == UppercutElementTypes.FEATURE_HEADER) return new GherkinFeatureHeaderImpl(node);
+    if (node.getElementType() == UppercutElementTypes.SCENARIO) return new GherkinScenarioImpl(node);
+    if (node.getElementType() == UppercutElementTypes.STEP) return new GherkinStepImpl(node);
+    if (node.getElementType() == UppercutElementTypes.SCENARIO_OUTLINE) return new GherkinScenarioOutlineImpl(node);
+    if (node.getElementType() == UppercutElementTypes.RULE) return new GherkinRuleImpl(node);
+    if (node.getElementType() == UppercutElementTypes.EXAMPLES_BLOCK) return new GherkinExamplesBlockImpl(node);
+    if (node.getElementType() == UppercutElementTypes.TABLE) return new GherkinTableImpl(node);
+    if (node.getElementType() == UppercutElementTypes.TABLE_ROW) return new GherkinTableRowImpl(node);
+    if (node.getElementType() == UppercutElementTypes.TABLE_CELL) return new GherkinTableCellImpl(node);
+    if (node.getElementType() == UppercutElementTypes.TABLE_HEADER_ROW) return new GherkinTableHeaderRowImpl(node);
+    if (node.getElementType() == UppercutElementTypes.TAG) return new GherkinTagImpl(node);
+    if (node.getElementType() == UppercutElementTypes.STEP_PARAMETER) return new GherkinStepParameterImpl(node);
+    if (node.getElementType() == UppercutElementTypes.PYSTRING) return new GherkinPystringImpl(node);
+    if (node.getElementType() == UppercutElementTypes.DECLARATION
+      || node.getElementType() == UppercutElementTypes.VARIABLE) {
       return new KarateDeclaration(node);
     }
-    if (node.getElementType() == GherkinElementTypes.PAREN_ELEMENT) {
+    if (node.getElementType() == UppercutElementTypes.PAREN_ELEMENT) {
       return new KarateParenElement(node);
     }
-    if ( node.getElementType() == GherkinElementTypes.JAVASCRIPT) {
+    if ( node.getElementType() == UppercutElementTypes.JAVASCRIPT) {
       return new KarateEmbeddedJavascriptElement(node);
     } else if (node.getElementType() == JSON) {
       return new KarateEmbeddedJsonElement(node);
-    } else if (node.getElementType() == GherkinElementTypes.XML) {
+    } else if (node.getElementType() == UppercutElementTypes.XML) {
       return new KarateEmbeddedJavascriptElement(node);
     } else if (node.getElementType() == TEXT_BLOCK) {
       return new GherkinPystringImpl(node);

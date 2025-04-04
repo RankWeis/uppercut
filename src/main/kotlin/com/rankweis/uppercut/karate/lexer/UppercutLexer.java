@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 
-public class GherkinLexer extends LexerBase {
+public class UppercutLexer extends LexerBase {
 
   protected CharSequence myBuffer = Strings.EMPTY_CHAR_SEQUENCE;
   protected int myStartOffset = 0;
@@ -80,11 +80,11 @@ public class GherkinLexer extends LexerBase {
   Lexer jsonLexer = null;
   Lexer xmlLexer = null;
 
-  public GherkinLexer(GherkinKeywordProvider provider) {
+  public UppercutLexer(GherkinKeywordProvider provider) {
     this(provider, false);
   }
 
-  public GherkinLexer(GherkinKeywordProvider provider, boolean highlighting) {
+  public UppercutLexer(GherkinKeywordProvider provider, boolean highlighting) {
     myKeywordProvider = provider;
     boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
     if (useInternalEngine) {
@@ -515,6 +515,30 @@ public class GherkinLexer extends LexerBase {
     }
   }
 
+  @VisibleForTesting
+  int findNextMatchingClosingParen() {
+    int pos = myPosition;
+    int closingBracesRequired = 0;
+    while (pos < myEndOffset) {
+      if (myBuffer.charAt(pos) == '(') {
+        closingBracesRequired++;
+      } else if (myBuffer.charAt(pos) == ')') {
+        closingBracesRequired--;
+        if (closingBracesRequired <= 0) {
+          break;
+        }
+      }
+      pos++;
+    }
+
+    pos = Math.max(Math.min(pos, myEndOffset - 1), 0);
+    if (myBuffer.charAt(pos) != ')') {
+      return -1;
+    } else {
+      return pos;
+    }
+  }
+
   private boolean handleKeywords() {
     for (String keyword : myKeywords) {
       int length = keyword.length();
@@ -639,11 +663,11 @@ public class GherkinLexer extends LexerBase {
   }
 
   private void injectJson() {
-    if (isStringAtPosition("#{")) {
-      int closingBrace = Math.min(findNextMatchingClosingBrace() + 1, myEndOffset);
+    if (isStringAtPosition("#(")) {
+      int closingBrace = Math.min(findNextMatchingClosingParen() + 1, myEndOffset);
       if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim()
-        .matches("#\\{\\S+}")) {
-        myCurrentToken = JsonElementTypes.IDENTIFIER;
+        .matches("#\\(\\S+\\)")) {
+        myCurrentToken = JSON_INJECTABLE;
         myPosition = closingBrace;
         while(jsonLexer.getTokenEnd() < closingBrace) {
           jsonLexer.advance();
@@ -651,11 +675,11 @@ public class GherkinLexer extends LexerBase {
         return;
       }
     }
-    if (isStringAtPosition("\"#{")) {
-      int closingBrace = Math.min(findNextMatchingClosingBrace() + 2, myEndOffset);
+    if (isStringAtPosition("\"#(")) {
+      int closingBrace = Math.min(findNextMatchingClosingParen() + 2, myEndOffset);
       if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim()
-        .matches("\"#\\{\\S+}\"")) {
-        myCurrentToken = JsonElementTypes.IDENTIFIER;
+        .matches("\"#\\(\\S+\\)\"")) { // "#
+        myCurrentToken = JSON_INJECTABLE;
         myPosition = closingBrace;
         while(jsonLexer.getTokenEnd() < closingBrace) {
           jsonLexer.advance();

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi.impl;
 
-import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
+import com.rankweis.uppercut.karate.psi.UppercutElementTypes;
 import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
 import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.rankweis.uppercut.karate.psi.GherkinTableRow;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class GherkinTableImpl extends GherkinPsiElementBase implements GherkinTable {
-  private static final TokenSet HEADER_ROW_TOKEN_SET = TokenSet.create(GherkinElementTypes.TABLE_HEADER_ROW);
+  private static final TokenSet HEADER_ROW_TOKEN_SET = TokenSet.create(UppercutElementTypes.TABLE_HEADER_ROW);
 
   public GherkinTableImpl(@NotNull final ASTNode node) {
     super(node);

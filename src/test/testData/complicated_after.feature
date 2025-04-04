@@ -278,3 +278,13 @@ Feature: Nested JSON and Dynamic Expressions
       }
     }
   }
+
+  Scenario: JSON expression syntax
+    Given var = "Hello"
+    Given a =
+    """
+    {
+      "withoutQuotes": #(var),
+      "withQuotes": "#(var)"
+    }
+    """

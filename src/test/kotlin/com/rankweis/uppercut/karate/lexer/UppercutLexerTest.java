@@ -5,9 +5,9 @@ import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-public class GherkinLexerTest extends LightPlatformTestCase {
+public class UppercutLexerTest extends LightPlatformTestCase {
 
-  private GherkinLexer lexer;
+  private UppercutLexer lexer;
 
   @Mock GherkinKeywordProvider keywordProvider;
 
@@ -42,7 +42,7 @@ public class GherkinLexerTest extends LightPlatformTestCase {
   public void setUp() throws Exception {
     super.setUp();
     MockitoAnnotations.openMocks(this);
-    lexer = new GherkinLexer(keywordProvider);
+    lexer = new UppercutLexer(keywordProvider);
   }
 
   public void testFindNextMatchingClosingBrace_SimpleCase() {
@@ -74,7 +74,6 @@ public class GherkinLexerTest extends LightPlatformTestCase {
       assertEquals(end, result);
     }
   }
-
 
   public void testFindNextMatchingClosingBrace_EmptyString() {
     lexer.start("", 0, 0, 0);

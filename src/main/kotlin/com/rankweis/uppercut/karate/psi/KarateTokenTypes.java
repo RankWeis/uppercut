@@ -3,7 +3,6 @@
 
 package com.rankweis.uppercut.karate.psi;
 
-import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -41,7 +40,7 @@ public interface KarateTokenTypes {
   KarateElementType TABLE_CELL = new KarateElementType("TABLE_CELL");
 
   TokenSet IDENTIFIERS =
-    TokenSet.create(VARIABLE, DECLARATION, GherkinElementTypes.VARIABLE, GherkinElementTypes.DECLARATION);
+    TokenSet.create(VARIABLE, DECLARATION, UppercutElementTypes.VARIABLE, UppercutElementTypes.DECLARATION);
 
   TokenSet KEYWORDS = TokenSet.create(FEATURE_KEYWORD, RULE_KEYWORD, EXAMPLE_KEYWORD,
     BACKGROUND_KEYWORD, SCENARIO_KEYWORD, SCENARIO_OUTLINE_KEYWORD,
