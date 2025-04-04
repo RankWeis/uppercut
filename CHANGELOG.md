@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Modified
+
+- Expression syntax in json snippets (`#{variable}` and `"#{variable}"`) render better.
+
 ## [2.4.3] - 2025-04-03
 
 ### Fixed

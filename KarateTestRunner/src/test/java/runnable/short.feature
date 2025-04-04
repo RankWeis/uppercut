@@ -1,4 +1,10 @@
 @short
 Feature: short
   Scenario:
-    print "hi"
+    * print "hi"
+    * def a =
+    """
+    {
+      "a": #{b}
+    }
+    """

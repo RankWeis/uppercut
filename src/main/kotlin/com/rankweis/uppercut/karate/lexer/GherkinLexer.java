@@ -5,6 +5,7 @@ package com.rankweis.uppercut.karate.lexer;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.CLOSE_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DOUBLE_QUOTED_STRING;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.JSON_INJECTABLE;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPEN_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPERATOR;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING_INCOMPLETE;
@@ -13,6 +14,7 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.SINGLE_QUOTED_ST
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
 
+import com.intellij.json.JsonElementTypes;
 import com.intellij.json.json5.Json5Lexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
@@ -637,6 +639,30 @@ public class GherkinLexer extends LexerBase {
   }
 
   private void injectJson() {
+    if (isStringAtPosition("#{")) {
+      int closingBrace = Math.min(findNextMatchingClosingBrace() + 1, myEndOffset);
+      if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim()
+        .matches("#\\{\\S+}")) {
+        myCurrentToken = JsonElementTypes.IDENTIFIER;
+        myPosition = closingBrace;
+        while(jsonLexer.getTokenEnd() < closingBrace) {
+          jsonLexer.advance();
+        }
+        return;
+      }
+    }
+    if (isStringAtPosition("\"#{")) {
+      int closingBrace = Math.min(findNextMatchingClosingBrace() + 2, myEndOffset);
+      if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim()
+        .matches("\"#\\{\\S+}\"")) {
+        myCurrentToken = JsonElementTypes.IDENTIFIER;
+        myPosition = closingBrace;
+        while(jsonLexer.getTokenEnd() < closingBrace) {
+          jsonLexer.advance();
+        }
+        return;
+      }
+    }
     jsonLexer.advance();
     myCurrentToken = jsonLexer.getTokenType();
     myPosition = jsonLexer.getTokenEnd();
