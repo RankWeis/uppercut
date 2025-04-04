@@ -23,8 +23,16 @@ public class UppercutParserTest extends ParsingTestCase {
     super("", "feature", true, new UppercutParserDefinition());
   }
 
-  public void testComplicated() {
-    doTest(true, true);
+  public void testComplicated() throws IOException {
+    try {
+      doTest(true, true);
+    } catch (Throwable t) {
+      System.out.println("UNIQUEly sITUATED");
+      String s = toParseTreeText(this.myFile, this.skipSpaces(), this.includeRanges());
+      System.out.println(s);
+      System.out.println("UNIQUELY SITUATED");
+      throw new RuntimeException(t);
+    }
   }
 
   @Override

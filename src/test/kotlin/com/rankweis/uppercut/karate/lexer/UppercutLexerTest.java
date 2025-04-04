@@ -45,28 +45,28 @@ public class UppercutLexerTest extends LightPlatformTestCase {
     lexer = new UppercutLexer(keywordProvider);
   }
 
-  public void testFindNextMatchingClosingBrace_SimpleCase() {
+  public void testFindNextMatchingClosingBraceSimpleCase() {
     lexer.start(" { some text }", 0, 14, 0);
     lexer.advance();
     int result = lexer.findNextMatchingClosingBrace();
     assertEquals(13, result);
   }
 
-  public void testFindNextMatchingClosingBrace_NestedBraces() {
+  public void testFindNextMatchingClosingBraceNestedBraces() {
     lexer.start(" { { nested } text }", 0, 21, 0);
     int result = lexer.findNextMatchingClosingBrace();
     assertEquals(19, result);
   }
 
-  public void testFindNextMatchingClosingBrace_NoClosingBrace() {
+  public void testFindNextMatchingClosingBraceNoClosingBrace() {
     lexer.start("{ some text", 0, 11, 0);
     lexer.advance();
     int result = lexer.findNextMatchingClosingBrace();
     assertEquals(-1, result);
   }
 
-  public void testFindingNextMatchingClosingBrace_RealScenario() {
-    for(String realScenario : REAL_SCENARIOS) {
+  public void testFindingNextMatchingClosingBraceRealScenario() {
+    for (String realScenario : REAL_SCENARIOS) {
       int start = realScenario.indexOf("function");
       int end = realScenario.lastIndexOf("}");
       lexer.start(realScenario, start, realScenario.length(), 0, false);
@@ -75,7 +75,7 @@ public class UppercutLexerTest extends LightPlatformTestCase {
     }
   }
 
-  public void testFindNextMatchingClosingBrace_EmptyString() {
+  public void testFindNextMatchingClosingBraceEmptyString() {
     lexer.start("", 0, 0, 0);
     lexer.advance();
     assertNull(lexer.getTokenType());

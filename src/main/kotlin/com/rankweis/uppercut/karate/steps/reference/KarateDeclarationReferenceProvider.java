@@ -1,11 +1,11 @@
 package com.rankweis.uppercut.karate.steps.reference;
 
 import static com.intellij.psi.tree.TokenSet.WHITE_SPACE;
-import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.STEP_PARAMETER;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.STEP_PARAMETER_BRACE;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.STEP_PARAMETER_TEXT;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.STEP_PARAMETER;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
