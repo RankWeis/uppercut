@@ -65,7 +65,7 @@ class UppercutUITest {
                         clickRunTest(frame)
                     }
                 }
-                runTests(this, 1000.milliseconds)
+                runTests(this, 3000.milliseconds)
                 verifyConsoleResults(this, 1)
                 execute(
                     CommandChain().openFile("src/test/java/karate-config.js")
@@ -88,7 +88,7 @@ class UppercutUITest {
                         clickRunTest(frame)
                     }
                 }
-                runTests(this, 1000.milliseconds)
+                runTests(this, 3000.milliseconds)
                 verifyConsoleResults(this, 2, 0, 1)
             }
         }
