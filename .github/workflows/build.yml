@@ -134,6 +134,12 @@ jobs:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
 
+      # Upload the Kover report to CodeCov
+      - name: Upload Code Coverage Report
+        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574
+        with:
+          files: ${{ github.workspace }}/build/reports/kover/report.xml
+
 
   # Run Qodana inspections and provide report
   inspectCode:
@@ -169,55 +175,61 @@ jobs:
           distribution: zulu
           java-version: 17
 
+      # Run Qodana inspections
+      - name: Qodana - Code Inspection
+        uses: JetBrains/qodana-action@v2024.2
+        with:
+          cache-default-branch-only: true
+
   # Run plugin structure verification along with IntelliJ Plugin Verifier
-#  verify:
-#    name: Verify plugin
-#    needs: [ build ]
-#    runs-on: ubuntu-latest
-#    if: ${{ github.actor_id == '733691' }}
-#    steps:
-#
-#     #  Free GitHub Actions Environment Disk Space
-#      - name: Maximize Build Space
-#        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
-#        with:
-#          tool-cache: false
-#          large-packages: false
-#
-#      # Check out the current repository
-#      - name: Fetch Sources
-#        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+  verify:
+    name: Verify plugin
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    if: ${{ github.actor_id == '733691' }}
+    steps:
 
-#      # Set up Java environment for the next steps
-#      - name: Setup Java
-#        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
-#        with:
-#          distribution: zulu
-#          java-version: 17
-#
-#      # Setup Gradle
-#      - name: Setup Gradle
-#        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
+     #  Free GitHub Actions Environment Disk Space
+      - name: Maximize Build Space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        with:
+          tool-cache: false
+          large-packages: false
 
-#      IntelliJ will verify Plugin for us and this is a lot of downloading.
-#      # Cache Plugin Verifier IDEs
-#      - name: Setup Plugin Verifier IDEs Cache
-#        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57
-#        with:
-#          path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
-#          key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
-#
-#      # Run Verify Plugin task and IntelliJ Plugin Verifier tool
-#      - name: Run Plugin Verification tasks
-#        run: ./gradlew verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
+      # Check out the current repository
+      - name: Fetch Sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-#      # Collect Plugin Verifier Result
-#      - name: Collect Plugin Verifier Result
-#        if: ${{ always() }}
-#        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-#        with:
-#          name: pluginVerifier-result
-#          path: ${{ github.workspace }}/build/reports/pluginVerifier
+      # Set up Java environment for the next steps
+      - name: Setup Java
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
+        with:
+          distribution: zulu
+          java-version: 17
+
+      # Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
+
+      # IntelliJ will verify Plugin for us and this is a lot of downloading.
+      # Cache Plugin Verifier IDEs
+      - name: Setup Plugin Verifier IDEs Cache
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57
+        with:
+          path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
+          key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
+
+      # Run Verify Plugin task and IntelliJ Plugin Verifier tool
+      - name: Run Plugin Verification tasks
+        run: ./gradlew verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
+
+      # Collect Plugin Verifier Result
+      - name: Collect Plugin Verifier Result
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pluginVerifier-result
+          path: ${{ github.workspace }}/build/reports/pluginVerifier
 
   # Prepare a draft release for GitHub Releases page for the manual verification
   # If accepted and published, release workflow would be triggered
