@@ -20,13 +20,16 @@ public class KarateJsonLiteralChecker implements JsonLiteralChecker {
     return null;
   }
 
-  public @Nullable Pair<TextRange, String> getErrorForStringFragment(Pair<TextRange, String> fragment, JsonStringLiteral stringLiteral) {
+  public @Nullable Pair<TextRange, String> getErrorForStringFragment(Pair<TextRange, String> fragment,
+    JsonStringLiteral stringLiteral) {
     String fragmentText = fragment.second;
-    if (fragmentText.startsWith("\\") && fragmentText.length() > 1 && fragmentText.endsWith("\n") && StringUtil.isEmptyOrSpaces(fragmentText.substring(1, fragmentText.length() - 1))) {
+    if (fragmentText.startsWith("\\") && fragmentText.length() > 1 && fragmentText.endsWith("\n")
+      && StringUtil.isEmptyOrSpaces(fragmentText.substring(1, fragmentText.length() - 1))) {
       return null;
     } else if (fragmentText.startsWith("\\x") && VALID_HEX_ESCAPE.matcher(fragmentText).matches()) {
       return null;
-    } else if (!StandardJsonLiteralChecker.VALID_ESCAPE.matcher(fragmentText).matches() && !INVALID_NUMERIC_ESCAPE.matcher(fragmentText).matches()) {
+    } else if (!StandardJsonLiteralChecker.VALID_ESCAPE.matcher(fragmentText).matches()
+      && !INVALID_NUMERIC_ESCAPE.matcher(fragmentText).matches()) {
       return null;
     } else {
       String error = StandardJsonLiteralChecker.getStringError(fragmentText);

@@ -9,7 +9,7 @@ import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JSInspector implements InspectionSuppressor {
+public class JavascriptInspector implements InspectionSuppressor {
 
   private static final Set<String> SUPPRESSED_INSPECTIONS = new HashSet<>();
 

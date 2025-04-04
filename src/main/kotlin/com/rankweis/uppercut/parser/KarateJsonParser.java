@@ -22,7 +22,7 @@ public class KarateJsonParser extends JsonParser {
   };
 
   @Override public void parseLight(IElementType t, PsiBuilder b) {
-    Marker mark = b.mark();
+    final Marker mark = b.mark();
     b = JsonParserUtil.adapt_builder_(t, b, this, EXTENDS_SETS_);
     ((Builder) b).state.tokenAdvancer = TOKEN_ADVANCER;
     PsiBuilder.Marker m = JsonParserUtil.enter_section_(b, 0, 1, null);

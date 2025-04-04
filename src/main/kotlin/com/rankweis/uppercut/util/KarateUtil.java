@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class KarateUtil {
-  
+
   public static List<GherkinPsiElement> findProperties(Project project, String key) {
     List<GherkinPsiElement> result = new ArrayList<>();
     Collection<VirtualFile> virtualFiles =
@@ -53,7 +53,7 @@ public class KarateUtil {
     }
     return result;
   }
-  
+
   public static GherkinPsiElement createProperty(Project project, String name) {
     GherkinFile file = createFile(project, name);
     return (GherkinPsiElement) file.getFirstChild();
@@ -61,8 +61,8 @@ public class KarateUtil {
 
   public static GherkinFile createFile(Project project, String text) {
     String name = "dummy.simple";
-    return (GherkinFile) PsiFileFactory.getInstance(project).
-      createFileFromText(name, GherkinFileType.INSTANCE, text);
+    return (GherkinFile) PsiFileFactory.getInstance(project)
+      .createFileFromText(name, GherkinFileType.INSTANCE, text);
   }
 
 }

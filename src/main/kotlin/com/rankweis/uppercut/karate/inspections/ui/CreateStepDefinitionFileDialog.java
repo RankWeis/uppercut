@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CreateStepDefinitionFileDialog extends DialogWrapper {
+
   private JTextField myFileNameTextField;
 
   private JComboBox<FileTypeComboboxItem> myFileTypeCombobox;
@@ -39,8 +40,9 @@ public class CreateStepDefinitionFileDialog extends DialogWrapper {
 
   private final CreateStepDefinitionFileModel myModel;
 
-  public CreateStepDefinitionFileDialog(@NotNull final Project project, @NotNull final CreateStepDefinitionFileModel model,
-                                        @NotNull final InputValidator validator) {
+  public CreateStepDefinitionFileDialog(@NotNull final Project project,
+    @NotNull final CreateStepDefinitionFileModel model,
+    @NotNull final InputValidator validator) {
     super(project);
     myModel = model;
     myValidator = validator;
@@ -53,8 +55,8 @@ public class CreateStepDefinitionFileDialog extends DialogWrapper {
     myFileTypeCombobox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        FileTypeComboboxItem newItem = (FileTypeComboboxItem)myFileTypeCombobox.getSelectedItem();
-        FileTypeComboboxItem oldItem = (FileTypeComboboxItem)e.getItem();
+        FileTypeComboboxItem newItem = (FileTypeComboboxItem) myFileTypeCombobox.getSelectedItem();
+        FileTypeComboboxItem oldItem = (FileTypeComboboxItem) e.getItem();
 
         if (newItem != null && oldItem.getDefaultFileName().equals(myFileNameTextField.getText())) {
           myFileNameTextField.setText(newItem.getDefaultFileName());
@@ -79,8 +81,8 @@ public class CreateStepDefinitionFileDialog extends DialogWrapper {
     final FileChooserDescriptor folderChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     folderChooserDescriptor.setTitle(folderChooserTitle);
 
-
-    VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(VfsUtilCore.pathToUrl(model.getStepDefinitionFolderPath()));
+    VirtualFile virtualFile =
+      VirtualFileManager.getInstance().findFileByUrl(VfsUtilCore.pathToUrl(model.getStepDefinitionFolderPath()));
     if (virtualFile == null) {
       virtualFile = model.getContext().getContainingFile().getContainingDirectory().getVirtualFile();
     }
@@ -112,8 +114,7 @@ public class CreateStepDefinitionFileDialog extends DialogWrapper {
     String fileName = myFileNameTextField.getText();
     if (myValidator == null) {
       close(OK_EXIT_CODE);
-    }
-    else {
+    } else {
       if (myValidator.checkInput(fileName) && myValidator.canClose(fileName)) {
         myModel.setFileName(myFileNameTextField.getText());
         close(OK_EXIT_CODE);
@@ -144,24 +145,28 @@ public class CreateStepDefinitionFileDialog extends DialogWrapper {
 
   protected void validateAll() {
     if (!isValidPath(myDirectoryTextField.getText())) {
-      setErrorText(MyBundle.message("cucumber.quick.fix.create.step.file.error.incorrect.directory"), myDirectoryTextField);
+      setErrorText(MyBundle.message("cucumber.quick.fix.create.step.file.error.incorrect.directory"),
+        myDirectoryTextField);
     } else {
       setErrorText(null, myDirectoryTextField);
     }
 
     final String fileName = myFileNameTextField.getText();
 
-    boolean fileNameIsOk = fileName != null && PathUtil.isValidFileName(fileName) &&
-                           CucumberStepHelper
-                             .validateNewStepDefinitionFileName(myModel.getProject(), fileName, myModel.getSelectedFileType());
+    boolean fileNameIsOk = fileName != null && PathUtil.isValidFileName(fileName)
+      && CucumberStepHelper
+        .validateNewStepDefinitionFileName(myModel.getProject(), fileName, myModel.getSelectedFileType());
 
     if (!fileNameIsOk) {
-      setErrorText(MyBundle.message("cucumber.quick.fix.create.step.file.error.incorrect.file.name"), myFileNameTextField);
+      setErrorText(MyBundle.message("cucumber.quick.fix.create.step.file.error.incorrect.file.name"),
+        myFileNameTextField);
     } else {
-      String fileUrl = VfsUtilCore.pathToUrl(FileUtil.join(myModel.getStepDefinitionFolderPath(), myModel.getFileNameWithExtension()));
-      VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(fileUrl);
-      if (vFile != null) {
-        setErrorText(MyBundle.message("cucumber.quick.fix.create.step.file.error.file.exists", (myModel.getFileNameWithExtension())), myFileNameTextField);
+      String fileUrl =
+        VfsUtilCore.pathToUrl(FileUtil.join(myModel.getStepDefinitionFolderPath(), myModel.getFileNameWithExtension()));
+      VirtualFile virtFile = VirtualFileManager.getInstance().findFileByUrl(fileUrl);
+      if (virtFile != null) {
+        setErrorText(MyBundle.message("cucumber.quick.fix.create.step.file.error.file.exists",
+          (myModel.getFileNameWithExtension())), myFileNameTextField);
       }
     }
   }

@@ -7,9 +7,11 @@ import com.rankweis.uppercut.karate.psi.GherkinStep;
 import org.jetbrains.annotations.NotNull;
 
 public interface StepDefinitionCreator {
+
   /**
    * Creates step definition file
-   * @param dir where to create file
+   *
+   * @param dir  where to create file
    * @param name of created file
    * @return PsiFile object of created file
    */
@@ -18,18 +20,22 @@ public interface StepDefinitionCreator {
 
   /**
    * Creates step definition
-   * @param step to implement
-   * @param file where to create step definition
-   * @param withTemplate should or not run template builder around regex and step body. We should not force user to go through
+   *
+   * @param step         to implement
+   * @param file         where to create step definition
+   * @param withTemplate should or not run template builder around regex and step body. We should not force user to go
+   *                     through
    *                     number of templates in case of "Create All Step Definitions" action invoked
    * @return true if success, false otherwise
    */
-  default boolean createStepDefinition(@NotNull final GherkinStep step, @NotNull final PsiFile file, boolean withTemplate) {
+  default boolean createStepDefinition(@NotNull final GherkinStep step, @NotNull final PsiFile file,
+    boolean withTemplate) {
     return false;
   }
 
   /**
    * Validates name of new step definition file
+   *
    * @param fileName name of file to check
    * @return true if name is valid, false otherwise
    */
@@ -48,6 +54,7 @@ public interface StepDefinitionCreator {
 
   /**
    * Provides default name of step definition file
+   *
    * @param step step we want to create definition container for
    * @return String representing default name of step definition file
    */

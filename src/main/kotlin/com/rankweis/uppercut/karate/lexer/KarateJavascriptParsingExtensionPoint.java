@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public interface KarateJavascriptParsingExtensionPoint {
+
   ExtensionPointName<KarateJavascriptParsingExtensionPoint> EP_NAME =
     ExtensionPointName.create("com.rankweis.uppercut.karateJavascriptParsingExtensionPoint");
 
@@ -23,5 +24,5 @@ public interface KarateJavascriptParsingExtensionPoint {
 
   Consumer<PsiBuilder> parseJs();
 
-  boolean isJSLanguage(Language l);
+  boolean isJsLanguage(Language l);
 }

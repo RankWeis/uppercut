@@ -16,12 +16,14 @@ import javax.swing.JTextField;
 import javax.swing.text.NumberFormatter;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Setter
 @Getter
+@Slf4j
 public class UppercutSettingsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
 
   private KarateSettingsState settingsState;
@@ -58,11 +60,11 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
     try {
       defaultParallelism = Integer.parseInt(defaultParallelismField.getText());
     } catch (NumberFormatException ignored) {
-
+      log.warn("Default parallelism is not a number - this can be ignored");
     }
-    return !defaultEnvironmentField.getText().equals(settingsState.getDefaultEnvironment()) ||
-      useKarateJsCheckbox.isSelected() != settingsState.isUseKarateJavaScriptEngine() ||
-      !defaultParallelism.equals(settingsState.getDefaultParallelism());
+    return !defaultEnvironmentField.getText().equals(settingsState.getDefaultEnvironment())
+      || useKarateJsCheckbox.isSelected() != settingsState.isUseKarateJavaScriptEngine()
+      || !defaultParallelism.equals(settingsState.getDefaultParallelism());
   }
 
   @Nullable
@@ -100,7 +102,7 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
     try {
       defaultParallelism = Integer.parseInt(defaultParallelismField.getText());
     } catch (NumberFormatException ignored) {
-
+      log.warn("Default parallelism is not a number - this can be ignored");
     }
     settingsState.setDefaultEnvironment(defaultEnvironmentField.getText());
     settingsState.setDefaultParallelism(defaultParallelism);

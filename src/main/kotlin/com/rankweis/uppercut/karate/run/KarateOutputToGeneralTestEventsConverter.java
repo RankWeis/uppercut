@@ -94,6 +94,29 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     }
   }
 
+  private boolean process(String text) {
+    LinkedList<KarateItem> karateItems =
+      threadToScenarioStack.computeIfAbsent(currentThreadGroup, k -> new LinkedList<>());
+    if (text.startsWith("<<UPPERCUT>>") || text.strip().endsWith("<<UPPERCUT>>")) {
+      // Safety guard, should never hit this.
+      return true;
+    }
+    if (!karateItems.isEmpty()) {
+      KarateItem scenario = karateItems.peek();
+      for (String s : text.splitWithDelimiters("\n", 2)) {
+        ServiceMessageBuilder msgScenario;
+        if (myCurrentOutputType == ProcessOutputType.STDOUT) {
+          msgScenario = ServiceMessageBuilder.testStdOut(scenario.getName()).addAttribute("out", s);
+        } else {
+          msgScenario = ServiceMessageBuilder.testStdErr(scenario.getName()).addAttribute("out", s);
+        }
+        finishMessage(msgScenario, scenario);
+      }
+      return true;
+    }
+    return false;
+  }
+
   @Override protected boolean processServiceMessages(@NotNull String text, @NotNull Key<?> outputType,
     @NotNull ServiceMessageVisitor visitor) {
     myCurrentOutputType = outputType;
@@ -166,29 +189,6 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     }
     return false;
 
-  }
-
-  private boolean process(String text) {
-    LinkedList<KarateItem> karateItems =
-      threadToScenarioStack.computeIfAbsent(currentThreadGroup, k -> new LinkedList<>());
-    if (text.startsWith("<<UPPERCUT>>") || text.strip().endsWith("<<UPPERCUT>>")) {
-      // Safety guard, should never hit this.
-      return true;
-    }
-    if (!karateItems.isEmpty()) {
-      KarateItem scenario = karateItems.peek();
-      for (String s : text.splitWithDelimiters("\n", 2)) {
-        ServiceMessageBuilder msgScenario;
-        if (myCurrentOutputType == ProcessOutputType.STDOUT) {
-          msgScenario = ServiceMessageBuilder.testStdOut(scenario.getName()).addAttribute("out", s);
-        } else {
-          msgScenario = ServiceMessageBuilder.testStdErr(scenario.getName()).addAttribute("out", s);
-        }
-        finishMessage(msgScenario, scenario);
-      }
-      return true;
-    }
-    return false;
   }
 
   private boolean featureStartEnd(String text) {

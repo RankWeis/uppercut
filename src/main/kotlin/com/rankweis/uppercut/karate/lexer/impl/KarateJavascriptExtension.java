@@ -24,28 +24,34 @@ import java.util.function.Consumer;
 public class KarateJavascriptExtension implements KarateJavascriptParsingExtensionPoint {
 
 
-  static class CustomJSLanguageOptionHolder extends DialectOptionHolder {
-    private static final CustomJSLanguageOptionHolder INSTANCE = new CustomJSLanguageOptionHolder();
+  static class CustomJsLanguageOptionHolder extends DialectOptionHolder {
+
+    private static final CustomJsLanguageOptionHolder INSTANCE = new CustomJsLanguageOptionHolder();
+
     public static DialectOptionHolder getInstance() {
       return INSTANCE;
     }
-    public CustomJSLanguageOptionHolder() {
+
+    public CustomJsLanguageOptionHolder() {
       super("JSX", false, true);
     }
   }
 
-  static class CustomJSLanguageDialect extends JSLanguageDialect {
-    private static final CustomJSLanguageDialect INSTANCE = new CustomJSLanguageDialect();
+  static class CustomJsLanguageDialect extends JSLanguageDialect {
+
+    private static final CustomJsLanguageDialect INSTANCE = new CustomJsLanguageDialect();
+
     public static JSLanguageDialect getInstance() {
       return INSTANCE;
     }
-    public CustomJSLanguageDialect() {
-      super("KarateJS", new CustomJSLanguageOptionHolder());
+
+    public CustomJsLanguageDialect() {
+      super("KarateJS", new CustomJsLanguageOptionHolder());
     }
   }
 
-  private static final DialectOptionHolder holder = CustomJSLanguageOptionHolder.getInstance();
-  private static final JSLanguageDialect dialect = CustomJSLanguageDialect.getInstance();
+  private static final DialectOptionHolder holder = CustomJsLanguageOptionHolder.getInstance();
+  private static final JSLanguageDialect dialect = CustomJsLanguageDialect.getInstance();
 
 
   @Override public Lexer getLexer(boolean highlighting) {
@@ -75,7 +81,7 @@ public class KarateJavascriptExtension implements KarateJavascriptParsingExtensi
     };
   }
 
-  @Override public boolean isJSLanguage(Language l) {
+  @Override public boolean isJsLanguage(Language l) {
     return JavascriptLanguage.INSTANCE == l;
   }
 }
