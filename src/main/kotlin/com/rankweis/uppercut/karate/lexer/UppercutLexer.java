@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be 
 // found in the LICENSE file.
+
 package com.rankweis.uppercut.karate.lexer;
 
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.CLOSE_PAREN;
@@ -14,7 +15,6 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.SINGLE_QUOTED_ST
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
 
-import com.intellij.json.JsonElementTypes;
 import com.intellij.json.json5.Json5Lexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
@@ -48,28 +48,27 @@ public class UppercutLexer extends LexerBase {
   private List<String> myKeywords;
   private int myState;
 
-  private final static int STATE_DEFAULT = 0;
-  private final static int STATE_TABLE = 2;
-  private final static int STATE_AFTER_STEP_KEYWORD = 3;
-  private final static int STATE_AFTER_SCENARIO_KEYWORD = 4;
-  private final static int STATE_INSIDE_PYSTRING = 5;
-  private final static int STATE_AFTER_ACTION_KEYWORD = 6;
+  private static final int STATE_DEFAULT = 0;
+  private static final int STATE_TABLE = 2;
+  private static final int STATE_AFTER_STEP_KEYWORD = 3;
+  private static final int STATE_AFTER_SCENARIO_KEYWORD = 4;
+  private static final int STATE_INSIDE_PYSTRING = 5;
+  private static final int STATE_AFTER_ACTION_KEYWORD = 6;
 
-  private final static int STATE_PARAMETER_INSIDE_PYSTRING = 7;
-  private final static int STATE_PARAMETER_INSIDE_STEP = 8;
-  private final static int STATE_AFTER_FEATURE_KEYWORD = 9;
-  private final static int STATE_AFTER_OPERATOR = 10;
+  private static final int STATE_PARAMETER_INSIDE_PYSTRING = 7;
+  private static final int STATE_PARAMETER_INSIDE_STEP = 8;
+  private static final int STATE_AFTER_FEATURE_KEYWORD = 9;
+  private static final int STATE_AFTER_OPERATOR = 10;
 
-  private final static int INJECTING_JAVASCRIPT = 100;
-  private final static int INJECTING_JSON = 200;
-  private final static int INJECTING_XML = 300;
+  private static final int INJECTING_JAVASCRIPT = 100;
+  private static final int INJECTING_JSON = 200;
+  private static final int INJECTING_XML = 300;
 
   public static final String PYSTRING_MARKER = "\"\"\"";
   public static final List<String> INTERESTING_SYMBOLS =
     List.of("\n", "'", "\"", "#", "{", "[", "function", " ", "(", ")");
   private final GherkinKeywordProvider myKeywordProvider;
-  List<String> scenarioKeywords =
-    Stream.of("Scenario", "Background").toList();
+  List<String> scenarioKeywords = Stream.of("Scenario", "Background").toList();
   List<String> stepKeywords;
   List<String> interruptions;
 
@@ -89,11 +88,11 @@ public class UppercutLexer extends LexerBase {
     boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
     if (useInternalEngine) {
       this.jsLexer =
-              KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast().getLexer(highlighting);
+        KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast().getLexer(highlighting);
     } else {
       this.jsLexer =
-              KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().map(l -> l.getLexer(highlighting))
-                      .orElse(null);
+        KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().map(l -> l.getLexer(highlighting))
+          .orElse(null);
     }
     updateLanguage("en");
     stepKeywords = myKeywords.stream().filter(myKeywordProvider::isStepKeyword).toList();
@@ -119,28 +118,23 @@ public class UppercutLexer extends LexerBase {
     }
   }
 
-  @Override
-  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  @Override public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     start(buffer, startOffset, endOffset, initialState, true);
   }
 
-  @Override
-  public int getState() {
+  @Override public int getState() {
     return myState;
   }
 
-  @Override
-  public IElementType getTokenType() {
+  @Override public IElementType getTokenType() {
     return myCurrentToken;
   }
 
-  @Override
-  public int getTokenStart() {
+  @Override public int getTokenStart() {
     return myCurrentTokenStart;
   }
 
-  @Override
-  public int getTokenEnd() {
+  @Override public int getTokenEnd() {
     return myPosition;
   }
 
@@ -200,8 +194,8 @@ public class UppercutLexer extends LexerBase {
     }
 
     boolean isJsJson =
-      pos < myEndOffset && myBuffer.charAt(pos) == closingBrace &&
-        !myBuffer.subSequence(myPosition, pos).toString().matches("[\\[{*\\d]*");
+      pos < myEndOffset && myBuffer.charAt(pos) == closingBrace && !myBuffer.subSequence(myPosition, pos).toString()
+        .matches("[\\[{*\\d]*");
     if (isJsJson) {
       startInjectJson(myPosition, pos + 1);
     }
@@ -218,8 +212,7 @@ public class UppercutLexer extends LexerBase {
 
     boolean positionOkay = pos < (myEndOffset - 1) && myBuffer.charAt(pos) == '=';
     // Look for 'declaration =' but not 'declaration =='
-    boolean isDeclaration = positionOkay && myBuffer.charAt(pos + 1) != '='
-      && myBuffer.charAt(pos - 1) != '!';
+    boolean isDeclaration = positionOkay && myBuffer.charAt(pos + 1) != '=' && myBuffer.charAt(pos - 1) != '!';
     boolean isVariable =
       !isDeclaration && positionOkay && (nextNonSpace(pos + 1) == '=' || prevNonSpace(startingPos, pos - 1) == '!');
     if (isDeclaration || isVariable) {
@@ -257,14 +250,12 @@ public class UppercutLexer extends LexerBase {
       || myState == INJECTING_XML;
   }
 
-  @Override
-  public void advance() {
+  @Override public void advance() {
     if (myPosition >= myEndOffset) {
       myCurrentToken = null;
       return;
     }
     myCurrentTokenStart = myPosition;
-    char c = myBuffer.charAt(myPosition);
     // Handle opening and closing markers """
     if (isStringAtPosition(PYSTRING_MARKER)) {
       myCurrentToken = KarateTokenTypes.PYSTRING_QUOTES;
@@ -313,6 +304,7 @@ public class UppercutLexer extends LexerBase {
       injectPyString();
       return;
     }
+    char c = myBuffer.charAt(myPosition);
     if (myState == STATE_AFTER_OPERATOR) {
       if (c == '<') {
         Matcher matcher =
@@ -420,8 +412,8 @@ public class UppercutLexer extends LexerBase {
       do {
         myPosition++;
       } while (myPosition < myEndOffset && isValidTagChar(myBuffer.charAt(myPosition)));
-    } else if (isStringAtPosition("==") || isStringAtPosition("!=")
-      || isStringAtPosition("<=") || isStringAtPosition(">=")) {
+    } else if (isStringAtPosition("==") || isStringAtPosition("!=") || isStringAtPosition("<=") || isStringAtPosition(
+      ">=")) {
       myPosition += 2;
       myCurrentToken = OPERATOR;
       myState = STATE_AFTER_OPERATOR;
@@ -446,12 +438,12 @@ public class UppercutLexer extends LexerBase {
       if (myState == STATE_AFTER_STEP_KEYWORD) {
         for (String keyword : myKeywords) {
           if (myKeywordProvider.isActionKeyword(keyword) && isStringAtPosition(keyword)) {
-            if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) &&
-              (myPosition + keyword.length() >= myBuffer.length() ||
-                !Character.isWhitespace(myBuffer.charAt(myPosition + keyword.length())))) {
+            if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) && (
+              myPosition + keyword.length() >= myBuffer.length() || !Character.isWhitespace(
+                myBuffer.charAt(myPosition + keyword.length())))) {
               continue;
-            } else if (myPosition + keyword.length() < myBuffer.length() &&
-              Character.isLetter(myBuffer.charAt(myPosition + keyword.length()))) {
+            } else if (myPosition + keyword.length() < myBuffer.length() && Character.isLetter(
+              myBuffer.charAt(myPosition + keyword.length()))) {
               continue;
             }
             myState = STATE_AFTER_ACTION_KEYWORD;
@@ -491,8 +483,7 @@ public class UppercutLexer extends LexerBase {
     }
   }
 
-  @VisibleForTesting
-  int findNextMatchingClosingBrace() {
+  @VisibleForTesting int findNextMatchingClosingBrace() {
     int pos = myPosition;
     int closingBracesRequired = 0;
     while (pos < myEndOffset) {
@@ -515,8 +506,7 @@ public class UppercutLexer extends LexerBase {
     }
   }
 
-  @VisibleForTesting
-  int findNextMatchingClosingParen() {
+  @VisibleForTesting int findNextMatchingClosingParen() {
     int pos = myPosition;
     int closingBracesRequired = 0;
     while (pos < myEndOffset) {
@@ -543,9 +533,8 @@ public class UppercutLexer extends LexerBase {
     for (String keyword : myKeywords) {
       int length = keyword.length();
       if (isStringAtPosition(keyword)) {
-        if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) &&
-          myEndOffset - myPosition > length &&
-          Character.isLetterOrDigit(myBuffer.charAt(myPosition + length))) {
+        if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) && myEndOffset - myPosition > length
+          && Character.isLetterOrDigit(myBuffer.charAt(myPosition + length))) {
           continue;
         }
 
@@ -583,7 +572,6 @@ public class UppercutLexer extends LexerBase {
   }
 
   private void injectPyString(boolean multiLine) {
-    int startPos = myPosition;
     int endPos = myPosition;
     while (endPos < myEndOffset && !isStringAtPosition(PYSTRING_MARKER, endPos)) {
       endPos++;
@@ -594,6 +582,7 @@ public class UppercutLexer extends LexerBase {
       myCurrentToken = KarateTokenTypes.PYSTRING_INCOMPLETE;
       return;
     }
+    int startPos = myPosition;
     String strippedStr = myBuffer.subSequence(startPos, endPos).toString().strip();
     if (!multiLine && strippedStr.matches("\\[?[\\w+.]*]?")) {
       myCurrentToken = TEXT;
@@ -606,8 +595,7 @@ public class UppercutLexer extends LexerBase {
       myState = STATE_DEFAULT;
       return;
     }
-    if (StringUtil.startsWith(strippedStr, "{")
-      || StringUtil.startsWith(strippedStr, "[")) {
+    if (StringUtil.startsWith(strippedStr, "{") || StringUtil.startsWith(strippedStr, "[")) {
       startInjectJson(startPos, endPos);
     } else if (StringUtil.startsWith(strippedStr, "<")) {
       startInjectXml(startPos, endPos);
@@ -665,11 +653,10 @@ public class UppercutLexer extends LexerBase {
   private void injectJson() {
     if (isStringAtPosition("#(")) {
       int closingBrace = Math.min(findNextMatchingClosingParen() + 1, myEndOffset);
-      if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim()
-        .matches("#\\(\\S+\\)")) {
+      if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim().matches("#\\(\\S+\\)")) {
         myCurrentToken = JSON_INJECTABLE;
         myPosition = closingBrace;
-        while(jsonLexer.getTokenEnd() < closingBrace) {
+        while (jsonLexer.getTokenEnd() < closingBrace) {
           jsonLexer.advance();
         }
         return;
@@ -681,7 +668,7 @@ public class UppercutLexer extends LexerBase {
         .matches("\"#\\(\\S+\\)\"")) { // "#
         myCurrentToken = JSON_INJECTABLE;
         myPosition = closingBrace;
-        while(jsonLexer.getTokenEnd() < closingBrace) {
+        while (jsonLexer.getTokenEnd() < closingBrace) {
           jsonLexer.advance();
         }
         return;
@@ -702,8 +689,7 @@ public class UppercutLexer extends LexerBase {
     return myState == STATE_AFTER_ACTION_KEYWORD || myState == STATE_AFTER_SCENARIO_KEYWORD;
   }
 
-  @Nullable
-  public static String fetchLocationLanguage(final @NotNull String commentText) {
+  @Nullable public static String fetchLocationLanguage(final @NotNull String commentText) {
     if (commentText.startsWith("language:")) {
       return commentText.substring(9).trim();
     }
@@ -723,10 +709,6 @@ public class UppercutLexer extends LexerBase {
       .equals(keyword);
   }
 
-  private String stringHelper(int offset) {
-    return myBuffer.subSequence(myPosition, offset).toString();
-  }
-
   private boolean isStringAtPosition(String keyword, int position) {
     int length = keyword.length();
     return myEndOffset - position >= length && myBuffer.subSequence(position, position + length).toString()
@@ -740,8 +722,7 @@ public class UppercutLexer extends LexerBase {
   private void advanceToNextInterestingToken() {
     myPosition++;
     int mark = myPosition;
-    while (myPosition < myEndOffset && INTERESTING_SYMBOLS.stream()
-      .noneMatch(this::isStringAtPosition)) {
+    while (myPosition < myEndOffset && INTERESTING_SYMBOLS.stream().noneMatch(this::isStringAtPosition)) {
       myPosition++;
     }
     returnWhitespace(mark);
@@ -752,8 +733,7 @@ public class UppercutLexer extends LexerBase {
     int mark = myPosition + 1;
     while (mark < myEndOffset) {
       final int finalMark = mark;
-      if (INTERESTING_SYMBOLS.stream()
-        .noneMatch(s -> this.isStringAtPosition(s, finalMark))) {
+      if (INTERESTING_SYMBOLS.stream().noneMatch(s -> this.isStringAtPosition(s, finalMark))) {
         mark++;
       } else {
         break;
@@ -784,11 +764,10 @@ public class UppercutLexer extends LexerBase {
     returnWhitespace(mark);
   }
 
-  @VisibleForTesting
-  boolean containsCharEarlierInLine(char token) {
+  @VisibleForTesting boolean containsCharEarlierInLine(char token) {
     int pos = myPosition;
-    while(pos >= 0 && myBuffer.charAt(pos) != '\n') {
-      if(myBuffer.charAt(pos) == token) {
+    while (pos >= 0 && myBuffer.charAt(pos) != '\n') {
+      if (myBuffer.charAt(pos) == token) {
         return true;
       }
       pos--;
