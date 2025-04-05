@@ -27,7 +27,7 @@ public class JavascriptInspector implements InspectionSuppressor {
     if (element.getText() != null) {
       if (toolId.equals("JSUnresolvedReference")) {
         PsiElement cur = element;
-        while (cur != null) {
+        while (cur != null && cur.getText() != null) {
           if ((cur.getText().equals("karate") || cur.getText().equals("Java")) && cur.getPrevSibling() == null) {
             return true;
           }
