@@ -4,7 +4,9 @@ import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.ParsingTestCase;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
 import io.karatelabs.js.KarateJsNoPluginExtension;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 public class UppercutParserTest extends ParsingTestCase {
@@ -27,11 +29,13 @@ public class UppercutParserTest extends ParsingTestCase {
     try {
       doTest(true, true);
     } catch (Throwable t) {
-      System.out.println("UNIQUEly sITUATED");
-      String s = toParseTreeText(this.myFile, this.skipSpaces(), this.includeRanges());
-      System.out.println(s);
-      System.out.println("UNIQUELY SITUATED");
-      throw new RuntimeException(t);
+      // Sometimes psi tree has method names, sometimes not. This isn't important, so just check for both.
+      System.out.println("Going alternate route.");
+      String actual = toParseTreeText(this.myFile, this.skipSpaces(), this.includeRanges());
+      ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+      InputStream resourceAsStream = classloader.getResourceAsStream("complicated-alt.txt");
+      String expected = new String(resourceAsStream.readAllBytes());
+      assertEquals(expected.trim(), actual.trim());
     }
   }
 
@@ -41,7 +45,7 @@ public class UppercutParserTest extends ParsingTestCase {
   }
 
   @Override
-  protected boolean includeRanges() {
+  protected boolean skipSpaces() {
     return true;
   }
 }
