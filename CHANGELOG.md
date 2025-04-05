@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Modified
+
+- Highlighting is a little more reliable now.
+
 ## [2.4.5] - 2025-04-05
 
 ### Modified

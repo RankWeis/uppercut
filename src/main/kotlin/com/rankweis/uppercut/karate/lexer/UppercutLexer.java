@@ -18,6 +18,7 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
 import com.intellij.json.json5.Json5Lexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
+import com.intellij.lexer.LexerPosition;
 import com.intellij.lexer.XmlLexer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -60,9 +61,9 @@ public class UppercutLexer extends LexerBase {
   private static final int STATE_AFTER_FEATURE_KEYWORD = 9;
   private static final int STATE_AFTER_OPERATOR = 10;
 
-  private static final int INJECTING_JAVASCRIPT = 100;
-  private static final int INJECTING_JSON = 200;
-  private static final int INJECTING_XML = 300;
+  private static final int INJECTING_JAVASCRIPT = 1000;
+  private static final int INJECTING_JSON = 2000;
+  private static final int INJECTING_XML = 3000;
 
   public static final String PYSTRING_MARKER = "\"\"\"";
   public static final List<String> INTERESTING_SYMBOLS =
@@ -113,28 +114,47 @@ public class UppercutLexer extends LexerBase {
     myEndOffset = endOffset;
     myPosition = startOffset;
     myState = initialState;
+
+    // setup context
+    if (myPosition != 0 && myState == STATE_DEFAULT) {
+      String prev = myBuffer.subSequence(0, myPosition).toString();
+      int pystringOccurrences = prev.split(PYSTRING_MARKER + "\n").length - 1;
+      if (prev.endsWith(PYSTRING_MARKER)) {
+        pystringOccurrences++;
+      }
+      if (pystringOccurrences % 2 == 1) {
+        // currently in pystring markers
+        myPosition = prev.lastIndexOf(PYSTRING_MARKER + "\n") + PYSTRING_MARKER.length() + 1;
+        myState = STATE_INSIDE_PYSTRING;
+      }
+    }
     if (advance) {
       advance();
     }
   }
 
-  @Override public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  @Override
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     start(buffer, startOffset, endOffset, initialState, true);
   }
 
-  @Override public int getState() {
+  @Override
+  public int getState() {
     return myState;
   }
 
-  @Override public IElementType getTokenType() {
+  @Override
+  public IElementType getTokenType() {
     return myCurrentToken;
   }
 
-  @Override public int getTokenStart() {
+  @Override
+  public int getTokenStart() {
     return myCurrentTokenStart;
   }
 
-  @Override public int getTokenEnd() {
+  @Override
+  public int getTokenEnd() {
     return myPosition;
   }
 
@@ -246,11 +266,23 @@ public class UppercutLexer extends LexerBase {
   }
 
   private boolean injecting() {
-    return myState == STATE_INSIDE_PYSTRING || myState == INJECTING_JAVASCRIPT || myState == INJECTING_JSON
-      || myState == INJECTING_XML;
+    return (myState == STATE_INSIDE_PYSTRING) || injectingJson() || injectingJavascript() || injectingXml();
   }
 
-  @Override public void advance() {
+  private boolean injectingJson() {
+    return (myState >= INJECTING_JSON) && (myState < (INJECTING_JSON + 1000));
+  }
+
+  private boolean injectingJavascript() {
+    return (myState >= INJECTING_JAVASCRIPT) && (myState < (INJECTING_JAVASCRIPT + 1000));
+  }
+
+  private boolean injectingXml() {
+    return myState >= INJECTING_XML && myState < (INJECTING_XML + 1000);
+  }
+
+  @Override
+  public void advance() {
     if (myPosition >= myEndOffset) {
       myCurrentToken = null;
       return;
@@ -276,7 +308,7 @@ public class UppercutLexer extends LexerBase {
       }
       return;
     }
-    if (myState == INJECTING_JAVASCRIPT) {
+    if (injectingJavascript()) {
       if (myPosition >= jsLexer.getBufferEnd()) {
         myState = STATE_DEFAULT;
       } else {
@@ -284,7 +316,7 @@ public class UppercutLexer extends LexerBase {
         return;
       }
     }
-    if (myState == INJECTING_JSON) {
+    if (injectingJson()) {
       if (myPosition >= jsonLexer.getBufferEnd()) {
         myState = STATE_DEFAULT;
       } else {
@@ -292,7 +324,7 @@ public class UppercutLexer extends LexerBase {
         return;
       }
     }
-    if (myState == INJECTING_XML) {
+    if (injectingXml()) {
       if (myPosition >= xmlLexer.getBufferEnd()) {
         myState = STATE_DEFAULT;
       } else {
@@ -483,7 +515,8 @@ public class UppercutLexer extends LexerBase {
     }
   }
 
-  @VisibleForTesting int findNextMatchingClosingBrace() {
+  @VisibleForTesting
+  int findNextMatchingClosingBrace() {
     int pos = myPosition;
     int closingBracesRequired = 0;
     while (pos < myEndOffset) {
@@ -506,7 +539,8 @@ public class UppercutLexer extends LexerBase {
     }
   }
 
-  @VisibleForTesting int findNextMatchingClosingParen() {
+  @VisibleForTesting
+  int findNextMatchingClosingParen() {
     int pos = myPosition;
     int closingBracesRequired = 0;
     while (pos < myEndOffset) {
@@ -626,6 +660,7 @@ public class UppercutLexer extends LexerBase {
     }
     myCurrentToken = jsLexer.getTokenType();
     myPosition = jsLexer.getTokenEnd();
+    myState = INJECTING_JAVASCRIPT + jsLexer.getState();
   }
 
   private void startInjectJson(int startPos, int endPos) {
@@ -634,7 +669,7 @@ public class UppercutLexer extends LexerBase {
     }
     jsonLexer = new Json5Lexer();
     jsonLexer.start(myBuffer, startPos, endPos);
-    myState = INJECTING_JSON;
+    myState = INJECTING_JSON + jsonLexer.getState();
     myCurrentToken = jsonLexer.getTokenType();
     myPosition = jsonLexer.getTokenEnd();
   }
@@ -645,14 +680,35 @@ public class UppercutLexer extends LexerBase {
     }
     xmlLexer = new XmlLexer();
     xmlLexer.start(myBuffer, startPos, endPos);
-    myState = INJECTING_XML;
+    myState = INJECTING_XML + xmlLexer.getState();
     myCurrentToken = xmlLexer.getTokenType();
     myPosition = xmlLexer.getTokenEnd();
   }
 
+  @Override
+  public void restore(@NotNull LexerPosition position) {
+    super.restore(position);
+    if (injecting()) {
+      int endPos = myPosition;
+      while (endPos < myEndOffset && !isStringAtPosition(PYSTRING_MARKER, endPos)) {
+        endPos++;
+      }
+      endPos = Math.min(endPos, myEndOffset);
+      if (injectingJson()) {
+        jsonLexer.start(myBuffer, myStartOffset, endPos, jsonLexer.getState() - INJECTING_JSON);
+      } else if (injectingJavascript()) {
+        jsLexer.start(myBuffer, myStartOffset, endPos, jsLexer.getState() - INJECTING_JAVASCRIPT);
+      } else if (injectingXml()) {
+        xmlLexer.start(myBuffer, myStartOffset, endPos, xmlLexer.getState() - INJECTING_XML);
+      }
+    }
+  }
+
   private void injectJson() {
     if (isStringAtPosition("#(")) {
-      int closingBrace = Math.min(findNextMatchingClosingParen() + 1, myEndOffset);
+      int nextMatchingClosingParen = findNextMatchingClosingParen();
+      nextMatchingClosingParen = nextMatchingClosingParen == -1 ? myEndOffset : nextMatchingClosingParen;
+      int closingBrace = Math.min(nextMatchingClosingParen + 1, myEndOffset);
       if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim().matches("#\\(\\S+\\)")) {
         myCurrentToken = JSON_INJECTABLE;
         myPosition = closingBrace;
@@ -663,7 +719,9 @@ public class UppercutLexer extends LexerBase {
       }
     }
     if (isStringAtPosition("\"#(")) {
-      int closingBrace = Math.min(findNextMatchingClosingParen() + 2, myEndOffset);
+      int nextMatchingClosingParen = findNextMatchingClosingParen();
+      nextMatchingClosingParen = nextMatchingClosingParen == -1 ? myEndOffset : nextMatchingClosingParen;
+      int closingBrace = Math.min(nextMatchingClosingParen + 2, myEndOffset - 1);
       if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim()
         .matches("\"#\\(\\S+\\)\"")) { // "#
         myCurrentToken = JSON_INJECTABLE;
@@ -681,7 +739,7 @@ public class UppercutLexer extends LexerBase {
 
   private void injectXml() {
     xmlLexer.advance();
-    myCurrentToken = xmlLexer.getTokenType();
+    myState = INJECTING_XML + xmlLexer.getState();
     myPosition = xmlLexer.getTokenEnd();
   }
 
@@ -689,7 +747,8 @@ public class UppercutLexer extends LexerBase {
     return myState == STATE_AFTER_ACTION_KEYWORD || myState == STATE_AFTER_SCENARIO_KEYWORD;
   }
 
-  @Nullable public static String fetchLocationLanguage(final @NotNull String commentText) {
+  @Nullable
+  public static String fetchLocationLanguage(final @NotNull String commentText) {
     if (commentText.startsWith("language:")) {
       return commentText.substring(9).trim();
     }
@@ -764,7 +823,8 @@ public class UppercutLexer extends LexerBase {
     returnWhitespace(mark);
   }
 
-  @VisibleForTesting boolean containsCharEarlierInLine(char token) {
+  @VisibleForTesting
+  boolean containsCharEarlierInLine(char token) {
     int pos = myPosition;
     while (pos >= 0 && myBuffer.charAt(pos) != '\n') {
       if (myBuffer.charAt(pos) == token) {
@@ -871,3 +931,4 @@ public class UppercutLexer extends LexerBase {
     return myEndOffset;
   }
 }
+

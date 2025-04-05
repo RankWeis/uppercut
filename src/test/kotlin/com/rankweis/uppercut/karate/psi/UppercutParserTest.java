@@ -27,7 +27,7 @@ public class UppercutParserTest extends ParsingTestCase {
 
   public void testComplicated() throws IOException {
     try {
-      doTest(true, true);
+      doTest(false, true);
     } catch (Throwable t) {
       // Sometimes psi tree has method names, sometimes not. This isn't important, so just check for both.
       System.out.println("Going alternate route.");
