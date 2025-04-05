@@ -227,11 +227,9 @@ grammarKit {
     }
 }
 
-
 tasks.withType<Copy> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
-
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
 changelog {
@@ -251,7 +249,6 @@ kover {
 }
 
 idea {
-
     module {
         isDownloadJavadoc = true
         isDownloadSources = true
@@ -272,7 +269,6 @@ tasks {
     publishPlugin {
         dependsOn("patchChangelog")
     }
-
 
     printProductsReleases {
         channels = listOf(ProductRelease.Channel.EAP)
