@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.4.5] - 2025-04-05
+
 ### Modified
 
 - Expression syntax in json snippets (`#{variable}` and `"#{variable}"`) render better.
@@ -335,7 +337,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.4...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.5...HEAD
+[2.4.5]: https://github.com/rankweis/uppercut/compare/v2.4.3...v2.4.5
 [2.4.4]: https://github.com/rankweis/uppercut/compare/v2.4.3...v2.4.4
 [2.4.3]: https://github.com/rankweis/uppercut/compare/v2.4.2...v2.4.3
 [2.4.2]: https://github.com/rankweis/uppercut/compare/v2.3.3...v2.4.2
