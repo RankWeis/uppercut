@@ -84,7 +84,7 @@ dependencies {
     testImplementation(libs.junit5Params) // JUnit 5 API
     testImplementation(libs.junitPlatformLauncher) // JUnit Platform launcher
     integrationTestImplementation(libs.junit5engine) // JUnit 5 runtime engine
-    testImplementation("com.jetbrains.intellij.platform:test-framework:251-EAP-SNAPSHOT")
+    testImplementation("com.jetbrains.intellij.platform:test-framework:243.25659.59")
 
     testImplementation(libs.junit) // JUnit 4 support
     testImplementation("org.junit.vintage:junit-vintage-engine") // JUnit 4 compatibility engine for JUnit 5
