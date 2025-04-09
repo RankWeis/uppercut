@@ -4,16 +4,9 @@
 
 ## [Unreleased]
 
-## [2.4.6] - 2025-04-07
-
 ### Modified
 
 - Highlighting is a little more reliable now.
-
-## [2.4.5] - 2025-04-05
-
-### Modified
-
 - Expression syntax in json snippets (`#{variable}` and `"#{variable}"`) render better.
 
 ## [2.4.3] - 2025-04-03
