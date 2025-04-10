@@ -34,7 +34,7 @@ class UppercutUITest {
     object IdeaUltimateCases : TestCaseTemplate(IdeProductProvider.IU) {
         val IntellijKarateTestCase = withProject(
             GitHubProject.fromGithub(branchName = "main", repoRelativeUrl = "RankWeis/uppercutTestProject.git")
-        ).useEAP()
+        ).useRelease()
     }
 
     @Test
