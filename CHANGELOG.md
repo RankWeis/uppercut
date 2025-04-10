@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.4.7] - 2025-04-10
+
 ### Modified
 
 - Highlighting is a little more reliable now.
@@ -336,7 +338,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.6...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.7...HEAD
+[2.4.7]: https://github.com/rankweis/uppercut/compare/v2.4.3...v2.4.7
 [2.4.6]: https://github.com/rankweis/uppercut/compare/v2.4.5...v2.4.6
 [2.4.5]: https://github.com/rankweis/uppercut/compare/v2.4.3...v2.4.5
 [2.4.4]: https://github.com/rankweis/uppercut/compare/v2.4.3...v2.4.4
