@@ -105,7 +105,7 @@ dependencies {
     testImplementation(libs.mockito) // Mockito for mocking in tests
     integrationTestImplementation(libs.junitJupiter)
     integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2") // Kotlin Coroutines testing library
-    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1") // Kotlin Coroutines testing library
+    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2") // Kotlin Coroutines testing library
     integrationTestImplementation(libs.kodein)
 
 //    integrationTestImplementation("com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-EAP-SNAPSHOT")
