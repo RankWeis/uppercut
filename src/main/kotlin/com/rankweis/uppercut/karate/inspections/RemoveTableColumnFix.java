@@ -1,18 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
+
 package com.rankweis.uppercut.karate.inspections;
 
-import com.rankweis.uppercut.karate.MyBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.NotNull;
+import com.rankweis.uppercut.karate.MyBundle;
 import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.rankweis.uppercut.karate.psi.GherkinTableRow;
+import org.jetbrains.annotations.NotNull;
 
 
 public class RemoveTableColumnFix implements LocalQuickFix {
+
   private final int myColumnIndex;
 
   public RemoveTableColumnFix(int columnIndex) {

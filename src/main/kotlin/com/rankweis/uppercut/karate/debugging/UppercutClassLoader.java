@@ -56,9 +56,9 @@ public class UppercutClassLoader {
       if (classLoader == null) {
         return null;
       }
-      Class<?> aClass = classLoader.loadClass(className);
-      fileCache.put(className, aClass);
-      return aClass;
+      Class<?> myClass = classLoader.loadClass(className);
+      fileCache.put(className, myClass);
+      return myClass;
     } catch (ClassNotFoundException e) {
       return null;
     }

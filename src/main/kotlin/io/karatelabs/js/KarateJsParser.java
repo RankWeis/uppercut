@@ -1,6 +1,6 @@
 package io.karatelabs.js;
 
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.TEXT_BLOCK;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.TEXT_BLOCK;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;

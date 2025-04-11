@@ -7,8 +7,9 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class KaratePositionManagerFactory extends PositionManagerFactory {
-    @Override
-    public PositionManager createPositionManager(@NotNull DebugProcess process) {
-      return new KaratePositionManager((DebugProcessImpl) process);
-    }
+
+  @Override
+  public PositionManager createPositionManager(@NotNull DebugProcess process) {
+    return new KaratePositionManager((DebugProcessImpl) process);
+  }
 }

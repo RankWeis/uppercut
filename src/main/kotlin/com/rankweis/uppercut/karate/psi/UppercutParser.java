@@ -1,9 +1,5 @@
 package com.rankweis.uppercut.karate.psi;
 
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.TEXT_BLOCK;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.XML;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.CLOSE_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DOUBLE_QUOTED_STRING;
@@ -13,6 +9,10 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING_QUOTES;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.SINGLE_QUOTED_STRING;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.TEXT_LIKE;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.JAVASCRIPT;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.JSON;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.TEXT_BLOCK;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.XML;
 
 import com.intellij.json.JsonLanguage;
 import com.intellij.json.json5.Json5Language;
@@ -37,14 +37,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GherkinParser implements PsiParser {
+public class UppercutParser implements PsiParser {
 
   private @NonNls @Nullable String overrideInjection;
 
   LinkedList<PsiBuilder.Marker> parens = new LinkedList<>();
-  private final TokenSet SCENARIO_END_TOKENS =
-    TokenSet.create(
-      KarateTokenTypes.BACKGROUND_KEYWORD, KarateTokenTypes.SCENARIO_KEYWORD,
+  private static final TokenSet SCENARIO_END_TOKENS =
+    TokenSet.create(KarateTokenTypes.BACKGROUND_KEYWORD, KarateTokenTypes.SCENARIO_KEYWORD,
       KarateTokenTypes.SCENARIO_OUTLINE_KEYWORD, KarateTokenTypes.RULE_KEYWORD, KarateTokenTypes.FEATURE_KEYWORD);
 
   @Override
@@ -52,7 +51,7 @@ public class GherkinParser implements PsiParser {
   public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
     parseFileTopLevel(builder);
-    marker.done(GherkinParserDefinition.GHERKIN_FILE);
+    marker.done(UppercutParserDefinition.KARATE_FILE);
     return builder.getTreeBuilt();
   }
 
@@ -86,12 +85,10 @@ public class GherkinParser implements PsiParser {
         }
       }
 
-      if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(tokenType) ||
-        tokenType == KarateTokenTypes.RULE_KEYWORD ||
-        tokenType == KarateTokenTypes.BACKGROUND_KEYWORD ||
-        tokenType == KarateTokenTypes.TAG) {
+      if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(tokenType) || tokenType == KarateTokenTypes.RULE_KEYWORD
+        || tokenType == KarateTokenTypes.BACKGROUND_KEYWORD || tokenType == KarateTokenTypes.TAG) {
         if (descMarker != null) {
-          descMarker.done(GherkinElementTypes.FEATURE_HEADER);
+          descMarker.done(UppercutElementTypes.FEATURE_HEADER);
           descMarker = null;
         }
         parseFeatureElements(builder);
@@ -109,9 +106,9 @@ public class GherkinParser implements PsiParser {
       }
     }
     if (descMarker != null) {
-      descMarker.done(GherkinElementTypes.FEATURE_HEADER);
+      descMarker.done(UppercutElementTypes.FEATURE_HEADER);
     }
-    marker.done(GherkinElementTypes.FEATURE);
+    marker.done(UppercutElementTypes.FEATURE);
   }
 
   private boolean hadLineBreakBefore(PsiBuilder builder, int prevTokenEnd) {
@@ -127,7 +124,7 @@ public class GherkinParser implements PsiParser {
     while (builder.getTokenType() == KarateTokenTypes.TAG) {
       final PsiBuilder.Marker tagMarker = builder.mark();
       builder.advanceLexer();
-      tagMarker.done(GherkinElementTypes.TAG);
+      tagMarker.done(UppercutElementTypes.TAG);
     }
   }
 
@@ -136,7 +133,7 @@ public class GherkinParser implements PsiParser {
     while (builder.getTokenType() != KarateTokenTypes.FEATURE_KEYWORD && !builder.eof()) {
       if (builder.getTokenType() == KarateTokenTypes.RULE_KEYWORD) {
         if (ruleMarker != null) {
-          ruleMarker.done(GherkinElementTypes.RULE);
+          ruleMarker.done(UppercutElementTypes.RULE);
         }
         ruleMarker = builder.mark();
         builder.advanceLexer();
@@ -160,10 +157,10 @@ public class GherkinParser implements PsiParser {
       final boolean outline = startTokenType == KarateTokenTypes.SCENARIO_OUTLINE_KEYWORD;
       builder.advanceLexer();
       parseScenario(builder);
-      marker.done(outline ? GherkinElementTypes.SCENARIO_OUTLINE : GherkinElementTypes.SCENARIO);
+      marker.done(outline ? UppercutElementTypes.SCENARIO_OUTLINE : UppercutElementTypes.SCENARIO);
     }
     if (ruleMarker != null) {
-      ruleMarker.done(GherkinElementTypes.RULE);
+      ruleMarker.done(UppercutElementTypes.RULE);
     }
   }
 
@@ -209,7 +206,7 @@ public class GherkinParser implements PsiParser {
     if (builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_TEXT) {
       final PsiBuilder.Marker stepParameterMarker = builder.mark();
       builder.advanceLexer();
-      stepParameterMarker.done(GherkinElementTypes.STEP_PARAMETER);
+      stepParameterMarker.done(UppercutElementTypes.STEP_PARAMETER);
       return true;
     }
     return false;
@@ -219,7 +216,7 @@ public class GherkinParser implements PsiParser {
     if (builder.getTokenType() == DECLARATION) {
       final PsiBuilder.Marker stepParameterMarker = builder.mark();
       builder.advanceLexer();
-      stepParameterMarker.done(GherkinElementTypes.DECLARATION);
+      stepParameterMarker.done(UppercutElementTypes.DECLARATION);
       return true;
     }
     return false;
@@ -229,7 +226,7 @@ public class GherkinParser implements PsiParser {
     if (builder.getTokenType() == VARIABLE) {
       final PsiBuilder.Marker stepParameterMarker = builder.mark();
       builder.advanceLexer();
-      stepParameterMarker.done(GherkinElementTypes.VARIABLE);
+      stepParameterMarker.done(UppercutElementTypes.VARIABLE);
       return true;
     }
     return false;
@@ -251,22 +248,17 @@ public class GherkinParser implements PsiParser {
       parseStep(builder);
     }
 
-    marker.done(GherkinElementTypes.STEP);
+    marker.done(UppercutElementTypes.STEP);
   }
 
   private void parseTextLikeObjects(PsiBuilder builder) {
     int prevTokenEnd = -1;
-    while (TEXT_LIKE.contains(builder.getTokenType())
-      || builder.getTokenType() == OPEN_PAREN
-      || builder.getTokenType() == CLOSE_PAREN
-      || builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_BRACE
+    while (TEXT_LIKE.contains(builder.getTokenType()) || builder.getTokenType() == OPEN_PAREN
+      || builder.getTokenType() == CLOSE_PAREN || builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_BRACE
       || builder.getTokenType() == KarateTokenTypes.STEP_PARAMETER_TEXT
-      || builder.getTokenType() == KarateTokenTypes.ACTION_KEYWORD
-      || builder.getTokenType() == DECLARATION
-      || builder.getTokenType() == VARIABLE
-      || builder.getTokenType() == SINGLE_QUOTED_STRING
-      || builder.getTokenType() == DOUBLE_QUOTED_STRING
-      || isPystring(builder.getTokenType())) {
+      || builder.getTokenType() == KarateTokenTypes.ACTION_KEYWORD || builder.getTokenType() == DECLARATION
+      || builder.getTokenType() == VARIABLE || builder.getTokenType() == SINGLE_QUOTED_STRING
+      || builder.getTokenType() == DOUBLE_QUOTED_STRING || isPystring(builder.getTokenType())) {
       if (isPystring(builder.getTokenType())) {
         parsePystring(builder);
         continue;
@@ -305,7 +297,7 @@ public class GherkinParser implements PsiParser {
       }
       if (builder.getTokenType() == CLOSE_PAREN) {
         if (!parens.isEmpty()) {
-          parens.pop().done(GherkinElementTypes.PAREN_ELEMENT);
+          parens.pop().done(UppercutElementTypes.PAREN_ELEMENT);
         } else {
           builder.error("Unbalanced parentheses");
         }
@@ -327,14 +319,14 @@ public class GherkinParser implements PsiParser {
   private void parsePystring(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
     if (builder.eof()) {
-      marker.done(GherkinElementTypes.PYSTRING);
+      marker.done(UppercutElementTypes.PYSTRING);
       return;
     }
     if (builder.getTokenType() == PYSTRING_QUOTES) {
       if (builder.getTokenType() == KarateTokenTypes.PYSTRING_QUOTES) {
         builder.advanceLexer();
         if (builder.eof()) {
-          marker.done(GherkinElementTypes.PYSTRING);
+          marker.done(UppercutElementTypes.PYSTRING);
           return;
         }
       }
@@ -356,9 +348,8 @@ public class GherkinParser implements PsiParser {
       }
       mark.done(TEXT_BLOCK);
     } else {
-      if (jsExt.map(j -> j.isJSLanguage(Objects.requireNonNull(builder.getTokenType()).getLanguage())).orElse(false)) {
-        parseLanguage(builder, JAVASCRIPT,
-          jsExt.map(KarateJavascriptParsingExtensionPoint::parseJs).orElseThrow());
+      if (jsExt.map(j -> j.isJsLanguage(Objects.requireNonNull(builder.getTokenType()).getLanguage())).orElse(false)) {
+        parseLanguage(builder, JAVASCRIPT, jsExt.map(KarateJavascriptParsingExtensionPoint::parseJs).orElseThrow());
       } else if (builder.getTokenType() != null && (builder.getTokenType().getLanguage() == Json5Language.INSTANCE
         || builder.getTokenType().getLanguage() == JsonLanguage.INSTANCE)) {
         new KarateJsonParser().parseLight(JSON, builder);
@@ -375,11 +366,10 @@ public class GherkinParser implements PsiParser {
     if (builder.getTokenType() == PYSTRING_QUOTES) {
       builder.advanceLexer();
     }
-    marker.done(GherkinElementTypes.PYSTRING);
+    marker.done(UppercutElementTypes.PYSTRING);
   }
 
-  private static void parseLanguage(PsiBuilder builder, IElementType closingTag,
-    Consumer<PsiBuilder> doParse) {
+  private static void parseLanguage(PsiBuilder builder, IElementType closingTag, Consumer<PsiBuilder> doParse) {
 
     PsiBuilder.Marker languageMarker = null;
     if (closingTag != null) {
@@ -406,7 +396,7 @@ public class GherkinParser implements PsiParser {
     if (builder.getTokenType() == KarateTokenTypes.PIPE) {
       parseTable(builder);
     }
-    marker.done(GherkinElementTypes.EXAMPLES_BLOCK);
+    marker.done(UppercutElementTypes.EXAMPLES_BLOCK);
   }
 
   private void parseTable(PsiBuilder builder) {
@@ -451,15 +441,15 @@ public class GherkinParser implements PsiParser {
       closeCell(cellMarker);
     }
     closeRowMarker(rowMarker, isHeaderRow);
-    marker.done(GherkinElementTypes.TABLE);
+    marker.done(UppercutElementTypes.TABLE);
   }
 
   private void closeCell(PsiBuilder.Marker cellMarker) {
-    cellMarker.done(GherkinElementTypes.TABLE_CELL);
+    cellMarker.done(UppercutElementTypes.TABLE_CELL);
   }
 
   private void closeRowMarker(PsiBuilder.Marker rowMarker, boolean headerRow) {
-    rowMarker.done(headerRow ? GherkinElementTypes.TABLE_HEADER_ROW : GherkinElementTypes.TABLE_ROW);
+    rowMarker.done(headerRow ? UppercutElementTypes.TABLE_HEADER_ROW : UppercutElementTypes.TABLE_ROW);
   }
 
   private int getTokenLength(@Nullable final String tokenText) {
@@ -474,14 +464,13 @@ public class GherkinParser implements PsiParser {
     KarateJavascriptParsingExtensionPoint ex;
     List<KarateJavascriptParsingExtensionPoint> extensionList = KarateJavascriptExtension.EP_NAME.getExtensionList();
     if (useInternalEngine) {
-        ex = extensionList.stream().toList().get(extensionList.size() - 1);
+      ex = extensionList.stream().toList().get(extensionList.size() - 1);
     } else {
       ex =
         extensionList.stream().findFirst().get();
     }
-    return tokenType == KarateTokenTypes.PYSTRING || tokenType == PYSTRING_QUOTES
-      || ex.isJSLanguage(tokenType.getLanguage()) || tokenType.getLanguage()
-      .is(Json5Language.INSTANCE) || tokenType.getLanguage()
+    return tokenType == KarateTokenTypes.PYSTRING || tokenType == PYSTRING_QUOTES || ex.isJsLanguage(
+      tokenType.getLanguage()) || tokenType.getLanguage().is(Json5Language.INSTANCE) || tokenType.getLanguage()
       .is(JsonLanguage.INSTANCE) || tokenType.getLanguage().is(XMLLanguage.INSTANCE);
   }
 }

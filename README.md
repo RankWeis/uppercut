@@ -41,7 +41,7 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
 
 ## Collaborators
 
-<!-- readme: calvario31,collaborators -start -->
+<!-- readme: calvario31,rpiterman,collaborators -start -->
 <table>
 	<tbody>
 		<tr>
@@ -50,6 +50,13 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
                     <img src="https://avatars.githubusercontent.com/u/39682391?v=4" width="100;" alt="calvario31"/>
                     <br />
                     <sub><b>calvario31</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/rpiterman">
+                    <img src="https://avatars.githubusercontent.com/u/1968526?v=4" width="100;" alt="rpiterman"/>
+                    <br />
+                    <sub><b>rpiterman</b></sub>
                 </a>
             </td>
             <td align="center">
@@ -62,7 +69,7 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
 		</tr>
 	<tbody>
 </table>
-<!-- readme: calvario31,collaborators -end -->
+<!-- readme: calvario31,rpiterman,collaborators -end -->
 
 ## Contributors
 

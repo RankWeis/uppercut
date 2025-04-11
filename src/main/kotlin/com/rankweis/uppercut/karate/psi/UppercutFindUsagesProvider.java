@@ -10,14 +10,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.rankweis.uppercut.karate.MyBundle;
-import com.rankweis.uppercut.karate.lexer.GherkinLexer;
+import com.rankweis.uppercut.karate.lexer.UppercutLexer;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
-public final class KarateFindUsagesProvider implements FindUsagesProvider {
+public final class UppercutFindUsagesProvider implements FindUsagesProvider {
   @Override
   public WordsScanner getWordsScanner() {
-    return new DefaultWordsScanner(new GherkinLexer(
+    return new DefaultWordsScanner(new UppercutLexer(
       new PlainKarateKeywordProvider()), KEYWORDS, COMMENTS, TokenSet.EMPTY);
   }
 

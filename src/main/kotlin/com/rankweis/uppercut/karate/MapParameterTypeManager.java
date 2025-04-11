@@ -1,4 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
+
 package com.rankweis.uppercut.karate;
 
 import com.intellij.psi.PsiElement;
@@ -8,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MapParameterTypeManager implements ParameterTypeManager {
+
   public static final MapParameterTypeManager DEFAULT = new MapParameterTypeManager(
     CucumberUtil.STANDARD_PARAMETER_TYPES);
 
@@ -18,7 +21,8 @@ public class MapParameterTypeManager implements ParameterTypeManager {
     this(parameterTypes, null);
   }
 
-  public MapParameterTypeManager(Map<String, String> parameterTypes, Map<String, SmartPsiElementPointer<PsiElement>> parameterTypeDeclarations) {
+  public MapParameterTypeManager(Map<String, String> parameterTypes,
+    Map<String, SmartPsiElementPointer<PsiElement>> parameterTypeDeclarations) {
     myParameterTypes = parameterTypes;
     myParameterTypeDeclarations = parameterTypeDeclarations;
   }

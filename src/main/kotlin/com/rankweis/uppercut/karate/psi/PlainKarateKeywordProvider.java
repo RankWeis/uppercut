@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
+
 package com.rankweis.uppercut.karate.psi;
 
 import com.intellij.psi.tree.IElementType;
@@ -11,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PlainKarateKeywordProvider implements GherkinKeywordProvider {
+
   public static GherkinKeywordTable DEFAULT_KEYWORD_TABLE = new GherkinKeywordTable();
   public static Map<String, IElementType> DEFAULT_KEYWORDS = new HashMap<>();
   private static final Set<String> ourKeywordsWithNoSpaceAfter = new HashSet<>();
@@ -31,7 +34,7 @@ public class PlainKarateKeywordProvider implements GherkinKeywordProvider {
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.STEP_KEYWORD, "But");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.STEP_KEYWORD, "*");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.STEP_KEYWORD, "Lorsqu'");
-    
+
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "url");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "call");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "callonce");
@@ -58,7 +61,7 @@ public class PlainKarateKeywordProvider implements GherkinKeywordProvider {
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "params");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "response");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "eval");
-    
+
     ourKeywordsWithNoSpaceAfter.add("Lorsqu'");
 
     DEFAULT_KEYWORD_TABLE.putAllKeywordsInto(DEFAULT_KEYWORDS);

@@ -15,7 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.rankweis.uppercut.karate.CucumberUtil;
 import com.rankweis.uppercut.karate.MyBundle;
-import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
+import com.rankweis.uppercut.karate.psi.UppercutElementTypes;
 import com.rankweis.uppercut.karate.psi.GherkinElementVisitor;
 import com.rankweis.uppercut.karate.psi.GherkinPystring;
 import com.rankweis.uppercut.karate.psi.GherkinScenarioOutline;
@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 public class GherkinStepImpl extends GherkinPsiElementBase implements GherkinStep, PsiCheckedRenameElement {
 
   private static final TokenSet TEXT_FILTER = TokenSet
-    .create(KarateTokenTypes.DECLARATION, KarateTokenTypes.TEXT, GherkinElementTypes.STEP_PARAMETER,
+    .create(KarateTokenTypes.DECLARATION, KarateTokenTypes.TEXT, UppercutElementTypes.STEP_PARAMETER,
       TokenType.WHITE_SPACE, KarateTokenTypes.STEP_PARAMETER_TEXT, KarateTokenTypes.STEP_PARAMETER_BRACE);
 
   private static final Pattern PARAMETER_SUBSTITUTION_PATTERN = Pattern.compile("<([^>\n\r]+)>");
@@ -81,7 +81,7 @@ public class GherkinStepImpl extends GherkinPsiElementBase implements GherkinSte
   @Override
   @Nullable
   public GherkinTable getTable() {
-    final ASTNode tableNode = getNode().findChildByType(GherkinElementTypes.TABLE);
+    final ASTNode tableNode = getNode().findChildByType(UppercutElementTypes.TABLE);
     return tableNode == null ? null : (GherkinTable)tableNode.getPsi();
   }
 

@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be 
 // found in the LICENSE file.
+
 package com.rankweis.uppercut.karate.lexer;
 
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.CLOSE_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DOUBLE_QUOTED_STRING;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.JSON_INJECTABLE;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPEN_PAREN;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPERATOR;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING_INCOMPLETE;
@@ -16,6 +18,7 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
 import com.intellij.json.json5.Json5Lexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
+import com.intellij.lexer.LexerPosition;
 import com.intellij.lexer.XmlLexer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -35,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 
-public class GherkinLexer extends LexerBase {
+public class UppercutLexer extends LexerBase {
 
   protected CharSequence myBuffer = Strings.EMPTY_CHAR_SEQUENCE;
   protected int myStartOffset = 0;
@@ -46,28 +49,27 @@ public class GherkinLexer extends LexerBase {
   private List<String> myKeywords;
   private int myState;
 
-  private final static int STATE_DEFAULT = 0;
-  private final static int STATE_TABLE = 2;
-  private final static int STATE_AFTER_STEP_KEYWORD = 3;
-  private final static int STATE_AFTER_SCENARIO_KEYWORD = 4;
-  private final static int STATE_INSIDE_PYSTRING = 5;
-  private final static int STATE_AFTER_ACTION_KEYWORD = 6;
+  private static final int STATE_DEFAULT = 0;
+  private static final int STATE_TABLE = 2;
+  private static final int STATE_AFTER_STEP_KEYWORD = 3;
+  private static final int STATE_AFTER_SCENARIO_KEYWORD = 4;
+  private static final int STATE_INSIDE_PYSTRING = 5;
+  private static final int STATE_AFTER_ACTION_KEYWORD = 6;
 
-  private final static int STATE_PARAMETER_INSIDE_PYSTRING = 7;
-  private final static int STATE_PARAMETER_INSIDE_STEP = 8;
-  private final static int STATE_AFTER_FEATURE_KEYWORD = 9;
-  private final static int STATE_AFTER_OPERATOR = 10;
+  private static final int STATE_PARAMETER_INSIDE_PYSTRING = 7;
+  private static final int STATE_PARAMETER_INSIDE_STEP = 8;
+  private static final int STATE_AFTER_FEATURE_KEYWORD = 9;
+  private static final int STATE_AFTER_OPERATOR = 10;
 
-  private final static int INJECTING_JAVASCRIPT = 100;
-  private final static int INJECTING_JSON = 200;
-  private final static int INJECTING_XML = 300;
+  private static final int INJECTING_JAVASCRIPT = 1000;
+  private static final int INJECTING_JSON = 2000;
+  private static final int INJECTING_XML = 3000;
 
   public static final String PYSTRING_MARKER = "\"\"\"";
   public static final List<String> INTERESTING_SYMBOLS =
     List.of("\n", "'", "\"", "#", "{", "[", "function", " ", "(", ")");
   private final GherkinKeywordProvider myKeywordProvider;
-  List<String> scenarioKeywords =
-    Stream.of("Scenario", "Background").toList();
+  List<String> scenarioKeywords = Stream.of("Scenario", "Background").toList();
   List<String> stepKeywords;
   List<String> interruptions;
 
@@ -78,21 +80,19 @@ public class GherkinLexer extends LexerBase {
   Lexer jsonLexer = null;
   Lexer xmlLexer = null;
 
-  public GherkinLexer(GherkinKeywordProvider provider) {
+  public UppercutLexer(GherkinKeywordProvider provider) {
     this(provider, false);
   }
 
-  public GherkinLexer(GherkinKeywordProvider provider, boolean highlighting) {
+  public UppercutLexer(GherkinKeywordProvider provider, boolean highlighting) {
     myKeywordProvider = provider;
     boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
-    List<KarateJavascriptParsingExtensionPoint> extensionList = KarateJavascriptExtension.EP_NAME.getExtensionList();
+    List<KarateJavascriptParsingExtensionPoint> extensions =
+      KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList();
     if (useInternalEngine) {
-      this.jsLexer =
-              extensionList.stream().toList().get(extensionList.size() - 1).getLexer(highlighting);
+      this.jsLexer = extensions.get(extensions.size() - 1).getLexer(highlighting);
     } else {
-      this.jsLexer =
-              extensionList.stream().findFirst().map(l -> l.getLexer(highlighting))
-                      .orElse(null);
+      this.jsLexer = extensions.get(0).getLexer(highlighting);
     }
     updateLanguage("en");
     stepKeywords = myKeywords.stream().filter(myKeywordProvider::isStepKeyword).toList();
@@ -113,6 +113,20 @@ public class GherkinLexer extends LexerBase {
     myEndOffset = endOffset;
     myPosition = startOffset;
     myState = initialState;
+
+    // setup context
+    if (myPosition != 0 && myState == STATE_DEFAULT) {
+      String prev = myBuffer.subSequence(0, myPosition).toString();
+      int pystringOccurrences = prev.split(PYSTRING_MARKER + "\n").length - 1;
+      if (prev.endsWith(PYSTRING_MARKER)) {
+        pystringOccurrences++;
+      }
+      if (pystringOccurrences % 2 == 1) {
+        // currently in pystring markers
+        myPosition = prev.lastIndexOf(PYSTRING_MARKER + "\n") + PYSTRING_MARKER.length() + 1;
+        myState = STATE_INSIDE_PYSTRING;
+      }
+    }
     if (advance) {
       advance();
     }
@@ -199,8 +213,8 @@ public class GherkinLexer extends LexerBase {
     }
 
     boolean isJsJson =
-      pos < myEndOffset && myBuffer.charAt(pos) == closingBrace &&
-        !myBuffer.subSequence(myPosition, pos).toString().matches("[\\[{*\\d]*");
+      pos < myEndOffset && myBuffer.charAt(pos) == closingBrace && !myBuffer.subSequence(myPosition, pos).toString()
+        .matches("[\\[{*\\d]*");
     if (isJsJson) {
       startInjectJson(myPosition, pos + 1);
     }
@@ -217,8 +231,7 @@ public class GherkinLexer extends LexerBase {
 
     boolean positionOkay = pos < (myEndOffset - 1) && myBuffer.charAt(pos) == '=';
     // Look for 'declaration =' but not 'declaration =='
-    boolean isDeclaration = positionOkay && myBuffer.charAt(pos + 1) != '='
-      && myBuffer.charAt(pos - 1) != '!';
+    boolean isDeclaration = positionOkay && myBuffer.charAt(pos + 1) != '=' && myBuffer.charAt(pos - 1) != '!';
     boolean isVariable =
       !isDeclaration && positionOkay && (nextNonSpace(pos + 1) == '=' || prevNonSpace(startingPos, pos - 1) == '!');
     if (isDeclaration || isVariable) {
@@ -252,8 +265,19 @@ public class GherkinLexer extends LexerBase {
   }
 
   private boolean injecting() {
-    return myState == STATE_INSIDE_PYSTRING || myState == INJECTING_JAVASCRIPT || myState == INJECTING_JSON
-      || myState == INJECTING_XML;
+    return (myState == STATE_INSIDE_PYSTRING) || injectingJson() || injectingJavascript() || injectingXml();
+  }
+
+  private boolean injectingJson() {
+    return (myState >= INJECTING_JSON) && (myState < (INJECTING_JSON + 1000));
+  }
+
+  private boolean injectingJavascript() {
+    return (myState >= INJECTING_JAVASCRIPT) && (myState < (INJECTING_JAVASCRIPT + 1000));
+  }
+
+  private boolean injectingXml() {
+    return myState >= INJECTING_XML && myState < (INJECTING_XML + 1000);
   }
 
   @Override
@@ -263,7 +287,6 @@ public class GherkinLexer extends LexerBase {
       return;
     }
     myCurrentTokenStart = myPosition;
-    char c = myBuffer.charAt(myPosition);
     // Handle opening and closing markers """
     if (isStringAtPosition(PYSTRING_MARKER)) {
       myCurrentToken = KarateTokenTypes.PYSTRING_QUOTES;
@@ -284,7 +307,7 @@ public class GherkinLexer extends LexerBase {
       }
       return;
     }
-    if (myState == INJECTING_JAVASCRIPT) {
+    if (injectingJavascript()) {
       if (myPosition >= jsLexer.getBufferEnd()) {
         myState = STATE_DEFAULT;
       } else {
@@ -292,7 +315,7 @@ public class GherkinLexer extends LexerBase {
         return;
       }
     }
-    if (myState == INJECTING_JSON) {
+    if (injectingJson()) {
       if (myPosition >= jsonLexer.getBufferEnd()) {
         myState = STATE_DEFAULT;
       } else {
@@ -300,7 +323,7 @@ public class GherkinLexer extends LexerBase {
         return;
       }
     }
-    if (myState == INJECTING_XML) {
+    if (injectingXml()) {
       if (myPosition >= xmlLexer.getBufferEnd()) {
         myState = STATE_DEFAULT;
       } else {
@@ -312,6 +335,7 @@ public class GherkinLexer extends LexerBase {
       injectPyString();
       return;
     }
+    char c = myBuffer.charAt(myPosition);
     if (myState == STATE_AFTER_OPERATOR) {
       if (c == '<') {
         Matcher matcher =
@@ -386,7 +410,7 @@ public class GherkinLexer extends LexerBase {
       while (myPosition > 0 && Character.isWhitespace(myBuffer.charAt(myPosition - 1))) {
         myPosition--;
       }
-    } else if (isStringAtPosition("function") && jsLexer != null) {
+    } else if (isStringAtPosition("function") && containsCharEarlierInLine('=') && jsLexer != null) {
       int endOfFunction = findNextMatchingClosingBrace();
       if (endOfFunction < 0) {
         endOfFunction = getPositionOfNextLine();
@@ -419,8 +443,8 @@ public class GherkinLexer extends LexerBase {
       do {
         myPosition++;
       } while (myPosition < myEndOffset && isValidTagChar(myBuffer.charAt(myPosition)));
-    } else if (isStringAtPosition("==") || isStringAtPosition("!=")
-      || isStringAtPosition("<=") || isStringAtPosition(">=")) {
+    } else if (isStringAtPosition("==") || isStringAtPosition("!=") || isStringAtPosition("<=") || isStringAtPosition(
+      ">=")) {
       myPosition += 2;
       myCurrentToken = OPERATOR;
       myState = STATE_AFTER_OPERATOR;
@@ -445,12 +469,12 @@ public class GherkinLexer extends LexerBase {
       if (myState == STATE_AFTER_STEP_KEYWORD) {
         for (String keyword : myKeywords) {
           if (myKeywordProvider.isActionKeyword(keyword) && isStringAtPosition(keyword)) {
-            if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) &&
-              (myPosition + keyword.length() >= myBuffer.length() ||
-                !Character.isWhitespace(myBuffer.charAt(myPosition + keyword.length())))) {
+            if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) && (
+              myPosition + keyword.length() >= myBuffer.length() || !Character.isWhitespace(
+                myBuffer.charAt(myPosition + keyword.length())))) {
               continue;
-            } else if (myPosition + keyword.length() < myBuffer.length() &&
-              Character.isLetter(myBuffer.charAt(myPosition + keyword.length()))) {
+            } else if (myPosition + keyword.length() < myBuffer.length() && Character.isLetter(
+              myBuffer.charAt(myPosition + keyword.length()))) {
               continue;
             }
             myState = STATE_AFTER_ACTION_KEYWORD;
@@ -514,13 +538,36 @@ public class GherkinLexer extends LexerBase {
     }
   }
 
+  @VisibleForTesting
+  int findNextMatchingClosingParen() {
+    int pos = myPosition;
+    int closingBracesRequired = 0;
+    while (pos < myEndOffset) {
+      if (myBuffer.charAt(pos) == '(') {
+        closingBracesRequired++;
+      } else if (myBuffer.charAt(pos) == ')') {
+        closingBracesRequired--;
+        if (closingBracesRequired <= 0) {
+          break;
+        }
+      }
+      pos++;
+    }
+
+    pos = Math.max(Math.min(pos, myEndOffset - 1), 0);
+    if (myBuffer.charAt(pos) != ')') {
+      return -1;
+    } else {
+      return pos;
+    }
+  }
+
   private boolean handleKeywords() {
     for (String keyword : myKeywords) {
       int length = keyword.length();
       if (isStringAtPosition(keyword)) {
-        if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) &&
-          myEndOffset - myPosition > length &&
-          Character.isLetterOrDigit(myBuffer.charAt(myPosition + length))) {
+        if (myKeywordProvider.isSpaceRequiredAfterKeyword(myCurLanguage, keyword) && myEndOffset - myPosition > length
+          && Character.isLetterOrDigit(myBuffer.charAt(myPosition + length))) {
           continue;
         }
 
@@ -558,7 +605,6 @@ public class GherkinLexer extends LexerBase {
   }
 
   private void injectPyString(boolean multiLine) {
-    int startPos = myPosition;
     int endPos = myPosition;
     while (endPos < myEndOffset && !isStringAtPosition(PYSTRING_MARKER, endPos)) {
       endPos++;
@@ -569,6 +615,7 @@ public class GherkinLexer extends LexerBase {
       myCurrentToken = KarateTokenTypes.PYSTRING_INCOMPLETE;
       return;
     }
+    int startPos = myPosition;
     String strippedStr = myBuffer.subSequence(startPos, endPos).toString().strip();
     if (!multiLine && strippedStr.matches("\\[?[\\w+.]*]?")) {
       myCurrentToken = TEXT;
@@ -581,8 +628,7 @@ public class GherkinLexer extends LexerBase {
       myState = STATE_DEFAULT;
       return;
     }
-    if (StringUtil.startsWith(strippedStr, "{")
-      || StringUtil.startsWith(strippedStr, "[")) {
+    if (StringUtil.startsWith(strippedStr, "{") || StringUtil.startsWith(strippedStr, "[")) {
       startInjectJson(startPos, endPos);
     } else if (StringUtil.startsWith(strippedStr, "<")) {
       startInjectXml(startPos, endPos);
@@ -613,6 +659,7 @@ public class GherkinLexer extends LexerBase {
     }
     myCurrentToken = jsLexer.getTokenType();
     myPosition = jsLexer.getTokenEnd();
+    myState = INJECTING_JAVASCRIPT + jsLexer.getState();
   }
 
   private void startInjectJson(int startPos, int endPos) {
@@ -621,7 +668,7 @@ public class GherkinLexer extends LexerBase {
     }
     jsonLexer = new Json5Lexer();
     jsonLexer.start(myBuffer, startPos, endPos);
-    myState = INJECTING_JSON;
+    myState = INJECTING_JSON + jsonLexer.getState();
     myCurrentToken = jsonLexer.getTokenType();
     myPosition = jsonLexer.getTokenEnd();
   }
@@ -632,12 +679,58 @@ public class GherkinLexer extends LexerBase {
     }
     xmlLexer = new XmlLexer();
     xmlLexer.start(myBuffer, startPos, endPos);
-    myState = INJECTING_XML;
+    myState = INJECTING_XML + xmlLexer.getState();
     myCurrentToken = xmlLexer.getTokenType();
     myPosition = xmlLexer.getTokenEnd();
   }
 
+  @Override
+  public void restore(@NotNull LexerPosition position) {
+    super.restore(position);
+    if (injecting()) {
+      int endPos = myPosition;
+      while (endPos < myEndOffset && !isStringAtPosition(PYSTRING_MARKER, endPos)) {
+        endPos++;
+      }
+      endPos = Math.min(endPos, myEndOffset);
+      if (injectingJson()) {
+        jsonLexer.start(myBuffer, myStartOffset, endPos, jsonLexer.getState() - INJECTING_JSON);
+      } else if (injectingJavascript()) {
+        jsLexer.start(myBuffer, myStartOffset, endPos, jsLexer.getState() - INJECTING_JAVASCRIPT);
+      } else if (injectingXml()) {
+        xmlLexer.start(myBuffer, myStartOffset, endPos, xmlLexer.getState() - INJECTING_XML);
+      }
+    }
+  }
+
   private void injectJson() {
+    if (isStringAtPosition("#(")) {
+      int nextMatchingClosingParen = findNextMatchingClosingParen();
+      nextMatchingClosingParen = nextMatchingClosingParen == -1 ? myEndOffset : nextMatchingClosingParen;
+      int closingBrace = Math.min(nextMatchingClosingParen + 1, myEndOffset);
+      if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim().matches("#\\(\\S+\\)")) {
+        myCurrentToken = JSON_INJECTABLE;
+        myPosition = closingBrace;
+        while (jsonLexer.getTokenEnd() < closingBrace) {
+          jsonLexer.advance();
+        }
+        return;
+      }
+    }
+    if (isStringAtPosition("\"#(")) {
+      int nextMatchingClosingParen = findNextMatchingClosingParen();
+      nextMatchingClosingParen = nextMatchingClosingParen == -1 ? myEndOffset : nextMatchingClosingParen;
+      int closingBrace = Math.min(nextMatchingClosingParen + 2, myEndOffset - 1);
+      if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim()
+        .matches("\"#\\(\\S+\\)\"")) { // "#
+        myCurrentToken = JSON_INJECTABLE;
+        myPosition = closingBrace;
+        while (jsonLexer.getTokenEnd() < closingBrace) {
+          jsonLexer.advance();
+        }
+        return;
+      }
+    }
     jsonLexer.advance();
     myCurrentToken = jsonLexer.getTokenType();
     myPosition = jsonLexer.getTokenEnd();
@@ -645,7 +738,7 @@ public class GherkinLexer extends LexerBase {
 
   private void injectXml() {
     xmlLexer.advance();
-    myCurrentToken = xmlLexer.getTokenType();
+    myState = INJECTING_XML + xmlLexer.getState();
     myPosition = xmlLexer.getTokenEnd();
   }
 
@@ -674,10 +767,6 @@ public class GherkinLexer extends LexerBase {
       .equals(keyword);
   }
 
-  private String stringHelper(int offset) {
-    return myBuffer.subSequence(myPosition, offset).toString();
-  }
-
   private boolean isStringAtPosition(String keyword, int position) {
     int length = keyword.length();
     return myEndOffset - position >= length && myBuffer.subSequence(position, position + length).toString()
@@ -691,8 +780,7 @@ public class GherkinLexer extends LexerBase {
   private void advanceToNextInterestingToken() {
     myPosition++;
     int mark = myPosition;
-    while (myPosition < myEndOffset && INTERESTING_SYMBOLS.stream()
-      .noneMatch(this::isStringAtPosition)) {
+    while (myPosition < myEndOffset && INTERESTING_SYMBOLS.stream().noneMatch(this::isStringAtPosition)) {
       myPosition++;
     }
     returnWhitespace(mark);
@@ -703,8 +791,7 @@ public class GherkinLexer extends LexerBase {
     int mark = myPosition + 1;
     while (mark < myEndOffset) {
       final int finalMark = mark;
-      if (INTERESTING_SYMBOLS.stream()
-        .noneMatch(s -> this.isStringAtPosition(s, finalMark))) {
+      if (INTERESTING_SYMBOLS.stream().noneMatch(s -> this.isStringAtPosition(s, finalMark))) {
         mark++;
       } else {
         break;
@@ -733,6 +820,18 @@ public class GherkinLexer extends LexerBase {
     }
 
     returnWhitespace(mark);
+  }
+
+  @VisibleForTesting
+  boolean containsCharEarlierInLine(char token) {
+    int pos = myPosition;
+    while (pos >= 0 && myBuffer.charAt(pos) != '\n') {
+      if (myBuffer.charAt(pos) == token) {
+        return true;
+      }
+      pos--;
+    }
+    return false;
   }
 
   private void advanceToNextLine() {
@@ -831,3 +930,4 @@ public class GherkinLexer extends LexerBase {
     return myEndOffset;
   }
 }
+

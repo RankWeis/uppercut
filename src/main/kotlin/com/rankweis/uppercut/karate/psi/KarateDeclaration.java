@@ -57,7 +57,7 @@ public class KarateDeclaration extends GherkinPsiElementBase implements PsiNameI
   
   @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    ASTNode keyNode = this.getNode().findChildByType(GherkinElementTypes.DECLARATION);
+    ASTNode keyNode = this.getNode().findChildByType(UppercutElementTypes.DECLARATION);
     if (keyNode != null) {
       GherkinPsiElement property =
         KarateUtil.createProperty(getProject(), name);

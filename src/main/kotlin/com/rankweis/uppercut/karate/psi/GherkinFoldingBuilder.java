@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.psi;
 
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JSON;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.TEXT_BLOCK;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.XML;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.JAVASCRIPT;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.JSON;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.TEXT_BLOCK;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.XML;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilderEx;
@@ -23,10 +23,10 @@ import org.jetbrains.annotations.NotNull;
 
 public final class GherkinFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
-  private static final TokenSet BLOCKS_TO_FOLD = TokenSet.create(GherkinElementTypes.SCENARIO,
-    GherkinElementTypes.SCENARIO_OUTLINE,
-    GherkinElementTypes.EXAMPLES_BLOCK,
-    KarateTokenTypes.PYSTRING, JSON, JAVASCRIPT, XML, TEXT_BLOCK);
+  private static final TokenSet BLOCKS_TO_FOLD = TokenSet.create(UppercutElementTypes.SCENARIO,
+    UppercutElementTypes.SCENARIO_OUTLINE,
+    UppercutElementTypes.EXAMPLES_BLOCK,
+    UppercutElementTypes.PYSTRING, JSON, JAVASCRIPT, XML, TEXT_BLOCK);
 
 
   @Override public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document,

@@ -27,7 +27,6 @@ public class KarateJavascriptFormat {
     this.dialect = dialect;
   }
 
-
   public List<Block> getJsSubBlocks(ASTNode astNode, Alignment alignment) {
     List<Block> result = new ArrayList<>();
     PsiFile file = astNode.getPsi().getContainingFile();
@@ -64,14 +63,14 @@ public class KarateJavascriptFormat {
         (x) -> x.getTreeParent() == astNode ? alignment : null, context);
       SubBlockVisitor subBlockVisitor = context.createSubBlockVisitor(parent, null);
       result.add(parent);
-//      for (ASTNode jsChild : children) {
-//        if (jsChild.getElementType() == TokenType.WHITE_SPACE) {
-//          subBlockVisitor.visit(jsChild);
-//        }
-//        Block b = context.createBlock(jsChild, childWrap, alignmentChild, Indent.getNoneIndent(), null, parent);
-//        result.add(b);
-//      }
-//      result.addAll(subBlockVisitor.getBlocks());
+      //      for (ASTNode jsChild : children) {
+      //        if (jsChild.getElementType() == TokenType.WHITE_SPACE) {
+      //          subBlockVisitor.visit(jsChild);
+      //        }
+      //        Block b = context.createBlock(jsChild, childWrap, alignmentChild, Indent.getNoneIndent(), null, parent);
+      //        result.add(b);
+      //      }
+      //      result.addAll(subBlockVisitor.getBlocks());
     });
     return result;
   }
