@@ -49,18 +49,18 @@ public class UppercutConsoleFilter implements Filter {
       .map(module -> {
         @NotNull VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
         List<VirtualFile> vfs = Arrays.stream(sourceRoots)
-          .map(r -> r.findFileByRelativePath(filePaths.getFirst()))
+          .map(r -> r.findFileByRelativePath(filePaths.get(0)))
           .filter(Objects::nonNull)
           .toList();
         if (vfs.isEmpty()) {
           return null;
         }
         if (filePaths.size() == 1) {
-          return vfs.getFirst();
+          return vfs.get(0);
         } else {
-          return vfs.getFirst();
+          return vfs.get(0);
         }
       }).filter(Objects::nonNull).toList();
-    return virtualFiles.isEmpty() ? null : virtualFiles.getFirst();
+    return virtualFiles.isEmpty() ? null : virtualFiles.get(0);
   }
 }

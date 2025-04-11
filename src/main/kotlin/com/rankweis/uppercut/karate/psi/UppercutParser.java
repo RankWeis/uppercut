@@ -29,6 +29,7 @@ import com.rankweis.uppercut.karate.lexer.impl.KarateJavascriptExtension;
 import com.rankweis.uppercut.parser.KarateJsonParser;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -463,7 +464,7 @@ public class UppercutParser implements PsiParser {
     KarateJavascriptParsingExtensionPoint ex;
     List<KarateJavascriptParsingExtensionPoint> extensionList = KarateJavascriptExtension.EP_NAME.getExtensionList();
     if (useInternalEngine) {
-        ex = extensionList.stream().toList().get(extensionList.size() - 1);
+      ex = extensionList.stream().toList().get(extensionList.size() - 1);
     } else {
       ex =
         extensionList.stream().findFirst().get();

@@ -34,6 +34,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTestEventsConverter {
@@ -103,7 +104,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     }
     if (!karateItems.isEmpty()) {
       KarateItem scenario = karateItems.peek();
-      for (String s : text.splitWithDelimiters("\n", 2)) {
+      for (String s : StringUtils.splitPreserveAllTokens(text, "\n", 2)) {
         ServiceMessageBuilder msgScenario;
         if (myCurrentOutputType == ProcessOutputType.STDOUT) {
           msgScenario = ServiceMessageBuilder.testStdOut(scenario.getName()).addAttribute("out", s);
@@ -175,7 +176,8 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     Pattern failedPattern = Pattern.compile("\n>> " + karateConfigName + " failed\n");
     Matcher m = p.matcher(text);
     if (karateConfigItem == null && m.find()) {
-      karateConfigName = Arrays.stream(m.group(1).split(":")).toList().getLast();
+      List<String> configs = Arrays.stream(m.group(1).split(":")).toList();
+      karateConfigName = configs.get(configs.size() - 1);
       int rand = new Random().nextInt();
       karateConfigItem = addFeatureToTree(karateConfigName, rand);
       return true;

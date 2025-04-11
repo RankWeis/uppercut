@@ -13,14 +13,12 @@ gradleIntelliJPlugin = "2.1.0"
 qodana = "2024.3.4"
 kover = "0.9.1"
 lombok = "8.13.1"
-robot = "0.11.23"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 junit5api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit5" }
 junit5engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit5" }
 mockito = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
-karatejs = { group = "io.karatelabs.js", name = "karate-js", version.ref = "karate-js"}
 
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }

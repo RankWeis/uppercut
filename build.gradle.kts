@@ -1,6 +1,7 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 
 fun properties(key: String) = providers.gradleProperty(key)
@@ -41,21 +42,6 @@ configure<SourceSetContainer> {
     named("test") {
         java.srcDir("src/test/kotlin")
     }
-    create("integrationTest") {
-        compileClasspath += sourceSets.main.get().output
-        runtimeClasspath += sourceSets.main.get().output
-    }
-    create("platformTest") {
-        compileClasspath += sourceSets.main.get().output
-        runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
-    }
-}
-
-val integrationTestImplementation by configurations.getting {
-    extendsFrom(configurations.testImplementation.get())
-}
-val platformTestImplementation by configurations.getting {
-    extendsFrom(configurations.testImplementation.get())
 }
 
 dependencies {
@@ -70,7 +56,7 @@ dependencies {
         plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
 
         jetbrainsRuntime()
-//        testFramework(TestFrameworkType.Platform)
+        testFramework(TestFrameworkType.Platform)
     }
 
     // Plugin Module
@@ -81,60 +67,17 @@ dependencies {
 
     // --- JUnit Testing Framework ---
     testImplementation(libs.junit5api) // JUnit 5 API
-    testImplementation(libs.junit5Params) // JUnit 5 API
-    testImplementation(libs.junitPlatformLauncher) // JUnit Platform launcher
-    integrationTestImplementation(libs.junit5engine) // JUnit 5 runtime engine
-    testImplementation("com.jetbrains.intellij.platform:test-framework:251-EAP-SNAPSHOT")
 
-    testImplementation(libs.junit) // JUnit 4 support
-    testImplementation("org.junit.vintage:junit-vintage-engine") // JUnit 4 compatibility engine for JUnit 5
-
-    // --- IntelliJ Testing Tools (IDE Starter + Driver) ---
-    integrationTestImplementation(libs.starterSquashed)
-    integrationTestImplementation(libs.starterJunit5)
-    integrationTestImplementation(libs.starterDriver)
-    integrationTestImplementation(libs.driverClient)
-    integrationTestImplementation(libs.driverSdk)
-    integrationTestImplementation(libs.driverModel)
-    integrationTestImplementation(libs.metricsSquashed)
-    integrationTestImplementation(libs.metricsCollector)
-    integrationTestImplementation(libs.ijPerformance)
-    integrationTestImplementation(libs.ijCommon)
+    testRuntimeOnly(libs.junit) // JUnit 4 support
 
     // --- Mocking and Coroutines Testing ---
     testImplementation(libs.mockito) // Mockito for mocking in tests
-    integrationTestImplementation(libs.junitJupiter)
-    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2") // Kotlin Coroutines testing library
-    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2") // Kotlin Coroutines testing library
-    integrationTestImplementation(libs.kodein)
 
-//    integrationTestImplementation("com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-EAP-SNAPSHOT")
     implementation("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") {
         isTransitive = false
     }
     implementation("io.karatelabs:karate-core:${properties("karateVersion").get()}") {
         isTransitive = false
-    }
-}
-
-val integrationTests = tasks.register<Test>("integrationTest") {
-    val integrationTestSourceSet = sourceSets.getByName("integrationTest")
-    testClassesDirs = integrationTestSourceSet.output.classesDirs
-    classpath = integrationTestSourceSet.runtimeClasspath
-    systemProperty("path.to.build.plugin", tasks.prepareSandbox.get().pluginDirectory.get().asFile)
-    useJUnitPlatform {
-        excludeEngines("junit-vintage")
-        includeEngines("junit-jupiter")
-    }
-    dependsOn(tasks.prepareSandbox)
-}
-
-tasks.register<Test>("platformTest") {
-    val integrationTestSourceSet = sourceSets.getByName("platformTest")
-    testClassesDirs = integrationTestSourceSet.output.classesDirs
-    classpath = integrationTestSourceSet.runtimeClasspath
-    useJUnitPlatform {
-        includeEngines("junit-vintage")
     }
 }
 
@@ -150,8 +93,8 @@ abstract class InstrumentedJarsRule : AttributeCompatibilityRule<LibraryElements
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 // Set the JVM language level used to build the project.

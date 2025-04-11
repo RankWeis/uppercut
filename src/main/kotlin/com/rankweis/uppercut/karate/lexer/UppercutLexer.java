@@ -87,13 +87,12 @@ public class UppercutLexer extends LexerBase {
   public UppercutLexer(GherkinKeywordProvider provider, boolean highlighting) {
     myKeywordProvider = provider;
     boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
+    List<KarateJavascriptParsingExtensionPoint> extensions =
+      KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList();
     if (useInternalEngine) {
-      this.jsLexer =
-        KarateJavascriptExtension.EP_NAME.getExtensionList().stream().toList().getLast().getLexer(highlighting);
+      this.jsLexer = extensions.get(extensions.size() - 1).getLexer(highlighting);
     } else {
-      this.jsLexer =
-        KarateJavascriptExtension.EP_NAME.getExtensionList().stream().findFirst().map(l -> l.getLexer(highlighting))
-          .orElse(null);
+      this.jsLexer = extensions.get(0).getLexer(highlighting);
     }
     updateLanguage("en");
     stepKeywords = myKeywords.stream().filter(myKeywordProvider::isStepKeyword).toList();
