@@ -4,10 +4,26 @@
 
 ## [Unreleased]
 
-## [2.3.2-2024.2] - 2025-02-28
+### Added
+
+- If karate-junit5 is not in the classpath, adds a default one (for version 1.5.1) into the classpath
+- NOTE: This can cause inconsistent results, and you should attempt to provide a default karate-junit5 of your own.
+
+### Modified
+
+- Highlighting is a little more reliable now.
+- Expression syntax in json snippets (`#{variable}` and `"#{variable}"`) render better.
+- Display of test results in console
+- Nesting structure for running tests (If feature A calls feature B, B will nest under A)
+- Test Runner Console links to classpath files
 
 ### Fixed
 
+- karate-config.js would sometimes fail silently, now it provides explicit warnings.
+- Helpful improvements to js expression error checking.
+- Syntax highlight issue.
+- Prematurely loading of classes should no longer happen
+- karate local variable no longer marks as unresolved
 - Logs should now display in full when testing.
 - No longer overrides your logging settings.
 - Debugger no longer suspends job (unless you want it to)
@@ -24,11 +40,23 @@
 
 - Major bug that would run each karate process twice
 
+## [2.2.1] - 2025-02-06
+
 ### Updated
 
 - Default env no longer set to 'DEV'
+
+## [2.2.0] - 2025-01-28
+
+### Updated
+
 - Made default parallelism configurable (Settings -> Tools -> Karate)
 - Made default parallelism 1 instead of 5
+
+## [2.1.3] - 2025-01-28
+
+### Updated
+
 - Fixed issue where java 21 was necessary to run certain tests (Java 17+ is now required)
 
 ## [2.1.2] - 2025-01-24
@@ -301,15 +329,10 @@
 [2.1.2]: https://github.com/rankweis/uppercut/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/rankweis/uppercut/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/rankweis/uppercut/compare/v2.0.2...v2.1.0
-[2.1.0-2024.2]: https://github.com/rankweis/uppercut/compare/v2.0.1-2024.2...v2.1.0-2024.2
 [2.0.2]: https://github.com/rankweis/uppercut/compare/v2.0.0...v2.0.2
-[2.0.1-2024.2]: https://github.com/rankweis/uppercut/compare/v2.0.2...v2.0.1-2024.2
 [2.0.0]: https://github.com/rankweis/uppercut/compare/v1.3.4...v2.0.0
-[2.0.0-2024.2]: https://github.com/rankweis/uppercut/compare/v1.3.4-2024.2...v2.0.0-2024.2
 [1.3.4]: https://github.com/rankweis/uppercut/compare/v1.3.3...v1.3.4
-[1.3.4-2024.2]: https://github.com/rankweis/uppercut/compare/v1.3.3-2024.2...v1.3.4-2024.2
 [1.3.3]: https://github.com/rankweis/uppercut/compare/v1.3.2...v1.3.3
-[1.3.3-2024.2]: https://github.com/rankweis/uppercut/compare/v1.3.2...v1.3.3-2024.2
 [1.3.2]: https://github.com/rankweis/uppercut/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/rankweis/uppercut/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/rankweis/uppercut/compare/v1.2.7...v1.3.0

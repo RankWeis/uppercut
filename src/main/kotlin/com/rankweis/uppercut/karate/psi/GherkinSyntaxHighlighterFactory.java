@@ -16,7 +16,7 @@ public final class GherkinSyntaxHighlighterFactory extends JsonSyntaxHighlighter
   @Override
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(Project project, VirtualFile virtualFile) {
-    return new GherkinSyntaxHighlighter(project, virtualFile, getKeywordProvider(true));
+    return new UppercutSyntaxHighlighter(project, virtualFile, getKeywordProvider(true));
   }
 
   @Override protected boolean isCanEscapeEol() {

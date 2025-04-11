@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
+
 package com.rankweis.uppercut.karate.steps;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -21,7 +23,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Definition of a karate/cucumber 'step'.
+ */
 public abstract class AbstractStepDefinition {
+
   private static final Pattern ESCAPE_PATTERN = Pattern.compile("(#\\{.+?})");
 
   private static final String CUCUMBER_START_PREFIX = "\\A";
@@ -50,8 +56,7 @@ public abstract class AbstractStepDefinition {
     CharSequence stepChars = StringUtil.newBombedCharSequence(stepName, TIME_TO_CHECK_STEP_BY_REGEXP_MILLIS);
     try {
       return pattern.matcher(stepChars).find();
-    }
-    catch (ProcessCanceledException ignore) {
+    } catch (ProcessCanceledException ignore) {
       return false;
     }
   }
@@ -68,7 +73,9 @@ public abstract class AbstractStepDefinition {
   public Pattern getPattern() {
     try {
       final String cucumberRegex = getCucumberRegex();
-      if (cucumberRegex == null) return null;
+      if (cucumberRegex == null) {
+        return null;
+      }
       if (!cucumberRegex.equals(myRegexText)) {
         final StringBuilder patternText = new StringBuilder(ESCAPE_PATTERN.matcher(cucumberRegex).replaceAll("(.*)"));
         if (patternText.toString().startsWith(CUCUMBER_START_PREFIX)) {
@@ -83,8 +90,7 @@ public abstract class AbstractStepDefinition {
         myRegexText = cucumberRegex;
       }
       return myRegex;
-    }
-    catch (final PatternSyntaxException ignored) {
+    } catch (final PatternSyntaxException ignored) {
       return null; // Bad regex?
     }
   }
@@ -97,17 +103,21 @@ public abstract class AbstractStepDefinition {
   @Nullable
   @Contract("null -> null")
   protected abstract String getCucumberRegexFromElement(PsiElement element);
-  
+
   protected boolean isCaseSensitive() {
     return true;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
-    AbstractStepDefinition that = (AbstractStepDefinition)o;
+    AbstractStepDefinition that = (AbstractStepDefinition) o;
 
     return myElementPointer.equals(that.myElementPointer);
   }
@@ -135,6 +145,7 @@ public abstract class AbstractStepDefinition {
 
   /**
    * Checks if step definition supports rename.
+   *
    * @param newName if null -- check if definition supports renaming at all (regardless new name).
    *                If not null -- check if it can be renamed to the new (provided) name.
    * @return true if rename is supported
@@ -165,7 +176,7 @@ public abstract class AbstractStepDefinition {
     for (final PsiReference reference : consumer.getResults()) {
       final PsiElement step = reference.getElement();
       if (step instanceof GherkinStep) {
-        results.add((GherkinStep)step);
+        results.add((GherkinStep) step);
       }
     }
     return results;

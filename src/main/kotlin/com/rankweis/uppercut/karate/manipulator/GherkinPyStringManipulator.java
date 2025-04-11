@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.rankweis.uppercut.karate.manipulator;
 
-import static com.rankweis.uppercut.karate.lexer.GherkinLexer.PYSTRING_MARKER;
+import static com.rankweis.uppercut.karate.lexer.UppercutLexer.PYSTRING_MARKER;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;

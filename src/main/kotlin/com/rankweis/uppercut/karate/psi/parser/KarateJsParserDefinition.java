@@ -1,6 +1,6 @@
 package com.rankweis.uppercut.karate.psi.parser;
 
-import static com.rankweis.uppercut.karate.psi.GherkinParserDefinition.GHERKIN_FILE;
+import static com.rankweis.uppercut.karate.psi.UppercutParserDefinition.KARATE_FILE;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
@@ -30,7 +30,7 @@ public class KarateJsParserDefinition implements ParserDefinition {
   }
 
   @Override public @NotNull IFileElementType getFileNodeType() {
-    return GHERKIN_FILE;
+    return KARATE_FILE;
   }
 
   @Override public @NotNull TokenSet getCommentTokens() {

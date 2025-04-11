@@ -1,5 +1,9 @@
 package com.rankweis.uppercut.karate.psi;
 
+import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.lang.javascript.JSSyntaxHighlighterFactory;
+import com.intellij.lang.javascript.highlighting.JSHighlighter;
+import com.intellij.lang.javascript.highlighting.JavaScriptHighlightDescriptor;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -77,7 +81,14 @@ public final class GherkinHighlighter {
     GHERKIN_PYSTRING_ID,
     DefaultLanguageHighlighterColors.STRING
   );
-  
+
+  @NonNls
+  static final String KARATE_REFERENCE_ID = "KARATE_REFERENCE";
+  public static final TextAttributesKey KARATE_REFERENCE = TextAttributesKey.createTextAttributesKey(
+    KARATE_REFERENCE_ID,
+    JavaHighlightingColors.METHOD_DECLARATION_ATTRIBUTES
+  );
+
   public static final TextAttributesKey TEXT = TextAttributesKey.createTextAttributesKey("GHERKIN_TEXT", HighlighterColors.TEXT);
 
   public static final TextAttributesKey DECLARATION =

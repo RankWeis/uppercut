@@ -3,7 +3,7 @@ package com.rankweis.uppercut.karate.completion;
 
 import static com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.STEP;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.STEP;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.STEP_KEYWORD;
 
 import com.intellij.codeInsight.TailTypes;
@@ -35,7 +35,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
-import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
+import com.rankweis.uppercut.karate.psi.UppercutElementTypes;
 import com.rankweis.uppercut.karate.psi.GherkinFeature;
 import com.rankweis.uppercut.karate.psi.GherkinFile;
 import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
@@ -94,9 +94,9 @@ public final class CucumberCompletionContributor extends CompletionContributor {
 
   public CucumberCompletionContributor() {
     PsiElementPattern.Capture<PsiElement> inTable = psiElement().inside(psiElement().withElementType(
-      GherkinElementTypes.TABLE));
+      UppercutElementTypes.TABLE));
     PsiElementPattern.Capture<PsiElement> inScenario =
-      psiElement().inside(psiElement().withElementType(GherkinElementTypes.SCENARIOS)).andNot(inTable);
+      psiElement().inside(psiElement().withElementType(UppercutElementTypes.SCENARIOS)).andNot(inTable);
     PsiElementPattern.Capture<PsiElement> inStep =
       psiElement().inside(psiElement().withElementType(STEP)).andNot(inTable);
 

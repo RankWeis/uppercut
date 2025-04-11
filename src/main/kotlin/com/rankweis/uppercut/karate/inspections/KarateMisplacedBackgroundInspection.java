@@ -10,6 +10,7 @@ import com.rankweis.uppercut.karate.psi.GherkinScenario;
 import org.jetbrains.annotations.NotNull;
 
 public final class KarateMisplacedBackgroundInspection extends GherkinInspection {
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -22,8 +23,10 @@ public final class KarateMisplacedBackgroundInspection extends GherkinInspection
 
           while (element != null) {
             if (element instanceof GherkinScenario) {
-              if (!((GherkinScenario)element).isBackground()) {
-                holder.registerProblem(scenario.getFirstChild(), MyBundle.message("inspection.gherkin.background.after.scenario.error.message"), ProblemHighlightType.ERROR);
+              if (!((GherkinScenario) element).isBackground()) {
+                holder.registerProblem(scenario.getFirstChild(),
+                  MyBundle.message("inspection.gherkin.background.after.scenario.error.message"),
+                  ProblemHighlightType.ERROR);
                 break;
               }
             }

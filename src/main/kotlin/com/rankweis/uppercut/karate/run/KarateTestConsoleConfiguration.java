@@ -14,17 +14,15 @@ public class KarateTestConsoleConfiguration extends SMTRunnerConsoleProperties i
   public KarateTestConsoleConfiguration(@NotNull RunConfiguration config,
     @NotNull String testFrameworkName, @NotNull Executor executor) {
     super(config, testFrameworkName, executor);
-    setUsePredefinedMessageFilter(false);
+    setUsePredefinedMessageFilter(true);
     setIdBasedTestTree(true);
   }
-  
+
 
   @Override public OutputToGeneralTestEventsConverter createTestEventsConverter(@NotNull String testFrameworkName,
     @NotNull TestConsoleProperties consoleProperties) {
-    final KarateRunConfiguration runConfiguration = (KarateRunConfiguration)getConfiguration();
-//    final VirtualFile file = runConfiguration.getRunnerParameters().getKarateFileOrDirectory();
-      return new KarateOutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties);
+    return new KarateOutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties);
   }
-  
-  
+
+
 }

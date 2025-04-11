@@ -31,11 +31,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer<KarateRunConfiguration> {
 
-  @NotNull @Override public ConfigurationFactory getConfigurationFactory() {
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
     return KarateConfigurationType.INSTANCE;
   }
 
-  @Override public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+  @Override
+  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
     return super.isPreferredConfiguration(self, other);
   }
 
@@ -44,7 +47,8 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     return ((KarateRunConfiguration) self.getConfiguration()).isAllInFolderAreFeature();
   }
 
-  @Override public boolean isConfigurationFromContext(@NotNull KarateRunConfiguration configuration,
+  @Override
+  public boolean isConfigurationFromContext(@NotNull KarateRunConfiguration configuration,
     @NotNull ConfigurationContext context) {
     VirtualFile virtualFile = context.getLocation().getVirtualFile();
 
@@ -98,7 +102,6 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     }
     final String name = virtualFile.map(VirtualFile::getName).orElse(null);
     final String path = virtualFile.map(VirtualFile::getPath).orElse(null);
-    String relPath = getRelativePathFromModule(contextModule, path, name);
 
     PsiElement psiElement = sourceElement.get();
     PsiFile containingFile = psiElement.getContainingFile();
@@ -108,18 +111,17 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     Project project = containingFile.getProject();
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     Document document = psiDocumentManager.getDocument(containingFile);
-    int textOffset = psiElement.getTextOffset();
+    final int textOffset = psiElement.getTextOffset();
     if (document == null) {
       return false;
     }
-    int lineNumber = document.getLineNumber(textOffset) + 1;
     PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
     IElementType elementType = PsiUtilCore.getElementType(psiElement);
     if (elementType == KarateTokenTypes.TAG) {
       preferredTest = PreferredTest.ALL_TAGS;
       Arrays.stream(ModuleManager.getInstance(context.getProject()).getModules())
         .flatMap(m -> Arrays.stream(ModuleRootManager.getInstance(m).getSourceRoots()))
-        .map(root -> path.contains(root.getPath()) ? root : null).filter(Objects::nonNull).findFirst()
+        .map(root -> (path != null && path.contains(root.getPath())) ? root : null).filter(Objects::nonNull).findFirst()
         .ifPresent(vf -> configuration.setWorkingDirectory(vf.getPath()));
       configuration.setTag(psiElement.getText());
     } else if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType)) {
@@ -128,9 +130,11 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
 
     configuration.setPreferredTest(preferredTest);
     sourceElement.set(containingFile);
+    int lineNumber = document.getLineNumber(textOffset) + 1;
     configuration.setLineNumber(lineNumber);
     configuration.setTestName(name);
     configuration.setPath(path);
+    String relPath = getRelativePathFromModule(contextModule, path, name);
     configuration.setRelPath(relPath);
     PsiElement nextElement =
       PsiUtilCore.getElementAtOffset(containingFile, psiElement.getTextOffset() + psiElement.getTextOffset() + 1);
@@ -151,7 +155,7 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     if (module == null) {
       return false;
     }
-    if(Arrays.stream(dir.getChildren()).map(VirtualFile::getName).allMatch(s -> s.endsWith(".feature"))) {
+    if (Arrays.stream(dir.getChildren()).map(VirtualFile::getName).allMatch(s -> s.endsWith(".feature"))) {
       configuration.setAllInFolderAreFeature(true);
     }
     configuration.setPath(getRelativePathFromModule(module, dir.getPath(), dir.getPath()));

@@ -40,7 +40,11 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("ALL") @Slf4j
+/**
+ * Managing the debugger cache positions.
+ */
+@SuppressWarnings("ALL")
+@Slf4j
 public class KaratePositionManager implements PositionManager {
 
   Cache<SourcePosition, Location> karateToJava = CacheBuilder.newBuilder()
@@ -61,24 +65,25 @@ public class KaratePositionManager implements PositionManager {
     .maximumSize(5000)
     .build();
 
-  private final UppercutClassLoader CLASS_LOADER = UppercutClassLoader.INSTANCE;
+  private final UppercutClassLoader classLoader = UppercutClassLoader.INSTANCE;
   private final DebugProcessImpl debugProcess;
 
   public KaratePositionManager(DebugProcess debugProcess) {
     this.debugProcess = (DebugProcessImpl) debugProcess;
   }
 
-//  @Override public @NotNull CompletableFuture<SourcePosition> getSourcePositionAsync(@Nullable Location location) {
-//    return CompletableFuture.supplyAsync(() -> {
-//      try {
-//        return getSourcePosition(location);
-//      } catch (NoDataException e) {
-//        throw new RuntimeException(e);
-//      }
-//    });
-//  }
-//
-  @Override public @Nullable SourcePosition getSourcePosition(@Nullable Location location) throws NoDataException {
+  //  @Override public @NotNull CompletableFuture<SourcePosition> getSourcePositionAsync(@Nullable Location location) {
+  //    return CompletableFuture.supplyAsync(() -> {
+  //      try {
+  //        return getSourcePosition(location);
+  //      } catch (NoDataException e) {
+  //        throw new RuntimeException(e);
+  //      }
+  //    });
+  //  }
+  //
+  @Override
+  public @Nullable SourcePosition getSourcePosition(@Nullable Location location) throws NoDataException {
     try {
       LinkedHashSet<JavaSourcePosition> sourcePositions = null;
       sourcePositions = javaToKarate.get(location, () -> new LinkedHashSet<>());
@@ -88,7 +93,9 @@ public class KaratePositionManager implements PositionManager {
     }
   }
 
-  @SneakyThrows @Override public @NotNull List<ReferenceType> getAllClasses(@NotNull SourcePosition sourcePosition)
+  @SneakyThrows
+  @Override
+  public @NotNull List<ReferenceType> getAllClasses(@NotNull SourcePosition sourcePosition)
     throws NoDataException {
     VirtualMachine vm = debugProcess.getVirtualMachineProxy().getVirtualMachine();
     return getReferenceTypes(getMethodsFromText(sourcePosition), vm).stream().toList();
@@ -96,7 +103,7 @@ public class KaratePositionManager implements PositionManager {
 
   private List<Method> getMethodsFromText(@NotNull SourcePosition sourcePosition) {
     try {
-      Class<?> stepRuntimeClass = CLASS_LOADER.getClass("com.intuit.karate.core.StepRuntime");
+      Class<?> stepRuntimeClass = classLoader.getClass("com.intuit.karate.core.StepRuntime");
       if (stepRuntimeClass == null) {
         return List.of();
       }
@@ -148,7 +155,9 @@ public class KaratePositionManager implements PositionManager {
   }
 
 
-  @SneakyThrows @Override public @NotNull List<Location> locationsOfLine(@NotNull ReferenceType referenceType,
+  @SneakyThrows
+  @Override
+  public @NotNull List<Location> locationsOfLine(@NotNull ReferenceType referenceType,
     @NotNull final SourcePosition sourcePosition) {
     List<Method> method = getMethodsFromText(sourcePosition);
     List<Location> locs = new ArrayList<>();
@@ -186,7 +195,7 @@ public class KaratePositionManager implements PositionManager {
         javaToKarate.put(l, sourcePositions);
       });
     }
-        return List.of(locs.get(0));
+    return List.of(locs.get(0));
   }
 
   @Nullable
@@ -199,7 +208,7 @@ public class KaratePositionManager implements PositionManager {
     @NotNull final SourcePosition position)
     throws NoDataException {
 
-    String qName = getOuterClassName(position);
+    String queryerName = getOuterClassName(position);
     ClassPrepareRequestor waitRequestor = new ClassPrepareRequestor() {
       @Override
       public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
@@ -212,7 +221,7 @@ public class KaratePositionManager implements PositionManager {
     List<Method> allMethods = getMethodsFromText(position);
     if (!getReferenceTypes(allMethods, debugProcess.getVirtualMachineProxy().getVirtualMachine()).isEmpty()) {
       return debugProcess.getRequestsManager()
-        .createClassPrepareRequest(requestor, qName);
+        .createClassPrepareRequest(requestor, queryerName);
     }
 
     ClassPrepareRequest classPrepareRequest = null;

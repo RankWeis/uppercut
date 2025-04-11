@@ -1,4 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
+
 package com.rankweis.uppercut.karate;
 
 import com.intellij.codeInsight.template.Template;
@@ -24,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractStepDefinitionCreator implements StepDefinitionCreator {
+
   @Override
   @NotNull
   public String getStepDefinitionFilePath(@NotNull final PsiFile psiFile) {
@@ -61,19 +64,21 @@ public abstract class AbstractStepDefinitionCreator implements StepDefinitionCre
     if (dir != null) {
       return dir.getVirtualFile().getPath();
     }
-    return FileUtil.join(featureFile.getContainingDirectory().getVirtualFile().getPath(), CucumberUtil.STEP_DEFINITIONS_DIR_NAME);
+    return FileUtil.join(featureFile.getContainingDirectory().getVirtualFile().getPath(),
+      CucumberUtil.STEP_DEFINITIONS_DIR_NAME);
   }
-  
+
   @Nullable
   private static PsiDirectory findStepDefinitionDirectory(@NotNull final PsiFile featureFile) {
     final PsiDirectory psiFeatureDir = featureFile.getContainingDirectory();
     assert psiFeatureDir != null;
 
     VirtualFile featureDir = psiFeatureDir.getVirtualFile();
-    VirtualFile contentRoot = ProjectRootManager.getInstance(featureFile.getProject()).getFileIndex().getContentRootForFile(featureDir);
-    while (featureDir != null &&
-           !Comparing.equal(featureDir, contentRoot) &&
-           featureDir.findChild(CucumberUtil.STEP_DEFINITIONS_DIR_NAME) == null) {
+    VirtualFile contentRoot =
+      ProjectRootManager.getInstance(featureFile.getProject()).getFileIndex().getContentRootForFile(featureDir);
+    while (featureDir != null
+      && !Comparing.equal(featureDir, contentRoot)
+      && featureDir.findChild(CucumberUtil.STEP_DEFINITIONS_DIR_NAME) == null) {
       featureDir = featureDir.getParent();
     }
     if (featureDir != null) {

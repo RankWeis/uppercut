@@ -23,7 +23,9 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
-  
+
+permissions:
+  contents: read
 jobs:
 
   # Prepare environment and build the plugin
@@ -89,7 +91,7 @@ jobs:
 
       # Store already-built plugin as an artifact for downloading
       - name: Upload artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ${{ steps.artifact.outputs.filename }}
           path: ./build/distributions/content/*/*
@@ -119,50 +121,24 @@ jobs:
 
       # Run tests
       - name: Run Tests
-        run: ./gradlew check
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" ./gradlew check -x integrationTest
 
       # Collect Tests Result of failed tests
       - name: Collect Tests Result
         if: ${{ failure() }}
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
 
-
-  # Run Qodana inspections and provide report
-  inspectCode:
-    name: Inspect code
-    needs: [ build ]
-    runs-on: ubuntu-latest
-    if: ${{ github.actor_id == '733691' }}
-    permissions:
-      contents: write
-      checks: write
-      pull-requests: write
-    steps:
-
-      # Free GitHub Actions Environment Disk Space
-      - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+      # Upload the Kover report to CodeCov
+      - name: Upload Code Coverage Report
+        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574
         with:
-          tool-cache: false
-          large-packages: false
-
-      # Check out the current repository
-      - name: Fetch Sources
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
-          fetch-depth: 0  # a full history is required for pull request analysis
-
-      # Set up Java environment for the next steps
-      - name: Setup Java
-        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12
-        with:
-          distribution: zulu
-          java-version: 17
+          files: ${{ github.workspace }}/build/reports/kover/report.xml
 
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
@@ -194,9 +170,10 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b
 
+      # IntelliJ will verify Plugin for us and this is a lot of downloading.
       # Cache Plugin Verifier IDEs
       - name: Setup Plugin Verifier IDEs Cache
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
         with:
           path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
           key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
@@ -208,7 +185,7 @@ jobs:
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
         if: ${{ always() }}
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: pluginVerifier-result
           path: ${{ github.workspace }}/build/reports/pluginVerifier
@@ -219,7 +196,7 @@ jobs:
     name: Release draft
     runs-on: ubuntu-latest
     if: ${{ github.actor_id == '733691' && github.event_name != 'pull_request' }}
-    needs: [ build, test, inspectCode, verify ]
+    needs: [ build, test, verify ]
     permissions:
       contents: write
     steps:

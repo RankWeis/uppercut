@@ -1,0 +1,2594 @@
+KarateFile:complicated.feature 
+  GherkinFeature:Nested JSON and Dynamic Expressions 
+    PsiElement(FEATURE_KEYWORD)('Feature:') 
+    PsiElement(TEXT)('Nested JSON and Dynamic Expressions') 
+    GherkinScenario: 
+      PsiElement(SCENARIO_KEYWORD)('Scenario:') 
+      PsiElement(TEXT)('Process deeply nested JSON with dynamic expressions') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('input') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              OBJECT 
+                PsiElement({)('{') 
+                PROPERTY 
+                  STRING_LITERAL 
+                    PsiElement(DOUBLE_QUOTED_STRING)('"outer"') 
+                  PsiElement(:)(':') 
+                  OBJECT 
+                    PsiElement({)('{') 
+                    PROPERTY 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"inner"') 
+                      PsiElement(:)(':') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          STRING_LITERAL 
+                            PsiElement(DOUBLE_QUOTED_STRING)('"key"') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(DOUBLE_QUOTED_STRING)('"#[randomString(5)]"') 
+                        PsiElement(})('}') 
+                    PsiElement(})('}') 
+                PsiElement(})('}') 
+      GherkinStep:karate.jsonPath 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('expected') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('karate.jsonPath') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+          PsiElement(TEXT)('input,') 
+          PsiElement(SINGLE_QUOTED_STRING)(''$.outer.inner.key'') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('dynamicResult') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJavascriptElement(javascript_element) 
+            KarateEmbeddedJavascriptElement(javascript_element) 
+              PROGRAM 
+                STATEMENT 
+                  EXPR 
+                    FN_EXPR 
+                      PsiElement(FUNCTION)('function') 
+                      PsiElement(L_PAREN)('(') 
+                      FN_DECL_ARGS 
+                        <empty list> 
+                      PsiElement(R_PAREN)(')') 
+                      PsiElement(WS)(' ') 
+                      BLOCK 
+                        PsiElement(L_CURLY)('{') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          VAR_STMT 
+                            PsiElement(VAR)('var') 
+                            PsiElement(WS)(' ') 
+                            VAR_STMT_NAMES 
+                              PsiElement(IDENT)('result') 
+                            PsiElement(WS)(' ') 
+                            PsiElement(EQ)('=') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('karate') 
+                              REF_DOT_EXPR 
+                                PsiElement(DOT)('.') 
+                                PsiElement(IDENT)('jsonPath') 
+                              FN_CALL_EXPR 
+                                PsiElement(L_PAREN)('(') 
+                                FN_CALL_ARGS 
+                                  FN_CALL_ARG 
+                                    EXPR 
+                                      REF_EXPR 
+                                        PsiElement(IDENT)('input') 
+                                    PsiElement(COMMA)(',') 
+                                  PsiElement(WS)(' ') 
+                                  FN_CALL_ARG 
+                                    EXPR 
+                                      LIT_EXPR 
+                                        PsiElement(S_STRING)(''$.outer.inner.key'') 
+                                PsiElement(R_PAREN)(')') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          RETURN_STMT 
+                            PsiElement(RETURN)('return') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('result') 
+                              PsiElement(WS)(' ') 
+                              LOGIC_EXPR 
+                                PsiElement(EQ_EQ)('==') 
+                                PsiElement(WS)(' ') 
+                                EXPR 
+                                  REF_EXPR 
+                                    PsiElement(IDENT)('expected') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n    ') 
+                        PsiElement(R_CURLY)('}') 
+      GherkinStep:true 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('match') 
+        KarateDeclaration(variable) 
+          PsiElement(VARIABLE)('dynamicResult()') 
+        PsiElement(OPERATOR)('==') 
+        PsiElement(TEXT)('true') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('print') 
+        PsiElement(SINGLE_QUOTED_STRING)(''Dynamic result validation passed!'') 
+    GherkinScenario: 
+      PsiElement(SCENARIO_KEYWORD)('Scenario:') 
+      PsiElement(TEXT)('Use a custom Java class to manipulate data') 
+      GherkinStep:Java.type 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('MyJavaClass') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('Java.type') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+          PsiElement(SINGLE_QUOTED_STRING)(''com.example.MyJavaClass'') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep:new MyJavaClass 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('instance') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('new') 
+        PsiElement(TEXT)('MyJavaClass') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('complexOperation') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJavascriptElement(javascript_element) 
+            KarateEmbeddedJavascriptElement(javascript_element) 
+              PROGRAM 
+                STATEMENT 
+                  EXPR 
+                    FN_EXPR 
+                      PsiElement(FUNCTION)('function') 
+                      PsiElement(WS)(' ') 
+                      PsiElement(L_PAREN)('(') 
+                      FN_DECL_ARGS 
+                        FN_DECL_ARG 
+                          PsiElement(IDENT)('data') 
+                      PsiElement(R_PAREN)(')') 
+                      BLOCK 
+                        PsiElement(L_CURLY)('{') 
+                        STATEMENT 
+                          RETURN_STMT 
+                            PsiElement(RETURN)('return') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('instance') 
+                              REF_DOT_EXPR 
+                                PsiElement(DOT)('.') 
+                                PsiElement(IDENT)('processData') 
+                              FN_CALL_EXPR 
+                                PsiElement(L_PAREN)('(') 
+                                FN_CALL_ARGS 
+                                  FN_CALL_ARG 
+                                    EXPR 
+                                      REF_EXPR 
+                                        PsiElement(IDENT)('data') 
+                                PsiElement(R_PAREN)(')') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(R_CURLY)('}') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('input') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              ARRAY 
+                PsiElement([)('[') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('1') 
+                PsiElement(,)(',') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('2') 
+                PsiElement(,)(',') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('3') 
+                PsiElement(,)(',') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('4') 
+                PsiElement(])(']') 
+      GherkinStep:complexOperation 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('result') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('complexOperation') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+          PsiElement(TEXT)('input') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('match') 
+        KarateDeclaration(variable) 
+          PsiElement(VARIABLE)('result') 
+        PsiElement(OPERATOR)('==') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              ARRAY 
+                PsiElement([)('[') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('2') 
+                PsiElement(,)(',') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('4') 
+                PsiElement(,)(',') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('6') 
+                PsiElement(,)(',') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('8') 
+                PsiElement(])(']') 
+    GherkinScenarioOutline:Test with edge-case data inputs 
+      PsiElement(SCENARIO_OUTLINE_KEYWORD)('Scenario Outline:') 
+      PsiElement(TEXT)('Test with edge-case data inputs') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('calculate') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJavascriptElement(javascript_element) 
+            KarateEmbeddedJavascriptElement(javascript_element) 
+              PROGRAM 
+                STATEMENT 
+                  EXPR 
+                    FN_EXPR 
+                      PsiElement(FUNCTION)('function') 
+                      PsiElement(WS)(' ') 
+                      PsiElement(L_PAREN)('(') 
+                      FN_DECL_ARGS 
+                        FN_DECL_ARG 
+                          PsiElement(IDENT)('a') 
+                          PsiElement(COMMA)(',') 
+                        PsiElement(WS)(' ') 
+                        FN_DECL_ARG 
+                          PsiElement(IDENT)('b') 
+                      PsiElement(R_PAREN)(')') 
+                      PsiElement(WS)(' ') 
+                      BLOCK 
+                        PsiElement(L_CURLY)('{') 
+                        PsiElement(WS)(' ') 
+                        STATEMENT 
+                          RETURN_STMT 
+                            PsiElement(RETURN)('return') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('a') 
+                              PsiElement(WS)(' ') 
+                              MATH_MUL_EXPR 
+                                PsiElement(SLASH)('/') 
+                                PsiElement(WS)(' ') 
+                                EXPR 
+                                  REF_EXPR 
+                                    PsiElement(IDENT)('b') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS)(' ') 
+                        PsiElement(R_CURLY)('}') 
+      GherkinStep:a 
+        PsiElement(STEP_KEYWORD)('Given') 
+        PsiElement(TEXT)('a') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJavascriptElement(xml_element) 
+            PsiElement(XML_START_TAG_START)('<') 
+            PsiElement(XML_START_TAG_START)('a') 
+            PsiElement(XML_START_TAG_START)('>') 
+            PsiElement(XML_START_TAG_START)(' ') 
+            PsiElement(XML_START_TAG_START)('and') 
+            PsiElement(XML_START_TAG_START)(' ') 
+            PsiElement(XML_START_TAG_START)('b') 
+            PsiElement(XML_START_TAG_START)(' ') 
+            PsiElement(XML_START_TAG_START)('=') 
+            PsiElement(XML_START_TAG_START)(' ') 
+            PsiElement(XML_START_TAG_START)('<') 
+            PsiElement(XML_START_TAG_START)('b') 
+            PsiElement(XML_START_TAG_START)('>') 
+      GherkinStep:result   calculate 
+        PsiElement(STEP_KEYWORD)('When') 
+        PsiElement(TEXT)('result') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(ACTION_KEYWORD)('call') 
+        PsiElement(TEXT)('calculate') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+          PsiElement(TEXT)('a,') 
+          PsiElement(TEXT)('b') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep:<expected> 
+        PsiElement(STEP_KEYWORD)('Then') 
+        PsiElement(ACTION_KEYWORD)('match') 
+        KarateDeclaration(variable) 
+          PsiElement(VARIABLE)('result') 
+        PsiElement(OPERATOR)('==') 
+        PsiElement(TEXT)('<expected>') 
+      GherkinExamplesBlock: 
+        PsiElement(EXAMPLES_KEYWORD)('Examples') 
+        PsiElement(COLON)(':') 
+        GherkinTable 
+          GherkinTableHeaderRow 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('a') 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('b') 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('expected') 
+            PsiElement(PIPE)('|') 
+          GherkinTableRow 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('10') 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('2') 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('5') 
+            PsiElement(PIPE)('|') 
+          GherkinTableRow 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('-10') 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('5') 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('-2') 
+            PsiElement(PIPE)('|') 
+          GherkinTableRow 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('1000') 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('0.5') 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('2000') 
+            PsiElement(PIPE)('|') 
+          GherkinTableRow 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('1e6') 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('1e-3') 
+            PsiElement(PIPE)('|') 
+            GherkinTableCellImpl(table cell) 
+              PsiElement(TABLE_CELL)('1e9') 
+            PsiElement(PIPE)('|') 
+    GherkinScenario: 
+      PsiElement(SCENARIO_KEYWORD)('Scenario:') 
+      PsiElement(TEXT)('Retry API call until success') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('retryApiCall') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJavascriptElement(javascript_element) 
+            KarateEmbeddedJavascriptElement(javascript_element) 
+              PROGRAM 
+                STATEMENT 
+                  EXPR 
+                    FN_EXPR 
+                      PsiElement(FUNCTION)('function') 
+                      PsiElement(L_PAREN)('(') 
+                      FN_DECL_ARGS 
+                        <empty list> 
+                      PsiElement(R_PAREN)(')') 
+                      PsiElement(WS)(' ') 
+                      BLOCK 
+                        PsiElement(L_CURLY)('{') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          VAR_STMT 
+                            PsiElement(VAR)('var') 
+                            PsiElement(WS)(' ') 
+                            VAR_STMT_NAMES 
+                              PsiElement(IDENT)('maxAttempts') 
+                            PsiElement(WS)(' ') 
+                            PsiElement(EQ)('=') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              LIT_EXPR 
+                                PsiElement(NUMBER)('3') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          FOR_STMT 
+                            PsiElement(FOR)('for') 
+                            PsiElement(WS)(' ') 
+                            PsiElement(L_PAREN)('(') 
+                            VAR_STMT 
+                              PsiElement(VAR)('var') 
+                              PsiElement(WS)(' ') 
+                              VAR_STMT_NAMES 
+                                PsiElement(IDENT)('i') 
+                              PsiElement(WS)(' ') 
+                              PsiElement(EQ)('=') 
+                              PsiElement(WS)(' ') 
+                              EXPR 
+                                LIT_EXPR 
+                                  PsiElement(NUMBER)('0') 
+                            PsiElement(SEMI)(';') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('i') 
+                              PsiElement(WS)(' ') 
+                              LOGIC_EXPR 
+                                PsiElement(LT)('<') 
+                                PsiElement(WS)(' ') 
+                                EXPR 
+                                  REF_EXPR 
+                                    PsiElement(IDENT)('maxAttempts') 
+                            PsiElement(SEMI)(';') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('i') 
+                              MATH_POST_EXPR 
+                                PsiElement(PLUS_PLUS)('++') 
+                            PsiElement(R_PAREN)(')') 
+                            PsiElement(WS)(' ') 
+                            STATEMENT 
+                              BLOCK 
+                                PsiElement(L_CURLY)('{') 
+                                PsiElement(WS_LF)('\n        ') 
+                                STATEMENT 
+                                  VAR_STMT 
+                                    PsiElement(VAR)('var') 
+                                    PsiElement(WS)(' ') 
+                                    VAR_STMT_NAMES 
+                                      PsiElement(IDENT)('response') 
+                                    PsiElement(WS)(' ') 
+                                    PsiElement(EQ)('=') 
+                                    PsiElement(WS)(' ') 
+                                    EXPR 
+                                      REF_EXPR 
+                                        PsiElement(IDENT)('karate') 
+                                      REF_DOT_EXPR 
+                                        PsiElement(DOT)('.') 
+                                        PsiElement(IDENT)('call') 
+                                      FN_CALL_EXPR 
+                                        PsiElement(L_PAREN)('(') 
+                                        FN_CALL_ARGS 
+                                          FN_CALL_ARG 
+                                            EXPR 
+                                              LIT_EXPR 
+                                                PsiElement(S_STRING)(''myApi.feature'') 
+                                        PsiElement(R_PAREN)(')') 
+                                  EOS 
+                                    PsiElement(SEMI)(';') 
+                                PsiElement(WS_LF)('\n        ') 
+                                STATEMENT 
+                                  IF_STMT 
+                                    PsiElement(IF)('if') 
+                                    PsiElement(WS)(' ') 
+                                    PsiElement(L_PAREN)('(') 
+                                    EXPR 
+                                      REF_EXPR 
+                                        PsiElement(IDENT)('response') 
+                                      REF_DOT_EXPR 
+                                        PsiElement(DOT)('.') 
+                                        PsiElement(IDENT)('status') 
+                                      PsiElement(WS)(' ') 
+                                      LOGIC_EXPR 
+                                        PsiElement(EQ_EQ)('==') 
+                                        PsiElement(WS)(' ') 
+                                        EXPR 
+                                          LIT_EXPR 
+                                            PsiElement(NUMBER)('200') 
+                                    PsiElement(R_PAREN)(')') 
+                                    PsiElement(WS)(' ') 
+                                    STATEMENT 
+                                      RETURN_STMT 
+                                        PsiElement(RETURN)('return') 
+                                        PsiElement(WS)(' ') 
+                                        EXPR 
+                                          REF_EXPR 
+                                            PsiElement(IDENT)('response') 
+                                      EOS 
+                                        PsiElement(SEMI)(';') 
+                                PsiElement(WS_LF)('\n        ') 
+                                STATEMENT 
+                                  EXPR 
+                                    REF_EXPR 
+                                      PsiElement(IDENT)('karate') 
+                                    REF_DOT_EXPR 
+                                      PsiElement(DOT)('.') 
+                                      PsiElement(IDENT)('sleep') 
+                                    FN_CALL_EXPR 
+                                      PsiElement(L_PAREN)('(') 
+                                      FN_CALL_ARGS 
+                                        FN_CALL_ARG 
+                                          EXPR 
+                                            LIT_EXPR 
+                                              PsiElement(NUMBER)('2000') 
+                                      PsiElement(R_PAREN)(')') 
+                                  EOS 
+                                    PsiElement(SEMI)(';') 
+                                PsiElement(WS_LF)('\n      ') 
+                                PsiElement(R_CURLY)('}') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          THROW_STMT 
+                            PsiElement(THROW)('throw') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              LIT_EXPR 
+                                PsiElement(S_STRING)(''API call failed after '') 
+                              PsiElement(WS)(' ') 
+                              MATH_ADD_EXPR 
+                                PsiElement(PLUS)('+') 
+                                PsiElement(WS)(' ') 
+                                EXPR 
+                                  REF_EXPR 
+                                    PsiElement(IDENT)('maxAttempts') 
+                              PsiElement(WS)(' ') 
+                              MATH_ADD_EXPR 
+                                PsiElement(PLUS)('+') 
+                                PsiElement(WS)(' ') 
+                                EXPR 
+                                  LIT_EXPR 
+                                    PsiElement(S_STRING)('' attempts'') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n    ') 
+                        PsiElement(R_CURLY)('}') 
+      GherkinStep:retryApiCall 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('result') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('retryApiCall') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep:200 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('match') 
+        KarateDeclaration(variable) 
+          PsiElement(VARIABLE)('result.status') 
+        PsiElement(OPERATOR)('==') 
+        PsiElement(TEXT)('200') 
+    GherkinScenario: 
+      PsiElement(SCENARIO_KEYWORD)('Scenario:') 
+      PsiElement(TEXT)('Chain API calls with dependencies') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('Given') 
+        PsiElement(ACTION_KEYWORD)('url') 
+        PsiElement(SINGLE_QUOTED_STRING)(''https://api.example.com/resource'') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('And') 
+        PsiElement(ACTION_KEYWORD)('path') 
+        PsiElement(SINGLE_QUOTED_STRING)(''create'') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('And') 
+        PsiElement(ACTION_KEYWORD)('request') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              OBJECT 
+                PsiElement({)('{') 
+                PROPERTY 
+                  STRING_LITERAL 
+                    PsiElement(DOUBLE_QUOTED_STRING)('"name"') 
+                  PsiElement(:)(':') 
+                  STRING_LITERAL 
+                    PsiElement(DOUBLE_QUOTED_STRING)('"test"') 
+                PsiElement(,)(',') 
+                PROPERTY 
+                  STRING_LITERAL 
+                    PsiElement(DOUBLE_QUOTED_STRING)('"value"') 
+                  PsiElement(:)(':') 
+                  NUMBER_LITERAL 
+                    PsiElement(NUMBER)('123') 
+                PsiElement(})('}') 
+      GherkinStep:r 
+        PsiElement(STEP_KEYWORD)('And') 
+        PsiElement(TEXT)('r') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJavascriptElement(javascript_element) 
+            KarateEmbeddedJavascriptElement(javascript_element) 
+              PROGRAM 
+                STATEMENT 
+                  EXPR 
+                    FN_EXPR 
+                      PsiElement(FUNCTION)('function') 
+                      PsiElement(L_PAREN)('(') 
+                      FN_DECL_ARGS 
+                        <empty list> 
+                      PsiElement(R_PAREN)(')') 
+                      PsiElement(WS)(' ') 
+                      BLOCK 
+                        PsiElement(L_CURLY)('{') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          EXPR 
+                            REF_EXPR 
+                              PsiElement(IDENT)('document') 
+                            REF_DOT_EXPR 
+                              PsiElement(DOT)('.') 
+                              PsiElement(IDENT)('querySelectorAll') 
+                            FN_CALL_EXPR 
+                              PsiElement(L_PAREN)('(') 
+                              FN_CALL_ARGS 
+                                FN_CALL_ARG 
+                                  EXPR 
+                                    LIT_EXPR 
+                                      PsiElement(S_STRING)(''.ruResponseButtons ._42ft._4jy0._4jy3._4jy1'') 
+                              PsiElement(R_PAREN)(')') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          FOR_STMT 
+                            PsiElement(FOR)('for') 
+                            PsiElement(WS)(' ') 
+                            PsiElement(L_PAREN)('(') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('i') 
+                              ASSIGN_EXPR 
+                                PsiElement(EQ)('=') 
+                                EXPR 
+                                  LIT_EXPR 
+                                    PsiElement(NUMBER)('0') 
+                            PsiElement(WS)(' ') 
+                            PsiElement(SEMI)(';') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('i') 
+                              LOGIC_EXPR 
+                                PsiElement(LT)('<') 
+                                PsiElement(WS)(' ') 
+                                EXPR 
+                                  REF_EXPR 
+                                    PsiElement(IDENT)('r') 
+                                  REF_DOT_EXPR 
+                                    PsiElement(DOT)('.') 
+                                    PsiElement(IDENT)('length') 
+                            PsiElement(SEMI)(';') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('i') 
+                              MATH_POST_EXPR 
+                                PsiElement(PLUS_PLUS)('++') 
+                            PsiElement(R_PAREN)(')') 
+                            STATEMENT 
+                              BLOCK 
+                                PsiElement(L_CURLY)('{') 
+                                PsiElement(WS)('     ') 
+                                STATEMENT 
+                                  EXPR 
+                                    REF_EXPR 
+                                      PsiElement(IDENT)('r') 
+                                    REF_BRACKET_EXPR 
+                                      PsiElement(L_BRACKET)('[') 
+                                      EXPR 
+                                        REF_EXPR 
+                                          PsiElement(IDENT)('i') 
+                                      PsiElement(R_BRACKET)(']') 
+                                    REF_DOT_EXPR 
+                                      PsiElement(DOT)('.') 
+                                      PsiElement(IDENT)('click') 
+                                    FN_CALL_EXPR 
+                                      PsiElement(L_PAREN)('(') 
+                                      FN_CALL_ARGS 
+                                        <empty list> 
+                                      PsiElement(R_PAREN)(')') 
+                                  EOS 
+                                    PsiElement(SEMI)(';') 
+                                PsiElement(WS)('     ') 
+                                PsiElement(R_CURLY)('}') 
+                        PsiElement(R_CURLY)('}') 
+      GherkinStep:POST 
+        PsiElement(STEP_KEYWORD)('When') 
+        PsiElement(ACTION_KEYWORD)('method') 
+        PsiElement(TEXT)('POST') 
+      GherkinStep:201 
+        PsiElement(STEP_KEYWORD)('Then') 
+        PsiElement(ACTION_KEYWORD)('status') 
+        PsiElement(TEXT)('201') 
+      GherkinStep:.id 
+        PsiElement(STEP_KEYWORD)('And') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('resourceId') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(ACTION_KEYWORD)('response') 
+        PsiElement(TEXT)('.id') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('Given') 
+        PsiElement(ACTION_KEYWORD)('url') 
+        PsiElement(SINGLE_QUOTED_STRING)(''https://api.example.com/resource'') 
+      GherkinStep:resourceId 
+        PsiElement(STEP_KEYWORD)('And') 
+        PsiElement(ACTION_KEYWORD)('path') 
+        PsiElement(TEXT)('resourceId') 
+      GherkinStep:GET 
+        PsiElement(STEP_KEYWORD)('When') 
+        PsiElement(ACTION_KEYWORD)('method') 
+        PsiElement(TEXT)('GET') 
+      GherkinStep:200 
+        PsiElement(STEP_KEYWORD)('Then') 
+        PsiElement(ACTION_KEYWORD)('status') 
+        PsiElement(TEXT)('200') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('And') 
+        PsiElement(ACTION_KEYWORD)('match') 
+        KarateDeclaration(variable) 
+          PsiElement(VARIABLE)('response.name') 
+        PsiElement(OPERATOR)('==') 
+        PsiElement(SINGLE_QUOTED_STRING)(''test'') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('Given') 
+        PsiElement(ACTION_KEYWORD)('url') 
+        PsiElement(SINGLE_QUOTED_STRING)(''https://api.example.com/resource'') 
+      GherkinStep:resourceId 
+        PsiElement(STEP_KEYWORD)('And') 
+        PsiElement(ACTION_KEYWORD)('path') 
+        PsiElement(TEXT)('resourceId') 
+      GherkinStep:DELETE 
+        PsiElement(STEP_KEYWORD)('When') 
+        PsiElement(ACTION_KEYWORD)('method') 
+        PsiElement(TEXT)('DELETE') 
+      GherkinStep:204 
+        PsiElement(STEP_KEYWORD)('Then') 
+        PsiElement(ACTION_KEYWORD)('status') 
+        PsiElement(TEXT)('204') 
+    GherkinScenario: 
+      PsiElement(SCENARIO_KEYWORD)('Scenario:') 
+      PsiElement(TEXT)('Perform nested operations on a JSON structure') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('data') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              OBJECT 
+                PsiElement({)('{') 
+                PROPERTY 
+                  STRING_LITERAL 
+                    PsiElement(DOUBLE_QUOTED_STRING)('"users"') 
+                  PsiElement(:)(':') 
+                  ARRAY 
+                    PsiElement([)('[') 
+                    OBJECT 
+                      PsiElement({)('{') 
+                      PROPERTY 
+                        STRING_LITERAL 
+                          PsiElement(DOUBLE_QUOTED_STRING)('"id"') 
+                        PsiElement(:)(':') 
+                        NUMBER_LITERAL 
+                          PsiElement(NUMBER)('1') 
+                      PsiElement(,)(',') 
+                      PROPERTY 
+                        STRING_LITERAL 
+                          PsiElement(DOUBLE_QUOTED_STRING)('"name"') 
+                        PsiElement(:)(':') 
+                        STRING_LITERAL 
+                          PsiElement(DOUBLE_QUOTED_STRING)('"Alice"') 
+                      PsiElement(})('}') 
+                    PsiElement(,)(',') 
+                    OBJECT 
+                      PsiElement({)('{') 
+                      PROPERTY 
+                        STRING_LITERAL 
+                          PsiElement(DOUBLE_QUOTED_STRING)('"id"') 
+                        PsiElement(:)(':') 
+                        NUMBER_LITERAL 
+                          PsiElement(NUMBER)('2') 
+                      PsiElement(,)(',') 
+                      PROPERTY 
+                        STRING_LITERAL 
+                          PsiElement(DOUBLE_QUOTED_STRING)('"name"') 
+                        PsiElement(:)(':') 
+                        STRING_LITERAL 
+                          PsiElement(DOUBLE_QUOTED_STRING)('"Bob"') 
+                      PsiElement(})('}') 
+                    PsiElement(])(']') 
+                PsiElement(})('}') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('transformData') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJavascriptElement(javascript_element) 
+            KarateEmbeddedJavascriptElement(javascript_element) 
+              PROGRAM 
+                STATEMENT 
+                  EXPR 
+                    FN_EXPR 
+                      PsiElement(FUNCTION)('function') 
+                      PsiElement(L_PAREN)('(') 
+                      FN_DECL_ARGS 
+                        FN_DECL_ARG 
+                          PsiElement(IDENT)('input') 
+                      PsiElement(R_PAREN)(')') 
+                      PsiElement(WS)(' ') 
+                      BLOCK 
+                        PsiElement(L_CURLY)('{') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          VAR_STMT 
+                            PsiElement(VAR)('var') 
+                            PsiElement(WS)(' ') 
+                            VAR_STMT_NAMES 
+                              PsiElement(IDENT)('output') 
+                            PsiElement(WS)(' ') 
+                            PsiElement(EQ)('=') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              LIT_EXPR 
+                                LIT_ARRAY 
+                                  PsiElement(L_BRACKET)('[') 
+                                  PsiElement(R_BRACKET)(']') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          EXPR 
+                            REF_EXPR 
+                              PsiElement(IDENT)('input') 
+                            REF_DOT_EXPR 
+                              PsiElement(DOT)('.') 
+                              PsiElement(IDENT)('users') 
+                            REF_DOT_EXPR 
+                              PsiElement(DOT)('.') 
+                              PsiElement(IDENT)('forEach') 
+                            FN_CALL_EXPR 
+                              PsiElement(L_PAREN)('(') 
+                              FN_CALL_ARGS 
+                                FN_CALL_ARG 
+                                  EXPR 
+                                    FN_EXPR 
+                                      PsiElement(FUNCTION)('function') 
+                                      PsiElement(L_PAREN)('(') 
+                                      FN_DECL_ARGS 
+                                        FN_DECL_ARG 
+                                          PsiElement(IDENT)('user') 
+                                      PsiElement(R_PAREN)(')') 
+                                      PsiElement(WS)(' ') 
+                                      BLOCK 
+                                        PsiElement(L_CURLY)('{') 
+                                        PsiElement(WS_LF)('\n        ') 
+                                        STATEMENT 
+                                          VAR_STMT 
+                                            PsiElement(VAR)('var') 
+                                            PsiElement(WS)(' ') 
+                                            VAR_STMT_NAMES 
+                                              PsiElement(IDENT)('transformed') 
+                                            PsiElement(WS)(' ') 
+                                            PsiElement(EQ)('=') 
+                                            PsiElement(WS)(' ') 
+                                            EXPR 
+                                              LIT_EXPR 
+                                                LIT_OBJECT 
+                                                  PsiElement(L_CURLY)('{') 
+                                                  PsiElement(WS)(' ') 
+                                                  OBJECT_ELEM 
+                                                    PsiElement(IDENT)('userId') 
+                                                    PsiElement(COLON)(':') 
+                                                    PsiElement(WS)(' ') 
+                                                    EXPR 
+                                                      REF_EXPR 
+                                                        PsiElement(IDENT)('user') 
+                                                      REF_DOT_EXPR 
+                                                        PsiElement(DOT)('.') 
+                                                        PsiElement(IDENT)('id') 
+                                                    PsiElement(COMMA)(',') 
+                                                  PsiElement(WS)(' ') 
+                                                  OBJECT_ELEM 
+                                                    PsiElement(IDENT)('details') 
+                                                    PsiElement(COLON)(':') 
+                                                    PsiElement(WS)(' ') 
+                                                    EXPR 
+                                                      LIT_EXPR 
+                                                        LIT_ARRAY 
+                                                          PsiElement(L_BRACKET)('[') 
+                                                          PsiElement(R_BRACKET)(']') 
+                                                  PsiElement(WS)(' ') 
+                                                  PsiElement(R_CURLY)('}') 
+                                          EOS 
+                                            PsiElement(SEMI)(';') 
+                                        PsiElement(WS_LF)('\n        ') 
+                                        STATEMENT 
+                                          FOR_STMT 
+                                            PsiElement(FOR)('for') 
+                                            PsiElement(WS)(' ') 
+                                            PsiElement(L_PAREN)('(') 
+                                            VAR_STMT 
+                                              PsiElement(VAR)('var') 
+                                              PsiElement(WS)(' ') 
+                                              VAR_STMT_NAMES 
+                                                PsiElement(IDENT)('i') 
+                                              PsiElement(WS)(' ') 
+                                              PsiElement(EQ)('=') 
+                                              PsiElement(WS)(' ') 
+                                              EXPR 
+                                                LIT_EXPR 
+                                                  PsiElement(NUMBER)('1') 
+                                            PsiElement(SEMI)(';') 
+                                            PsiElement(WS)(' ') 
+                                            EXPR 
+                                              REF_EXPR 
+                                                PsiElement(IDENT)('i') 
+                                              PsiElement(WS)(' ') 
+                                              LOGIC_EXPR 
+                                                PsiElement(LT_EQ)('<=') 
+                                                PsiElement(WS)(' ') 
+                                                EXPR 
+                                                  LIT_EXPR 
+                                                    PsiElement(NUMBER)('3') 
+                                            PsiElement(SEMI)(';') 
+                                            PsiElement(WS)(' ') 
+                                            EXPR 
+                                              REF_EXPR 
+                                                PsiElement(IDENT)('i') 
+                                              MATH_POST_EXPR 
+                                                PsiElement(PLUS_PLUS)('++') 
+                                            PsiElement(R_PAREN)(')') 
+                                            PsiElement(WS)(' ') 
+                                            STATEMENT 
+                                              BLOCK 
+                                                PsiElement(L_CURLY)('{') 
+                                                PsiElement(WS_LF)('\n          ') 
+                                                STATEMENT 
+                                                  EXPR 
+                                                    REF_EXPR 
+                                                      PsiElement(IDENT)('transformed') 
+                                                    REF_DOT_EXPR 
+                                                      PsiElement(DOT)('.') 
+                                                      PsiElement(IDENT)('details') 
+                                                    REF_DOT_EXPR 
+                                                      PsiElement(DOT)('.') 
+                                                      PsiElement(IDENT)('push') 
+                                                    FN_CALL_EXPR 
+                                                      PsiElement(L_PAREN)('(') 
+                                                      FN_CALL_ARGS 
+                                                        FN_CALL_ARG 
+                                                          EXPR 
+                                                            LIT_EXPR 
+                                                              LIT_OBJECT 
+                                                                PsiElement(L_CURLY)('{') 
+                                                                PsiElement(WS)(' ') 
+                                                                OBJECT_ELEM 
+                                                                  PsiElement(IDENT)('detailId') 
+                                                                  PsiElement(COLON)(':') 
+                                                                  PsiElement(WS)(' ') 
+                                                                  EXPR 
+                                                                    REF_EXPR 
+                                                                      PsiElement(IDENT)('i') 
+                                                                  PsiElement(COMMA)(',') 
+                                                                PsiElement(WS)(' ') 
+                                                                OBJECT_ELEM 
+                                                                  PsiElement(IDENT)('info') 
+                                                                  PsiElement(COLON)(':') 
+                                                                  PsiElement(WS)(' ') 
+                                                                  EXPR 
+                                                                    REF_EXPR 
+                                                                      PsiElement(IDENT)('user') 
+                                                                    REF_DOT_EXPR 
+                                                                      PsiElement(DOT)('.') 
+                                                                      PsiElement(IDENT)('name') 
+                                                                    PsiElement(WS)(' ') 
+                                                                    MATH_ADD_EXPR 
+                                                                      PsiElement(PLUS)('+') 
+                                                                      PsiElement(WS)(' ') 
+                                                                      EXPR 
+                                                                        LIT_EXPR 
+                                                                          PsiElement(S_STRING)(''_info'') 
+                                                                    PsiElement(WS)(' ') 
+                                                                    MATH_ADD_EXPR 
+                                                                      PsiElement(PLUS)('+') 
+                                                                      PsiElement(WS)(' ') 
+                                                                      EXPR 
+                                                                        REF_EXPR 
+                                                                          PsiElement(IDENT)('i') 
+                                                                PsiElement(WS)(' ') 
+                                                                PsiElement(R_CURLY)('}') 
+                                                      PsiElement(R_PAREN)(')') 
+                                                  EOS 
+                                                    PsiElement(SEMI)(';') 
+                                                PsiElement(WS_LF)('\n        ') 
+                                                PsiElement(R_CURLY)('}') 
+                                        PsiElement(WS_LF)('\n        ') 
+                                        STATEMENT 
+                                          EXPR 
+                                            REF_EXPR 
+                                              PsiElement(IDENT)('output') 
+                                            REF_DOT_EXPR 
+                                              PsiElement(DOT)('.') 
+                                              PsiElement(IDENT)('push') 
+                                            FN_CALL_EXPR 
+                                              PsiElement(L_PAREN)('(') 
+                                              FN_CALL_ARGS 
+                                                FN_CALL_ARG 
+                                                  EXPR 
+                                                    REF_EXPR 
+                                                      PsiElement(IDENT)('transformed') 
+                                              PsiElement(R_PAREN)(')') 
+                                          EOS 
+                                            PsiElement(SEMI)(';') 
+                                        PsiElement(WS_LF)('\n      ') 
+                                        PsiElement(R_CURLY)('}') 
+                              PsiElement(R_PAREN)(')') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          RETURN_STMT 
+                            PsiElement(RETURN)('return') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('output') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n    ') 
+                        PsiElement(R_CURLY)('}') 
+      GherkinStep:transformData 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('result') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('transformData') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+          PsiElement(TEXT)('data') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep:, result 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('print') 
+        PsiElement(SINGLE_QUOTED_STRING)(''Transformed Data:'') 
+        PsiElement(TEXT)(',') 
+        PsiElement(TEXT)('result') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('match') 
+        KarateDeclaration(variable) 
+          PsiElement(VARIABLE)('result') 
+        PsiElement(OPERATOR)('==') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              ARRAY 
+                PsiElement([)('[') 
+                OBJECT 
+                  PsiElement({)('{') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('userId') 
+                    PsiElement(:)(':') 
+                    NUMBER_LITERAL 
+                      PsiElement(NUMBER)('1') 
+                  PsiElement(,)(',') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('details') 
+                    PsiElement(:)(':') 
+                    ARRAY 
+                      PsiElement([)('[') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('detailId') 
+                          PsiElement(:)(':') 
+                          NUMBER_LITERAL 
+                            PsiElement(NUMBER)('1') 
+                        PsiElement(,)(',') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('info') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(SINGLE_QUOTED_STRING)(''Alice_info1'') 
+                        PsiElement(})('}') 
+                      PsiElement(,)(',') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('detailId') 
+                          PsiElement(:)(':') 
+                          NUMBER_LITERAL 
+                            PsiElement(NUMBER)('2') 
+                        PsiElement(,)(',') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('info') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(SINGLE_QUOTED_STRING)(''Alice_info2'') 
+                        PsiElement(})('}') 
+                      PsiElement(,)(',') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('detailId') 
+                          PsiElement(:)(':') 
+                          NUMBER_LITERAL 
+                            PsiElement(NUMBER)('3') 
+                        PsiElement(,)(',') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('info') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(SINGLE_QUOTED_STRING)(''Alice_info3'') 
+                        PsiElement(})('}') 
+                      PsiElement(])(']') 
+                  PsiElement(})('}') 
+                PsiElement(,)(',') 
+                OBJECT 
+                  PsiElement({)('{') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('userId') 
+                    PsiElement(:)(':') 
+                    NUMBER_LITERAL 
+                      PsiElement(NUMBER)('2') 
+                  PsiElement(,)(',') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('details') 
+                    PsiElement(:)(':') 
+                    ARRAY 
+                      PsiElement([)('[') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('detailId') 
+                          PsiElement(:)(':') 
+                          NUMBER_LITERAL 
+                            PsiElement(NUMBER)('1') 
+                        PsiElement(,)(',') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('info') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(SINGLE_QUOTED_STRING)(''Bob_info1'') 
+                        PsiElement(})('}') 
+                      PsiElement(,)(',') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('detailId') 
+                          PsiElement(:)(':') 
+                          NUMBER_LITERAL 
+                            PsiElement(NUMBER)('2') 
+                        PsiElement(,)(',') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('info') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(SINGLE_QUOTED_STRING)(''Bob_info2'') 
+                        PsiElement(})('}') 
+                      PsiElement(,)(',') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('detailId') 
+                          PsiElement(:)(':') 
+                          NUMBER_LITERAL 
+                            PsiElement(NUMBER)('3') 
+                        PsiElement(,)(',') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('info') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(SINGLE_QUOTED_STRING)(''Bob_info3'') 
+                        PsiElement(})('}') 
+                      PsiElement(])(']') 
+                  PsiElement(})('}') 
+                PsiElement(])(']') 
+    GherkinScenario: 
+      PsiElement(SCENARIO_KEYWORD)('Scenario:') 
+      PsiElement(TEXT)('Parallel processing of API requests') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('makeRequest') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJavascriptElement(javascript_element) 
+            KarateEmbeddedJavascriptElement(javascript_element) 
+              PROGRAM 
+                STATEMENT 
+                  EXPR 
+                    FN_EXPR 
+                      PsiElement(FUNCTION)('function') 
+                      PsiElement(L_PAREN)('(') 
+                      FN_DECL_ARGS 
+                        FN_DECL_ARG 
+                          PsiElement(IDENT)('id') 
+                      PsiElement(R_PAREN)(')') 
+                      PsiElement(WS)(' ') 
+                      BLOCK 
+                        PsiElement(L_CURLY)('{') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          RETURN_STMT 
+                            PsiElement(RETURN)('return') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('karate') 
+                              REF_DOT_EXPR 
+                                PsiElement(DOT)('.') 
+                                PsiElement(IDENT)('call') 
+                              FN_CALL_EXPR 
+                                PsiElement(L_PAREN)('(') 
+                                FN_CALL_ARGS 
+                                  FN_CALL_ARG 
+                                    EXPR 
+                                      LIT_EXPR 
+                                        PsiElement(S_STRING)(''singleRequest.feature'') 
+                                    PsiElement(COMMA)(',') 
+                                  PsiElement(WS)(' ') 
+                                  FN_CALL_ARG 
+                                    EXPR 
+                                      LIT_EXPR 
+                                        LIT_OBJECT 
+                                          PsiElement(L_CURLY)('{') 
+                                          OBJECT_ELEM 
+                                            PsiElement(IDENT)('id') 
+                                            PsiElement(COLON)(':') 
+                                            PsiElement(WS)(' ') 
+                                            EXPR 
+                                              REF_EXPR 
+                                                PsiElement(IDENT)('id') 
+                                          PsiElement(R_CURLY)('}') 
+                                PsiElement(R_PAREN)(')') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n    ') 
+                        PsiElement(R_CURLY)('}') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('ids') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              ARRAY 
+                PsiElement([)('[') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('1') 
+                PsiElement(,)(',') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('2') 
+                PsiElement(,)(',') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('3') 
+                PsiElement(,)(',') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('4') 
+                PsiElement(,)(',') 
+                NUMBER_LITERAL 
+                  PsiElement(NUMBER)('5') 
+                PsiElement(])(']') 
+      GherkinStep:karate.parallel 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('results') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('karate.parallel') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+          PsiElement(TEXT)('ids,') 
+          PsiElement(TEXT)('makeRequest') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep:5 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('match') 
+        KarateDeclaration(variable) 
+          PsiElement(VARIABLE)('results.length') 
+        PsiElement(OPERATOR)('==') 
+        PsiElement(TEXT)('5') 
+    GherkinScenario: 
+      PsiElement(SCENARIO_KEYWORD)('Scenario:') 
+      PsiElement(TEXT)('Combine Karate DSL with embedded JavaScript') 
+      GherkinStep:23 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('id') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('23') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('data') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              ARRAY 
+                PsiElement([)('[') 
+                OBJECT 
+                  PsiElement({)('{') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('id') 
+                    PsiElement(:)(':') 
+                    NUMBER_LITERAL 
+                      PsiElement(NUMBER)('1') 
+                  PsiElement(,)(',') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('name') 
+                    PsiElement(:)(':') 
+                    STRING_LITERAL 
+                      PsiElement(SINGLE_QUOTED_STRING)(''A'') 
+                  PsiElement(})('}') 
+                PsiElement(,)(',') 
+                OBJECT 
+                  PsiElement({)('{') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('id') 
+                    PsiElement(:)(':') 
+                    NUMBER_LITERAL 
+                      PsiElement(NUMBER)('2') 
+                  PsiElement(,)(',') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('name') 
+                    PsiElement(:)(':') 
+                    STRING_LITERAL 
+                      PsiElement(SINGLE_QUOTED_STRING)(''B'') 
+                  PsiElement(})('}') 
+                PsiElement(])(']') 
+      GherkinStep:karate.filter 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('results') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('karate.filter') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+          PsiElement(TEXT)('data,') 
+          GherkinPystring 
+            KarateEmbeddedJavascriptElement(javascript_element) 
+              KarateEmbeddedJavascriptElement(javascript_element) 
+                PROGRAM 
+                  STATEMENT 
+                    EXPR 
+                      FN_EXPR 
+                        PsiElement(FUNCTION)('function') 
+                        PsiElement(WS)(' ') 
+                        PsiElement(L_PAREN)('(') 
+                        FN_DECL_ARGS 
+                          FN_DECL_ARG 
+                            PsiElement(IDENT)('x') 
+                        PsiElement(R_PAREN)(')') 
+                        PsiElement(WS)(' ') 
+                        BLOCK 
+                          PsiElement(L_CURLY)('{') 
+                          PsiElement(WS)(' ') 
+                          STATEMENT 
+                            RETURN_STMT 
+                              PsiElement(RETURN)('return') 
+                              PsiElement(WS)(' ') 
+                              EXPR 
+                                REF_EXPR 
+                                  PsiElement(IDENT)('x') 
+                                REF_DOT_EXPR 
+                                  PsiElement(DOT)('.') 
+                                  PsiElement(IDENT)('id') 
+                                PsiElement(WS)(' ') 
+                                LOGIC_EXPR 
+                                  PsiElement(GT)('>') 
+                                  PsiElement(WS)(' ') 
+                                  EXPR 
+                                    LIT_EXPR 
+                                      PsiElement(NUMBER)('1') 
+                            EOS 
+                              PsiElement(SEMI)(';') 
+                          PsiElement(WS)(' ') 
+                          PsiElement(R_CURLY)('}') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('match') 
+        KarateDeclaration(variable) 
+          PsiElement(VARIABLE)('results') 
+        PsiElement(OPERATOR)('==') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              ARRAY 
+                PsiElement([)('[') 
+                OBJECT 
+                  PsiElement({)('{') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('id') 
+                    PsiElement(:)(':') 
+                    NUMBER_LITERAL 
+                      PsiElement(NUMBER)('2') 
+                  PsiElement(,)(',') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('name') 
+                    PsiElement(:)(':') 
+                    STRING_LITERAL 
+                      PsiElement(SINGLE_QUOTED_STRING)(''B'') 
+                  PsiElement(})('}') 
+                PsiElement(])(']') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('calculateSum') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJavascriptElement(javascript_element) 
+            KarateEmbeddedJavascriptElement(javascript_element) 
+              PROGRAM 
+                STATEMENT 
+                  EXPR 
+                    FN_EXPR 
+                      PsiElement(FUNCTION)('function') 
+                      PsiElement(L_PAREN)('(') 
+                      FN_DECL_ARGS 
+                        FN_DECL_ARG 
+                          PsiElement(IDENT)('a') 
+                          PsiElement(COMMA)(',') 
+                        PsiElement(WS)(' ') 
+                        FN_DECL_ARG 
+                          PsiElement(IDENT)('b') 
+                      PsiElement(R_PAREN)(')') 
+                      PsiElement(WS)(' ') 
+                      BLOCK 
+                        PsiElement(L_CURLY)('{') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          RETURN_STMT 
+                            PsiElement(RETURN)('return') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('a') 
+                              PsiElement(WS)(' ') 
+                              MATH_ADD_EXPR 
+                                PsiElement(PLUS)('+') 
+                                PsiElement(WS)(' ') 
+                                EXPR 
+                                  REF_EXPR 
+                                    PsiElement(IDENT)('b') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n    ') 
+                        PsiElement(R_CURLY)('}') 
+      GherkinStep:calculateSum 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('sum') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('calculateSum') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+          PsiElement(TEXT)('10,') 
+          PsiElement(TEXT)('20') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep:30 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('match') 
+        KarateDeclaration(variable) 
+          PsiElement(VARIABLE)('sum') 
+        PsiElement(OPERATOR)('==') 
+        PsiElement(TEXT)('30') 
+    GherkinScenario: 
+      PsiElement(SCENARIO_KEYWORD)('Scenario:') 
+      PsiElement(TEXT)('Flatten a deeply nested JSON object') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('nestedJson') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              OBJECT 
+                PsiElement({)('{') 
+                PROPERTY 
+                  STRING_LITERAL 
+                    PsiElement(DOUBLE_QUOTED_STRING)('"level1"') 
+                  PsiElement(:)(':') 
+                  OBJECT 
+                    PsiElement({)('{') 
+                    PROPERTY 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"level2"') 
+                      PsiElement(:)(':') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          STRING_LITERAL 
+                            PsiElement(DOUBLE_QUOTED_STRING)('"level3"') 
+                          PsiElement(:)(':') 
+                          OBJECT 
+                            PsiElement({)('{') 
+                            PROPERTY 
+                              STRING_LITERAL 
+                                PsiElement(DOUBLE_QUOTED_STRING)('"key"') 
+                              PsiElement(:)(':') 
+                              STRING_LITERAL 
+                                PsiElement(DOUBLE_QUOTED_STRING)('"value"') 
+                            PsiElement(})('}') 
+                        PsiElement(,)(',') 
+                        PROPERTY 
+                          STRING_LITERAL 
+                            PsiElement(DOUBLE_QUOTED_STRING)('"anotherKey"') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(DOUBLE_QUOTED_STRING)('"anotherValue"') 
+                        PsiElement(})('}') 
+                    PsiElement(})('}') 
+                PsiElement(})('}') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('flattenJson') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJavascriptElement(javascript_element) 
+            KarateEmbeddedJavascriptElement(javascript_element) 
+              PROGRAM 
+                STATEMENT 
+                  EXPR 
+                    FN_EXPR 
+                      PsiElement(FUNCTION)('function') 
+                      PsiElement(L_PAREN)('(') 
+                      FN_DECL_ARGS 
+                        FN_DECL_ARG 
+                          PsiElement(IDENT)('obj') 
+                          PsiElement(COMMA)(',') 
+                        PsiElement(WS)(' ') 
+                        FN_DECL_ARG 
+                          PsiElement(IDENT)('prefix') 
+                      PsiElement(R_PAREN)(')') 
+                      PsiElement(WS)(' ') 
+                      BLOCK 
+                        PsiElement(L_CURLY)('{') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          VAR_STMT 
+                            PsiElement(VAR)('var') 
+                            PsiElement(WS)(' ') 
+                            VAR_STMT_NAMES 
+                              PsiElement(IDENT)('result') 
+                            PsiElement(WS)(' ') 
+                            PsiElement(EQ)('=') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              LIT_EXPR 
+                                LIT_OBJECT 
+                                  PsiElement(L_CURLY)('{') 
+                                  PsiElement(R_CURLY)('}') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          FOR_STMT 
+                            PsiElement(FOR)('for') 
+                            PsiElement(WS)(' ') 
+                            PsiElement(L_PAREN)('(') 
+                            VAR_STMT 
+                              PsiElement(VAR)('var') 
+                              PsiElement(WS)(' ') 
+                              VAR_STMT_NAMES 
+                                PsiElement(IDENT)('key') 
+                            PsiElement(WS)(' ') 
+                            PsiElement(IN)('in') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('obj') 
+                            PsiElement(R_PAREN)(')') 
+                            PsiElement(WS)(' ') 
+                            STATEMENT 
+                              BLOCK 
+                                PsiElement(L_CURLY)('{') 
+                                PsiElement(WS_LF)('\n        ') 
+                                STATEMENT 
+                                  VAR_STMT 
+                                    PsiElement(VAR)('var') 
+                                    PsiElement(WS)(' ') 
+                                    VAR_STMT_NAMES 
+                                      PsiElement(IDENT)('prefixedKey') 
+                                    PsiElement(WS)(' ') 
+                                    PsiElement(EQ)('=') 
+                                    PsiElement(WS)(' ') 
+                                    EXPR 
+                                      REF_EXPR 
+                                        PsiElement(IDENT)('prefix') 
+                                      PsiElement(WS)(' ') 
+                                      LOGIC_TERN_EXPR 
+                                        PsiElement(QUES)('?') 
+                                        PsiElement(WS)(' ') 
+                                        EXPR 
+                                          REF_EXPR 
+                                            PsiElement(IDENT)('prefix') 
+                                          PsiElement(WS)(' ') 
+                                          MATH_ADD_EXPR 
+                                            PsiElement(PLUS)('+') 
+                                            PsiElement(WS)(' ') 
+                                            EXPR 
+                                              LIT_EXPR 
+                                                PsiElement(S_STRING)(''.'') 
+                                          PsiElement(WS)(' ') 
+                                          MATH_ADD_EXPR 
+                                            PsiElement(PLUS)('+') 
+                                            PsiElement(WS)(' ') 
+                                            EXPR 
+                                              REF_EXPR 
+                                                PsiElement(IDENT)('key') 
+                                        PsiElement(WS)(' ') 
+                                        PsiElement(COLON)(':') 
+                                        PsiElement(WS)(' ') 
+                                        EXPR 
+                                          REF_EXPR 
+                                            PsiElement(IDENT)('key') 
+                                  EOS 
+                                    PsiElement(SEMI)(';') 
+                                PsiElement(WS_LF)('\n        ') 
+                                STATEMENT 
+                                  IF_STMT 
+                                    PsiElement(IF)('if') 
+                                    PsiElement(WS)(' ') 
+                                    PsiElement(L_PAREN)('(') 
+                                    EXPR 
+                                      TYPEOF_EXPR 
+                                        PsiElement(TYPEOF)('typeof') 
+                                        PsiElement(WS)(' ') 
+                                        EXPR 
+                                          REF_EXPR 
+                                            PsiElement(IDENT)('obj') 
+                                          REF_BRACKET_EXPR 
+                                            PsiElement(L_BRACKET)('[') 
+                                            EXPR 
+                                              REF_EXPR 
+                                                PsiElement(IDENT)('key') 
+                                            PsiElement(R_BRACKET)(']') 
+                                      PsiElement(WS)(' ') 
+                                      LOGIC_EXPR 
+                                        PsiElement(EQ_EQ_EQ)('===') 
+                                        PsiElement(WS)(' ') 
+                                        EXPR 
+                                          LIT_EXPR 
+                                            PsiElement(S_STRING)(''object'') 
+                                      PsiElement(WS)(' ') 
+                                      LOGIC_AND_EXPR 
+                                        PsiElement(AMP_AMP)('&&') 
+                                        PsiElement(WS)(' ') 
+                                        EXPR 
+                                          REF_EXPR 
+                                            PsiElement(IDENT)('obj') 
+                                          REF_BRACKET_EXPR 
+                                            PsiElement(L_BRACKET)('[') 
+                                            EXPR 
+                                              REF_EXPR 
+                                                PsiElement(IDENT)('key') 
+                                            PsiElement(R_BRACKET)(']') 
+                                          PsiElement(WS)(' ') 
+                                          LOGIC_EXPR 
+                                            PsiElement(NOT_EQ_EQ)('!==') 
+                                            PsiElement(WS)(' ') 
+                                            EXPR 
+                                              LIT_EXPR 
+                                                PsiElement(NULL)('null') 
+                                    PsiElement(R_PAREN)(')') 
+                                    PsiElement(WS)(' ') 
+                                    STATEMENT 
+                                      BLOCK 
+                                        PsiElement(L_CURLY)('{') 
+                                        PsiElement(WS_LF)('\n          ') 
+                                        STATEMENT 
+                                          EXPR 
+                                            REF_EXPR 
+                                              PsiElement(IDENT)('Object') 
+                                            REF_DOT_EXPR 
+                                              PsiElement(DOT)('.') 
+                                              PsiElement(IDENT)('assign') 
+                                            FN_CALL_EXPR 
+                                              PsiElement(L_PAREN)('(') 
+                                              FN_CALL_ARGS 
+                                                FN_CALL_ARG 
+                                                  EXPR 
+                                                    REF_EXPR 
+                                                      PsiElement(IDENT)('result') 
+                                                  PsiElement(COMMA)(',') 
+                                                PsiElement(WS)(' ') 
+                                                FN_CALL_ARG 
+                                                  EXPR 
+                                                    REF_EXPR 
+                                                      PsiElement(IDENT)('flattenJson') 
+                                                    FN_CALL_EXPR 
+                                                      PsiElement(L_PAREN)('(') 
+                                                      FN_CALL_ARGS 
+                                                        FN_CALL_ARG 
+                                                          EXPR 
+                                                            REF_EXPR 
+                                                              PsiElement(IDENT)('obj') 
+                                                            REF_BRACKET_EXPR 
+                                                              PsiElement(L_BRACKET)('[') 
+                                                              EXPR 
+                                                                REF_EXPR 
+                                                                  PsiElement(IDENT)('key') 
+                                                              PsiElement(R_BRACKET)(']') 
+                                                          PsiElement(COMMA)(',') 
+                                                        PsiElement(WS)(' ') 
+                                                        FN_CALL_ARG 
+                                                          EXPR 
+                                                            REF_EXPR 
+                                                              PsiElement(IDENT)('prefixedKey') 
+                                                      PsiElement(R_PAREN)(')') 
+                                              PsiElement(R_PAREN)(')') 
+                                          EOS 
+                                            PsiElement(SEMI)(';') 
+                                        PsiElement(WS_LF)('\n        ') 
+                                        PsiElement(R_CURLY)('}') 
+                                    PsiElement(WS)(' ') 
+                                    PsiElement(ELSE)('else') 
+                                    PsiElement(WS)(' ') 
+                                    STATEMENT 
+                                      BLOCK 
+                                        PsiElement(L_CURLY)('{') 
+                                        PsiElement(WS_LF)('\n          ') 
+                                        STATEMENT 
+                                          EXPR 
+                                            REF_EXPR 
+                                              PsiElement(IDENT)('result') 
+                                            REF_BRACKET_EXPR 
+                                              PsiElement(L_BRACKET)('[') 
+                                              EXPR 
+                                                REF_EXPR 
+                                                  PsiElement(IDENT)('prefixedKey') 
+                                              PsiElement(R_BRACKET)(']') 
+                                            PsiElement(WS)(' ') 
+                                            ASSIGN_EXPR 
+                                              PsiElement(EQ)('=') 
+                                              PsiElement(WS)(' ') 
+                                              EXPR 
+                                                REF_EXPR 
+                                                  PsiElement(IDENT)('obj') 
+                                                REF_BRACKET_EXPR 
+                                                  PsiElement(L_BRACKET)('[') 
+                                                  EXPR 
+                                                    REF_EXPR 
+                                                      PsiElement(IDENT)('key') 
+                                                  PsiElement(R_BRACKET)(']') 
+                                          EOS 
+                                            PsiElement(SEMI)(';') 
+                                        PsiElement(WS_LF)('\n        ') 
+                                        PsiElement(R_CURLY)('}') 
+                                PsiElement(WS_LF)('\n      ') 
+                                PsiElement(R_CURLY)('}') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          RETURN_STMT 
+                            PsiElement(RETURN)('return') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('result') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n    ') 
+                        PsiElement(R_CURLY)('}') 
+      GherkinStep:flattenJson 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('flattened') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('flattenJson') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+          PsiElement(TEXT)('nestedJson,') 
+          PsiElement(SINGLE_QUOTED_STRING)('''') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep:, flattened 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('print') 
+        PsiElement(SINGLE_QUOTED_STRING)(''Flattened JSON:'') 
+        PsiElement(TEXT)(',') 
+        PsiElement(TEXT)('flattened') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('match') 
+        KarateDeclaration(variable) 
+          PsiElement(VARIABLE)('flattened') 
+        PsiElement(OPERATOR)('==') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              OBJECT 
+                PsiElement({)('{') 
+                PROPERTY 
+                  STRING_LITERAL 
+                    PsiElement(SINGLE_QUOTED_STRING)(''level1.level2.level3.key'') 
+                  PsiElement(:)(':') 
+                  STRING_LITERAL 
+                    PsiElement(SINGLE_QUOTED_STRING)(''value'') 
+                PsiElement(,)(',') 
+                PROPERTY 
+                  STRING_LITERAL 
+                    PsiElement(SINGLE_QUOTED_STRING)(''level1.level2.anotherKey'') 
+                  PsiElement(:)(':') 
+                  STRING_LITERAL 
+                    PsiElement(SINGLE_QUOTED_STRING)(''anotherValue'') 
+                PsiElement(})('}') 
+    GherkinScenario: 
+      PsiElement(SCENARIO_KEYWORD)('Scenario:') 
+      PsiElement(TEXT)('Merge multiple JSON arrays into a single array') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('arrays') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              ARRAY 
+                PsiElement([)('[') 
+                ARRAY 
+                  PsiElement([)('[') 
+                  OBJECT 
+                    PsiElement({)('{') 
+                    PROPERTY 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"id"') 
+                      PsiElement(:)(':') 
+                      NUMBER_LITERAL 
+                        PsiElement(NUMBER)('1') 
+                    PsiElement(,)(',') 
+                    PROPERTY 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"name"') 
+                      PsiElement(:)(':') 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"Item1"') 
+                    PsiElement(})('}') 
+                  PsiElement(,)(',') 
+                  OBJECT 
+                    PsiElement({)('{') 
+                    PROPERTY 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"id"') 
+                      PsiElement(:)(':') 
+                      NUMBER_LITERAL 
+                        PsiElement(NUMBER)('2') 
+                    PsiElement(,)(',') 
+                    PROPERTY 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"name"') 
+                      PsiElement(:)(':') 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"Item2"') 
+                    PsiElement(})('}') 
+                  PsiElement(])(']') 
+                PsiElement(,)(',') 
+                ARRAY 
+                  PsiElement([)('[') 
+                  OBJECT 
+                    PsiElement({)('{') 
+                    PROPERTY 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"id"') 
+                      PsiElement(:)(':') 
+                      NUMBER_LITERAL 
+                        PsiElement(NUMBER)('3') 
+                    PsiElement(,)(',') 
+                    PROPERTY 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"name"') 
+                      PsiElement(:)(':') 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"Item3"') 
+                    PsiElement(})('}') 
+                  PsiElement(,)(',') 
+                  OBJECT 
+                    PsiElement({)('{') 
+                    PROPERTY 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"id"') 
+                      PsiElement(:)(':') 
+                      NUMBER_LITERAL 
+                        PsiElement(NUMBER)('4') 
+                    PsiElement(,)(',') 
+                    PROPERTY 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"name"') 
+                      PsiElement(:)(':') 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"Item4"') 
+                    PsiElement(})('}') 
+                  PsiElement(])(']') 
+                PsiElement(,)(',') 
+                ARRAY 
+                  PsiElement([)('[') 
+                  OBJECT 
+                    PsiElement({)('{') 
+                    PROPERTY 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"id"') 
+                      PsiElement(:)(':') 
+                      NUMBER_LITERAL 
+                        PsiElement(NUMBER)('5') 
+                    PsiElement(,)(',') 
+                    PROPERTY 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"name"') 
+                      PsiElement(:)(':') 
+                      STRING_LITERAL 
+                        PsiElement(DOUBLE_QUOTED_STRING)('"Item5"') 
+                    PsiElement(})('}') 
+                  PsiElement(])(']') 
+                PsiElement(])(']') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('mergeArrays') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJavascriptElement(javascript_element) 
+            KarateEmbeddedJavascriptElement(javascript_element) 
+              PROGRAM 
+                STATEMENT 
+                  EXPR 
+                    FN_EXPR 
+                      PsiElement(FUNCTION)('function') 
+                      PsiElement(L_PAREN)('(') 
+                      FN_DECL_ARGS 
+                        FN_DECL_ARG 
+                          PsiElement(IDENT)('arrays') 
+                      PsiElement(R_PAREN)(')') 
+                      PsiElement(WS)(' ') 
+                      BLOCK 
+                        PsiElement(L_CURLY)('{') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          VAR_STMT 
+                            PsiElement(VAR)('var') 
+                            PsiElement(WS)(' ') 
+                            VAR_STMT_NAMES 
+                              PsiElement(IDENT)('merged') 
+                            PsiElement(WS)(' ') 
+                            PsiElement(EQ)('=') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              LIT_EXPR 
+                                LIT_ARRAY 
+                                  PsiElement(L_BRACKET)('[') 
+                                  PsiElement(R_BRACKET)(']') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          EXPR 
+                            REF_EXPR 
+                              PsiElement(IDENT)('arrays') 
+                            REF_DOT_EXPR 
+                              PsiElement(DOT)('.') 
+                              PsiElement(IDENT)('forEach') 
+                            FN_CALL_EXPR 
+                              PsiElement(L_PAREN)('(') 
+                              FN_CALL_ARGS 
+                                FN_CALL_ARG 
+                                  EXPR 
+                                    FN_EXPR 
+                                      PsiElement(FUNCTION)('function') 
+                                      PsiElement(L_PAREN)('(') 
+                                      FN_DECL_ARGS 
+                                        FN_DECL_ARG 
+                                          PsiElement(IDENT)('array') 
+                                      PsiElement(R_PAREN)(')') 
+                                      PsiElement(WS)(' ') 
+                                      BLOCK 
+                                        PsiElement(L_CURLY)('{') 
+                                        PsiElement(WS_LF)('\n        ') 
+                                        STATEMENT 
+                                          EXPR 
+                                            REF_EXPR 
+                                              PsiElement(IDENT)('merged') 
+                                            PsiElement(WS)(' ') 
+                                            ASSIGN_EXPR 
+                                              PsiElement(EQ)('=') 
+                                              PsiElement(WS)(' ') 
+                                              EXPR 
+                                                REF_EXPR 
+                                                  PsiElement(IDENT)('merged') 
+                                                REF_DOT_EXPR 
+                                                  PsiElement(DOT)('.') 
+                                                  PsiElement(IDENT)('concat') 
+                                                FN_CALL_EXPR 
+                                                  PsiElement(L_PAREN)('(') 
+                                                  FN_CALL_ARGS 
+                                                    FN_CALL_ARG 
+                                                      EXPR 
+                                                        REF_EXPR 
+                                                          PsiElement(IDENT)('array') 
+                                                  PsiElement(R_PAREN)(')') 
+                                          EOS 
+                                            PsiElement(SEMI)(';') 
+                                        PsiElement(WS_LF)('\n      ') 
+                                        PsiElement(R_CURLY)('}') 
+                              PsiElement(R_PAREN)(')') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          RETURN_STMT 
+                            PsiElement(RETURN)('return') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('merged') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n    ') 
+                        PsiElement(R_CURLY)('}') 
+      GherkinStep:mergeArrays 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('result') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('mergeArrays') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+          PsiElement(TEXT)('arrays') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep:, result 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('print') 
+        PsiElement(SINGLE_QUOTED_STRING)(''Merged JSON Array:'') 
+        PsiElement(TEXT)(',') 
+        PsiElement(TEXT)('result') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('match') 
+        KarateDeclaration(variable) 
+          PsiElement(VARIABLE)('result') 
+        PsiElement(OPERATOR)('==') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              ARRAY 
+                PsiElement([)('[') 
+                OBJECT 
+                  PsiElement({)('{') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('id') 
+                    PsiElement(:)(':') 
+                    NUMBER_LITERAL 
+                      PsiElement(NUMBER)('1') 
+                  PsiElement(,)(',') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('name') 
+                    PsiElement(:)(':') 
+                    STRING_LITERAL 
+                      PsiElement(SINGLE_QUOTED_STRING)(''Item1'') 
+                  PsiElement(})('}') 
+                PsiElement(,)(',') 
+                OBJECT 
+                  PsiElement({)('{') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('id') 
+                    PsiElement(:)(':') 
+                    NUMBER_LITERAL 
+                      PsiElement(NUMBER)('2') 
+                  PsiElement(,)(',') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('name') 
+                    PsiElement(:)(':') 
+                    STRING_LITERAL 
+                      PsiElement(SINGLE_QUOTED_STRING)(''Item2'') 
+                  PsiElement(})('}') 
+                PsiElement(,)(',') 
+                OBJECT 
+                  PsiElement({)('{') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('id') 
+                    PsiElement(:)(':') 
+                    NUMBER_LITERAL 
+                      PsiElement(NUMBER)('3') 
+                  PsiElement(,)(',') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('name') 
+                    PsiElement(:)(':') 
+                    STRING_LITERAL 
+                      PsiElement(SINGLE_QUOTED_STRING)(''Item3'') 
+                  PsiElement(})('}') 
+                PsiElement(,)(',') 
+                OBJECT 
+                  PsiElement({)('{') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('id') 
+                    PsiElement(:)(':') 
+                    NUMBER_LITERAL 
+                      PsiElement(NUMBER)('4') 
+                  PsiElement(,)(',') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('name') 
+                    PsiElement(:)(':') 
+                    STRING_LITERAL 
+                      PsiElement(SINGLE_QUOTED_STRING)(''Item4'') 
+                  PsiElement(})('}') 
+                PsiElement(,)(',') 
+                OBJECT 
+                  PsiElement({)('{') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('id') 
+                    PsiElement(:)(':') 
+                    NUMBER_LITERAL 
+                      PsiElement(NUMBER)('5') 
+                  PsiElement(,)(',') 
+                  PROPERTY 
+                    REFERENCE_EXPRESSION 
+                      PsiElement(IDENTIFIER)('name') 
+                    PsiElement(:)(':') 
+                    STRING_LITERAL 
+                      PsiElement(SINGLE_QUOTED_STRING)(''Item5'') 
+                  PsiElement(})('}') 
+                PsiElement(])(']') 
+    GherkinScenario: 
+      PsiElement(SCENARIO_KEYWORD)('Scenario:') 
+      PsiElement(TEXT)('Generate JSON dynamically using embedded JavaScript') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('generateDynamicJson') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          KarateEmbeddedJavascriptElement(javascript_element) 
+            KarateEmbeddedJavascriptElement(javascript_element) 
+              PROGRAM 
+                STATEMENT 
+                  EXPR 
+                    FN_EXPR 
+                      PsiElement(FUNCTION)('function') 
+                      PsiElement(L_PAREN)('(') 
+                      FN_DECL_ARGS 
+                        <empty list> 
+                      PsiElement(R_PAREN)(')') 
+                      PsiElement(WS)(' ') 
+                      BLOCK 
+                        PsiElement(L_CURLY)('{') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          VAR_STMT 
+                            PsiElement(VAR)('var') 
+                            PsiElement(WS)(' ') 
+                            VAR_STMT_NAMES 
+                              PsiElement(IDENT)('result') 
+                            PsiElement(WS)(' ') 
+                            PsiElement(EQ)('=') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              LIT_EXPR 
+                                LIT_OBJECT 
+                                  PsiElement(L_CURLY)('{') 
+                                  PsiElement(R_CURLY)('}') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          FOR_STMT 
+                            PsiElement(FOR)('for') 
+                            PsiElement(WS)(' ') 
+                            PsiElement(L_PAREN)('(') 
+                            VAR_STMT 
+                              PsiElement(VAR)('var') 
+                              PsiElement(WS)(' ') 
+                              VAR_STMT_NAMES 
+                                PsiElement(IDENT)('i') 
+                              PsiElement(WS)(' ') 
+                              PsiElement(EQ)('=') 
+                              PsiElement(WS)(' ') 
+                              EXPR 
+                                LIT_EXPR 
+                                  PsiElement(NUMBER)('1') 
+                            PsiElement(SEMI)(';') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('i') 
+                              PsiElement(WS)(' ') 
+                              LOGIC_EXPR 
+                                PsiElement(LT_EQ)('<=') 
+                                PsiElement(WS)(' ') 
+                                EXPR 
+                                  LIT_EXPR 
+                                    PsiElement(NUMBER)('5') 
+                            PsiElement(SEMI)(';') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('i') 
+                              MATH_POST_EXPR 
+                                PsiElement(PLUS_PLUS)('++') 
+                            PsiElement(R_PAREN)(')') 
+                            PsiElement(WS)(' ') 
+                            STATEMENT 
+                              BLOCK 
+                                PsiElement(L_CURLY)('{') 
+                                PsiElement(WS_LF)('\n        ') 
+                                STATEMENT 
+                                  EXPR 
+                                    REF_EXPR 
+                                      PsiElement(IDENT)('result') 
+                                    REF_BRACKET_EXPR 
+                                      PsiElement(L_BRACKET)('[') 
+                                      EXPR 
+                                        LIT_EXPR 
+                                          PsiElement(S_STRING)(''key'') 
+                                        PsiElement(WS)(' ') 
+                                        MATH_ADD_EXPR 
+                                          PsiElement(PLUS)('+') 
+                                          PsiElement(WS)(' ') 
+                                          EXPR 
+                                            REF_EXPR 
+                                              PsiElement(IDENT)('i') 
+                                      PsiElement(R_BRACKET)(']') 
+                                    PsiElement(WS)(' ') 
+                                    ASSIGN_EXPR 
+                                      PsiElement(EQ)('=') 
+                                      PsiElement(WS)(' ') 
+                                      EXPR 
+                                        LIT_EXPR 
+                                          LIT_OBJECT 
+                                            PsiElement(L_CURLY)('{') 
+                                            PsiElement(WS)(' ') 
+                                            OBJECT_ELEM 
+                                              PsiElement(IDENT)('value') 
+                                              PsiElement(COLON)(':') 
+                                              PsiElement(WS)(' ') 
+                                              EXPR 
+                                                REF_EXPR 
+                                                  PsiElement(IDENT)('i') 
+                                                PsiElement(WS)(' ') 
+                                                MATH_MUL_EXPR 
+                                                  PsiElement(STAR)('*') 
+                                                  PsiElement(WS)(' ') 
+                                                  EXPR 
+                                                    LIT_EXPR 
+                                                      PsiElement(NUMBER)('10') 
+                                              PsiElement(COMMA)(',') 
+                                            PsiElement(WS)(' ') 
+                                            OBJECT_ELEM 
+                                              PsiElement(IDENT)('nested') 
+                                              PsiElement(COLON)(':') 
+                                              PsiElement(WS)(' ') 
+                                              EXPR 
+                                                LIT_EXPR 
+                                                  LIT_OBJECT 
+                                                    PsiElement(L_CURLY)('{') 
+                                                    PsiElement(WS)(' ') 
+                                                    OBJECT_ELEM 
+                                                      PsiElement(IDENT)('id') 
+                                                      PsiElement(COLON)(':') 
+                                                      PsiElement(WS)(' ') 
+                                                      EXPR 
+                                                        LIT_EXPR 
+                                                          PsiElement(S_STRING)(''item'') 
+                                                        PsiElement(WS)(' ') 
+                                                        MATH_ADD_EXPR 
+                                                          PsiElement(PLUS)('+') 
+                                                          PsiElement(WS)(' ') 
+                                                          EXPR 
+                                                            REF_EXPR 
+                                                              PsiElement(IDENT)('i') 
+                                                    PsiElement(WS)(' ') 
+                                                    PsiElement(R_CURLY)('}') 
+                                            PsiElement(WS)(' ') 
+                                            PsiElement(R_CURLY)('}') 
+                                  EOS 
+                                    PsiElement(SEMI)(';') 
+                                PsiElement(WS_LF)('\n      ') 
+                                PsiElement(R_CURLY)('}') 
+                        PsiElement(WS_LF)('\n      ') 
+                        STATEMENT 
+                          RETURN_STMT 
+                            PsiElement(RETURN)('return') 
+                            PsiElement(WS)(' ') 
+                            EXPR 
+                              REF_EXPR 
+                                PsiElement(IDENT)('result') 
+                          EOS 
+                            PsiElement(SEMI)(';') 
+                        PsiElement(WS_LF)('\n    ') 
+                        PsiElement(R_CURLY)('}') 
+      GherkinStep:generateDynamicJson 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('def') 
+        KarateDeclaration(declaration) 
+          PsiElement(DECLARATION)('dynamicJson') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(TEXT)('generateDynamicJson') 
+        KarateParenElement(paren element) 
+          PsiElement(OPEN_PAREN)('(') 
+        PsiElement(CLOSE_PAREN)(')') 
+      GherkinStep:, dynamicJson 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('print') 
+        PsiElement(SINGLE_QUOTED_STRING)(''Generated JSON:'') 
+        PsiElement(TEXT)(',') 
+        PsiElement(TEXT)('dynamicJson') 
+      GherkinStep: 
+        PsiElement(STEP_KEYWORD)('*') 
+        PsiElement(ACTION_KEYWORD)('match') 
+        KarateDeclaration(variable) 
+          PsiElement(VARIABLE)('dynamicJson') 
+        PsiElement(OPERATOR)('==') 
+        GherkinPystring 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              OBJECT 
+                PsiElement({)('{') 
+                PROPERTY 
+                  REFERENCE_EXPRESSION 
+                    PsiElement(IDENTIFIER)('key1') 
+                  PsiElement(:)(':') 
+                  OBJECT 
+                    PsiElement({)('{') 
+                    PROPERTY 
+                      REFERENCE_EXPRESSION 
+                        PsiElement(IDENTIFIER)('value') 
+                      PsiElement(:)(':') 
+                      NUMBER_LITERAL 
+                        PsiElement(NUMBER)('10') 
+                    PsiElement(,)(',') 
+                    PROPERTY 
+                      REFERENCE_EXPRESSION 
+                        PsiElement(IDENTIFIER)('nested') 
+                      PsiElement(:)(':') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('id') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(SINGLE_QUOTED_STRING)(''item1'') 
+                        PsiElement(})('}') 
+                    PsiElement(})('}') 
+                PsiElement(,)(',') 
+                PROPERTY 
+                  REFERENCE_EXPRESSION 
+                    PsiElement(IDENTIFIER)('key2') 
+                  PsiElement(:)(':') 
+                  OBJECT 
+                    PsiElement({)('{') 
+                    PROPERTY 
+                      REFERENCE_EXPRESSION 
+                        PsiElement(IDENTIFIER)('value') 
+                      PsiElement(:)(':') 
+                      NUMBER_LITERAL 
+                        PsiElement(NUMBER)('20') 
+                    PsiElement(,)(',') 
+                    PROPERTY 
+                      REFERENCE_EXPRESSION 
+                        PsiElement(IDENTIFIER)('nested') 
+                      PsiElement(:)(':') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('id') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(SINGLE_QUOTED_STRING)(''item2'') 
+                        PsiElement(})('}') 
+                    PsiElement(})('}') 
+                PsiElement(,)(',') 
+                PROPERTY 
+                  REFERENCE_EXPRESSION 
+                    PsiElement(IDENTIFIER)('key3') 
+                  PsiElement(:)(':') 
+                  OBJECT 
+                    PsiElement({)('{') 
+                    PROPERTY 
+                      REFERENCE_EXPRESSION 
+                        PsiElement(IDENTIFIER)('value') 
+                      PsiElement(:)(':') 
+                      NUMBER_LITERAL 
+                        PsiElement(NUMBER)('30') 
+                    PsiElement(,)(',') 
+                    PROPERTY 
+                      REFERENCE_EXPRESSION 
+                        PsiElement(IDENTIFIER)('nested') 
+                      PsiElement(:)(':') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('id') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(SINGLE_QUOTED_STRING)(''item3'') 
+                        PsiElement(})('}') 
+                    PsiElement(})('}') 
+                PsiElement(,)(',') 
+                PROPERTY 
+                  REFERENCE_EXPRESSION 
+                    PsiElement(IDENTIFIER)('key4') 
+                  PsiElement(:)(':') 
+                  OBJECT 
+                    PsiElement({)('{') 
+                    PROPERTY 
+                      REFERENCE_EXPRESSION 
+                        PsiElement(IDENTIFIER)('value') 
+                      PsiElement(:)(':') 
+                      NUMBER_LITERAL 
+                        PsiElement(NUMBER)('40') 
+                    PsiElement(,)(',') 
+                    PROPERTY 
+                      REFERENCE_EXPRESSION 
+                        PsiElement(IDENTIFIER)('nested') 
+                      PsiElement(:)(':') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('id') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(SINGLE_QUOTED_STRING)(''item4'') 
+                        PsiElement(})('}') 
+                    PsiElement(})('}') 
+                PsiElement(,)(',') 
+                PROPERTY 
+                  REFERENCE_EXPRESSION 
+                    PsiElement(IDENTIFIER)('key5') 
+                  PsiElement(:)(':') 
+                  OBJECT 
+                    PsiElement({)('{') 
+                    PROPERTY 
+                      REFERENCE_EXPRESSION 
+                        PsiElement(IDENTIFIER)('value') 
+                      PsiElement(:)(':') 
+                      NUMBER_LITERAL 
+                        PsiElement(NUMBER)('50') 
+                    PsiElement(,)(',') 
+                    PROPERTY 
+                      REFERENCE_EXPRESSION 
+                        PsiElement(IDENTIFIER)('nested') 
+                      PsiElement(:)(':') 
+                      OBJECT 
+                        PsiElement({)('{') 
+                        PROPERTY 
+                          REFERENCE_EXPRESSION 
+                            PsiElement(IDENTIFIER)('id') 
+                          PsiElement(:)(':') 
+                          STRING_LITERAL 
+                            PsiElement(SINGLE_QUOTED_STRING)(''item5'') 
+                        PsiElement(})('}') 
+                    PsiElement(})('}') 
+                PsiElement(})('}') 
+    GherkinScenario: 
+      PsiElement(SCENARIO_KEYWORD)('Scenario:') 
+      PsiElement(TEXT)('JSON expression syntax') 
+      GherkinStep:var 
+        PsiElement(STEP_KEYWORD)('Given') 
+        PsiElement(TEXT)('var') 
+        PsiElement(OPERATOR)('=') 
+        PsiElement(DOUBLE_QUOTED_STRING)('"Hello"') 
+      GherkinStep:a 
+        PsiElement(STEP_KEYWORD)('Given') 
+        PsiElement(TEXT)('a') 
+        PsiElement(OPERATOR)('=') 
+        GherkinPystring 
+          PsiElement(PYSTRING_QUOTES)('"""') 
+          KarateEmbeddedJsonElement(json_element) 
+            KarateEmbeddedJsonElement(json_element) 
+              OBJECT 
+                PsiElement({)('{') 
+                PROPERTY 
+                  STRING_LITERAL 
+                    PsiElement(DOUBLE_QUOTED_STRING)('"withoutQuotes"') 
+                  PsiElement(:)(':') 
+                  REFERENCE_EXPRESSION 
+                    PsiElement(IDENTIFIER)('#(var)') 
+                PsiElement(,)(',') 
+                PROPERTY 
+                  STRING_LITERAL 
+                    PsiElement(DOUBLE_QUOTED_STRING)('"withQuotes"') 
+                  PsiElement(:)(':') 
+                  REFERENCE_EXPRESSION 
+                    PsiElement(IDENTIFIER)('"#(var)"') 
+                PsiElement(})('}') 
+          PsiElement(PYSTRING_QUOTES)('"""')

@@ -38,7 +38,7 @@
       implementationClass="com.rankweis.uppercut.karate.extension.KarateInspectionTool" order="last"/>
 
     <lang.parserDefinition language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.GherkinParserDefinition"/>
+      implementationClass="com.rankweis.uppercut.karate.psi.UppercutParserDefinition"/>
     <lang.parserDefinition language="KarateJs"
       implementationClass="com.rankweis.uppercut.karate.psi.parser.KarateJsParserDefinition"/>
     <lang.commenter language="Karate"
@@ -48,7 +48,7 @@
     <lang.formatter language="Karate"
       implementationClass="com.rankweis.uppercut.karate.format.KarateFormattingModelBuilder"/>
     <lang.formatter language="KarateJs"
-      implementationClass="com.rankweis.uppercut.karate.format.KarateJSFormattingModelBuilder"/>
+      implementationClass="com.rankweis.uppercut.karate.format.KarateJsFormattingModelBuilder"/>
     <annotator language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.annotator.GherkinAnnotator"/>
     <lang.foldingBuilder language="Karate"
@@ -59,7 +59,7 @@
       implementation="com.rankweis.uppercut.karate.psi.formatter.GherkinCodeStyleSettingsProvider"/>
 
     <lang.findUsagesProvider language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.KarateFindUsagesProvider"/>
+      implementationClass="com.rankweis.uppercut.karate.psi.UppercutFindUsagesProvider"/>
     <lang.refactoringSupport language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.refactoring.KarateRefactorSupportProvider"/>
     <colorSettingsPage

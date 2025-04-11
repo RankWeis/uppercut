@@ -48,7 +48,7 @@ public final class CucumberRunLineMarkerContributor extends RunLineMarkerContrib
       return null;
     }
     //    if (type == KarateTokenTypes.TAG &&
-    //      PsiTreeUtil.findSiblingBackward(element.getParent(), GherkinElementTypes.TAG, null) != null) {
+    //      PsiTreeUtil.findSiblingBackward(element.getParent(), UppercutElementTypes.TAG, null) != null) {
     //      // This is a hack; without this, if you have @Tag1 @Tag2 @Tag3, all the run configs will come back as @Tag3.
     //      // I can't figure out why this is, so the better UX is to just have one run configuration per line.
     //      return null;

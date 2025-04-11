@@ -26,16 +26,17 @@ public class KarateSettingsEditor extends JavaSettingsEditorBase<KarateRunConfig
     fragments.add(getDebugPort());
   }
 
-  private SettingsEditorFragment<KarateRunConfiguration, SettingsEditorLabeledComponent<JTextField>> getTestNameField() {
+  private SettingsEditorFragment<KarateRunConfiguration,
+    SettingsEditorLabeledComponent<JTextField>> getTestNameField() {
     JTextField textField = new JTextField();
     return new SettingsEditorFragment<>("karate.test.name", "Test name", "Tests",
-        new SettingsEditorLabeledComponent<>("Test Name", textField),
-        4, (settings, component) -> component.getComponent().setText(settings.getName()),
-        (settings, component) -> settings.setTestName(component.getComponent().getText()),
-        x -> true
-      );
+      new SettingsEditorLabeledComponent<>("Test Name", textField),
+      4, (settings, component) -> component.getComponent().setText(settings.getName()),
+      (settings, component) -> settings.setTestName(component.getComponent().getText()),
+      x -> true
+    );
   }
-  
+
   private SettingsEditorFragment<KarateRunConfiguration, SettingsEditorLabeledComponent<JTextField>> getParallelism() {
     JTextField textField = new JTextField();
     return new SettingsEditorFragment<>("karate.test.parallel", "Parallelism", "Test Options",
@@ -45,7 +46,7 @@ public class KarateSettingsEditor extends JavaSettingsEditorBase<KarateRunConfig
       x -> true
     );
   }
-  
+
   private SettingsEditorFragment<KarateRunConfiguration, SettingsEditorLabeledComponent<JTextField>> getEnv() {
     JTextField textField = new JTextField();
     return new SettingsEditorFragment<>("karate.test.env", "Environment", "Test Options",
@@ -55,7 +56,7 @@ public class KarateSettingsEditor extends JavaSettingsEditorBase<KarateRunConfig
       x -> true
     );
   }
-  
+
   private SettingsEditorFragment<KarateRunConfiguration, SettingsEditorLabeledComponent<JTextField>> getTagsField() {
     JTextField textField = new JTextField();
     return new SettingsEditorFragment<>("karate.test.tag", "Tag", "Tests",

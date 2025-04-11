@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be 
 // found in the LICENSE file.
+
 package com.rankweis.uppercut.karate.psi;
 
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.COMMENT;
@@ -9,6 +10,7 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.KEYWORDS;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.OPERATOR;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PIPE;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING_INCOMPLETE;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.PYSTRING_QUOTES;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.SINGLE_QUOTED_STRING;
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.STEP_KEYWORD;
@@ -26,8 +28,8 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
-import com.rankweis.uppercut.karate.lexer.GherkinLexer;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
+import com.rankweis.uppercut.karate.lexer.UppercutLexer;
 import com.rankweis.uppercut.karate.lexer.impl.KarateJavascriptExtension;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.util.Arrays;
@@ -38,7 +40,7 @@ import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
 
-public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase {
+public class UppercutSyntaxHighlighter extends SyntaxHighlighterBase {
 
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<>();
   private static final Json5SyntaxHighlightingFactory JSON_HIGHLIGHTER = new Json5SyntaxHighlightingFactory();
@@ -48,11 +50,11 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase {
   private VirtualFile virtualFile;
   private final GherkinKeywordProvider myKeywordProvider;
 
-  public GherkinSyntaxHighlighter(GherkinKeywordProvider keywordProvider) {
+  public UppercutSyntaxHighlighter(GherkinKeywordProvider keywordProvider) {
     myKeywordProvider = keywordProvider;
   }
 
-  public GherkinSyntaxHighlighter(Project project, VirtualFile virtualFile, GherkinKeywordProvider keywordProvider) {
+  public UppercutSyntaxHighlighter(Project project, VirtualFile virtualFile, GherkinKeywordProvider keywordProvider) {
     this.project = project;
     this.virtualFile = virtualFile;
     myKeywordProvider = keywordProvider;
@@ -73,18 +75,20 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase {
     ATTRIBUTES.put(VARIABLE, GherkinHighlighter.VARIABLE);
     ATTRIBUTES.put(TAG, GherkinHighlighter.TAG);
     ATTRIBUTES.put(PYSTRING, GherkinHighlighter.PYSTRING);
+    ATTRIBUTES.put(PYSTRING_INCOMPLETE, GherkinHighlighter.PYSTRING);
     ATTRIBUTES.put(PYSTRING_QUOTES, GherkinHighlighter.PYSTRING);
     ATTRIBUTES.put(JsonElementTypes.OBJECT, GherkinHighlighter.PYSTRING);
     ATTRIBUTES.put(TABLE_CELL, GherkinHighlighter.TABLE_CELL);
     ATTRIBUTES.put(PIPE, GherkinHighlighter.PIPE);
     ATTRIBUTES.put(SINGLE_QUOTED_STRING, GherkinHighlighter.QUOTE);
     ATTRIBUTES.put(DOUBLE_QUOTED_STRING, GherkinHighlighter.QUOTE);
+    ATTRIBUTES.put(KarateTokenTypes.JSON_INJECTABLE, GherkinHighlighter.KARATE_REFERENCE);
   }
 
   @Override
   @NotNull
   public Lexer getHighlightingLexer() {
-    return new GherkinLexer(myKeywordProvider, true);
+    return new UppercutLexer(myKeywordProvider, true);
   }
 
   @Override
@@ -99,7 +103,7 @@ public class GherkinSyntaxHighlighter extends SyntaxHighlighterBase {
     }
     Optional<TextAttributesKey[]> jsTextAttributesKeys =
       jsExt
-        .filter(ep -> ep.isJSLanguage(tokenType.getLanguage()))
+        .filter(ep -> ep.isJsLanguage(tokenType.getLanguage()))
         .map(KarateJavascriptParsingExtensionPoint::getJsSyntaxHighlighter)
         .map(h -> h.getTokenHighlights(tokenType))
         .filter(h -> h.length > 0);

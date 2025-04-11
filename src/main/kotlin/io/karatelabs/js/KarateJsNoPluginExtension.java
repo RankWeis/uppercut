@@ -1,6 +1,6 @@
 package io.karatelabs.js;
 
-import static com.rankweis.uppercut.karate.psi.GherkinElementTypes.JAVASCRIPT;
+import static com.rankweis.uppercut.karate.psi.UppercutElementTypes.JAVASCRIPT;
 
 import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Block;
@@ -41,7 +41,7 @@ public class KarateJsNoPluginExtension implements KarateJavascriptParsingExtensi
     }
   }
 
-  @Override public boolean isJSLanguage(Language l) {
+  @Override public boolean isJsLanguage(Language l) {
     return KarateJsLanguage.INSTANCE == l;
   }
 }

@@ -6,13 +6,13 @@ import com.rankweis.uppercut.karate.psi.GherkinExamplesBlock;
 import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
-import com.rankweis.uppercut.karate.psi.GherkinElementTypes;
+import com.rankweis.uppercut.karate.psi.UppercutElementTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
 public class GherkinExamplesBlockImpl extends GherkinPsiElementBase implements GherkinExamplesBlock {
-  private static final TokenSet TABLE_FILTER = TokenSet.create(GherkinElementTypes.TABLE);
+  private static final TokenSet TABLE_FILTER = TokenSet.create(UppercutElementTypes.TABLE);
 
   public GherkinExamplesBlockImpl(@NotNull final ASTNode node) {
     super(node);

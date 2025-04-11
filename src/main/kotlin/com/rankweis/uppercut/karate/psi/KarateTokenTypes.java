@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be 
 // found in the LICENSE file.
+
 package com.rankweis.uppercut.karate.psi;
 
+import com.intellij.json.JsonTokenType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public interface KarateTokenTypes {
@@ -29,6 +32,7 @@ public interface KarateTokenTypes {
   KarateElementType PYSTRING_INCOMPLETE = new KarateElementType("PYSTRING_INCOMPLETE");
   KarateElementType SINGLE_QUOTED_STRING = new KarateElementType("SINGLE_QUOTED_STRING");
   KarateElementType DOUBLE_QUOTED_STRING = new KarateElementType("DOUBLE_QUOTED_STRING");
+  IElementType JSON_INJECTABLE = new JsonTokenType("JSON_INJECTABLE");
 
   KarateElementType PIPE = new KarateElementType("PIPE");
   KarateElementType OPEN_PAREN = new KarateElementType("OPEN_PAREN");
@@ -36,13 +40,13 @@ public interface KarateTokenTypes {
   KarateElementType TABLE_CELL = new KarateElementType("TABLE_CELL");
 
   TokenSet IDENTIFIERS =
-    TokenSet.create(VARIABLE, DECLARATION, GherkinElementTypes.VARIABLE, GherkinElementTypes.DECLARATION);
+    TokenSet.create(VARIABLE, DECLARATION, UppercutElementTypes.VARIABLE, UppercutElementTypes.DECLARATION);
 
   TokenSet KEYWORDS = TokenSet.create(FEATURE_KEYWORD, RULE_KEYWORD, EXAMPLE_KEYWORD,
     BACKGROUND_KEYWORD, SCENARIO_KEYWORD, SCENARIO_OUTLINE_KEYWORD,
     EXAMPLES_KEYWORD, EXAMPLES_KEYWORD, ACTION_KEYWORD,
     STEP_KEYWORD);
- 
+
   TokenSet QUOTED_STRING = TokenSet.create(SINGLE_QUOTED_STRING, DOUBLE_QUOTED_STRING);
 
   TokenSet TEXT_LIKE = TokenSet.create(TEXT, OPERATOR);

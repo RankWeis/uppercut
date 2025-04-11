@@ -180,3 +180,13 @@ Feature: Nested JSON and Dynamic Expressions
   key4: { value: 40, nested: { id: 'item4' } },
   key5: { value: 50, nested: { id: 'item5' } }
   }
+
+  Scenario: JSON expression syntax
+    Given var = "Hello"
+    Given a =
+    """
+    {
+      "withoutQuotes": #(var),
+      "withQuotes": "#(var)"
+    }
+    """

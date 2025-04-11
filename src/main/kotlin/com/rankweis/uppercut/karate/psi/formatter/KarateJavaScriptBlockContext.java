@@ -34,13 +34,13 @@ public class KarateJavaScriptBlockContext extends JSBlockContext {
   }
 
   @Override protected @NotNull JSSpacingProcessor createSpacingProcessor(ASTNode node, ASTNode child1, ASTNode child2) {
-    return isTypedJSDialect(getDialect()) ? new TypedJSSpacingProcessor(node, child1, child2,
+    return isTypedJsDialect(getDialect()) ? new TypedJSSpacingProcessor(node, child1, child2,
       this.getTopSettings(), this.getDialect(), this.myDialectSettings)
       : new KarateJavaScriptSpacingProcessor(node, child1, child2, this.getTopSettings(), this.getDialect(),
         this.myDialectSettings);
   }
 
-  private static boolean isTypedJSDialect(@NotNull Language dialect) {
+  private static boolean isTypedJsDialect(@NotNull Language dialect) {
     return dialect == JavaScriptSupportLoader.FLOW_JS || dialect.isKindOf(JavaScriptSupportLoader.TYPESCRIPT);
   }
 }
