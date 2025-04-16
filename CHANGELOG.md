@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changes
+
+- Updates for 2025.1 IntelliJ
+
 ## [2.4.7] - 2025-04-10
 
 ### Modified
