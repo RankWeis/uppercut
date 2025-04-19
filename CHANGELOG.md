@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.4.8] - 2025-04-17
+
 ### Changes
 
 - Updates for 2025.1 IntelliJ
@@ -342,7 +344,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.7...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.8...HEAD
+[2.4.8]: https://github.com/rankweis/uppercut/compare/v2.4.7...v2.4.8
 [2.4.7]: https://github.com/rankweis/uppercut/compare/v2.4.3...v2.4.7
 [2.4.6]: https://github.com/rankweis/uppercut/compare/v2.4.5...v2.4.6
 [2.4.5]: https://github.com/rankweis/uppercut/compare/v2.4.3...v2.4.5
