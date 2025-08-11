@@ -736,11 +736,11 @@ public class UppercutLexer extends LexerBase {
       }
     }
     if (isStringAtPosition("#")) {
-      Integer injectable = INJECTABLE_STRINGS.stream().filter(s -> isStringAtPosition("#" + s))
+      int injectable = INJECTABLE_STRINGS.stream().filter(s -> isStringAtPosition("#" + s))
         .map(s -> s.length() + 1)
         .findFirst()
         .orElse(0);
-      if(injectable > 0) {
+      if (injectable > 0) {
         myCurrentToken = JSON_INJECTABLE;
         myPosition += injectable;
         while (jsonLexer.getTokenEnd() < myPosition) {
