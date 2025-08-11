@@ -68,6 +68,9 @@ public class UppercutLexer extends LexerBase {
   public static final String PYSTRING_MARKER = "\"\"\"";
   public static final List<String> INTERESTING_SYMBOLS =
     List.of("\n", "'", "\"", "#", "{", "[", "function", " ", "(", ")");
+  public static final List<String> INJECTABLE_STRINGS =
+    List.of("ignore", "null", "notnull", "present", "notpresent", "array", "object", "boolean", "number", "string",
+      "uuid", "regex", "?");
   private final GherkinKeywordProvider myKeywordProvider;
   List<String> scenarioKeywords = Stream.of("Scenario", "Background").toList();
   List<String> stepKeywords;
@@ -727,6 +730,20 @@ public class UppercutLexer extends LexerBase {
         myCurrentToken = JSON_INJECTABLE;
         myPosition = closingBrace;
         while (jsonLexer.getTokenEnd() < closingBrace) {
+          jsonLexer.advance();
+        }
+        return;
+      }
+    }
+    if (isStringAtPosition("#")) {
+      int injectable = INJECTABLE_STRINGS.stream().filter(s -> isStringAtPosition("#" + s))
+        .map(s -> s.length() + 1)
+        .findFirst()
+        .orElse(0);
+      if (injectable > 0) {
+        myCurrentToken = JSON_INJECTABLE;
+        myPosition += injectable;
+        while (jsonLexer.getTokenEnd() < myPosition) {
           jsonLexer.advance();
         }
         return;
