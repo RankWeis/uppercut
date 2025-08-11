@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Modified
+
+- Adds some additinal parsing ability and support for 2025.2 intelliJ
+
 ## [2.4.8] - 2025-04-17
 
 ### Changes
