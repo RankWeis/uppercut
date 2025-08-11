@@ -50,7 +50,6 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
   @Override
   public boolean isConfigurationFromContext(@NotNull KarateRunConfiguration configuration,
     @NotNull ConfigurationContext context) {
-    VirtualFile virtualFile = context.getLocation().getVirtualFile();
 
     PsiElement psiElement = context.getLocation().getPsiElement();
     PsiFile containingFile = psiElement.getContainingFile();
@@ -72,6 +71,7 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     } else if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType)) {
       preferredTest = PreferredTest.SINGLE_SCENARIO;
     }
+    VirtualFile virtualFile = context.getLocation().getVirtualFile();
     if (preferredTest == PreferredTest.ALL_TAGS) {
       return configuration.getName().equals(context.getPsiLocation().getText());
     } else if (preferredTest == PreferredTest.SINGLE_SCENARIO) {
