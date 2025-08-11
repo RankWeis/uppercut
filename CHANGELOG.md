@@ -6,7 +6,11 @@
 
 ### Modified
 
-- Adds some additinal parsing ability and support for 2025.2 intelliJ
+- Adds some additional parsing ability and support for 2025.2 intelliJ
+
+### Fixed
+
+- Run configs sometimes producing incorrect config.
 
 ## [2.4.8] - 2025-04-17
 

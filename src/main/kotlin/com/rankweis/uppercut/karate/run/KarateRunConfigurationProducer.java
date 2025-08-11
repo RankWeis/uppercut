@@ -65,7 +65,13 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
       return false;
     }
     int lineNumber = document.getLineNumber(textOffset) + 1;
-    PreferredTest preferredTest = configuration.getPreferredTest();
+    PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
+    IElementType elementType = PsiUtilCore.getElementType(psiElement);
+    if (elementType == KarateTokenTypes.TAG) {
+      preferredTest = PreferredTest.ALL_TAGS;
+    } else if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType)) {
+      preferredTest = PreferredTest.SINGLE_SCENARIO;
+    }
     if (preferredTest == PreferredTest.ALL_TAGS) {
       return configuration.getName().equals(context.getPsiLocation().getText());
     } else if (preferredTest == PreferredTest.SINGLE_SCENARIO) {
