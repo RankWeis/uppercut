@@ -50,7 +50,6 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
   @Override
   public boolean isConfigurationFromContext(@NotNull KarateRunConfiguration configuration,
     @NotNull ConfigurationContext context) {
-    VirtualFile virtualFile = context.getLocation().getVirtualFile();
 
     PsiElement psiElement = context.getLocation().getPsiElement();
     PsiFile containingFile = psiElement.getContainingFile();
@@ -65,7 +64,14 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
       return false;
     }
     int lineNumber = document.getLineNumber(textOffset) + 1;
-    PreferredTest preferredTest = configuration.getPreferredTest();
+    PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
+    IElementType elementType = PsiUtilCore.getElementType(psiElement);
+    if (elementType == KarateTokenTypes.TAG) {
+      preferredTest = PreferredTest.ALL_TAGS;
+    } else if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType)) {
+      preferredTest = PreferredTest.SINGLE_SCENARIO;
+    }
+    VirtualFile virtualFile = context.getLocation().getVirtualFile();
     if (preferredTest == PreferredTest.ALL_TAGS) {
       return configuration.getName().equals(context.getPsiLocation().getText());
     } else if (preferredTest == PreferredTest.SINGLE_SCENARIO) {

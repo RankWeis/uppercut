@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+## [2.4.9] - 2025-08-11
+
+### Modified
+
+- Adds some additional parsing ability and support for 2025.2 intelliJ
+
+### Fixed
+
+- Run configs sometimes producing incorrect config.
+
 ## [2.4.8] - 2025-04-17
 
 ### Changes
@@ -344,7 +354,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.8...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.9...HEAD
+[2.4.9]: https://github.com/rankweis/uppercut/compare/v2.4.8...v2.4.9
 [2.4.8]: https://github.com/rankweis/uppercut/compare/v2.4.7...v2.4.8
 [2.4.7]: https://github.com/rankweis/uppercut/compare/v2.4.3...v2.4.7
 [2.4.6]: https://github.com/rankweis/uppercut/compare/v2.4.5...v2.4.6
