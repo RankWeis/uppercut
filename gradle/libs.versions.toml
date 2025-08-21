@@ -10,7 +10,7 @@ kodein = "7.26.1"
 
 # plugins
 kotlin = "2.2.10"
-changelog = "2.2.1"
+changelog = "2.4.0"
 gradleIntelliJPlugin = "2.5.0"
 qodana = "2025.2.1"
 kover = "0.9.1"
