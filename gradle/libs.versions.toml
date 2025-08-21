@@ -6,7 +6,7 @@ junitPlatform = "1.12.2"
 mockito = "5.17.0"
 grammarkit = "2022.3.2.2"
 intellijStarter = "251.23774.435"
-kodein = "7.25.0"
+kodein = "7.26.1"
 
 # plugins
 kotlin = "2.2.10"
