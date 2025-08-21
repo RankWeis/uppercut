@@ -2,15 +2,16 @@
 # libraries
 junit = "4.13.2"
 junit5 = "5.13.4"
-junitPlatform = "1.12.2"
-mockito = "5.17.0"
+mockito = "5.19.0"
+junitPlatform = "1.13.4"
+mockito = "5.19.0"
 grammarkit = "2022.3.2.2"
-intellijStarter = "251.25410.129"
+intellijStarter = "252.23892.409"
 kodein = "7.26.1"
 
 # plugins
 kotlin = "2.2.10"
-changelog = "2.2.1"
+changelog = "2.4.0"
 gradleIntelliJPlugin = "2.5.0"
 qodana = "2025.2.1"
 kover = "0.9.1"
