@@ -1,8 +1,7 @@
 [versions]
 # libraries
 junit = "4.13.2"
-junit5 = "5.12.2"
-
+junit5 = "5.13.4"
 mockito = "5.19.0"
 junitPlatform = "1.13.4"
 mockito = "5.19.0"
