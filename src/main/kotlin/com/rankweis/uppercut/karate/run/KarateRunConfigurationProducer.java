@@ -75,7 +75,7 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     if (preferredTest == PreferredTest.ALL_TAGS) {
       return configuration.getName().equals(context.getPsiLocation().getText());
     } else if (preferredTest == PreferredTest.SINGLE_SCENARIO) {
-      return configuration.getName().equals(virtualFile.get() + ":" + lineNumber);
+      return configuration.getName().equals(virtualFile.getPath() + ":" + lineNumber);
     } else {
       return configuration.getName().equals(virtualFile.getName());
     }
