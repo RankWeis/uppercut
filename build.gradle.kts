@@ -1,6 +1,7 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 
 fun properties(key: String) = providers.gradleProperty(key)
@@ -70,7 +71,7 @@ dependencies {
         plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
 
         jetbrainsRuntime()
-//        testFramework(TestFrameworkType.Platform)
+        testFramework(TestFrameworkType.Platform)
     }
 
     // Plugin Module
@@ -84,7 +85,6 @@ dependencies {
     testImplementation(libs.junit5Params) // JUnit 5 API
     testImplementation(libs.junitPlatformLauncher) // JUnit Platform launcher
     integrationTestImplementation(libs.junit5engine) // JUnit 5 runtime engine
-    testImplementation("com.jetbrains.intellij.platform:test-framework:251.26094.141")
 
     testImplementation(libs.junit) // JUnit 4 support
     testImplementation("org.junit.vintage:junit-vintage-engine") // JUnit 4 compatibility engine for JUnit 5
