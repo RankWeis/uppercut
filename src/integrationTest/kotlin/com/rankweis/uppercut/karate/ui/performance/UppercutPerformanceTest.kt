@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.div
 import kotlin.time.Duration.Companion.minutes
 
@@ -36,7 +37,7 @@ class UppercutPerformanceTest {
             "openKarateProject", uppercutTests
         ).prepareProjectCleanImport().apply {
             val pathToPlugin = System.getProperty("path.to.build.plugin")
-            PluginConfigurator(this).installPluginFromFolder(File(pathToPlugin))
+            PluginConfigurator(this).installPluginFromPath(Path(pathToPlugin))
         }
 
         @JvmStatic
