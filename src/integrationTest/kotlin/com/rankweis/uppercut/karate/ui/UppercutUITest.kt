@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import java.io.File
+import kotlin.io.path.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -45,7 +46,7 @@ class UppercutUITest {
             IdeaUltimateCases.IntellijKarateTestCase
         ).prepareProjectCleanImport().apply {
             val pathToPlugin = System.getProperty("path.to.build.plugin")
-            PluginConfigurator(this).installPluginFromFolder(File(pathToPlugin))
+            PluginConfigurator(this).installPluginFromPath(Path(pathToPlugin))
         }.setupSdk(sdk).runIdeWithDriver().useDriverAndCloseIde {
             execute(
                 CommandChain().openFile("src/test/java/nested/test.feature")
