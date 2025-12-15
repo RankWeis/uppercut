@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Modified
+
+- Deprecated API usage.
+
 ## [2.4.10] - 2025-08-11
 
 ### Modified 
