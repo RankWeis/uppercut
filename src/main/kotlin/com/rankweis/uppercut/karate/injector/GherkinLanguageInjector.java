@@ -3,6 +3,7 @@
 package com.rankweis.uppercut.karate.injector;
 
 import static com.rankweis.uppercut.karate.lexer.UppercutLexer.PYSTRING_MARKER;
+import static org.apache.commons.lang3.Strings.CS;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
@@ -70,7 +71,7 @@ public final class GherkinLanguageInjector implements MultiHostInjector {
     if (!range.isEmpty()) {
       String prefix;
       String suffix;
-      if (StringUtils.startsWithAny(range.substring(hostText).trim(), "let", "const", "var")) {
+      if (CS.startsWithAny(range.substring(hostText).trim(), "let", "const", "var")) {
         prefix = null;
         suffix = null;
       } else {
