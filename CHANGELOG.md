@@ -4,13 +4,15 @@
 
 ## [Unreleased]
 
+## [2.4.11] - 2025-12-15
+
 ### Modified
 
 - Deprecated API usage.
 
 ## [2.4.10] - 2025-08-11
 
-### Modified 
+### Modified
 
 - 2025.* support
 
@@ -364,7 +366,9 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.9...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.11...HEAD
+[2.4.11]: https://github.com/rankweis/uppercut/compare/v2.4.10...v2.4.11
+[2.4.10]: https://github.com/rankweis/uppercut/compare/v2.4.9...v2.4.10
 [2.4.9]: https://github.com/rankweis/uppercut/compare/v2.4.8...v2.4.9
 [2.4.8]: https://github.com/rankweis/uppercut/compare/v2.4.7...v2.4.8
 [2.4.7]: https://github.com/rankweis/uppercut/compare/v2.4.3...v2.4.7
