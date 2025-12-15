@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Modified
+
+- 2025.* support
+- Fixed deprecated API.
+
 ## [2.4.11] - 2025-12-15
 
 ### Modified
