@@ -171,10 +171,10 @@
 <!--    <multiHostInjector-->
 <!--      implementation="com.rankweis.uppercut.karate.injector.GherkinLanguageInjectorNoJS"/>-->
 <!--    <formatting.injectedOptions implementation="com.rankweis.uppercut.karate.injector.KarateInjectedFormattingOptionsProvider"/>-->
-<!--    <debugger.javaDebugAware-->
-<!--      implementation="com.rankweis.uppercut.karate.debugging.KarateDebugAware" dynamic="true"/>-->
-<!--    <debugger.positionManagerFactory id="karatePositionManager"-->
-<!--      implementation="com.rankweis.uppercut.karate.debugging.KaratePositionManagerFactory" />-->
+    <debugger.javaDebugAware
+      implementation="com.rankweis.uppercut.karate.debugging.KarateDebugAware" dynamic="true"/>
+    <debugger.positionManagerFactory id="karatePositionManager"
+      implementation="com.rankweis.uppercut.karate.debugging.KaratePositionManagerFactory" />
   </extensions>
 
   <extensions defaultExtensionNs="com.rankweis.uppercut">
