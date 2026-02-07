@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Breakpoint support: enabled debugger integration for Karate feature files. (Thanks @Telsho!)
+
 ## [2.4.13] - 2026-02-07
 
 ### Fixed
