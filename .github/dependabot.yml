@@ -19,7 +19,7 @@ updates:
     schedule:
       interval: "daily"
     groups:
-      applies-to: security-updates
       github-actions:
+        applies-to: security-updates
         patterns:
           - "*"
