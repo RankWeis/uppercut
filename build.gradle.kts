@@ -31,12 +31,6 @@ repositories {
 }
 
 configure<SourceSetContainer> {
-    named("main") {
-        java.srcDir("src/main/kotlin")
-    }
-    named("test") {
-        java.srcDir("src/test/kotlin")
-    }
     create("integrationTest") {
         compileClasspath += sourceSets.main.get().output
         runtimeClasspath += sourceSets.main.get().output
@@ -196,15 +190,6 @@ intellijPlatform {
     pluginVerification {
         ides {
             ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("platformVersion").get(), useInstaller = false)
-        }
-    }
-}
-
-grammarKit {
-    tasks {
-        generateLexer {
-            sourceFile.set(file("src/main/java/io/karatelabs/js/js.jflex"))
-            targetOutputDir.set(file("src/main/java/io/karatelabs/js"))
         }
     }
 }
