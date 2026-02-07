@@ -107,6 +107,10 @@ val integrationTests = tasks.register<Test>("integrationTest") {
     dependsOn(tasks.prepareSandbox)
 }
 
+tasks.test {
+    systemProperty("idea.home.path", intellijPlatform.platformPath.toString())
+}
+
 tasks.register<Test>("platformTest") {
     val integrationTestSourceSet = sourceSets.getByName("platformTest")
     testClassesDirs = integrationTestSourceSet.output.classesDirs
