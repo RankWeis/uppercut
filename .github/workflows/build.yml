@@ -51,7 +51,7 @@ jobs:
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165
         with:
           distribution: zulu
-          java-version: 17
+          java-version: 21
 
       # Setup Gradle
       - name: Setup Gradle
@@ -111,7 +111,7 @@ jobs:
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165
         with:
           distribution: zulu
-          java-version: 17
+          java-version: 21
 
       # Setup Gradle
       - name: Setup Gradle
@@ -161,7 +161,7 @@ jobs:
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165
         with:
           distribution: zulu
-          java-version: 17
+          java-version: 21
 
       # Setup Gradle
       - name: Setup Gradle

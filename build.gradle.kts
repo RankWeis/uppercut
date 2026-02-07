@@ -26,10 +26,6 @@ checkstyle {
 // Configure project's dependencies
 repositories {
     mavenCentral()
-    maven("https://www.jetbrains.com/intellij-repository/releases")
-    maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
-    maven("https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/")
-    maven("https://download.jetbrains.com/teamcity-repository")
     intellijPlatform {
         defaultRepositories()
     }
