@@ -1,7 +1,6 @@
 fun properties(key: String) = providers.gradleProperty(key)
 plugins {
     id("java")
-    alias(libs.plugins.kotlin) // Kotlin support
 }
 
 repositories {
@@ -20,9 +19,10 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:${properties("logbackVersion").get()}")
 }
 
-// Set the JVM language level used to build the project.
-kotlin {
-    jvmToolchain(17)
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 tasks.test {

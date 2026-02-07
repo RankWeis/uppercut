@@ -35,12 +35,6 @@ jobs:
           distribution: zulu
           java-version: 21
 
-      # Compile Kotlin before CodeQL init so the interceptor doesn't patch
-      # the Kotlin compiler. CodeQL will only trace the Java compilation.
-      - name: Pre-compile Kotlin
-        if: matrix.language == 'java-kotlin'
-        run: ./gradlew compileKotlin
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
@@ -49,7 +43,7 @@ jobs:
 
       - name: Build
         if: matrix.build-mode == 'manual'
-        run: ./gradlew compileJava
+        run: ./gradlew classes
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

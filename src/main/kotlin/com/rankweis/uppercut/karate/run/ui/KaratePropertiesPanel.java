@@ -19,7 +19,7 @@ package com.rankweis.uppercut.karate.run.ui;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AddEditRemovePanel;
-import com.rankweis.uppercut.MyBundle;
+import com.rankweis.uppercut.karate.MyBundle;
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
