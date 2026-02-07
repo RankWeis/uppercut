@@ -67,7 +67,7 @@ public class KarateJsParser implements PsiParser {
       return b;
     }
     markRoot.done(root);
-    logger.debug("Parsed in {}ms", (System.currentTimeMillis() - start));
+    logger.trace("Parsed in {}ms", (System.currentTimeMillis() - start));
     return b;
   }
 }

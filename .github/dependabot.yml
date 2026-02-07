@@ -12,15 +12,6 @@ updates:
       gradle-deps:
         patterns:
           - "*"
-  # Maintain dependencies for Maven (KarateTestRunner subproject)
-  - package-ecosystem: "maven"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    groups:
-      maven-deps:
-        patterns:
-          - "*"
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"

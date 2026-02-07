@@ -6,16 +6,12 @@ mockito = "5.21.0"
 junitPlatform = "6.0.2"
 grammarkit = "2023.3.0.1"
 intellijStarter = "253.30387.90"
-kodein = "7.30.0"
 
 # plugins
-kotlin = "2.3.10"
 changelog = "2.5.0"
-gradleIntelliJPlugin = "2.5.0"
+gradleIntelliJPlugin = "2.10.5"
 qodana = "2025.3.1"
-kover = "0.9.6"
 lombok = "9.2.0"
-robot = "0.11.23"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -27,15 +23,11 @@ junitPlatformLauncher = { group = "org.junit.platform", name = "junit-platform-l
 mockito = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 metricsSquashed = { group = "com.jetbrains.intellij.tools", name = "ide-metrics-collector-starter-squashed", version.ref = "intellijStarter" }
 metricsCollector = { group = "com.jetbrains.intellij.tools", name = "ide-metrics-collector", version.ref = "intellijStarter" }
-kodein = { group = "org.kodein.di", name = "kodein-di-jvm", version.ref = "kodein"}
-
 
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
 gradleIntelliJPlugin = { id = "org.jetbrains.intellij.platform", version.ref = "gradleIntelliJPlugin" }
 gradleIntelliJModulePlugin = { id = "org.jetbrains.intellij.platform.modules", version.ref = "gradleIntelliJPlugin" }
-kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 qodana = { id = "org.jetbrains.qodana", version.ref = "qodana" }
 lombok = { id = "io.freefair.lombok", version.ref = "lombok" }
 grammarkit = { id = "org.jetbrains.grammarkit", version.ref = "grammarkit" }

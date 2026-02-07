@@ -51,7 +51,7 @@ jobs:
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165
         with:
           distribution: zulu
-          java-version: 17
+          java-version: 21
 
       # Setup Gradle
       - name: Setup Gradle
@@ -111,7 +111,7 @@ jobs:
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165
         with:
           distribution: zulu
-          java-version: 17
+          java-version: 21
 
       # Setup Gradle
       - name: Setup Gradle
@@ -132,11 +132,11 @@ jobs:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
 
-      # Upload the Kover report to CodeCov
+      # Upload the JaCoCo report to CodeCov
       - name: Upload Code Coverage Report
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         with:
-          files: ${{ github.workspace }}/build/reports/kover/report.xml
+          files: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
 
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
@@ -161,7 +161,7 @@ jobs:
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165
         with:
           distribution: zulu
-          java-version: 17
+          java-version: 21
 
       # Setup Gradle
       - name: Setup Gradle
