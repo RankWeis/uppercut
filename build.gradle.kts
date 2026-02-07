@@ -97,7 +97,6 @@ dependencies {
     integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     integrationTestImplementation(libs.kodein)
 
-//    integrationTestImplementation("com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-EAP-SNAPSHOT")
     implementation("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") {
         isTransitive = false
     }
