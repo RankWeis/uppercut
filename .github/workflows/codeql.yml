@@ -24,9 +24,6 @@ jobs:
           - language: actions
             build-mode: none
 
-    env:
-      CODEQL_EXTRACTOR_JAVA_OPTION_KOTLIN_EXTRACTOR_DISABLED: true
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -37,6 +34,12 @@ jobs:
         with:
           distribution: zulu
           java-version: 21
+
+      # Compile Kotlin before CodeQL init so the interceptor doesn't patch
+      # the Kotlin compiler. CodeQL will only trace the Java compilation.
+      - name: Pre-compile Kotlin
+        if: matrix.language == 'java-kotlin'
+        run: ./gradlew compileKotlin
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
