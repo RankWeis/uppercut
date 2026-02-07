@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.4.12] - 2025-12-15
+
 ### Modified
 
 - 2025.* support
@@ -371,7 +373,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.11...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.12...HEAD
+[2.4.12]: https://github.com/rankweis/uppercut/compare/v2.4.11...v2.4.12
 [2.4.11]: https://github.com/rankweis/uppercut/compare/v2.4.10...v2.4.11
 [2.4.10]: https://github.com/rankweis/uppercut/compare/v2.4.9...v2.4.10
 [2.4.9]: https://github.com/rankweis/uppercut/compare/v2.4.8...v2.4.9
