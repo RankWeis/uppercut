@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.4.13] - 2026-02-07
+
 ### Fixed
 
 - Fixed GherkinCodeStyleSettingsProvider deprecation warning by overriding getLanguage().
@@ -378,7 +380,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.12...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.13...HEAD
+[2.4.13]: https://github.com/rankweis/uppercut/compare/v2.4.12...v2.4.13
 [2.4.12]: https://github.com/rankweis/uppercut/compare/v2.4.11...v2.4.12
 [2.4.11]: https://github.com/rankweis/uppercut/compare/v2.4.10...v2.4.11
 [2.4.10]: https://github.com/rankweis/uppercut/compare/v2.4.9...v2.4.10
