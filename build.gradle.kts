@@ -72,6 +72,7 @@ dependencies {
 
         jetbrainsRuntime()
         testFramework(TestFrameworkType.Platform)
+        testFramework(TestFrameworkType.Starter)
     }
 
     // Plugin Module
@@ -89,23 +90,15 @@ dependencies {
     testImplementation(libs.junit) // JUnit 4 support
     testImplementation("org.junit.vintage:junit-vintage-engine") // JUnit 4 compatibility engine for JUnit 5
 
-    // --- IntelliJ Testing Tools (IDE Starter + Driver) ---
-    integrationTestImplementation(libs.starterSquashed)
-    integrationTestImplementation(libs.starterJunit5)
-    integrationTestImplementation(libs.starterDriver)
-    integrationTestImplementation(libs.driverClient)
-    integrationTestImplementation(libs.driverSdk)
-    integrationTestImplementation(libs.driverModel)
+    // --- Metrics (used by performance tests) ---
     integrationTestImplementation(libs.metricsSquashed)
     integrationTestImplementation(libs.metricsCollector)
-    integrationTestImplementation(libs.ijPerformance)
-    integrationTestImplementation(libs.ijCommon)
 
     // --- Mocking and Coroutines Testing ---
     testImplementation(libs.mockito) // Mockito for mocking in tests
     integrationTestImplementation(libs.junitJupiter)
-    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2") // Kotlin Coroutines testing library
-    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2") // Kotlin Coroutines testing library
+    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2")
+    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     integrationTestImplementation(libs.kodein)
 
 //    integrationTestImplementation("com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-EAP-SNAPSHOT")

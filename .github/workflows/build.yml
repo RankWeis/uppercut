@@ -32,7 +32,6 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    if: ${{ github.actor_id == '733691' }}
     outputs:
       version: ${{ steps.properties.outputs.version }}
       changelog: ${{ steps.properties.outputs.changelog }}
@@ -101,7 +100,6 @@ jobs:
     name: Test
     needs: [ build ]
     runs-on: ubuntu-latest
-    if: ${{ github.actor_id == '733691' }}
     steps:
 
       # Check out the current repository
@@ -145,7 +143,6 @@ jobs:
     name: Verify plugin
     needs: [ build ]
     runs-on: ubuntu-latest
-    if: ${{ github.actor_id == '733691' }}
     steps:
 
      #  Free GitHub Actions Environment Disk Space
@@ -195,7 +192,7 @@ jobs:
   releaseDraft:
     name: Release draft
     runs-on: ubuntu-latest
-    if: ${{ github.actor_id == '733691' && github.event_name != 'pull_request' }}
+    if: github.event_name != 'pull_request'
     needs: [ build, test, verify ]
     permissions:
       contents: write
