@@ -30,6 +30,7 @@ import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -38,6 +39,46 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 
+/**
+ * Lexer for Karate feature files. Extends the base Gherkin lexer with support for
+ * embedded JavaScript, JSON, and XML via language injection into sub-lexers.
+ *
+ * <h3>State Machine</h3>
+ * <p>The lexer uses a state machine (myState) with two kinds of states:</p>
+ * <ul>
+ *   <li><b>Core states (0-10)</b>: Track position within Gherkin structure
+ *       (e.g., after a step keyword, inside a table, inside a pystring)</li>
+ *   <li><b>Injection states (1000+)</b>: Indicate delegation to a sub-lexer.
+ *       The sub-lexer's own state is added as an offset within the range:
+ *       <ul>
+ *         <li>1000-1999 = JavaScript injection (via KarateJs or IntelliJ JS plugin)</li>
+ *         <li>2000-2999 = JSON injection (via Json5Lexer)</li>
+ *         <li>3000-3999 = XML injection (via XmlLexer)</li>
+ *       </ul>
+ *   </li>
+ * </ul>
+ *
+ * <h3>Token Flow in advance()</h3>
+ * <p>Each call to {@link #advance()} processes one token. Priority order:</p>
+ * <ol>
+ *   <li>Pystring markers (""")</li>
+ *   <li>Active sub-lexer delegation (JS, JSON, XML)</li>
+ *   <li>Pystring content detection and injection</li>
+ *   <li>Whitespace</li>
+ *   <li>Scenario/feature title text</li>
+ *   <li>JSON/array literals ({/[) — only injected when preceded by whitespace or '('</li>
+ *   <li>Table pipes (|)</li>
+ *   <li>Step parameters ({@code <param>})</li>
+ *   <li>Function definitions (triggers JS injection)</li>
+ *   <li>Quoted strings ('...' and "...")</li>
+ *   <li>Comments (#)</li>
+ *   <li>Tags (@tag) — only recognized at line start</li>
+ *   <li>Operators (==, !=, =, etc.)</li>
+ *   <li>Gherkin keywords (Feature, Scenario, Given, When, Then, etc.)</li>
+ *   <li>Action keywords (def, match, set, etc.) and declarations</li>
+ *   <li>Plain text fallback</li>
+ * </ol>
+ */
 public class UppercutLexer extends LexerBase {
 
   protected CharSequence myBuffer = Strings.EMPTY_CHAR_SEQUENCE;
@@ -49,6 +90,7 @@ public class UppercutLexer extends LexerBase {
   private List<String> myKeywords;
   private int myState;
 
+  // Core lexer states — track position within Gherkin structure
   private static final int STATE_DEFAULT = 0;
   private static final int STATE_TABLE = 2;
   private static final int STATE_AFTER_STEP_KEYWORD = 3;
@@ -61,24 +103,45 @@ public class UppercutLexer extends LexerBase {
   private static final int STATE_AFTER_FEATURE_KEYWORD = 9;
   private static final int STATE_AFTER_OPERATOR = 10;
 
+  // Injection state ranges — sub-lexer state is stored as offset within range.
+  // e.g., INJECTING_JSON + jsonLexer.getState() gives a unique composite state.
   private static final int INJECTING_JAVASCRIPT = 1000;
   private static final int INJECTING_JSON = 2000;
   private static final int INJECTING_XML = 3000;
 
   public static final String PYSTRING_MARKER = "\"\"\"";
+
+  // Tokens that cause advanceToNextInterestingToken() to stop consuming TEXT.
+  // These are characters/strings that need special handling by advance().
   public static final List<String> INTERESTING_SYMBOLS =
     List.of("\n", "'", "\"", "#", "{", "[", "function", " ", "(", ")");
+
+  // Karate marker expressions valid after '#' inside JSON values (e.g., "#null", "#regex").
   public static final List<String> INJECTABLE_STRINGS =
     List.of("ignore", "null", "notnull", "present", "notpresent", "array", "object", "boolean", "number", "string",
       "uuid", "regex", "?");
+
+  // Action keywords whose docstring content should be treated as plain text,
+  // not injected as JS/JSON/XML. These keywords produce raw string values in Karate.
+  private static final Set<String> PLAIN_TEXT_KEYWORDS =
+    Set.of("text", "csv", "yaml", "bytes", "doc");
+
   private final GherkinKeywordProvider myKeywordProvider;
+  // Tracks the most recent action keyword (e.g., "def", "match", "text") on the current step.
+  // Used by injectPyString() to decide whether docstring content is plain text or code.
+  // Reset to null when a new step keyword is encountered.
+  private String lastActionKeyword;
   List<String> scenarioKeywords = Stream.of("Scenario", "Background").toList();
   List<String> stepKeywords;
+  // Keywords that, if found at the beginning of a line inside a multi-line construct,
+  // signal that the construct has been "interrupted" (i.e., a new step/scenario started).
   List<String> interruptions;
 
 
   private String myCurLanguage;
 
+  // Sub-lexers for language injection. JS lexer is initialized once at construction;
+  // JSON and XML lexers are created on-demand per injection region.
   private final Lexer jsLexer;
   Lexer jsonLexer = null;
   Lexer xmlLexer = null;
@@ -193,7 +256,20 @@ public class UppercutLexer extends LexerBase {
     return isQuotedStr;
   }
 
-  private boolean advanceIfJsJson() {
+  /**
+   * Attempts to lex the current '{' or '[' as the start of a JSON/JS object or array.
+   * Finds the matching closing brace/bracket (handling nesting), checks that the content
+   * isn't trivially non-JSON (e.g., just digits like array indices), and if valid,
+   * starts injection for the matched region.
+   *
+   * <p>Uses {@link #isStringInterrupted} to detect if a new step/scenario keyword appears
+   * at a line start within the braces, which would indicate broken structure rather than JSON.</p>
+   *
+   * @param preferJs if true, inject as JavaScript (used for ({...}) patterns where
+   *                 content is a JS object literal, not strict JSON)
+   * @return true if injection was started, false if this isn't a JSON/JS literal
+   */
+  private boolean advanceIfJsJson(boolean preferJs) {
     char openingBrace = myBuffer.charAt(myPosition);
     char closingBrace = myBuffer.charAt(myPosition) == '{' ? '}' : ']';
     int pos = myPosition + 1;
@@ -216,11 +292,16 @@ public class UppercutLexer extends LexerBase {
       pos++;
     }
 
+    // Reject trivial matches like "[0]" or "{*}" that are array access / wildcards, not JSON
     boolean isJsJson =
       pos < myEndOffset && myBuffer.charAt(pos) == closingBrace && !myBuffer.subSequence(myPosition, pos).toString()
         .matches("[\\[{*\\d]*");
     if (isJsJson) {
-      startInjectJson(myPosition, pos + 1);
+      if (preferJs && jsLexer != null) {
+        startInjectJs(myPosition, pos + 1);
+      } else {
+        startInjectJson(myPosition, pos + 1);
+      }
     }
     return isJsJson;
   }
@@ -229,7 +310,11 @@ public class UppercutLexer extends LexerBase {
     int startingPos = myPosition;
     int pos = myPosition + 1;
 
-    while (pos < myEndOffset && myBuffer.charAt(pos) != '\n' && myBuffer.charAt(pos) != '=') {
+    // Scan forward to find '=' for declaration/variable detection.
+    // Also stop at ')' to avoid consuming closing parens into the token —
+    // e.g., in "match (expr) ==" the ')' must remain a separate CLOSE_PAREN.
+    while (pos < myEndOffset && myBuffer.charAt(pos) != '\n' && myBuffer.charAt(pos) != '='
+      && myBuffer.charAt(pos) != ')') {
       pos++;
     }
 
@@ -367,19 +452,23 @@ public class UppercutLexer extends LexerBase {
     } else if (isStringAtPosition(PYSTRING_MARKER)) {
       injectPyString();
     } else if ((c == '{' || c == '[') && myState != STATE_TABLE) {
-      if (c == '[') {
-        String stringUntilNextInterestingToken = getStringUntilNextInterestingToken();
-        if (stringUntilNextInterestingToken.matches("\\[?[\\w+.]*]")) {
-          myCurrentToken = TEXT;
-          advanceToNextInterestingToken();
-          return;
-        }
+      // Only attempt JSON injection when '{' or '[' is preceded by whitespace or '('.
+      // This prevents false injection for XPath attrs like [@dept='science'],
+      // JsonPath filters like $[?(@.field)], and array access like list[0].
+      // When preceded by '(' (e.g., ({ key: value })), inject as JavaScript
+      // since the content is a JS object literal, not JSON.
+      char prevChar = myPosition > 0 ? myBuffer.charAt(myPosition - 1) : ' ';
+      boolean precededByWhitespace = myPosition == 0 || Character.isWhitespace(prevChar);
+      boolean precededByParen = prevChar == '(';
+      if ((precededByWhitespace || precededByParen) && advanceIfJsJson(precededByParen)) {
+        return;
       }
-      if (!advanceIfJsJson()) {
-        myCurrentToken = TEXT;
-        advanceToNextInterestingToken();
-      }
-    } else if (c == '|' && myState != STATE_INSIDE_PYSTRING) {
+      myCurrentToken = TEXT;
+      advanceToNextInterestingToken();
+    } else if (c == '|' && myState != STATE_INSIDE_PYSTRING
+      && (myPosition + 1 >= myEndOffset || myBuffer.charAt(myPosition + 1) != '|')) {
+      // Single '|' is a table pipe delimiter. '||' is a logical OR operator
+      // (e.g., in Karate's "* if (a || b)") and should be treated as TEXT.
       myCurrentToken = KarateTokenTypes.PIPE;
       myPosition++;
       myState = STATE_TABLE;
@@ -442,7 +531,10 @@ public class UppercutLexer extends LexerBase {
     } else if (c == ':' && myState != STATE_AFTER_STEP_KEYWORD) {
       myCurrentToken = KarateTokenTypes.COLON;
       myPosition++;
-    } else if (c == '@') {
+    } else if (c == '@' && isAtLineStart()) {
+      // Tags (@tag) are only valid at the start of a line.
+      // Without this check, '@' inside expressions like JsonPath $[?(@.field)]
+      // would be consumed as a TAG token, eating subsequent characters.
       myCurrentToken = KarateTokenTypes.TAG;
       do {
         myPosition++;
@@ -483,6 +575,7 @@ public class UppercutLexer extends LexerBase {
             }
             myState = STATE_AFTER_ACTION_KEYWORD;
             myCurrentToken = KarateTokenTypes.ACTION_KEYWORD;
+            lastActionKeyword = keyword;
             myPosition += keyword.length();
             return;
           }
@@ -518,6 +611,18 @@ public class UppercutLexer extends LexerBase {
     }
   }
 
+  /**
+   * Finds the position of the '}' that matches the '{' at myPosition,
+   * handling nested braces. Used to determine the end of a function body
+   * for JavaScript injection.
+   *
+   * <p>Note: This does a simple brace count without skipping string literals,
+   * so braces inside strings are counted. This works well enough for typical
+   * Karate function bodies but could miscount in edge cases with unmatched
+   * braces inside strings.</p>
+   *
+   * @return position of matching '}', or -1 if not found
+   */
   @VisibleForTesting
   int findNextMatchingClosingBrace() {
     int pos = myPosition;
@@ -542,6 +647,13 @@ public class UppercutLexer extends LexerBase {
     }
   }
 
+  /**
+   * Finds the position of the ')' that matches the '(' at myPosition.
+   * Same approach as {@link #findNextMatchingClosingBrace()} but for parentheses.
+   * Used by {@link #injectJson()} to find the end of Karate's #(expression) markers.
+   *
+   * @return position of matching ')', or -1 if not found
+   */
   @VisibleForTesting
   int findNextMatchingClosingParen() {
     int pos = myPosition;
@@ -566,6 +678,11 @@ public class UppercutLexer extends LexerBase {
     }
   }
 
+  /**
+   * Attempts to match the current position against all registered Gherkin keywords
+   * (Feature, Scenario, Given, When, Then, And, But, etc.) sorted longest-first.
+   * Sets myState based on the keyword type and returns true if a match was found.
+   */
   private boolean handleKeywords() {
     for (String keyword : myKeywords) {
       int length = keyword.length();
@@ -586,6 +703,7 @@ public class UppercutLexer extends LexerBase {
         myPosition += length;
         if (myCurrentToken == KarateTokenTypes.STEP_KEYWORD) {
           myState = STATE_AFTER_STEP_KEYWORD;
+          lastActionKeyword = null;
         } else if (myCurrentToken == KarateTokenTypes.FEATURE_KEYWORD) {
           if (myPosition < myEndOffset - 1 && myBuffer.charAt(myPosition) == ':') {
             myPosition++;
@@ -608,6 +726,24 @@ public class UppercutLexer extends LexerBase {
     injectPyString(true);
   }
 
+  /**
+   * Handles content between pystring markers ("""). Detects the content type by inspecting
+   * the first non-whitespace character and delegates to the appropriate sub-lexer:
+   * <ul>
+   *   <li>'{' or '[' → JSON injection</li>
+   *   <li>'<' → XML injection</li>
+   *   <li>Everything else → JavaScript injection (if JS lexer available)</li>
+   * </ul>
+   *
+   * <p>Special cases:</p>
+   * <ul>
+   *   <li>Plain text keywords (text, csv, yaml, bytes, doc) skip injection entirely,
+   *       emitting the content as TEXT since Karate treats these as raw strings.</li>
+   *   <li>Blank content between markers is emitted as WHITE_SPACE.</li>
+   * </ul>
+   *
+   * @param multiLine true for standard pystrings, false for inline usage
+   */
   private void injectPyString(boolean multiLine) {
     int endPos = myPosition;
     while (endPos < myEndOffset && !isStringAtPosition(PYSTRING_MARKER, endPos)) {
@@ -630,6 +766,12 @@ public class UppercutLexer extends LexerBase {
       myPosition = endPos;
       myCurrentToken = TokenType.WHITE_SPACE;
       myState = STATE_DEFAULT;
+      return;
+    }
+    // Skip injection for action keywords that produce raw text values in Karate
+    if (lastActionKeyword != null && PLAIN_TEXT_KEYWORDS.contains(lastActionKeyword)) {
+      myPosition = endPos;
+      myCurrentToken = TEXT;
       return;
     }
     if (StringUtil.startsWith(strippedStr, "{") || StringUtil.startsWith(strippedStr, "[")) {
@@ -707,7 +849,23 @@ public class UppercutLexer extends LexerBase {
     }
   }
 
+  /**
+   * Advances one token within a JSON injection region. Before delegating to the JSON sub-lexer,
+   * checks for Karate-specific marker expressions that should be treated as a single
+   * JSON_INJECTABLE token rather than broken into JSON tokens:
+   *
+   * <ul>
+   *   <li>{@code #(expression)} — embedded Karate expression (e.g., {@code #(response.id)})</li>
+   *   <li>{@code "#(expression)"} — same but inside a quoted JSON string value</li>
+   *   <li>{@code #keyword} — Karate schema markers like {@code #null}, {@code #string},
+   *       {@code #regex}, {@code #notnull}, etc.</li>
+   * </ul>
+   *
+   * <p>When a marker is detected, the entire marker is emitted as one JSON_INJECTABLE token
+   * and the JSON sub-lexer is advanced past it to stay in sync.</p>
+   */
   private void injectJson() {
+    // Handle #(expression) — bare Karate embedded expression
     if (isStringAtPosition("#(")) {
       int nextMatchingClosingParen = findNextMatchingClosingParen();
       nextMatchingClosingParen = nextMatchingClosingParen == -1 ? myEndOffset : nextMatchingClosingParen;
@@ -721,12 +879,13 @@ public class UppercutLexer extends LexerBase {
         return;
       }
     }
+    // Handle "#(expression)" — quoted Karate embedded expression
     if (isStringAtPosition("\"#(")) {
       int nextMatchingClosingParen = findNextMatchingClosingParen();
       nextMatchingClosingParen = nextMatchingClosingParen == -1 ? myEndOffset : nextMatchingClosingParen;
       int closingBrace = Math.min(nextMatchingClosingParen + 2, myEndOffset - 1);
       if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim()
-        .matches("\"#\\(\\S+\\)\"")) { // "#
+        .matches("\"#\\(\\S+\\)\"")) {
         myCurrentToken = JSON_INJECTABLE;
         myPosition = closingBrace;
         while (jsonLexer.getTokenEnd() < closingBrace) {
@@ -735,6 +894,7 @@ public class UppercutLexer extends LexerBase {
         return;
       }
     }
+    // Handle #keyword — schema markers like #null, #string, #regex, etc.
     if (isStringAtPosition("#")) {
       int injectable = INJECTABLE_STRINGS.stream().filter(s -> isStringAtPosition("#" + s))
         .map(s -> s.length() + 1)
@@ -749,6 +909,7 @@ public class UppercutLexer extends LexerBase {
         return;
       }
     }
+    // Default: delegate to the JSON sub-lexer
     jsonLexer.advance();
     myCurrentToken = jsonLexer.getTokenType();
     myPosition = jsonLexer.getTokenEnd();
@@ -791,10 +952,35 @@ public class UppercutLexer extends LexerBase {
       .equals(keyword);
   }
 
+  /**
+   * Checks whether myPosition is at the start of a line (only whitespace between
+   * the current position and the previous newline or start of buffer).
+   * Used to guard tag recognition: '@' should only be a TAG at line start,
+   * not inside expressions like JsonPath {@code $[?(@.field)]}.
+   */
+  private boolean isAtLineStart() {
+    for (int pos = myPosition - 1; pos >= 0; pos--) {
+      char ch = myBuffer.charAt(pos);
+      if (ch == '\n') {
+        return true;
+      }
+      if (!Character.isWhitespace(ch)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private static boolean isValidTagChar(char c) {
     return !Character.isWhitespace(c) && c != '@';
   }
 
+  /**
+   * Advances myPosition past plain text content until hitting a character/string
+   * from {@link #INTERESTING_SYMBOLS} that needs special handling by advance().
+   * Trailing whitespace is returned (not consumed) so it can be emitted as a
+   * separate WHITE_SPACE token.
+   */
   private void advanceToNextInterestingToken() {
     myPosition++;
     int mark = myPosition;
@@ -818,6 +1004,10 @@ public class UppercutLexer extends LexerBase {
     return myBuffer.subSequence(myPosition, mark).toString();
   }
 
+  /**
+   * Backs up myPosition to exclude trailing whitespace from the current token.
+   * This ensures whitespace is emitted as separate WHITE_SPACE tokens for proper formatting.
+   */
   private void returnWhitespace(int mark) {
     while (myPosition > mark && Character.isWhitespace(myBuffer.charAt(myPosition - 1))) {
       myPosition--;
@@ -840,6 +1030,11 @@ public class UppercutLexer extends LexerBase {
     returnWhitespace(mark);
   }
 
+  /**
+   * Checks whether a given character appears earlier on the same line (before myPosition).
+   * Used to detect if '=' precedes a "function" keyword, which indicates a function
+   * assignment (e.g., {@code * def foo = function() {...}}) that should trigger JS injection.
+   */
   @VisibleForTesting
   boolean containsCharEarlierInLine(char token) {
     int pos = myPosition;
@@ -899,8 +1094,17 @@ public class UppercutLexer extends LexerBase {
     return true;
   }
 
-  // Gives the position of the terminal string (i.e. the matching pystring)
-  // Or -1 if it hits an interruption before this is possible.
+  /**
+   * Scans forward from myPosition looking for either a termination string (e.g., closing
+   * brace or pystring marker) or an interruption (step/scenario keyword at line start).
+   *
+   * <p>Used by {@link #advanceIfJsJson()} to check that a JSON literal isn't broken by
+   * a new step keyword, and by advance() to detect incomplete pystrings.</p>
+   *
+   * @param interruptions keywords that signal a structural break if found at line start
+   * @param terminations  strings that signal successful end of the construct
+   * @return position of the termination string, or -1 if interrupted or end-of-buffer
+   */
   private int isStringInterrupted(List<String> interruptions, List<String> terminations) {
     return isStringInterrupted(interruptions, terminations, myPosition);
   }

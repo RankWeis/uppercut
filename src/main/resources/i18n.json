@@ -887,6 +887,74 @@
 		"eval": [
 			"eval",
 			"eval "
+		],
+		"csv": [
+			"csv",
+			"csv "
+		],
+		"yaml": [
+			"yaml",
+			"yaml "
+		],
+		"text": [
+			"text",
+			"text "
+		],
+		"replace": [
+			"replace",
+			"replace "
+		],
+		"copy": [
+			"copy",
+			"copy "
+		],
+		"json": [
+			"json",
+			"json "
+		],
+		"string": [
+			"string",
+			"string "
+		],
+		"xml": [
+			"xml",
+			"xml "
+		],
+		"xmlstring": [
+			"xmlstring",
+			"xmlstring "
+		],
+		"bytes": [
+			"bytes",
+			"bytes "
+		],
+		"delete": [
+			"delete",
+			"delete "
+		],
+		"listen": [
+			"listen",
+			"listen "
+		],
+		"doc": [
+			"doc",
+			"doc "
+		],
+		"driver": [
+			"driver",
+			"driver "
+		],
+		"robot": [
+			"robot",
+			"robot "
+		],
+		"retry": [
+			"retry",
+			"retry "
+		],
+		"compareImage": [
+			"compareImage",
+			"compareImage "
 		]
 	},
 	"en-Scouse": {

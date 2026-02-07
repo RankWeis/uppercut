@@ -7,7 +7,6 @@ import com.rankweis.uppercut.parser.types.KarateJsElementType;
 import io.karatelabs.js.Lexer;
 import io.karatelabs.js.Token;
 import io.karatelabs.js.Type;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +54,7 @@ public class KarateLexerAdapter extends LexerBase {
   @Override public void advance() {
     try {
       currentToken = lexer.yylex();
-    } catch (IOException | Error e) {
+    } catch (Error e) {
       log.warn("Error in lexer", e);
       throw new LexerError(e.getMessage(), lexer.yytext().toString(), lexer.getTokenStart(), lexer.getTokenEnd());
     }
