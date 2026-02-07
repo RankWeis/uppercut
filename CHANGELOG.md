@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed GherkinCodeStyleSettingsProvider deprecation warning by overriding getLanguage().
+- Updated platformVersion to 253.30387.90 (IntelliJ 2025.3.2).
+
 ## [2.4.12] - 2025-12-15
 
 ### Modified

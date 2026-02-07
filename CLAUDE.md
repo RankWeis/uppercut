@@ -61,6 +61,8 @@ Key version properties are in `gradle.properties`:
 
 Dependency versions are managed in `gradle/libs.versions.toml`.
 
+**When updating `platformVersion`:** Always run `./gradlew verifyPlugin test` to ensure plugin compatibility and tests pass against the new platform version.
+
 ## Project Structure
 
 ```
@@ -254,6 +256,10 @@ Key dependencies (see `gradle/libs.versions.toml` and `gradle.properties`):
 | Mockito | 5.19.0 | Mocking |
 | GrammarKit | 2022.3.2.2 | Lexer/parser generation |
 | Kotlin | 2.2.10 | Kotlin support |
+
+## Changelog
+
+Update `CHANGELOG.md` for every major change. Add entries under the `## [Unreleased]` section using [Keep a Changelog](https://keepachangelog.com) format (`### Added`, `### Fixed`, `### Modified`, etc.). The CI deploy action handles version bumping and release — do not manually create version entries.
 
 ## Common Tasks
 
