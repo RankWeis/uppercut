@@ -10,6 +10,7 @@ updates:
       interval: "daily"
     groups:
       gradle-deps:
+        applies-to: security-updates
         patterns:
           - "*"
   # Maintain dependencies for GitHub Actions
@@ -18,6 +19,7 @@ updates:
     schedule:
       interval: "daily"
     groups:
+      applies-to: security-updates
       github-actions:
         patterns:
           - "*"
