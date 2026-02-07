@@ -158,7 +158,9 @@ public class Parser {
     private boolean exit(boolean result, boolean mandatory, Shift shift) {
         if (mandatory && !result) {
             error(marker.node.type);
-            marker.node.marker.error("expected: " + marker.node.type);
+            if (marker.node.marker != null) {
+                marker.node.marker.error("expected: " + marker.node.type);
+            }
         }
         if (result) {
             marker.node.done();
@@ -194,7 +196,9 @@ public class Parser {
             }
         } else {
             position = marker.position;
-            marker.node.marker.rollbackTo();
+            if (marker.node.marker != null) {
+                marker.node.marker.rollbackTo();
+            }
         }
         marker = marker.caller;
         return result;
@@ -369,6 +373,7 @@ public class Parser {
         result = result || (break_stmt() && eos());
         result = result || (delete_stmt() && eos());
         result = result || (expr(-1, false) && eos());
+        result = result || fn_decl();
         result = result || block(false);
         result = result || consumeIf(Token.SEMI); // empty statement
         return exit(result, mandatory);
@@ -656,6 +661,17 @@ public class Parser {
         result = result && consumeIf(Token.EQ_GT);
         result = result && (block(false) || expr(-1, false));
         return exit(result, false);
+    }
+
+    private boolean fn_decl() {
+        if (!peekIf(Token.FUNCTION)) {
+            return false;
+        }
+        boolean result = fn_expr();
+        if (result) {
+            eos(); // optional trailing semicolon
+        }
+        return result;
     }
 
     private boolean fn_expr() {

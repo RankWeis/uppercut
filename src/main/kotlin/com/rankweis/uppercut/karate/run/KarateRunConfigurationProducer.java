@@ -65,27 +65,28 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     if (document == null) {
       return false;
     }
-    int lineNumber = document.getLineNumber(textOffset) + 1;
     PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
     IElementType elementType = PsiUtilCore.getElementType(psiElement);
     if (elementType == KarateTokenTypes.TAG) {
       preferredTest = PreferredTest.ALL_TAGS;
-    } else if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType)) {
-      preferredTest = PreferredTest.SINGLE_SCENARIO;
     } else {
-      GherkinStepsHolder holder =
-        PsiTreeUtil.getParentOfType(psiElement, GherkinStepsHolder.class);
+      GherkinStepsHolder holder;
+      if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType)) {
+        holder = PsiTreeUtil.getParentOfType(psiElement, GherkinStepsHolder.class, false);
+      } else {
+        holder = PsiTreeUtil.getParentOfType(psiElement, GherkinStepsHolder.class);
+      }
       if (holder != null) {
         preferredTest = PreferredTest.SINGLE_SCENARIO;
         textOffset = holder.getTextOffset();
-        lineNumber = document.getLineNumber(textOffset) + 1;
       }
     }
     VirtualFile virtualFile = context.getLocation().getVirtualFile();
     if (preferredTest == PreferredTest.ALL_TAGS) {
       return configuration.getName().equals(context.getPsiLocation().getText());
     } else if (preferredTest == PreferredTest.SINGLE_SCENARIO) {
-      return configuration.getName().equals(virtualFile.getPath() + ":" + lineNumber);
+      int holderLine = document.getLineNumber(textOffset) + 1;
+      return configuration.getName().equals(virtualFile.getName() + ":" + holderLine);
     } else {
       return configuration.getName().equals(virtualFile.getName());
     }
@@ -140,11 +141,13 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
         .map(root -> (path != null && path.contains(root.getPath())) ? root : null).filter(Objects::nonNull).findFirst()
         .ifPresent(vf -> configuration.setWorkingDirectory(vf.getPath()));
       configuration.setTag(psiElement.getText());
-    } else if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType)) {
-      preferredTest = PreferredTest.SINGLE_SCENARIO;
     } else {
-      GherkinStepsHolder holder =
-        PsiTreeUtil.getParentOfType(psiElement, GherkinStepsHolder.class);
+      GherkinStepsHolder holder;
+      if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(elementType)) {
+        holder = PsiTreeUtil.getParentOfType(psiElement, GherkinStepsHolder.class, false);
+      } else {
+        holder = PsiTreeUtil.getParentOfType(psiElement, GherkinStepsHolder.class);
+      }
       if (holder != null) {
         preferredTest = PreferredTest.SINGLE_SCENARIO;
         textOffset = holder.getTextOffset();

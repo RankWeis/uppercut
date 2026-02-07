@@ -6,7 +6,13 @@
 
 ### Added
 
-- Breakpoint support: enabled debugger integration for Karate feature files. (Thanks @Telsho!)
+- Experimental breakpoint support: breakpoints can now be set in Karate feature files, but execution does not yet pause on them. (Thanks @Telsho!)
+
+### Fixed
+
+- Right-click "Run" now targets the specific scenario instead of the whole file.
+- Replaced JFlex JavaScript lexer with hand-written lexer supporting regex literals.
+- Fixed JavaScript parser handling of function declarations in docstrings.
 
 ## [2.4.13] - 2026-02-07
 

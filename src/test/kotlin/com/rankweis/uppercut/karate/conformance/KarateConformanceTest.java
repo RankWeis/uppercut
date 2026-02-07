@@ -10,12 +10,16 @@ import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
 import com.rankweis.uppercut.karate.lexer.UppercutLexer;
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import io.karatelabs.js.KarateJsNoPluginExtension;
+import io.karatelabs.js.Parser;
+import io.karatelabs.js.Source;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Conformance test suite that runs Karate's own .feature files through the
@@ -107,6 +111,68 @@ public class KarateConformanceTest extends BasePlatformTestCase {
     if (!failures.isEmpty()) {
       fail(String.format(
         "Parser errors in %d location(s):%n%s",
+        failures.size(), String.join("\n", failures)));
+    }
+  }
+
+  public void testJsParserConformance() throws IOException {
+    File[] featureFiles = getConformanceFiles();
+    Pattern docstringPattern = Pattern.compile(
+      "\"\"\"\\s*\\n(.*?)\\n\\s*\"\"\"", Pattern.DOTALL);
+    // Keywords whose docstrings are plain text, not JS
+    Pattern textKeywordPattern = Pattern.compile(
+      "\\b(?:text|csv|yaml|bytes|doc)\\b\\s*[=:]?\\s*$", Pattern.MULTILINE);
+    List<String> failures = new ArrayList<>();
+    int jsBlocks = 0;
+    int filesWithJs = 0;
+
+    for (File file : featureFiles) {
+      String content = Files.readString(file.toPath());
+      Matcher matcher = docstringPattern.matcher(content);
+      boolean fileHasJs = false;
+
+      while (matcher.find()) {
+        String block = matcher.group(1);
+        String trimmed = block.trim();
+        // Skip JSON blocks (start with { or [) and XML blocks (start with <)
+        if (trimmed.startsWith("{") || trimmed.startsWith("[")
+            || trimmed.startsWith("<")) {
+          continue;
+        }
+        // Skip blocks preceded by text/csv/yaml/bytes/doc keywords
+        String before = content.substring(
+          Math.max(0, matcher.start() - 80), matcher.start());
+        if (textKeywordPattern.matcher(before).find()) {
+          continue;
+        }
+        // Skip blocks that don't look like JS (no keywords or operators)
+        if (!trimmed.contains("var ") && !trimmed.contains("function ")
+            && !trimmed.contains("def ") && !trimmed.contains("= ")
+            && !trimmed.contains("if ") && !trimmed.contains("for ")
+            && !trimmed.contains("return ")) {
+          continue;
+        }
+        jsBlocks++;
+        fileHasJs = true;
+        try {
+          new Parser(new Source(trimmed)).parse();
+        } catch (Exception e) {
+          failures.add(String.format("  %s: %s", file.getName(),
+            e.getMessage().split("\n")[0]));
+        }
+      }
+      if (fileHasJs) {
+        filesWithJs++;
+      }
+    }
+
+    System.out.printf(
+      "JS parser conformance: %d blocks from %d files, %d failures%n",
+      jsBlocks, filesWithJs, failures.size());
+
+    if (!failures.isEmpty()) {
+      fail(String.format(
+        "JS parser errors in %d block(s):%n%s",
         failures.size(), String.join("\n", failures)));
     }
   }

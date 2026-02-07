@@ -5,7 +5,7 @@ junit5 = "5.13.4"
 mockito = "5.19.0"
 junitPlatform = "1.13.4"
 grammarkit = "2022.3.2.2"
-intellijStarter = "252.23892.409"
+intellijStarter = "253.30387.90"
 kodein = "7.26.1"
 
 # plugins
@@ -25,18 +25,8 @@ junit5engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", ver
 junitJupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit5" }
 junitPlatformLauncher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitPlatform" }
 mockito = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
-starterSquashed = { group = "com.jetbrains.intellij.tools", name = "ide-starter-squashed", version.ref = "intellijStarter" }
-starterJunit5 = { group = "com.jetbrains.intellij.tools", name = "ide-starter-junit5", version.ref = "intellijStarter" }
-starterDriver = { group = "com.jetbrains.intellij.tools", name = "ide-starter-driver", version.ref = "intellijStarter" }
-driverClient = { group = "com.jetbrains.intellij.driver", name = "driver-client", version.ref = "intellijStarter" }
-ijCommon = { group = "com.jetbrains.intellij.tools", name = "ide-util-common", version.ref = "intellijStarter" }
-driverSdk = { group = "com.jetbrains.intellij.driver", name = "driver-sdk", version.ref = "intellijStarter" }
-driverModel = { group = "com.jetbrains.intellij.driver", name = "driver-model", version.ref = "intellijStarter" }
-
 metricsSquashed = { group = "com.jetbrains.intellij.tools", name = "ide-metrics-collector-starter-squashed", version.ref = "intellijStarter" }
 metricsCollector = { group = "com.jetbrains.intellij.tools", name = "ide-metrics-collector", version.ref = "intellijStarter" }
-metricsCollectorStarter = { group = "com.jetbrains.intellij.tools", name = "ide-metrics-collector-starter", version.ref = "intellijStarter" }
-ijPerformance = { group = "com.jetbrains.intellij.tools", name = "ide-performance-testing-commands", version.ref = "intellijStarter" }
 kodein = { group = "org.kodein.di", name = "kodein-di-jvm", version.ref = "kodein"}
 
 
