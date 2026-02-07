@@ -24,6 +24,9 @@ jobs:
           - language: actions
             build-mode: none
 
+    env:
+      CODEQL_EXTRACTOR_JAVA_OPTION_KOTLIN_EXTRACTOR_DISABLED: true
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,12 +43,10 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
-        env:
-          CODEQL_EXTRACTOR_JAVA_OPTION_KOTLIN_EXTRACTOR_DISABLED: ${{ matrix.language == 'java-kotlin' }}
 
       - name: Build
         if: matrix.build-mode == 'manual'
-        run: ./gradlew classes
+        run: ./gradlew compileJava
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
