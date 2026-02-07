@@ -61,6 +61,23 @@ public class PlainKarateKeywordProvider implements GherkinKeywordProvider {
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "params");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "response");
     DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "eval");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "csv");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "yaml");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "text");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "replace");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "copy");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "json");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "string");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "xml");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "xmlstring");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "bytes");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "delete");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "listen");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "doc");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "driver");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "robot");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "retry");
+    DEFAULT_KEYWORD_TABLE.put(KarateTokenTypes.ACTION_KEYWORD, "compareImage");
 
     ourKeywordsWithNoSpaceAfter.add("Lorsqu'");
 

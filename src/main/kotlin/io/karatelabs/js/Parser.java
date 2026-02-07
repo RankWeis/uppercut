@@ -744,7 +744,7 @@ public class Parser {
     private boolean lit_expr() {
         enter(Type.LIT_EXPR);
         boolean result = lit_object() || lit_array();
-        result = result || anyOf(Token.S_STRING, Token.D_STRING, Token.NUMBER, Token.TRUE, Token.FALSE, Token.NULL);
+        result = result || anyOf(Token.S_STRING, Token.D_STRING, Token.NUMBER, Token.TRUE, Token.FALSE, Token.NULL, Token.REGEX);
         result = result || lit_template();
         return exit(result, false);
     }

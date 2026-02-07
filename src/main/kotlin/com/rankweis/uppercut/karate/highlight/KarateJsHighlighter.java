@@ -107,7 +107,7 @@ public class KarateJsHighlighter extends SyntaxHighlighterBase {
 
   static {
     register(HighlighterColors.NO_HIGHLIGHTING, WS_LF, WS);
-    register(DefaultLanguageHighlighterColors.STRING, BACKTICK, S_STRING, D_STRING, T_STRING);
+    register(DefaultLanguageHighlighterColors.STRING, BACKTICK, S_STRING, D_STRING, T_STRING, Token.REGEX);
     register(DefaultLanguageHighlighterColors.BRACES, L_CURLY, R_CURLY);
     register(DefaultLanguageHighlighterColors.BRACKETS, L_BRACKET, R_BRACKET);
     register(DefaultLanguageHighlighterColors.PARENTHESES, L_PAREN, R_PAREN);

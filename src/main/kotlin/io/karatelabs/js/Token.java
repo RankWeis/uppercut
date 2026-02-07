@@ -124,7 +124,8 @@ public enum Token {
     IDENT,
     //====
     DOLLAR_L_CURLY,
-    T_STRING;
+    T_STRING,
+    REGEX;
 
     public final boolean primary;
 
