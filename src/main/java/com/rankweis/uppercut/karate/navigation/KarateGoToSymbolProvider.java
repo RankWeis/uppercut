@@ -81,12 +81,23 @@ public class KarateGoToSymbolProvider implements GotoDeclarationHandler {
     if (filePaths.size() == 1) {
       return list.toArray(PsiElement[]::new);
     } else if (filePaths.size() == 2) {
+      String target = filePaths.get(1);
       return list.stream()
         .map(f -> {
-          int textOffsetNewline = f.getText().indexOf("@" + filePaths.get(1) + "\n");
-          int textOffset = f.getText().indexOf("@" + filePaths.get(1));
-          int textOffsetRet = textOffsetNewline == -1 ? textOffset : textOffsetNewline;
-          return f.findElementAt(textOffsetRet);
+          // Try tag first: @Test2
+          int textOffset = f.getText().indexOf("@" + target);
+          if (textOffset >= 0) {
+            return f.findElementAt(textOffset);
+          }
+          // Fall back to scenario name: Scenario: Test2
+          textOffset = f.getText().indexOf("Scenario: " + target);
+          if (textOffset < 0) {
+            textOffset = f.getText().indexOf("Scenario Outline: " + target);
+          }
+          if (textOffset >= 0) {
+            return f.findElementAt(textOffset);
+          }
+          return (PsiElement) f;
         })
         .toArray(PsiElement[]::new);
     }

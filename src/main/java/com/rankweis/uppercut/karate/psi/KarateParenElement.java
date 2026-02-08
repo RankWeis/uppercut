@@ -8,20 +8,20 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
 import com.rankweis.uppercut.karate.psi.element.KarateNamedElement;
 import com.rankweis.uppercut.karate.psi.impl.GherkinPsiElementBase;
 import com.rankweis.uppercut.karate.util.KarateUtil;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class KarateParenElement extends GherkinPsiElementBase implements PsiNameIdentifierOwner,
   GherkinPsiElement, GherkinSuppressionHolder, PomTarget, KarateNamedElement {
-
-  ConcurrentLinkedQueue<PsiReference> references = new ConcurrentLinkedQueue<>();
 
   public KarateParenElement(@NotNull ASTNode node) {
     super(node);
@@ -31,20 +31,10 @@ public class KarateParenElement extends GherkinPsiElementBase implements PsiName
     return this.getText();
   }
 
-  @Override public PsiReference getReference() {
-    return super.getReference();
-  }
-
   @Override public PsiReference @NotNull [] getReferences() {
-    return this.references.stream().filter(r -> r.isReferenceTo(this)).toList().toArray(new PsiReference[0]);
-  }
-
-  @Override public PsiReference findReferenceAt(int offset) {
-    return super.findReferenceAt(offset);
-  }
-
-  public void addReference(PsiReference reference) {
-    this.references.add(reference);
+    return CachedValuesManager.getCachedValue(this,
+      () -> CachedValueProvider.Result.create(
+        ReferenceProvidersRegistry.getReferencesFromProviders(this), this));
   }
 
   @Override protected void acceptGherkin(GherkinElementVisitor gherkinElementVisitor) {

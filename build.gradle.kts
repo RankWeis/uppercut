@@ -2,6 +2,7 @@ import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.extensions.IntelliJPlatformDependenciesExtension
 import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 
 fun properties(key: String) = providers.gradleProperty(key)
@@ -52,12 +53,12 @@ dependencies {
     intellijPlatform {
         val version = properties("platformVersion")
 
-        intellijIdeaUltimate(version, useInstaller = false)
+        intellijIdeaUltimate(version)
         // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
 
-        // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
-        plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
+//        // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
+//        plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
 
         jetbrainsRuntime()
         testFramework(TestFrameworkType.Platform)
@@ -193,7 +194,7 @@ intellijPlatform {
     }
     pluginVerification {
         ides {
-            ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("platformVersion").get(), useInstaller = false)
+            create(IntelliJPlatformType.IntellijIdeaUltimate, properties("platformVersion").get())
         }
     }
 }

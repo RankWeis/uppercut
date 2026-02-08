@@ -1,6 +1,7 @@
 package com.rankweis.uppercut.karate.psi;
 
 import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.DECLARATION;
+import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.pom.PomTarget;
@@ -42,6 +43,9 @@ public class KarateDeclaration extends GherkinPsiElementBase implements PsiNameI
 
   @Override public @Nullable PsiElement getNameIdentifier() {
     ASTNode keyNode = getNode().findChildByType(DECLARATION);
+    if (keyNode == null) {
+      keyNode = getNode().findChildByType(VARIABLE);
+    }
     return keyNode != null ? keyNode.getPsi() : null;
   }
 
