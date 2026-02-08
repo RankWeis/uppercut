@@ -61,6 +61,7 @@ public final class GherkinColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(MyBundle.message("color.settings.gherkin.table.pipe"), GherkinHighlighter.PIPE),
     new AttributesDescriptor(MyBundle.message("color.settings.gherkin.outline.param.substitution"), GherkinHighlighter.OUTLINE_PARAMETER_SUBSTITUTION),
     new AttributesDescriptor(MyBundle.message("color.settings.gherkin.regexp.param"), GherkinHighlighter.REGEXP_PARAMETER),
+    new AttributesDescriptor(MyBundle.message("color.settings.gherkin.operator"), GherkinHighlighter.OPERATOR),
   };
 
   // Empty still

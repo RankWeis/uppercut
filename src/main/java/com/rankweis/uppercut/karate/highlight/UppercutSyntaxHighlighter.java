@@ -71,7 +71,7 @@ public class UppercutSyntaxHighlighter extends SyntaxHighlighterBase {
 
     ATTRIBUTES.put(COMMENT, GherkinHighlighter.COMMENT);
     ATTRIBUTES.put(TEXT, GherkinHighlighter.TEXT);
-    ATTRIBUTES.put(OPERATOR, GherkinHighlighter.TEXT);
+    ATTRIBUTES.put(OPERATOR, GherkinHighlighter.OPERATOR);
     ATTRIBUTES.put(DECLARATION, GherkinHighlighter.DECLARATION);
     ATTRIBUTES.put(VARIABLE, GherkinHighlighter.VARIABLE);
     ATTRIBUTES.put(TAG, GherkinHighlighter.TAG);
