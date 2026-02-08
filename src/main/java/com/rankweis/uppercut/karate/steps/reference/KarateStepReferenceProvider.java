@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
+import com.rankweis.uppercut.karate.psi.GherkinPystring;
 import com.rankweis.uppercut.karate.psi.impl.GherkinStepImpl;
 import com.rankweis.uppercut.karate.psi.impl.KarateReference;
 import java.util.ArrayList;
@@ -33,17 +34,25 @@ public class KarateStepReferenceProvider extends PsiReferenceProvider {
       references.add(new KarateStepReference(element,
         new TextRange(keywordLength, element.getTextLength())));
 
-      // Variable references
+      // Variable references — skip tokens inside docstrings
+      GherkinPystring pystring = step.getPystring();
+      TextRange pystringRange = null;
+      if (pystring != null) {
+        int psStart = pystring.getTextOffset() - element.getTextOffset();
+        pystringRange = TextRange.create(psStart, psStart + pystring.getTextLength());
+      }
       Matcher m = VARIABLE_PATTERN.matcher(element.getText());
       while (m.find()) {
         int start = m.start();
         int end = m.end();
-        String content = m.group();
-        if (QUOTED_STRING.contains(element.findElementAt(m.start()).getNode().getElementType())) {
+        if (pystringRange != null && pystringRange.containsOffset(start)) {
+          continue;
+        }
+        if (QUOTED_STRING.contains(element.findElementAt(start).getNode().getElementType())) {
           continue;
         }
         references.add(new KarateReference(element, new TextRange(start, end), true));
-        String[] dotSplitted = DOT_PATTERN.split(content);
+        String[] dotSplitted = DOT_PATTERN.split(m.group());
         for (int i = 0; i < dotSplitted.length; i++) {
           StringBuilder builder = new StringBuilder();
           for (int j = 0; j <= i; j++) {

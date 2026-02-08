@@ -27,7 +27,7 @@ public class KarateUtil {
         Collection<KarateDeclaration> properties =
           PsiTreeUtil.findChildrenOfType(simpleFile, KarateDeclaration.class);
         for (KarateDeclaration property : properties) {
-          if (key.equals(property.getText())) {
+          if (key.equals(property.getName())) {
             result.add(property);
           }
         }

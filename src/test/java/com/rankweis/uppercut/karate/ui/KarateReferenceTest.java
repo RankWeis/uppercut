@@ -65,6 +65,39 @@ public class KarateReferenceTest extends BasePlatformTestCase {
     assertEquals("bgVar", ((KarateDeclaration) resolved).getName());
   }
 
+  public void testReferenceResolvesInScenarioOutline() {
+    String code = """
+      Feature: test
+        Scenario Outline: outline test
+          * def calculate = function(x) { return x * 2; }
+          * def result = calculate(1)
+          * match result == 2
+      """;
+    myFixture.configureByText("test.feature", code);
+
+    GherkinStep matchStep = findStepContaining("match result");
+    assertNotNull("Should find the match step", matchStep);
+
+    KarateReference ref = findKarateReference(matchStep, "result");
+    assertNotNull("Should find a KarateReference for result", ref);
+
+    PsiElement resolved = ref.resolve();
+    assertNotNull("Reference in Scenario Outline should resolve", resolved);
+    assertInstanceOf(resolved, KarateDeclaration.class);
+    assertEquals("result", ((KarateDeclaration) resolved).getName());
+
+    GherkinStep defResultStep = findStepContaining("def result");
+    assertNotNull("Should find the def result step", defResultStep);
+
+    KarateReference calcRef = findKarateReference(defResultStep, "calculate");
+    assertNotNull("Should find a KarateReference for calculate", calcRef);
+
+    PsiElement calcResolved = calcRef.resolve();
+    assertNotNull("calculate reference in Scenario Outline should resolve", calcResolved);
+    assertInstanceOf(calcResolved, KarateDeclaration.class);
+    assertEquals("calculate", ((KarateDeclaration) calcResolved).getName());
+  }
+
   public void testUnresolvedReference() {
     String code = """
       Feature: test
