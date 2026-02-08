@@ -2,15 +2,14 @@ package com.rankweis.uppercut.karate.ui;
 
 import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.indexing.FindSymbolParameters;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
 import com.rankweis.uppercut.karate.navigation.KarateChooseByNameContributor;
 import com.rankweis.uppercut.karate.psi.KarateDeclaration;
 import io.karatelabs.js.KarateJsNoPluginExtension;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class KarateGoToSymbolTest extends BasePlatformTestCase {
@@ -22,7 +21,7 @@ public class KarateGoToSymbolTest extends BasePlatformTestCase {
       List.of(new KarateJsNoPluginExtension()), getTestRootDisposable());
   }
 
-  public void testGoToSymbolContributorProcessesWithoutError() {
+  public void testGoToSymbolFindsDeclaration() {
     myFixture.configureByText("test.feature", """
       Feature: test
         Scenario: symbol test
@@ -34,27 +33,26 @@ public class KarateGoToSymbolTest extends BasePlatformTestCase {
     contributor.processNames(
       names::add, GlobalSearchScope.allScope(getProject()), null);
 
-    // Contributor should run without errors. Declarations are nested inside
-    // steps so they may not appear via FileTypeIndex direct-children search.
-    assertNotNull("Names list should not be null", names);
+    assertTrue("mySymbol should be in the symbol list, found: " + names,
+      names.contains("mySymbol"));
   }
 
-  public void testDeclarationsExistInPsiTree() {
+  public void testGoToSymbolNavigatesToElement() {
     myFixture.configureByText("test.feature", """
       Feature: test
         Scenario: symbol test
           * def navSymbol = "value"
       """);
 
-    Collection<KarateDeclaration> declarations =
-      PsiTreeUtil.findChildrenOfType(myFixture.getFile(), KarateDeclaration.class);
+    KarateChooseByNameContributor contributor = new KarateChooseByNameContributor();
+    List<NavigationItem> items = new ArrayList<>();
+    FindSymbolParameters params = FindSymbolParameters.simple(getProject(), false);
+    contributor.processElementsWithName("navSymbol", items::add, params);
 
-    assertFalse("Should find KarateDeclaration in PSI tree", declarations.isEmpty());
-
-    KarateDeclaration decl = declarations.iterator().next();
-    assertEquals("navSymbol", decl.getName());
-    assertInstanceOf(decl, NavigationItem.class);
-    assertEquals("navSymbol", ((NavigationItem) decl).getName());
+    assertFalse("Should find at least one NavigationItem for navSymbol", items.isEmpty());
+    NavigationItem item = items.get(0);
+    assertInstanceOf(item, KarateDeclaration.class);
+    assertEquals("navSymbol", item.getName());
   }
 
   @Override

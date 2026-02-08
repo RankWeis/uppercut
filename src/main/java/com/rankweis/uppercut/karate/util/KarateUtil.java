@@ -13,7 +13,6 @@ import com.rankweis.uppercut.karate.psi.GherkinPsiElement;
 import com.rankweis.uppercut.karate.psi.KarateDeclaration;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class KarateUtil {
@@ -25,12 +24,11 @@ public class KarateUtil {
     for (VirtualFile virtualFile : virtualFiles) {
       GherkinFile simpleFile = (GherkinFile) PsiManager.getInstance(project).findFile(virtualFile);
       if (simpleFile != null) {
-        GherkinPsiElement[] properties = PsiTreeUtil.getChildrenOfType(simpleFile, KarateDeclaration.class);
-        if (properties != null) {
-          for (GherkinPsiElement property : properties) {
-            if (key.equals(property.getText())) {
-              result.add(property);
-            }
+        Collection<KarateDeclaration> properties =
+          PsiTreeUtil.findChildrenOfType(simpleFile, KarateDeclaration.class);
+        for (KarateDeclaration property : properties) {
+          if (key.equals(property.getText())) {
+            result.add(property);
           }
         }
       }
@@ -45,10 +43,7 @@ public class KarateUtil {
     for (VirtualFile virtualFile : virtualFiles) {
       GherkinFile simpleFile = (GherkinFile) PsiManager.getInstance(project).findFile(virtualFile);
       if (simpleFile != null) {
-        KarateDeclaration[] properties = PsiTreeUtil.getChildrenOfType(simpleFile, KarateDeclaration.class);
-        if (properties != null) {
-          Collections.addAll(result, properties);
-        }
+        result.addAll(PsiTreeUtil.findChildrenOfType(simpleFile, KarateDeclaration.class));
       }
     }
     return result;
