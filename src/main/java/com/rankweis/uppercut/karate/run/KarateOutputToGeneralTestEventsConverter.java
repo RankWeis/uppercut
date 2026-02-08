@@ -26,7 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor;
@@ -60,6 +60,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
       + "\\[([^]]*)].* Scenario name: (.*), featureFileName: (.*), id (\\d+), featureId (\\d+), (.*) <<UPPERCUT>>\n?$");
   public static final Pattern FEATURE_FILE_NAME =
     Pattern.compile(".*KarateTestRunner - FeatureFileName: ([^,]*), id: (\\d+), (.*) <<UPPERCUT>>\n?");
+  private static final Pattern FEATURE_LINE_PATTERN = Pattern.compile("feature: \\S+\n?");
 
   @Data
   @Builder
@@ -135,7 +136,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     }
 
     if (karateConfigState == NO_RESULT && karateConfigItem != null) {
-      if (text.replace("<<NEWLINE>>", "\n").matches("feature: \\S+\n?")) {
+      if (FEATURE_LINE_PATTERN.matcher(text.replace("<<NEWLINE>>", "\n")).matches()) {
         ServiceMessageBuilder karateConfig =
           ServiceMessageBuilder.testSuiteFinished(karateConfigItem.getName());
         finishMessage(karateConfig, karateConfigItem);
@@ -169,17 +170,19 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     }
   }
 
+  private static final Pattern CONFIG_PATTERN = Pattern.compile("\\[config] (\\S+)\n?");
+
   private boolean karateJsStartedFailed(String text) {
-    Pattern p = Pattern.compile("\\[config] (\\S+)\n?");
     String karateConfigName = karateConfigItem == null ? "null" : karateConfigItem.getName();
-    Pattern failedPattern = Pattern.compile("\n>> " + karateConfigName + " failed\n");
-    Matcher m = p.matcher(text);
+    Matcher m = CONFIG_PATTERN.matcher(text);
     if (karateConfigItem == null && m.find()) {
-      karateConfigName = Arrays.stream(m.group(1).split(":")).toList().getLast();
-      int rand = new Random().nextInt();
+      String[] parts = m.group(1).split(":");
+      karateConfigName = parts[parts.length - 1];
+      int rand = ThreadLocalRandom.current().nextInt();
       karateConfigItem = addFeatureToTree(karateConfigName, rand);
       return true;
-    } else if (karateConfigState == NO_RESULT && failedPattern.matcher(text.replace("<<NEWLINE>>", "\n")).find()) {
+    } else if (karateConfigState == NO_RESULT
+      && text.replace("<<NEWLINE>>", "\n").contains("\n>> " + karateConfigName + " failed\n")) {
       ServiceMessageBuilder scenarioFailed =
         ServiceMessageBuilder.testFailed(karateConfigName)
           .addAttribute("message", "Running config " + karateConfigName + " failed");

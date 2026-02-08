@@ -55,11 +55,7 @@ public class UppercutConsoleFilter implements Filter {
         if (vfs.isEmpty()) {
           return null;
         }
-        if (filePaths.size() == 1) {
-          return vfs.getFirst();
-        } else {
-          return vfs.getFirst();
-        }
+        return vfs.getFirst();
       }).filter(Objects::nonNull).toList();
     return virtualFiles.isEmpty() ? null : virtualFiles.getFirst();
   }

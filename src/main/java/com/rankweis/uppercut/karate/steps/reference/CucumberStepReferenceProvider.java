@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Unmodifiable;
 public class CucumberStepReferenceProvider extends PsiReferenceProvider {
 
   private static final Pattern VARIABLE_PATTERN = Pattern.compile("([\\w.]+)");
+  private static final Pattern DOT_PATTERN = Pattern.compile("\\.");
   
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
@@ -37,7 +38,7 @@ public class CucumberStepReferenceProvider extends PsiReferenceProvider {
           continue;
         }
         references.add(new KarateReference(element, new TextRange(start, end), true));
-        String[] dotSplitted = content.split("\\.");
+        String[] dotSplitted = DOT_PATTERN.split(content);
         for (int i = 0; i < dotSplitted.length; i++) {
           StringBuilder builder = new StringBuilder();
           for (int j = 0; j <= i; j++) {
