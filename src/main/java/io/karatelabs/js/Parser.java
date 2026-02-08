@@ -372,8 +372,8 @@ public class Parser {
         result = result || switch_stmt();
         result = result || (break_stmt() && eos());
         result = result || (delete_stmt() && eos());
-        result = result || (expr(-1, false) && eos());
         result = result || fn_decl();
+        result = result || (expr(-1, false) && eos());
         result = result || block(false);
         result = result || consumeIf(Token.SEMI); // empty statement
         return exit(result, mandatory);
@@ -667,7 +667,9 @@ public class Parser {
         if (!peekIf(Token.FUNCTION)) {
             return false;
         }
+        enter(Type.EXPR);
         boolean result = fn_expr();
+        exit(result, false);
         if (result) {
             eos(); // optional trailing semicolon
         }

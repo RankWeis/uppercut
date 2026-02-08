@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0
+// license that can be found in the LICENSE file.
+
 package com.rankweis.uppercut.karate.steps.reference;
 
 import com.intellij.openapi.module.Module;
@@ -29,13 +31,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class CucumberStepReference implements PsiPolyVariantReference {
+public class KarateStepReference implements PsiPolyVariantReference {
   private static final MyResolver RESOLVER = new MyResolver();
 
   private final PsiElement myStep;
   private final TextRange myRange;
 
-  public CucumberStepReference(PsiElement step, TextRange range) {
+  public KarateStepReference(PsiElement step, TextRange range) {
     myStep = step;
     myRange = range;
   }
@@ -117,7 +119,7 @@ public class CucumberStepReference implements PsiPolyVariantReference {
       }
       return CachedValueProvider.Result.create(allStepDefinition, PsiModificationTracker.MODIFICATION_COUNT);
     });
-    
+
     List<PsiElement> resolvedElements = new ArrayList<>();
     for (final AbstractStepDefinition stepDefinition : stepDefinitions) {
       if (stepDefinition.supportsStep(myStep)) {
@@ -152,12 +154,13 @@ public class CucumberStepReference implements PsiPolyVariantReference {
    */
   @NotNull
   public Collection<AbstractStepDefinition> resolveToDefinitions() {
-    return CucumberStepHelper.findStepDefinitions(myStep.getContainingFile(), ((GherkinStepImpl)myStep));
+    return CucumberStepHelper.findStepDefinitions(
+      myStep.getContainingFile(), ((GherkinStepImpl) myStep));
   }
 
-  private static class MyResolver implements ResolveCache.PolyVariantResolver<CucumberStepReference> {
+  private static class MyResolver implements ResolveCache.PolyVariantResolver<KarateStepReference> {
     @Override
-    public ResolveResult @NotNull [] resolve(@NotNull CucumberStepReference ref, boolean incompleteCode) {
+    public ResolveResult @NotNull [] resolve(@NotNull KarateStepReference ref, boolean incompleteCode) {
       return ref.multiResolveInner();
     }
   }

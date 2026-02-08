@@ -25,7 +25,7 @@ import com.rankweis.uppercut.karate.psi.GherkinUtil;
 import com.rankweis.uppercut.karate.psi.KarateLanguage;
 import com.rankweis.uppercut.karate.psi.i18n.JsonGherkinKeywordProvider;
 import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
-import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
+import com.rankweis.uppercut.karate.steps.reference.KarateStepReference;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,7 +96,7 @@ public final class ScenarioToOutlineIntention implements IntentionAction {
     newScenarioText.append(keywordsTable.getScenarioOutlineKeyword()).append(": ").append(scenario.getScenarioName());
     Map<String, String> examples = new LinkedHashMap<>();
     for (GherkinStep step : scenario.getSteps()) {
-      CucumberStepReference reference = CucumberUtil.getCucumberStepReference(step);
+      KarateStepReference reference = CucumberUtil.getKarateStepReference(step);
       final AbstractStepDefinition definition = reference != null ? reference.resolveToDefinition() : null;
       if (definition != null) {
         String stepName = replaceVarNames(step.getName(), definition, examples);

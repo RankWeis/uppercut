@@ -2,7 +2,7 @@ package com.rankweis.uppercut.karate.inspections;
 
 import com.rankweis.uppercut.karate.CucumberUtil;
 import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
-import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
+import com.rankweis.uppercut.karate.steps.reference.KarateStepReference;
 import com.rankweis.uppercut.karate.MyBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -39,9 +39,9 @@ public class CucumberCreateAllStepsFix extends CucumberCreateStepFixBase {
         for (GherkinStep step : stepsHolder.getSteps()) {
           final PsiReference[] references = step.getReferences();
           for (PsiReference reference : references) {
-            if (!(reference instanceof CucumberStepReference)) continue;
+            if (!(reference instanceof KarateStepReference)) continue;
 
-            final AbstractStepDefinition definition = ((CucumberStepReference)reference).resolveToDefinition();
+            final AbstractStepDefinition definition = ((KarateStepReference)reference).resolveToDefinition();
             if (definition == null) {
               String pattern = Pattern.quote(step.getName());
               pattern = StringUtil.trimEnd(StringUtil.trimStart(pattern, "\\Q"), "\\E");

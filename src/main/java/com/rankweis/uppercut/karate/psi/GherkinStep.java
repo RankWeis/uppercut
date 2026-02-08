@@ -2,7 +2,7 @@
 package com.rankweis.uppercut.karate.psi;
 
 import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
-import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
+import com.rankweis.uppercut.karate.steps.reference.KarateStepReference;
 import com.intellij.lang.ASTNode;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.PsiNamedElement;
@@ -38,8 +38,8 @@ public interface GherkinStep extends GherkinPsiElement, GherkinSuppressionHolder
   String getSubstitutedName();
 
   /**
-   * @return all step definitions (may be heavy). Works just like {@link CucumberStepReference#resolveToDefinition()}
-   * @see CucumberStepReference#resolveToDefinition()
+   * @return all step definitions (may be heavy). Works just like {@link KarateStepReference#resolveToDefinition()}
+   * @see KarateStepReference#resolveToDefinition()
    */
   @NotNull
   Collection<AbstractStepDefinition> findDefinitions();

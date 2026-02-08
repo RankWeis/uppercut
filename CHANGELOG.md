@@ -13,6 +13,7 @@
 
 ### Fixed
 
+- Fixed Go-to-Symbol (Ctrl+Alt+Shift+N) not finding Karate variable declarations.
 - Fixed GherkinCodeStyleSettingsProvider deprecation warning by overriding getLanguage().
 - Updated platformVersion to 253.30387.90 (IntelliJ 2025.3.2).
 - Right-click "Run" now targets the specific scenario instead of the whole file.

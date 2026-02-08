@@ -7,8 +7,10 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.rankweis.uppercut.karate.psi.GherkinScenario;
 import com.rankweis.uppercut.karate.psi.GherkinStep;
+import com.rankweis.uppercut.karate.psi.GherkinStepsHolder;
 import com.rankweis.uppercut.karate.psi.KarateDeclaration;
 import java.util.Collection;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +32,7 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
 
   @Override public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     PsiElement parent =
-      PsiTreeUtil.findFirstParent(myElement, GherkinScenario.class::isInstance);
+      PsiTreeUtil.findFirstParent(myElement, GherkinStepsHolder.class::isInstance);
 
     KarateDeclaration match = findDeclarationInSteps(
       PsiTreeUtil.getChildrenOfType(parent, GherkinStep.class));
@@ -68,12 +70,20 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
         continue;
       }
       for (KarateDeclaration decl : decls) {
-        if (decl.getText().equals(key)) {
+        if (key.equals(decl.getName())) {
           return decl;
         }
       }
     }
     return null;
+  }
+
+  @Override
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
+    if (myElement instanceof KarateDeclaration declaration) {
+      return declaration.setName(newElementName);
+    }
+    return super.handleElementRename(newElementName);
   }
 
   @Override public @Nullable PsiElement resolve() {

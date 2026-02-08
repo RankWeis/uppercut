@@ -50,15 +50,10 @@ val platformTestImplementation by configurations.getting {
 
 dependencies {
     intellijPlatform {
-        val version = properties("platformVersion")
-
-        intellijIdeaUltimate(version, useInstaller = false)
-        // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
+        intellijIdea(properties("platformVersion")) {
+            type = IntelliJPlatformType.IntellijIdeaUltimate
+        }
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
-
-        // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
-        plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
-
         jetbrainsRuntime()
         testFramework(TestFrameworkType.Platform)
         testFramework(TestFrameworkType.Starter)
@@ -193,7 +188,7 @@ intellijPlatform {
     }
     pluginVerification {
         ides {
-            ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("platformVersion").get(), useInstaller = false)
+            recommended()
         }
     }
 }
@@ -242,7 +237,7 @@ tasks {
 
     printProductsReleases {
         channels = listOf(ProductRelease.Channel.EAP)
-        types = listOf(IntelliJPlatformType.IntellijIdeaUltimate)
-        untilBuild = "251.*"
+        types = listOf(IntelliJPlatformType.IntellijIdea)
+        untilBuild = "261.*"
     }
 }

@@ -73,7 +73,7 @@
       nonDefaultProject="true"/>
 
     <psi.referenceContributor language="Karate"
-      implementation="com.rankweis.uppercut.karate.steps.reference.CucumberReferenceContributor"/>
+      implementation="com.rankweis.uppercut.karate.steps.reference.KarateReferenceContributor"/>
 
     <localInspection language="Karate" shortName="KarateUndefinedStep" bundle="messages.MyBundle"
       key="cucumber.inspection.undefined.step.name" groupKey="cucumber.inspection.group.name"
