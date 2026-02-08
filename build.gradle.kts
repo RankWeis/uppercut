@@ -52,12 +52,11 @@ dependencies {
     intellijPlatform {
         intellijIdea(properties("platformVersion")) {
             type = IntelliJPlatformType.IntellijIdeaUltimate
-
-            bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
-            jetbrainsRuntime()
-            testFramework(TestFrameworkType.Platform)
-            testFramework(TestFrameworkType.Starter)
         }
+        bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
+        jetbrainsRuntime()
+        testFramework(TestFrameworkType.Platform)
+        testFramework(TestFrameworkType.Starter)
     }
 
     // Plugin Module
