@@ -25,7 +25,7 @@ import com.rankweis.uppercut.karate.psi.GherkinTable;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.rankweis.uppercut.karate.psi.refactoring.GherkinChangeUtil;
 import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
-import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
+import com.rankweis.uppercut.karate.steps.reference.KarateStepReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -206,8 +206,8 @@ public class GherkinStepImpl extends GherkinPsiElementBase implements GherkinSte
   public Collection<AbstractStepDefinition> findDefinitions() {
     final List<AbstractStepDefinition> result = new ArrayList<>();
     for (final PsiReference reference : getReferences()) {
-      if (reference instanceof CucumberStepReference) {
-        result.addAll(((CucumberStepReference)reference).resolveToDefinitions());
+      if (reference instanceof KarateStepReference) {
+        result.addAll(((KarateStepReference)reference).resolveToDefinitions());
       }
     }
     return result;

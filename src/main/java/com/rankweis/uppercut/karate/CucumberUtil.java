@@ -4,7 +4,7 @@ package com.rankweis.uppercut.karate;
 import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
 import com.rankweis.uppercut.karate.steps.search.CucumberStepSearchUtil;
 import com.rankweis.uppercut.karate.psi.GherkinStep;
-import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
+import com.rankweis.uppercut.karate.steps.reference.KarateStepReference;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -475,7 +475,7 @@ public final class CucumberUtil {
 
   @Nullable
   public static PsiElement resolveSep(@NotNull GherkinStep step) {
-    PsiReference reference = Arrays.stream(step.getReferences()).filter(r -> r instanceof CucumberStepReference).findFirst().orElse(null);
+    PsiReference reference = Arrays.stream(step.getReferences()).filter(r -> r instanceof KarateStepReference).findFirst().orElse(null);
     return reference != null ? reference.resolve() : null;
   }
 
@@ -491,13 +491,13 @@ public final class CucumberUtil {
     return document.getLineNumber(textOffset) + 1;
   }
 
-  public static CucumberStepReference getCucumberStepReference(@Nullable PsiElement element) {
+  public static KarateStepReference getKarateStepReference(@Nullable PsiElement element) {
     if (element == null) {
       return null;
     }
     for (PsiReference ref : element.getReferences()) {
-      if (ref instanceof CucumberStepReference) {
-        return (CucumberStepReference) ref;
+      if (ref instanceof KarateStepReference) {
+        return (KarateStepReference) ref;
       }
     }
     return null;

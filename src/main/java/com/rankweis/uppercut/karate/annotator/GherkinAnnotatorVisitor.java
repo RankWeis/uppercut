@@ -33,7 +33,7 @@ import com.rankweis.uppercut.karate.psi.impl.GherkinTableHeaderRowImpl;
 import com.rankweis.uppercut.karate.psi.impl.GherkinTableImpl;
 import com.rankweis.uppercut.karate.psi.impl.GherkinTableNavigator;
 import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
-import com.rankweis.uppercut.karate.steps.reference.CucumberStepReference;
+import com.rankweis.uppercut.karate.steps.reference.KarateStepReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -83,7 +83,7 @@ public class GherkinAnnotatorVisitor extends GherkinElementVisitor {
 
   @Override
   public void visitStep(GherkinStep step) {
-    CucumberStepReference reference = CucumberUtil.getCucumberStepReference(step);
+    KarateStepReference reference = CucumberUtil.getKarateStepReference(step);
     if (reference == null) {
       return;
     }
@@ -139,7 +139,7 @@ public class GherkinAnnotatorVisitor extends GherkinElementVisitor {
     }
   }
 
-  private void highlightOutlineParams(@NotNull final GherkinStep step, @NotNull final CucumberStepReference reference) {
+  private void highlightOutlineParams(@NotNull final GherkinStep step, @NotNull final KarateStepReference reference) {
     final List<String> realSubstitutions = getRealSubstitutions(step);
     if (realSubstitutions != null && !realSubstitutions.isEmpty()) {
       // regexp for searching outline parameters substitutions
