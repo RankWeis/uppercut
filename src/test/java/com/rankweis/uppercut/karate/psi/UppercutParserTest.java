@@ -3,6 +3,7 @@ package com.rankweis.uppercut.karate.psi;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.ParsingTestCase;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
+import com.rankweis.uppercut.karate.parser.UppercutParserDefinition;
 import io.karatelabs.js.KarateJsNoPluginExtension;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

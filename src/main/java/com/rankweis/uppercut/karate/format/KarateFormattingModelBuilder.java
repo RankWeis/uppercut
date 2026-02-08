@@ -8,7 +8,6 @@ import com.intellij.formatting.SpacingBuilder;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.rankweis.uppercut.karate.psi.KarateLanguage;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
-import com.rankweis.uppercut.karate.psi.formatter.GherkinBlock;
 import org.jetbrains.annotations.NotNull;
 
 public class KarateFormattingModelBuilder implements FormattingModelBuilder {

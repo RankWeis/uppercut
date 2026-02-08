@@ -9,7 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import com.rankweis.uppercut.karate.psi.KarateDeclaration;
-import com.rankweis.uppercut.util.KarateUtil;
+import com.rankweis.uppercut.karate.util.KarateUtil;
 import java.util.List;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;

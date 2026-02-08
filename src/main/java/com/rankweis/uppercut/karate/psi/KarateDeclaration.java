@@ -10,7 +10,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import com.rankweis.uppercut.karate.psi.element.KarateNamedElement;
 import com.rankweis.uppercut.karate.psi.impl.GherkinPsiElementBase;
-import com.rankweis.uppercut.util.KarateUtil;
+import com.rankweis.uppercut.karate.util.KarateUtil;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
