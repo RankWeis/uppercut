@@ -9,7 +9,7 @@ import com.intellij.lang.PsiParser;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.rankweis.uppercut.karate.psi.KarateJsLanguage;
-import com.rankweis.uppercut.karate.psi.parser.KarateJsParserDefinition;
+import com.rankweis.uppercut.karate.parser.KarateJsParserDefinition;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;

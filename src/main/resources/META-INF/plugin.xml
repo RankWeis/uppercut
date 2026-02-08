@@ -20,7 +20,7 @@
       implementationClass="com.rankweis.uppercut.karate.psi.KarateJsFileType"
       fieldName="INSTANCE" language="KarateJs" extensions="featurejs"/>
     <lang.syntaxHighlighterFactory language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.GherkinSyntaxHighlighterFactory"/>
+      implementationClass="com.rankweis.uppercut.karate.highlight.GherkinSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="KarateJs"
       implementationClass="com.rankweis.uppercut.karate.highlight.KarateJsSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JSON"
@@ -38,32 +38,32 @@
       implementationClass="com.rankweis.uppercut.karate.extension.KarateInspectionTool" order="last"/>
 
     <lang.parserDefinition language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.UppercutParserDefinition"/>
+      implementationClass="com.rankweis.uppercut.karate.parser.UppercutParserDefinition"/>
     <lang.parserDefinition language="KarateJs"
-      implementationClass="com.rankweis.uppercut.karate.psi.parser.KarateJsParserDefinition"/>
+      implementationClass="com.rankweis.uppercut.karate.parser.KarateJsParserDefinition"/>
     <lang.commenter language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.GherkinCommenter"/>
+      implementationClass="com.rankweis.uppercut.karate.commenter.GherkinCommenter"/>
     <lang.psiStructureViewFactory language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.structure.GherkinStructureViewFactory"/>
+      implementationClass="com.rankweis.uppercut.karate.structure.GherkinStructureViewFactory"/>
     <lang.formatter language="Karate"
       implementationClass="com.rankweis.uppercut.karate.format.KarateFormattingModelBuilder"/>
     <lang.formatter language="KarateJs"
       implementationClass="com.rankweis.uppercut.karate.format.KarateJsFormattingModelBuilder"/>
     <annotator language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.annotator.GherkinAnnotator"/>
+      implementationClass="com.rankweis.uppercut.karate.annotator.GherkinAnnotator"/>
     <lang.foldingBuilder language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.GherkinFoldingBuilder"/>
+      implementationClass="com.rankweis.uppercut.karate.folding.GherkinFoldingBuilder"/>
     <langCodeStyleSettingsProvider
-      implementation="com.rankweis.uppercut.karate.psi.formatter.GherkinLanguageCodeStyleSettingsProvider"/>
+      implementation="com.rankweis.uppercut.karate.format.GherkinLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider
-      implementation="com.rankweis.uppercut.karate.psi.formatter.GherkinCodeStyleSettingsProvider"/>
+      implementation="com.rankweis.uppercut.karate.format.GherkinCodeStyleSettingsProvider"/>
 
     <lang.findUsagesProvider language="Karate"
-      implementationClass="com.rankweis.uppercut.karate.psi.UppercutFindUsagesProvider"/>
+      implementationClass="com.rankweis.uppercut.karate.navigation.UppercutFindUsagesProvider"/>
     <lang.refactoringSupport language="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.refactoring.KarateRefactorSupportProvider"/>
     <colorSettingsPage
-      implementation="com.rankweis.uppercut.karate.psi.GherkinColorsPage"/>
+      implementation="com.rankweis.uppercut.karate.highlight.GherkinColorsPage"/>
 
     <projectConfigurable
       parentId="tools"

@@ -3,7 +3,7 @@ package com.rankweis.uppercut.karate;
 import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.rankweis.uppercut.karate.psi.UppercutSyntaxHighlighter;
+import com.rankweis.uppercut.karate.highlight.UppercutSyntaxHighlighter;
 import com.rankweis.uppercut.karate.psi.PlainKarateKeywordProvider;
 import com.rankweis.uppercut.karate.psi.impl.GherkinFileImpl;
 import org.jetbrains.annotations.NotNull;

@@ -16,8 +16,8 @@ import com.intellij.lang.javascript.ecmascript6.parsing.jsx.JSXParser;
 import com.intellij.lang.javascript.highlighting.JSHighlighter;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
+import com.rankweis.uppercut.karate.format.KarateJavascriptFormat;
 import com.rankweis.uppercut.karate.lexer.KarateJavascriptParsingExtensionPoint;
-import com.rankweis.uppercut.karate.psi.formatter.KarateJavascriptFormat;
 import java.util.List;
 import java.util.function.Consumer;
 

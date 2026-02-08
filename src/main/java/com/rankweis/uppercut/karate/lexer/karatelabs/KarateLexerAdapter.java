@@ -3,7 +3,7 @@ package com.rankweis.uppercut.karate.lexer.karatelabs;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharSequenceReader;
-import com.rankweis.uppercut.parser.types.KarateJsElementType;
+import com.rankweis.uppercut.karate.parser.types.KarateJsElementType;
 import io.karatelabs.js.Lexer;
 import io.karatelabs.js.Token;
 import io.karatelabs.js.Type;
