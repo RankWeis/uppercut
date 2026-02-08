@@ -2,7 +2,6 @@ import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
-import org.jetbrains.intellij.platform.gradle.extensions.IntelliJPlatformDependenciesExtension
 import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 
 fun properties(key: String) = providers.gradleProperty(key)
@@ -51,18 +50,14 @@ val platformTestImplementation by configurations.getting {
 
 dependencies {
     intellijPlatform {
-        val version = properties("platformVersion")
+        intellijIdea(properties("platformVersion")) {
+            type = IntelliJPlatformType.IntellijIdeaUltimate
 
-        intellijIdeaUltimate(version)
-        // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
-        bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
-
-//        // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
-//        plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
-
-        jetbrainsRuntime()
-        testFramework(TestFrameworkType.Platform)
-        testFramework(TestFrameworkType.Starter)
+            bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
+            jetbrainsRuntime()
+            testFramework(TestFrameworkType.Platform)
+            testFramework(TestFrameworkType.Starter)
+        }
     }
 
     // Plugin Module
@@ -194,7 +189,7 @@ intellijPlatform {
     }
     pluginVerification {
         ides {
-            create(IntelliJPlatformType.IntellijIdeaUltimate, properties("platformVersion").get())
+            recommended()
         }
     }
 }
@@ -243,7 +238,7 @@ tasks {
 
     printProductsReleases {
         channels = listOf(ProductRelease.Channel.EAP)
-        types = listOf(IntelliJPlatformType.IntellijIdeaUltimate)
-        untilBuild = "251.*"
+        types = listOf(IntelliJPlatformType.IntellijIdea)
+        untilBuild = "261.*"
     }
 }

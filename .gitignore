@@ -8,4 +8,5 @@ target/
 .DS_STORE
 
 .intellijPlatform
+.idea-sandbox
 /out/
