@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.4.15] - 2026-02-08
+
 **Rewrote the Karate JavaScript parser from the ground up, fixing dozens of parsing issues.** Files that previously showed false syntax errors should now parse cleanly.
 **Enhanced lexer - your edits should feel a lot snappier and highlights should be instant!**
 
@@ -390,7 +392,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.14...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.15...HEAD
+[2.4.15]: https://github.com/rankweis/uppercut/compare/v2.4.12...v2.4.15
 [2.4.14]: https://github.com/rankweis/uppercut/compare/v2.4.13...v2.4.14
 [2.4.13]: https://github.com/rankweis/uppercut/compare/v2.4.12...v2.4.13
 [2.4.12]: https://github.com/rankweis/uppercut/compare/v2.4.11...v2.4.12
