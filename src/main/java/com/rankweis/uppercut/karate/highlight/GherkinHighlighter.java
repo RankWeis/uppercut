@@ -97,6 +97,9 @@ public final class GherkinHighlighter {
   public static final TextAttributesKey VARIABLE =
     TextAttributesKey.createTextAttributesKey("KARATE_VARIABLE", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
 
+  public static final TextAttributesKey OPERATOR =
+    TextAttributesKey.createTextAttributesKey("KARATE_OPERATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN);
+
   public static final TextAttributesKey PIPE = TextAttributesKey.createTextAttributesKey("GHERKIN_TABLE_PIPE", KEYWORD);
 
   private GherkinHighlighter() {

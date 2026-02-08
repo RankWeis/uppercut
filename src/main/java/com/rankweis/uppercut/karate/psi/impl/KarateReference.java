@@ -10,10 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.rankweis.uppercut.karate.psi.GherkinScenario;
 import com.rankweis.uppercut.karate.psi.GherkinStep;
 import com.rankweis.uppercut.karate.psi.KarateDeclaration;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.Collection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,39 +32,48 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
     PsiElement parent =
       PsiTreeUtil.findFirstParent(myElement, GherkinScenario.class::isInstance);
 
-    List<KarateDeclaration> declarationsInScenario = Arrays.stream(
-        Optional.ofNullable(PsiTreeUtil.getChildrenOfType(parent, GherkinStep.class))
-          .orElse(GherkinStep.EMPTY_ARRAY))
-      .flatMap(step -> {
-        KarateDeclaration[] childrenOfType = PsiTreeUtil.getChildrenOfType(step, KarateDeclaration.class);
-        return childrenOfType == null ? Stream.of() : Arrays.stream(childrenOfType);
-      }).filter(t -> t.getText().equals(key))
-      .toList();
-    if (!declarationsInScenario.isEmpty()) {
-      return new PsiElementResolveResult[]{new PsiElementResolveResult(declarationsInScenario.get(0))};
-    } else {
-      if (!myElement.isValid()) {
-        return new ResolveResult[0];
+    KarateDeclaration match = findDeclarationInSteps(
+      PsiTreeUtil.getChildrenOfType(parent, GherkinStep.class));
+    if (match != null) {
+      return new PsiElementResolveResult[]{new PsiElementResolveResult(match)};
+    }
+
+    if (!myElement.isValid()) {
+      return new ResolveResult[0];
+    }
+
+    Collection<GherkinScenario> scenarios =
+      PsiTreeUtil.findChildrenOfType(myElement.getContainingFile(), GherkinScenario.class);
+    for (GherkinScenario scenario : scenarios) {
+      if (!scenario.isBackground()) {
+        continue;
       }
-      List<KarateDeclaration> declarationsInBackground =
-        PsiTreeUtil.findChildrenOfType(myElement.getContainingFile(), GherkinScenario.class)
-          .stream()
-          .filter(GherkinScenario::isBackground)
-          .flatMap(step -> {
-            GherkinStep[] gherkinSteps = PsiTreeUtil.getChildrenOfType(step, GherkinStep.class);
-            return gherkinSteps != null ? Arrays.stream(gherkinSteps) : Stream.of();
-          })
-          .flatMap(step -> {
-            KarateDeclaration[] childrenOfType = PsiTreeUtil.getChildrenOfType(step, KarateDeclaration.class);
-            return childrenOfType == null ? Stream.of() : Arrays.stream(childrenOfType);
-          }).filter(t -> t.getText().equals(key))
-          .toList();
-      if (!declarationsInBackground.isEmpty()) {
-        return new PsiElementResolveResult[]{new PsiElementResolveResult(declarationsInBackground.get(0))};
+      match = findDeclarationInSteps(
+        PsiTreeUtil.getChildrenOfType(scenario, GherkinStep.class));
+      if (match != null) {
+        return new PsiElementResolveResult[]{new PsiElementResolveResult(match)};
       }
     }
 
     return new ResolveResult[0];
+  }
+
+  private @Nullable KarateDeclaration findDeclarationInSteps(GherkinStep @Nullable [] steps) {
+    if (steps == null) {
+      return null;
+    }
+    for (GherkinStep step : steps) {
+      KarateDeclaration[] decls = PsiTreeUtil.getChildrenOfType(step, KarateDeclaration.class);
+      if (decls == null) {
+        continue;
+      }
+      for (KarateDeclaration decl : decls) {
+        if (decl.getText().equals(key)) {
+          return decl;
+        }
+      }
+    }
+    return null;
   }
 
   @Override public @Nullable PsiElement resolve() {

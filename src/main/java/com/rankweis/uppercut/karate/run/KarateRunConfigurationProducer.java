@@ -163,7 +163,7 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     String relPath = getRelativePathFromModule(contextModule, path, name);
     configuration.setRelPath(relPath);
     PsiElement nextElement =
-      PsiUtilCore.getElementAtOffset(containingFile, psiElement.getTextOffset() + psiElement.getTextOffset() + 1);
+      PsiUtilCore.getElementAtOffset(containingFile, psiElement.getTextOffset() + psiElement.getTextLength() + 1);
     configuration.setTestDescription(nextElement.getText());
     if (preferredTest == PreferredTest.ALL_TAGS) {
       configuration.setName(configuration.getTag());

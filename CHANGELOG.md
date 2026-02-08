@@ -4,9 +4,8 @@
 
 ## [Unreleased]
 
-## [2.4.14] - 2026-02-08
-
 **Rewrote the Karate JavaScript parser from the ground up, fixing dozens of parsing issues.** Files that previously showed false syntax errors should now parse cleanly.
+**Enhanced lexer - your edits should feel a lot snappier and highlights should be instant!**
 
 ### Added
 
@@ -14,17 +13,12 @@
 
 ### Fixed
 
+- Fixed GherkinCodeStyleSettingsProvider deprecation warning by overriding getLanguage().
+- Updated platformVersion to 253.30387.90 (IntelliJ 2025.3.2).
 - Right-click "Run" now targets the specific scenario instead of the whole file.
 - Replaced JFlex JavaScript lexer with hand-written lexer supporting regex literals (e.g. `/-/g`).
 - Fixed parsing of function declarations inside docstrings.
 - Fixed false syntax errors in JsonPath expressions, XPath selectors, and array access patterns.
-
-## [2.4.13] - 2026-02-07
-
-### Fixed
-
-- Fixed GherkinCodeStyleSettingsProvider deprecation warning by overriding getLanguage().
-- Updated platformVersion to 253.30387.90 (IntelliJ 2025.3.2).
 
 ## [2.4.12] - 2025-12-15
 

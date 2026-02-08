@@ -7,6 +7,7 @@ import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
+import com.rankweis.uppercut.karate.MyBundle;
 import java.text.NumberFormat;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -51,7 +52,7 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
 
   @Override
   public @ConfigurableName String getDisplayName() {
-    return "Karate Settings";
+    return MyBundle.message("settings.configurable.name");
   }
 
   @Override

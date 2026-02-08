@@ -79,7 +79,7 @@ import org.jetbrains.annotations.VisibleForTesting;
  *   <li>Plain text fallback</li>
  * </ol>
  */
-public class UppercutLexer extends LexerBase {
+public class LegacyUppercutLexer extends LexerBase {
 
   protected CharSequence myBuffer = Strings.EMPTY_CHAR_SEQUENCE;
   protected int myStartOffset = 0;
@@ -126,17 +126,6 @@ public class UppercutLexer extends LexerBase {
   private static final Set<String> PLAIN_TEXT_KEYWORDS =
     Set.of("text", "csv", "yaml", "bytes", "doc");
 
-  // Pre-compiled patterns for regex checks in hot paths
-  private static final Pattern TRIVIAL_BRACE_CONTENT = Pattern.compile("[\\[{*\\d]*");
-  private static final Pattern SIMPLE_WORD_PATTERN = Pattern.compile("\\[?[\\w+.]*]?");
-  private static final Pattern BARE_INJECTABLE = Pattern.compile("#\\(\\S+\\)");
-  private static final Pattern QUOTED_INJECTABLE = Pattern.compile("\"#\\(\\S+\\)\"");
-  private static final Pattern XML_TAG_PATTERN = Pattern.compile("<[^<>]+>[^<]*");
-
-  // Pre-built "#keyword" strings for INJECTABLE_STRINGS to avoid concat in hot loop
-  private static final List<String> INJECTABLE_PREFIXED =
-    INJECTABLE_STRINGS.stream().map(s -> "#" + s).toList();
-
   private final GherkinKeywordProvider myKeywordProvider;
   // Tracks the most recent action keyword (e.g., "def", "match", "text") on the current step.
   // Used by injectPyString() to decide whether docstring content is plain text or code.
@@ -157,11 +146,11 @@ public class UppercutLexer extends LexerBase {
   Lexer jsonLexer = null;
   Lexer xmlLexer = null;
 
-  public UppercutLexer(GherkinKeywordProvider provider) {
+  public LegacyUppercutLexer(GherkinKeywordProvider provider) {
     this(provider, false);
   }
 
-  public UppercutLexer(GherkinKeywordProvider provider, boolean highlighting) {
+  public LegacyUppercutLexer(GherkinKeywordProvider provider, boolean highlighting) {
     myKeywordProvider = provider;
     boolean useInternalEngine = KarateSettingsState.getInstance().isUseKarateJavaScriptEngine();
     if (useInternalEngine) {
@@ -192,24 +181,16 @@ public class UppercutLexer extends LexerBase {
     myPosition = startOffset;
     myState = initialState;
 
-    // setup context — count pystring markers before start position to detect
-    // if we're resuming inside an unclosed pystring
+    // setup context
     if (myPosition != 0 && myState == STATE_DEFAULT) {
-      int pystringOccurrences = 0;
-      int lastPystringNewline = -1;
-      for (int i = 0; i <= myPosition - PYSTRING_MARKER.length(); i++) {
-        if (isStringAtPosition(PYSTRING_MARKER, i)) {
-          pystringOccurrences++;
-          // Track position of """\n for backtracking
-          if (i + PYSTRING_MARKER.length() < myPosition
-            && myBuffer.charAt(i + PYSTRING_MARKER.length()) == '\n') {
-            lastPystringNewline = i + PYSTRING_MARKER.length() + 1;
-          }
-          i += PYSTRING_MARKER.length() - 1; // skip past the marker
-        }
+      String prev = myBuffer.subSequence(0, myPosition).toString();
+      int pystringOccurrences = prev.split(PYSTRING_MARKER + "\n").length - 1;
+      if (prev.endsWith(PYSTRING_MARKER)) {
+        pystringOccurrences++;
       }
-      if (pystringOccurrences % 2 == 1 && lastPystringNewline >= 0) {
-        myPosition = lastPystringNewline;
+      if (pystringOccurrences % 2 == 1) {
+        // currently in pystring markers
+        myPosition = prev.lastIndexOf(PYSTRING_MARKER + "\n") + PYSTRING_MARKER.length() + 1;
         myState = STATE_INSIDE_PYSTRING;
       }
     }
@@ -291,12 +272,11 @@ public class UppercutLexer extends LexerBase {
   private boolean advanceIfJsJson(boolean preferJs) {
     char openingBrace = myBuffer.charAt(myPosition);
     char closingBrace = myBuffer.charAt(myPosition) == '{' ? '}' : ']';
-    List<String> braceTerminations = List.of(String.valueOf(openingBrace), String.valueOf(closingBrace));
     int pos = myPosition + 1;
     int closingBracesRequired = 1;
 
     while (pos < myEndOffset) {
-      int nextPos = isStringInterrupted(interruptions, braceTerminations, pos);
+      int nextPos = isStringInterrupted(interruptions, List.of("" + openingBrace, "" + closingBrace), pos);
       if (nextPos == -1 || nextPos >= myEndOffset) {
         return false;
       }
@@ -314,8 +294,8 @@ public class UppercutLexer extends LexerBase {
 
     // Reject trivial matches like "[0]" or "{*}" that are array access / wildcards, not JSON
     boolean isJsJson =
-      pos < myEndOffset && myBuffer.charAt(pos) == closingBrace
-        && !TRIVIAL_BRACE_CONTENT.matcher(myBuffer.subSequence(myPosition, pos)).matches();
+      pos < myEndOffset && myBuffer.charAt(pos) == closingBrace && !myBuffer.subSequence(myPosition, pos).toString()
+        .matches("[\\[{*\\d]*");
     if (isJsJson) {
       if (preferJs && jsLexer != null) {
         startInjectJs(myPosition, pos + 1);
@@ -363,7 +343,7 @@ public class UppercutLexer extends LexerBase {
     while (pos < myEndOffset && myBuffer.charAt(pos) == ' ') {
       pos++;
     }
-    return pos < myEndOffset ? myBuffer.charAt(pos) : ' ';
+    return myBuffer.charAt(pos);
   }
 
   private char prevNonSpace(int start, int pos) {
@@ -448,7 +428,7 @@ public class UppercutLexer extends LexerBase {
     if (myState == STATE_AFTER_OPERATOR) {
       if (c == '<') {
         Matcher matcher =
-          XML_TAG_PATTERN.matcher(myBuffer.subSequence(myPosition, getPositionOfNextLine()));
+          Pattern.compile("<[^<>]+>[^<]*").matcher(myBuffer.subSequence(myPosition, getPositionOfNextLine()));
         if (!matcher.matches()) {
           // Probably is attempting xml
           startInjectXml(myPosition, getPositionOfNextLine());
@@ -777,7 +757,7 @@ public class UppercutLexer extends LexerBase {
     }
     int startPos = myPosition;
     String strippedStr = myBuffer.subSequence(startPos, endPos).toString().strip();
-    if (!multiLine && SIMPLE_WORD_PATTERN.matcher(strippedStr).matches()) {
+    if (!multiLine && strippedStr.matches("\\[?[\\w+.]*]?")) {
       myCurrentToken = TEXT;
       myState = STATE_DEFAULT;
       advanceToNextLine();
@@ -890,8 +870,7 @@ public class UppercutLexer extends LexerBase {
       int nextMatchingClosingParen = findNextMatchingClosingParen();
       nextMatchingClosingParen = nextMatchingClosingParen == -1 ? myEndOffset : nextMatchingClosingParen;
       int closingBrace = Math.min(nextMatchingClosingParen + 1, myEndOffset);
-      if (closingBrace > 0 && BARE_INJECTABLE.matcher(
-        myBuffer.subSequence(myPosition, closingBrace).toString().trim()).matches()) {
+      if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim().matches("#\\(\\S+\\)")) {
         myCurrentToken = JSON_INJECTABLE;
         myPosition = closingBrace;
         while (jsonLexer.getTokenEnd() < closingBrace) {
@@ -905,8 +884,8 @@ public class UppercutLexer extends LexerBase {
       int nextMatchingClosingParen = findNextMatchingClosingParen();
       nextMatchingClosingParen = nextMatchingClosingParen == -1 ? myEndOffset : nextMatchingClosingParen;
       int closingBrace = Math.min(nextMatchingClosingParen + 2, myEndOffset - 1);
-      if (closingBrace > 0 && QUOTED_INJECTABLE.matcher(
-        myBuffer.subSequence(myPosition, closingBrace).toString().trim()).matches()) {
+      if (closingBrace > 0 && myBuffer.subSequence(myPosition, closingBrace).toString().trim()
+        .matches("\"#\\(\\S+\\)\"")) {
         myCurrentToken = JSON_INJECTABLE;
         myPosition = closingBrace;
         while (jsonLexer.getTokenEnd() < closingBrace) {
@@ -917,14 +896,10 @@ public class UppercutLexer extends LexerBase {
     }
     // Handle #keyword — schema markers like #null, #string, #regex, etc.
     if (isStringAtPosition("#")) {
-      int injectable = 0;
-      for (int i = 0; i < INJECTABLE_PREFIXED.size(); i++) {
-        String prefixed = INJECTABLE_PREFIXED.get(i);
-        if (isStringAtPosition(prefixed)) {
-          injectable = prefixed.length();
-          break;
-        }
-      }
+      int injectable = INJECTABLE_STRINGS.stream().filter(s -> isStringAtPosition("#" + s))
+        .map(s -> s.length() + 1)
+        .findFirst()
+        .orElse(0);
       if (injectable > 0) {
         myCurrentToken = JSON_INJECTABLE;
         myPosition += injectable;
@@ -937,13 +912,11 @@ public class UppercutLexer extends LexerBase {
     // Default: delegate to the JSON sub-lexer
     jsonLexer.advance();
     myCurrentToken = jsonLexer.getTokenType();
-    myState = INJECTING_JSON + jsonLexer.getState();
     myPosition = jsonLexer.getTokenEnd();
   }
 
   private void injectXml() {
     xmlLexer.advance();
-    myCurrentToken = xmlLexer.getTokenType();
     myState = INJECTING_XML + xmlLexer.getState();
     myPosition = xmlLexer.getTokenEnd();
   }
@@ -968,20 +941,15 @@ public class UppercutLexer extends LexerBase {
   }
 
   private boolean isStringAtPosition(String keyword) {
-    return isStringAtPosition(keyword, myPosition);
+    int length = keyword.length();
+    return myEndOffset - myPosition >= length && myBuffer.subSequence(myPosition, myPosition + length).toString()
+      .equals(keyword);
   }
 
   private boolean isStringAtPosition(String keyword, int position) {
     int length = keyword.length();
-    if (myEndOffset - position < length) {
-      return false;
-    }
-    for (int i = 0; i < length; i++) {
-      if (myBuffer.charAt(position + i) != keyword.charAt(i)) {
-        return false;
-      }
-    }
-    return true;
+    return myEndOffset - position >= length && myBuffer.subSequence(position, position + length).toString()
+      .equals(keyword);
   }
 
   /**
@@ -1008,26 +976,15 @@ public class UppercutLexer extends LexerBase {
   }
 
   /**
-   * Returns true if the character at the given position is an "interesting" token
-   * boundary that should stop text consumption — i.e., a character that needs
-   * special handling by advance().
-   */
-  private boolean isInterestingPosition(int pos) {
-    char c = myBuffer.charAt(pos);
-    return c == '\n' || c == '\'' || c == '"' || c == '#' || c == '{' || c == '['
-      || c == ' ' || c == '(' || c == ')' || isStringAtPosition("function", pos);
-  }
-
-  /**
-   * Advances myPosition past plain text content until hitting an interesting token
-   * boundary that needs special handling by advance().
+   * Advances myPosition past plain text content until hitting a character/string
+   * from {@link #INTERESTING_SYMBOLS} that needs special handling by advance().
    * Trailing whitespace is returned (not consumed) so it can be emitted as a
    * separate WHITE_SPACE token.
    */
   private void advanceToNextInterestingToken() {
     myPosition++;
     int mark = myPosition;
-    while (myPosition < myEndOffset && !isInterestingPosition(myPosition)) {
+    while (myPosition < myEndOffset && INTERESTING_SYMBOLS.stream().noneMatch(this::isStringAtPosition)) {
       myPosition++;
     }
     returnWhitespace(mark);
@@ -1036,8 +993,13 @@ public class UppercutLexer extends LexerBase {
 
   private String getStringUntilNextInterestingToken() {
     int mark = myPosition + 1;
-    while (mark < myEndOffset && !isInterestingPosition(mark)) {
-      mark++;
+    while (mark < myEndOffset) {
+      final int finalMark = mark;
+      if (INTERESTING_SYMBOLS.stream().noneMatch(s -> this.isStringAtPosition(s, finalMark))) {
+        mark++;
+      } else {
+        break;
+      }
     }
     return myBuffer.subSequence(myPosition, mark).toString();
   }
@@ -1151,10 +1113,11 @@ public class UppercutLexer extends LexerBase {
     int end = myStartPosition;
     while (end < myEndOffset) {
       end = getPositionOfNextNonWhitespace(end, true);
-      if (anyStringAtPosition(terminations, end)) {
+      int finalEnd = end;
+      if (terminations.stream().anyMatch(s -> isStringAtPosition(s, finalEnd))) {
         return end;
       }
-      if (anyStringAtPosition(interruptions, end)) {
+      if (interruptions.stream().anyMatch(s -> isStringAtPosition(s, finalEnd))) {
         if (isBeginningOfLine(end - 1)) {
           return -1;
         }
@@ -1162,15 +1125,6 @@ public class UppercutLexer extends LexerBase {
       end++;
     }
     return -1;
-  }
-
-  private boolean anyStringAtPosition(List<String> strings, int position) {
-    for (int i = 0; i < strings.size(); i++) {
-      if (isStringAtPosition(strings.get(i), position)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private int getPositionOfNextLine() {
