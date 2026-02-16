@@ -3,7 +3,7 @@
 junit = "4.13.2"
 junit5 = "6.0.2"
 mockito = "5.21.0"
-junitPlatform = "6.0.2"
+junitPlatform = "6.0.3"
 grammarkit = "2023.3.0.1"
 intellijStarter = "253.30387.90"
 
