@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed second (and subsequent) tags on the same line not being recognized as annotations (e.g. `@tag1 @tag2`). (#273)
+
 ## [2.4.15] - 2026-02-08
 
 **Rewrote the Karate JavaScript parser from the ground up, fixing dozens of parsing issues.** Files that previously showed false syntax errors should now parse cleanly.
