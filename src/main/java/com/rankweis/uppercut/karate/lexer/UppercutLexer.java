@@ -551,8 +551,8 @@ public class UppercutLexer extends LexerBase {
     } else if (c == ':' && myState != STATE_AFTER_STEP_KEYWORD) {
       myCurrentToken = KarateTokenTypes.COLON;
       myPosition++;
-    } else if (c == '@' && isAtLineStart()) {
-      // Tags (@tag) are only valid at the start of a line.
+    } else if (c == '@' && isValidTagPosition()) {
+      // Tags (@tag) are only valid at the start of a line or after another tag.
       // Without this check, '@' inside expressions like JsonPath $[?(@.field)]
       // would be consumed as a TAG token, eating subsequent characters.
       myCurrentToken = KarateTokenTypes.TAG;
@@ -985,22 +985,40 @@ public class UppercutLexer extends LexerBase {
   }
 
   /**
-   * Checks whether myPosition is at the start of a line (only whitespace between
-   * the current position and the previous newline or start of buffer).
-   * Used to guard tag recognition: '@' should only be a TAG at line start,
-   * not inside expressions like JsonPath {@code $[?(@.field)]}.
+   * Checks whether myPosition is a valid position for a tag. A tag is valid when
+   * only whitespace and other tags precede it on the current line. This allows
+   * multiple tags on the same line (e.g. {@code @tag1 @tag2}) while preventing
+   * '@' inside expressions like JsonPath {@code $[?(@.field)]} from being
+   * consumed as TAG tokens.
    */
-  private boolean isAtLineStart() {
-    for (int pos = myPosition - 1; pos >= 0; pos--) {
+  private boolean isValidTagPosition() {
+    int pos = myPosition - 1;
+    while (pos >= 0) {
       char ch = myBuffer.charAt(pos);
       if (ch == '\n') {
         return true;
       }
-      if (!Character.isWhitespace(ch)) {
+      if (Character.isWhitespace(ch)) {
+        pos--;
+        continue;
+      }
+      // Non-whitespace found — must be part of a preceding tag to be valid.
+      // Walk backwards past tag-name chars (letters, digits, hyphens, underscores),
+      // then check for '@'.
+      while (pos >= 0 && isTagNameChar(myBuffer.charAt(pos))) {
+        pos--;
+      }
+      if (pos < 0 || myBuffer.charAt(pos) != '@') {
         return false;
       }
+      // Found a valid preceding tag; continue scanning to verify the rest of the line.
+      pos--;
     }
     return true;
+  }
+
+  private static boolean isTagNameChar(char c) {
+    return Character.isLetterOrDigit(c) || c == '-' || c == '_';
   }
 
   private static boolean isValidTagChar(char c) {
