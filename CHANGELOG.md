@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.4.16] - 2026-02-27
+
 ### Fixed
 
 - Fixed second (and subsequent) tags on the same line not being recognized as annotations (e.g. `@tag1 @tag2`). (#273)
@@ -396,7 +398,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.15...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.16...HEAD
+[2.4.16]: https://github.com/rankweis/uppercut/compare/v2.4.15...v2.4.16
 [2.4.15]: https://github.com/rankweis/uppercut/compare/v2.4.12...v2.4.15
 [2.4.14]: https://github.com/rankweis/uppercut/compare/v2.4.13...v2.4.14
 [2.4.13]: https://github.com/rankweis/uppercut/compare/v2.4.12...v2.4.13
