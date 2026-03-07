@@ -52,12 +52,12 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
   private final Map<String, LinkedList<KarateItem>> threadToScenarioStack = new HashMap<>();
   private final Map<Integer, KarateItem> idToItem = new HashMap<>();
   private String currentThreadGroup = "main";
-  public static final String UPPERCUT_LOG = "^<<UPPERCUT>>";
+  private static final String UPPERCUT_PREFIX = "<<UPPERCUT>>";
   public static final Pattern UPPERCUT_LOG_PATTERN =
-    Pattern.compile(UPPERCUT_LOG + "\\[([^]]+)] ([\\d:.,]+) (\\w+) ?(.*)\n?");
+    Pattern.compile("^\\[([^]]+)] ([\\d:.,]+) (\\w+) ?(.*)\n?");
   public static final Pattern SCENARIO_NAME =
-    Pattern.compile(UPPERCUT_LOG
-      + "\\[([^]]*)].* Scenario name: (.*), featureFileName: (.*), id (\\d+), featureId (\\d+), (.*) <<UPPERCUT>>\n?$");
+    Pattern.compile(
+      "^\\[([^]]*)].* Scenario name: (.*), featureFileName: (.*), id (\\d+), featureId (\\d+), (.*) <<UPPERCUT>>\n?$");
   public static final Pattern FEATURE_FILE_NAME =
     Pattern.compile(".*KarateTestRunner - FeatureFileName: ([^,]*), id: (\\d+), (.*) <<UPPERCUT>>\n?");
   private static final Pattern FEATURE_LINE_PATTERN = Pattern.compile("feature: \\S+\n?");
@@ -80,6 +80,9 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
 
   @Override public void process(String text, Key outputType) {
     if (text != null) {
+      if (text.startsWith(UPPERCUT_PREFIX)) {
+        text = text.substring(UPPERCUT_PREFIX.length());
+      }
       Matcher matcher = UPPERCUT_LOG_PATTERN.matcher(text);
       if (matcher.matches()) {
         String logLevel = matcher.group(3);
@@ -98,8 +101,8 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
   private boolean process(String text) {
     LinkedList<KarateItem> karateItems =
       threadToScenarioStack.computeIfAbsent(currentThreadGroup, k -> new LinkedList<>());
-    if (text.startsWith("<<UPPERCUT>>") || text.strip().endsWith("<<UPPERCUT>>")) {
-      // Safety guard, should never hit this.
+    if (text.strip().endsWith("<<UPPERCUT>>")) {
+      // Safety guard: consume structural messages that shouldn't be shown to user.
       return true;
     }
     if (!karateItems.isEmpty()) {
@@ -154,7 +157,11 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     if (featureStartEnd(text) || scenarioStartEnd(text)) {
       return true;
     }
-    // Always consume anything with <<UPPERCUT>> so it will never be shown to user.
+    // Strip the UPPERCUT prefix and forward the log message content to scenario output.
+    String content = matcher.group(4);
+    if (content != null && !content.isEmpty()) {
+      return process(content + "\n");
+    }
     return true;
   }
 

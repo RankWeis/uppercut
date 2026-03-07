@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
 import com.intuit.karate.core.FeatureRuntime;
 import com.intuit.karate.core.ScenarioCall;
@@ -223,15 +222,15 @@ public class KarateTestRunner {
     outputStreamAppender.setName("KarateAppender");
     outputStreamAppender.setEncoder(encoder);
     outputStreamAppender.start();
-    List<Appender<ILoggingEvent>> appenders = new ArrayList<>();
-
     Logger intuitLogger = context.getLogger(Logger.ROOT_LOGGER_NAME);
+    List<ConsoleAppender<ILoggingEvent>> consoleAppenders = new ArrayList<>();
     intuitLogger.iteratorForAppenders().forEachRemaining(appender -> {
-      appenders.add(appender);
-      intuitLogger.detachAppender(appender);
+      if (appender instanceof ConsoleAppender) {
+        consoleAppenders.add((ConsoleAppender<ILoggingEvent>) appender);
+      }
     });
+    consoleAppenders.forEach(intuitLogger::detachAppender);
     intuitLogger.addAppender(outputStreamAppender);
-    appenders.forEach(intuitLogger::addAppender);
   }
 
 }
