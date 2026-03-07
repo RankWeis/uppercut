@@ -5,7 +5,8 @@ import static com.intellij.codeInspection.SuppressionUtil.COMMON_SUPPRESS_REGEXP
 
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,7 +32,8 @@ public final class GherkinSuppressionUtil {
   }
 
   public static boolean isSuppressedFor(@NotNull final PsiElement element, @NotNull final String toolId) {
-    return ReadAction.compute(() -> getSuppressedIn(element, toolId) != null).booleanValue();
+    return ApplicationManager.getApplication()
+      .runReadAction((Computable<Boolean>) () -> getSuppressedIn(element, toolId) != null);
   }
 
   @Nullable

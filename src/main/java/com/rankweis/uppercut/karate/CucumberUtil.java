@@ -5,10 +5,11 @@ import com.rankweis.uppercut.karate.steps.AbstractStepDefinition;
 import com.rankweis.uppercut.karate.steps.search.CucumberStepSearchUtil;
 import com.rankweis.uppercut.karate.psi.GherkinStep;
 import com.rankweis.uppercut.karate.steps.reference.KarateStepReference;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -127,7 +128,8 @@ public final class CucumberUtil {
       return true;
     }
 
-    final SearchScope searchScope = ReadAction.compute(() -> CucumberStepSearchUtil.restrictScopeToGherkinFiles(effectiveSearchScope));
+    final SearchScope searchScope = ApplicationManager.getApplication()
+      .runReadAction((Computable<SearchScope>) () -> CucumberStepSearchUtil.restrictScopeToGherkinFiles(effectiveSearchScope));
 
 
     final short context = (short)(UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_CODE);

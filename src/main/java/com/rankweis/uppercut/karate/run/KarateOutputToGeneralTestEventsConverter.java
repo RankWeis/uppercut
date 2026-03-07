@@ -8,10 +8,11 @@ import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -273,8 +274,8 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
         })
         .map(root -> VfsUtil.findRelativeFile(featureName, root)).filter(Objects::nonNull).findFirst()
         .ifPresent(file -> {
-          int lineNumber = ReadAction.compute(
-            () -> {
+          int lineNumber = ApplicationManager.getApplication()
+            .runReadAction((Computable<Integer>) () -> {
               PsiFile psiFile = PsiManager.getInstance(testConsoleProperties.getProject()).findFile(file);
               if (psiFile == null) {
                 return -1;

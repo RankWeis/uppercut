@@ -4,13 +4,15 @@
 
 ## [Unreleased]
 
-## [2.4.17] - 2026-03-07
+## [2.5.0] - 2026-03-07
 
 ### Fixed
 
 - Fixed run configurations using the project root as working directory instead of the module root in multi-module projects, causing Karate `file:` reads to fail. (#284)
 - Fixed gutter-button-generated run configurations ignoring the Run Configuration template's working directory setting. (#284)
 - Fixed HTTP request/response logs appearing duplicated in the Test Result tree when using DEBUG-level logging. (#276)
+- Replaced deprecated `ReadAction.compute(ThrowableComputable)` calls with `ApplicationManager.runReadAction(Computable)` for IntelliJ 2026.1 compatibility.
+- Removed deprecated `PositionManager.getAcceptedFileTypes()` override in `KaratePositionManager`.
 
 ## [2.4.16] - 2026-02-27
 
