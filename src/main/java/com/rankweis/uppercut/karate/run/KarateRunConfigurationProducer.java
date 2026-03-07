@@ -7,7 +7,6 @@ import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Ref;
@@ -25,7 +24,6 @@ import com.rankweis.uppercut.karate.psi.GherkinStepsHolder;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.rankweis.uppercut.karate.run.KarateRunConfiguration.PreferredTest;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
@@ -101,12 +99,18 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
   protected boolean setupConfigurationFromContext(@NotNull KarateRunConfiguration configuration,
     @NotNull ConfigurationContext context,
     @NotNull Ref<PsiElement> sourceElement) {
-    String baseDir = FileUtil.toSystemIndependentName(StringUtil.notNullize(context.getProject().getBasePath()));
     final PsiElement location = context.getPsiLocation();
-    configuration.setWorkingDirectory(baseDir);
     Module contextModule = context.getModule();
     if (contextModule != null) {
       configuration.setModule(contextModule);
+    }
+    String moduleDir = getModuleContentRoot(contextModule);
+    if (moduleDir != null) {
+      configuration.setWorkingDirectory(moduleDir);
+    } else {
+      String baseDir = FileUtil.toSystemIndependentName(
+        StringUtil.notNullize(context.getProject().getBasePath()));
+      configuration.setWorkingDirectory(baseDir);
     }
     Optional<VirtualFile> virtualFile =
       Optional.of(context).map(ConfigurationContext::getLocation).map(Location::getVirtualFile);
@@ -136,10 +140,10 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     IElementType elementType = PsiUtilCore.getElementType(psiElement);
     if (elementType == KarateTokenTypes.TAG) {
       preferredTest = PreferredTest.ALL_TAGS;
-      Arrays.stream(ModuleManager.getInstance(context.getProject()).getModules())
-        .flatMap(m -> Arrays.stream(ModuleRootManager.getInstance(m).getSourceRoots()))
-        .map(root -> (path != null && path.contains(root.getPath())) ? root : null).filter(Objects::nonNull).findFirst()
-        .ifPresent(vf -> configuration.setWorkingDirectory(vf.getPath()));
+      String tagModuleDir = getModuleContentRoot(contextModule);
+      if (tagModuleDir != null) {
+        configuration.setWorkingDirectory(tagModuleDir);
+      }
       configuration.setTag(psiElement.getText());
     } else {
       GherkinStepsHolder holder;
@@ -188,6 +192,17 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     configuration.setPreferredTest(PreferredTest.ALL_IN_FOLDER);
     configuration.setName("Karate tests in '" + dir.getName() + "'");
     return true;
+  }
+
+  private static @Nullable String getModuleContentRoot(@Nullable Module module) {
+    if (module == null) {
+      return null;
+    }
+    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    if (contentRoots.length > 0) {
+      return FileUtil.toSystemIndependentName(contentRoots[0].getPath());
+    }
+    return null;
   }
 
   private static String getRelativePathFromModule(Module contextModule, String path, String name) {
