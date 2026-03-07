@@ -10,3 +10,4 @@ target/
 .intellijPlatform
 .idea-sandbox
 /out/
+/.claude/settings.local.json
