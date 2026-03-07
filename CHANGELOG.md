@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.4.17] - 2026-03-07
+
 ### Fixed
 
 - Fixed run configurations using the project root as working directory instead of the module root in multi-module projects, causing Karate `file:` reads to fail. (#284)
@@ -404,7 +406,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.16...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.17...HEAD
+[2.4.17]: https://github.com/rankweis/uppercut/compare/v2.4.16...v2.4.17
 [2.4.16]: https://github.com/rankweis/uppercut/compare/v2.4.15...v2.4.16
 [2.4.15]: https://github.com/rankweis/uppercut/compare/v2.4.12...v2.4.15
 [2.4.14]: https://github.com/rankweis/uppercut/compare/v2.4.13...v2.4.14
