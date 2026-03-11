@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Disabled experimental Karate debug/breakpoint support to fix interference with JUnit/Java breakpoints. (#288)
+
 ## [2.5.0] - 2026-03-07
 
 ### Fixed
