@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-03-11
+
 ### Fixed
 
 - Disabled experimental Karate debug/breakpoint support to fix interference with JUnit/Java breakpoints. (#288)
@@ -412,7 +414,9 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.17...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.5.1...HEAD
+[2.5.1]: https://github.com/rankweis/uppercut/compare/v2.5.0...v2.5.1
+[2.5.0]: https://github.com/rankweis/uppercut/compare/v2.4.16...v2.5.0
 [2.4.17]: https://github.com/rankweis/uppercut/compare/v2.4.16...v2.4.17
 [2.4.16]: https://github.com/rankweis/uppercut/compare/v2.4.15...v2.4.16
 [2.4.15]: https://github.com/rankweis/uppercut/compare/v2.4.12...v2.4.15
