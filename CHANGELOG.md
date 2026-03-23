@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.5.2] - 2026-03-23
+
 ### Fixed
 
 - Debugging no longer blocks java files.
@@ -419,7 +421,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.5.1...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.5.2...HEAD
+[2.5.2]: https://github.com/rankweis/uppercut/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/rankweis/uppercut/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/rankweis/uppercut/compare/v2.4.16...v2.5.0
 [2.4.17]: https://github.com/rankweis/uppercut/compare/v2.4.16...v2.4.17
