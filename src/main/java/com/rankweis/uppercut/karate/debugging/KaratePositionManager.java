@@ -12,8 +12,10 @@ import com.intellij.debugger.engine.PositionManagerImpl.JavaSourcePosition;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
+import com.rankweis.uppercut.karate.psi.GherkinFileType;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
@@ -233,4 +235,8 @@ public class KaratePositionManager implements PositionManager {
     return classPrepareRequest1;
   }
 
+  @Override
+  public @Nullable Set<? extends FileType> getAcceptedFileTypes() {
+    return Set.of(GherkinFileType.INSTANCE);
+  }
 }
