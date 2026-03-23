@@ -5,7 +5,6 @@ junit5 = "6.0.3"
 mockito = "5.23.0"
 junitPlatform = "6.0.3"
 grammarkit = "2023.3.0.3"
-intellijStarter = "253.30387.90"
 
 # plugins
 changelog = "2.5.0"
@@ -21,13 +20,10 @@ junit5engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", ver
 junitJupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit5" }
 junitPlatformLauncher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitPlatform" }
 mockito = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
-metricsSquashed = { group = "com.jetbrains.intellij.tools", name = "ide-metrics-collector-starter-squashed", version.ref = "intellijStarter" }
-metricsCollector = { group = "com.jetbrains.intellij.tools", name = "ide-metrics-collector", version.ref = "intellijStarter" }
 
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
 gradleIntelliJPlugin = { id = "org.jetbrains.intellij.platform", version.ref = "gradleIntelliJPlugin" }
-gradleIntelliJModulePlugin = { id = "org.jetbrains.intellij.platform.modules", version.ref = "gradleIntelliJPlugin" }
 qodana = { id = "org.jetbrains.qodana", version.ref = "qodana" }
 lombok = { id = "io.freefair.lombok", version.ref = "lombok" }
 grammarkit = { id = "org.jetbrains.grammarkit", version.ref = "grammarkit" }
