@@ -12,10 +12,9 @@ plugins {
     alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
     alias(libs.plugins.grammarkit)
     alias(libs.plugins.lombok)
-    alias(libs.plugins.kotlin) // Kotlin support
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
     alias(libs.plugins.qodana) // Gradle Qodana Plugin
-    alias(libs.plugins.kover) // Gradle Kover Plugin
+    jacoco
     checkstyle
 }
 
@@ -26,22 +25,12 @@ checkstyle {
 // Configure project's dependencies
 repositories {
     mavenCentral()
-    maven("https://www.jetbrains.com/intellij-repository/releases")
-    maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
-    maven("https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/")
-    maven("https://download.jetbrains.com/teamcity-repository")
     intellijPlatform {
         defaultRepositories()
     }
 }
 
 configure<SourceSetContainer> {
-    named("main") {
-        java.srcDir("src/main/kotlin")
-    }
-    named("test") {
-        java.srcDir("src/test/kotlin")
-    }
     create("integrationTest") {
         compileClasspath += sourceSets.main.get().output
         runtimeClasspath += sourceSets.main.get().output
@@ -61,17 +50,13 @@ val platformTestImplementation by configurations.getting {
 
 dependencies {
     intellijPlatform {
-        val version = properties("platformVersion")
-
-        intellijIdeaUltimate(version, useInstaller = false)
-        // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
+        intellijIdea(properties("platformVersion")) {
+            type = IntelliJPlatformType.IntellijIdeaUltimate
+        }
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
-
-        // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
-        plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
-
         jetbrainsRuntime()
         testFramework(TestFrameworkType.Platform)
+        testFramework(TestFrameworkType.Starter)
     }
 
     // Plugin Module
@@ -89,26 +74,14 @@ dependencies {
     testImplementation(libs.junit) // JUnit 4 support
     testImplementation("org.junit.vintage:junit-vintage-engine") // JUnit 4 compatibility engine for JUnit 5
 
-    // --- IntelliJ Testing Tools (IDE Starter + Driver) ---
-    integrationTestImplementation(libs.starterSquashed)
-    integrationTestImplementation(libs.starterJunit5)
-    integrationTestImplementation(libs.starterDriver)
-    integrationTestImplementation(libs.driverClient)
-    integrationTestImplementation(libs.driverSdk)
-    integrationTestImplementation(libs.driverModel)
+    // --- Metrics (used by performance tests) ---
     integrationTestImplementation(libs.metricsSquashed)
     integrationTestImplementation(libs.metricsCollector)
-    integrationTestImplementation(libs.ijPerformance)
-    integrationTestImplementation(libs.ijCommon)
 
-    // --- Mocking and Coroutines Testing ---
+    // --- Mocking ---
     testImplementation(libs.mockito) // Mockito for mocking in tests
     integrationTestImplementation(libs.junitJupiter)
-    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2") // Kotlin Coroutines testing library
-    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2") // Kotlin Coroutines testing library
-    integrationTestImplementation(libs.kodein)
 
-//    integrationTestImplementation("com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-EAP-SNAPSHOT")
     implementation("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") {
         isTransitive = false
     }
@@ -127,6 +100,10 @@ val integrationTests = tasks.register<Test>("integrationTest") {
         includeEngines("junit-jupiter")
     }
     dependsOn(tasks.prepareSandbox)
+}
+
+tasks.test {
+    systemProperty("idea.home.path", intellijPlatform.platformPath.toString())
 }
 
 tasks.register<Test>("platformTest") {
@@ -152,11 +129,9 @@ abstract class InstrumentedJarsRule : AttributeCompatibilityRule<LibraryElements
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
-}
-
-// Set the JVM language level used to build the project.
-kotlin {
-    jvmToolchain(21)
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
@@ -213,16 +188,7 @@ intellijPlatform {
     }
     pluginVerification {
         ides {
-            ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("platformVersion").get(), useInstaller = false)
-        }
-    }
-}
-
-grammarKit {
-    tasks {
-        generateLexer {
-            sourceFile.set(file("src/main/java/io/karatelabs/js/js.jflex"))
-            targetOutputDir.set(file("src/main/java/io/karatelabs/js"))
+            recommended()
         }
     }
 }
@@ -237,15 +203,14 @@ changelog {
     repositoryUrl = properties("pluginRepositoryUrl")
 }
 
-// Configure Gradle Kover Plugin - read more: https://github.com/Kotlin/kotlinx-kover#configuration
-kover {
+tasks.jacocoTestReport {
     reports {
-        total {
-            xml {
-                onCheck = true
-            }
-        }
+        xml.required = true
     }
+}
+
+tasks.check {
+    dependsOn(tasks.jacocoTestReport)
 }
 
 idea {
@@ -272,7 +237,7 @@ tasks {
 
     printProductsReleases {
         channels = listOf(ProductRelease.Channel.EAP)
-        types = listOf(IntelliJPlatformType.IntellijIdeaUltimate)
-        untilBuild = "251.*"
+        types = listOf(IntelliJPlatformType.IntellijIdea)
+        untilBuild = "261.*"
     }
 }

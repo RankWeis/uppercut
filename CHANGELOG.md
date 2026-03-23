@@ -4,6 +4,49 @@
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-03-11
+
+### Fixed
+
+- Disabled experimental Karate debug/breakpoint support to fix interference with JUnit/Java breakpoints. (#288)
+
+## [2.5.0] - 2026-03-07
+
+### Fixed
+
+- Fixed run configurations using the project root as working directory instead of the module root in multi-module projects, causing Karate `file:` reads to fail. (#284)
+- Fixed gutter-button-generated run configurations ignoring the Run Configuration template's working directory setting. (#284)
+- Fixed HTTP request/response logs appearing duplicated in the Test Result tree when using DEBUG-level logging. (#276)
+- Replaced deprecated `ReadAction.compute(ThrowableComputable)` calls with `ApplicationManager.runReadAction(Computable)` for IntelliJ 2026.1 compatibility.
+- Removed deprecated `PositionManager.getAcceptedFileTypes()` override in `KaratePositionManager`.
+
+## [2.4.16] - 2026-02-27
+
+### Fixed
+
+- Fixed second (and subsequent) tags on the same line not being recognized as annotations (e.g. `@tag1 @tag2`). (#273)
+
+## [2.4.15] - 2026-02-08
+
+**Rewrote the Karate JavaScript parser from the ground up, fixing dozens of parsing issues.** Files that previously showed false syntax errors should now parse cleanly.
+**Enhanced lexer - your edits should feel a lot snappier and highlights should be instant!**
+
+### Added
+
+- Experimental breakpoint support: breakpoints can now be set in Karate feature files, but execution does not yet pause on them. (Thanks @Telsho!)
+
+### Fixed
+
+- Fixed Go-to-Symbol (Ctrl+Alt+Shift+N) not finding Karate variable declarations.
+- Fixed GherkinCodeStyleSettingsProvider deprecation warning by overriding getLanguage().
+- Updated platformVersion to 253.30387.90 (IntelliJ 2025.3.2).
+- Right-click "Run" now targets the specific scenario instead of the whole file.
+- Replaced JFlex JavaScript lexer with hand-written lexer supporting regex literals (e.g. `/-/g`).
+- Fixed parsing of function declarations inside docstrings.
+- Fixed false syntax errors in JsonPath expressions, XPath selectors, and array access patterns.
+
+## [2.4.12] - 2025-12-15
+
 ### Modified
 
 - 2025.* support
@@ -371,7 +414,15 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.4.11...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.5.1...HEAD
+[2.5.1]: https://github.com/rankweis/uppercut/compare/v2.5.0...v2.5.1
+[2.5.0]: https://github.com/rankweis/uppercut/compare/v2.4.16...v2.5.0
+[2.4.17]: https://github.com/rankweis/uppercut/compare/v2.4.16...v2.4.17
+[2.4.16]: https://github.com/rankweis/uppercut/compare/v2.4.15...v2.4.16
+[2.4.15]: https://github.com/rankweis/uppercut/compare/v2.4.12...v2.4.15
+[2.4.14]: https://github.com/rankweis/uppercut/compare/v2.4.13...v2.4.14
+[2.4.13]: https://github.com/rankweis/uppercut/compare/v2.4.12...v2.4.13
+[2.4.12]: https://github.com/rankweis/uppercut/compare/v2.4.11...v2.4.12
 [2.4.11]: https://github.com/rankweis/uppercut/compare/v2.4.10...v2.4.11
 [2.4.10]: https://github.com/rankweis/uppercut/compare/v2.4.9...v2.4.10
 [2.4.9]: https://github.com/rankweis/uppercut/compare/v2.4.8...v2.4.9
