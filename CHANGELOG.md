@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed ternary operator expressions (`condition ? a : b`) being flagged as "Unexpected element" in feature files. (#295)
+
 ## [2.5.1] - 2026-03-11
 
 ### Fixed

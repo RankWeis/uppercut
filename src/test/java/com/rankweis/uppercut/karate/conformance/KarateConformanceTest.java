@@ -1,5 +1,7 @@
 package com.rankweis.uppercut.karate.conformance;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
@@ -173,6 +175,37 @@ public class KarateConformanceTest extends BasePlatformTestCase {
     if (!failures.isEmpty()) {
       fail(String.format(
         "JS parser errors in %d block(s):%n%s",
+        failures.size(), String.join("\n", failures)));
+    }
+  }
+
+  public void testAnnotationConformance() throws IOException {
+    File[] featureFiles = getConformanceFiles();
+    List<String> failures = new ArrayList<>();
+    int passed = 0;
+
+    for (File file : featureFiles) {
+      String content = Files.readString(file.toPath());
+      myFixture.configureByText(file.getName(), content);
+      List<HighlightInfo> errors = myFixture.doHighlighting(HighlightSeverity.ERROR);
+      if (errors.isEmpty()) {
+        passed++;
+      }
+      for (HighlightInfo error : errors) {
+        int offset = error.getStartOffset();
+        String context = getSurroundingContext(content, offset);
+        failures.add(String.format(
+          "  %s: \"%s\" at offset %d: ...%s...",
+          file.getName(), error.getDescription(), offset, context));
+      }
+    }
+
+    System.out.printf("Annotation conformance: %d passed, %d with errors%n",
+      passed, failures.size());
+
+    if (!failures.isEmpty()) {
+      fail(String.format(
+        "Annotation errors in %d location(s):%n%s",
         failures.size(), String.join("\n", failures)));
     }
   }

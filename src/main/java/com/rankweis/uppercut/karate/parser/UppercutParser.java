@@ -278,6 +278,7 @@ public class UppercutParser implements PsiParser {
       || type == KarateTokenTypes.STEP_PARAMETER_BRACE
       || type == KarateTokenTypes.STEP_PARAMETER_TEXT
       || type == KarateTokenTypes.ACTION_KEYWORD
+      || type == KarateTokenTypes.COLON
       || type == DECLARATION
       || type == VARIABLE
       || type == SINGLE_QUOTED_STRING

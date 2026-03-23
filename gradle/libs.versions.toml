@@ -9,7 +9,7 @@ intellijStarter = "253.30387.90"
 
 # plugins
 changelog = "2.5.0"
-gradleIntelliJPlugin = "2.10.5"
+gradleIntelliJPlugin = "2.13.1"
 qodana = "2025.3.1"
 lombok = "9.2.0"
 
