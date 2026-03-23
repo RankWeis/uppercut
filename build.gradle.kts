@@ -74,10 +74,6 @@ dependencies {
     testImplementation(libs.junit) // JUnit 4 support
     testImplementation("org.junit.vintage:junit-vintage-engine") // JUnit 4 compatibility engine for JUnit 5
 
-    // --- Metrics (used by performance tests) ---
-    integrationTestImplementation(libs.metricsSquashed)
-    integrationTestImplementation(libs.metricsCollector)
-
     // --- Mocking ---
     testImplementation(libs.mockito) // Mockito for mocking in tests
     integrationTestImplementation(libs.junitJupiter)
