@@ -8,7 +8,7 @@ grammarkit = "2023.3.0.3"
 
 # plugins
 changelog = "2.5.0"
-gradleIntelliJPlugin = "2.14.0"
+gradleIntelliJPlugin = "2.15.0"
 qodana = "2025.3.2"
 lombok = "9.2.0"
 
