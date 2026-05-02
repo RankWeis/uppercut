@@ -10,7 +10,7 @@ grammarkit = "2023.3.0.3"
 changelog = "2.5.0"
 gradleIntelliJPlugin = "2.14.0"
 qodana = "2026.1.0"
-lombok = "9.2.0"
+lombok = "9.5.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
