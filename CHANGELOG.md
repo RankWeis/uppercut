@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Security vulnerabilities and library updates.
+
 ## [2.5.2] - 2026-03-23
 
 ### Fixed
