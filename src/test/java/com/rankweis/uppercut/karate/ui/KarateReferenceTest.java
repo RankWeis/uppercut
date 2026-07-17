@@ -1,5 +1,6 @@
 package com.rankweis.uppercut.karate.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,6 +19,13 @@ public class KarateReferenceTest extends BasePlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    if (!ApplicationManager.getApplication().getExtensionArea()
+        .hasExtensionPoint(KarateJavascriptParsingExtensionPoint.EP_NAME.getName())) {
+      ApplicationManager.getApplication().getExtensionArea().registerExtensionPoint(
+        KarateJavascriptParsingExtensionPoint.EP_NAME.getName(),
+        KarateJavascriptParsingExtensionPoint.class.getName(),
+        com.intellij.openapi.extensions.ExtensionPoint.Kind.INTERFACE, false);
+    }
     ExtensionTestUtil.maskExtensions(KarateJavascriptParsingExtensionPoint.EP_NAME,
       List.of(new KarateJsNoPluginExtension()), getTestRootDisposable());
   }

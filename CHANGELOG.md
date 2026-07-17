@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- Support for IntelliJ IDEA 2026.2 (build 262.*)
+
+### Modified
+
+- Updated IntelliJ Platform Gradle Plugin from 2.16.0 to 2.18.1
+- Updated Java toolchain from 21 to 25 (required by IntelliJ 2026.2)
+- Replaced `org.apache.commons.collections.CollectionUtils` usage with standard Java equivalents
+
 ### Fixed
 
 - Security vulnerabilities and library updates.

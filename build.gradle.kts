@@ -123,10 +123,10 @@ abstract class InstrumentedJarsRule : AttributeCompatibilityRule<LibraryElements
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -234,6 +234,6 @@ tasks {
     printProductsReleases {
         channels = listOf(ProductRelease.Channel.EAP)
         types = listOf(IntelliJPlatformType.IntellijIdea)
-        untilBuild = "261.*"
+        untilBuild = "262.*"
     }
 }

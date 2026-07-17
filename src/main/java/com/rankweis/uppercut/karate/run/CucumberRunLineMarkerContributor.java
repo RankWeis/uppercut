@@ -20,8 +20,8 @@ import com.rankweis.uppercut.karate.psi.GherkinFile;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import org.apache.commons.collections.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +59,7 @@ public final class CucumberRunLineMarkerContributor extends RunLineMarkerContrib
       actions.addAll(Arrays.stream(ExecutorAction.getActions(0))
         .map(action -> new ElementSpecificAction(action, element.getText())).toList());
     } else {
-      CollectionUtils.addAll(actions, ExecutorAction.getActions());
+      Collections.addAll(actions, ExecutorAction.getActions());
     }
     boolean isClass = type == KarateTokenTypes.FEATURE_KEYWORD || type == KarateTokenTypes.TAG;
     return new Info(getTestStateIcon(state, isClass), actions.toArray(AnAction[]::new), RUN_TEST_TOOLTIP_PROVIDER);

@@ -1,7 +1,11 @@
 package com.rankweis.uppercut.karate.lexer;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
+import io.karatelabs.js.KarateJsNoPluginExtension;
+import java.util.List;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -41,6 +45,15 @@ public class UppercutLexerTest extends LightPlatformTestCase {
 
   public void setUp() throws Exception {
     super.setUp();
+    if (!ApplicationManager.getApplication().getExtensionArea()
+        .hasExtensionPoint(KarateJavascriptParsingExtensionPoint.EP_NAME.getName())) {
+      ApplicationManager.getApplication().getExtensionArea().registerExtensionPoint(
+        KarateJavascriptParsingExtensionPoint.EP_NAME.getName(),
+        KarateJavascriptParsingExtensionPoint.class.getName(),
+        com.intellij.openapi.extensions.ExtensionPoint.Kind.INTERFACE, false);
+    }
+    ExtensionTestUtil.maskExtensions(KarateJavascriptParsingExtensionPoint.EP_NAME,
+      List.of(new KarateJsNoPluginExtension()), getTestRootDisposable());
     MockitoAnnotations.openMocks(this);
     lexer = new UppercutLexer(keywordProvider);
   }
