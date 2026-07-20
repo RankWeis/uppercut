@@ -176,14 +176,17 @@ public class KarateTestRunner {
 
   public static void main(String[] args) throws Exception {
     try {
-      getOutputStreamAppender();
       KarateTestRunner runner = new KarateTestRunner();
       runner.parseArgs(args);
       boolean karateV2 = runner.params.getOrDefault("karate-major-version", List.of())
         .stream().anyMatch("2"::equals);
       if (karateV2) {
+        // No appender on the v2 path: it reports through RunListener events, and a Karate 2 project
+        // that brings its own logback would otherwise have its console appenders detached and every
+        // line <<UPPERCUT>>-prefixed - v1-shaped noise the converter then misroutes.
         new KarateV2TestRunner(runner.params).doTest();
       } else {
+        getOutputStreamAppender();
         runner.doTest();
       }
     } catch (ClassNotFoundException | NoClassDefFoundError e) {
