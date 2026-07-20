@@ -1,4 +1,4 @@
-package spike;
+package sample;
 
 import io.karatelabs.core.Runner;
 import io.karatelabs.core.SuiteResult;
@@ -7,7 +7,7 @@ import io.karatelabs.core.SuiteResult;
  * Compiled (non-reflective) twin of what Uppercut's KarateV2TestRunner does reflectively: drive
  * io.karatelabs.core.Runner with a RunListener and dump every event + its toJson() payload.
  *
- * <p>Run with: <pre>../gradlew -p karate2-spike eventProbe</pre></p>
+ * <p>Run with: <pre>../../gradlew -p testProjects/karate-v2 eventProbe</pre></p>
  *
  * <p>Things to verify in the output:</p>
  * <ul>
@@ -20,7 +20,7 @@ import io.karatelabs.core.SuiteResult;
 public class EventProbe {
 
   public static void main(String[] args) {
-    String path = args.length > 0 ? args[0] : "classpath:spike";
+    String path = args.length > 0 ? args[0] : "classpath:sample";
     SuiteResult result = Runner.builder()
       .path(path)
       .workingDir(".")

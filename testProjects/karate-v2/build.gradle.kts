@@ -39,11 +39,11 @@ tasks.test {
 }
 
 // Dumps every RunEvent the way the Uppercut runner will consume them:
-//   ../gradlew -p karate2-spike eventProbe
+//   ../../gradlew -p testProjects/karate-v2 eventProbe
 tasks.register<JavaExec>("eventProbe") {
     classpath = sourceSets.test.get().runtimeClasspath
-    mainClass = "spike.EventProbe"
-    // e.g. -PprobePath=classpath:spike2 to probe the failing feature's event payloads
+    mainClass = "sample.EventProbe"
+    // e.g. -PprobePath=classpath:broken to probe the failing feature's event payloads
     if (project.hasProperty("probePath")) {
         args(project.property("probePath").toString())
     }

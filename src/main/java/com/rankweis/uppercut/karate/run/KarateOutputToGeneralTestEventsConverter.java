@@ -373,7 +373,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
 
   /**
    * Karate 2.x event paths are relative to the working directory and point at the compiled test
-   * classpath (e.g. {@code build/resources/test/spike/x.feature} for Gradle, {@code target/test-classes/...}
+   * classpath (e.g. {@code build/resources/test/sample/x.feature} for Gradle, {@code target/test-classes/...}
    * for Maven). Strip leading segments until a suffix resolves against a source root or the project dir.
    */
   private VirtualFile findFeatureFile(String featurePath) {

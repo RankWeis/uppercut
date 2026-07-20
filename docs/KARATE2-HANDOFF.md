@@ -13,10 +13,10 @@ Read `docs/KARATE2.md` first for the architecture and the verified Karate 2 API 
   event lines -> `KarateV2EventProcessor` -> id-based SM test tree.
 - Unit tests pass (`KarateV2EventProcessorTest`, `KarateVersionDetectionTest`) - written
   JUnit4-style because the root `test` task does not use the JUnit platform launcher.
-- `karate2-spike/` is a standalone sample project (NOT in settings.gradle) with karate-junit6
-  2.1.1; `../gradlew -p karate2-spike eventProbe` dumps the live v2 event stream.
+- `testProjects/karate-v2/` is a standalone sample project (NOT in settings.gradle) with karate-junit6
+  2.1.1; `./gradlew -p testProjects/karate-v2 eventProbe` dumps the live v2 event stream.
 - Integration test `Karate2UITest` (IDE Starter/Driver, Kotlin): opens a temp copy of
-  karate2-spike, installs the built plugin, clicks the feature gutter, asserts 3 passed
+  testProjects/karate-v2, installs the built plugin, clicks the feature gutter, asserts 3 passed
   scenarios, takes screenshots to `build/reports/integrationTest/screenshots/karate2/`.
 
 ## What is NOT yet verified (do these first)

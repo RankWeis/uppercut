@@ -1,4 +1,4 @@
-Feature: karate v2 spike - exercises v2-only APIs and a called feature
+Feature: karate v2 sample - exercises v2-only APIs and a called feature
 
   Scenario: v2 built-ins and a nested call
     * def id = karate.uuid()

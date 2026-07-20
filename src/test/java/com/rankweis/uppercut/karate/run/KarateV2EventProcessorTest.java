@@ -17,8 +17,8 @@ import org.junit.Test;
  */
 public class KarateV2EventProcessorTest {
 
-  private static final String USERS = "build/resources/test/spike/users.feature";
-  private static final String CALLED = "build/resources/test/spike/called.feature";
+  private static final String USERS = "build/resources/test/sample/users.feature";
+  private static final String CALLED = "build/resources/test/sample/called.feature";
 
   private RecordingSink sink;
   private KarateV2EventProcessor processor;
@@ -63,7 +63,7 @@ public class KarateV2EventProcessorTest {
   @Test
   public void featureAndScenarioLifecycleWithCalledFeatureNesting() {
     process("FEATURE_ENTER",
-      "{\"path\":\"" + USERS + "\",\"name\":\"spike feature\",\"line\":1,\"callDepth\":0,\"tags\":[]}");
+      "{\"path\":\"" + USERS + "\",\"name\":\"sample feature\",\"line\":1,\"callDepth\":0,\"tags\":[]}");
     process("SCENARIO_ENTER",
       "{\"feature\":\"" + USERS + "\",\"name\":\"first scenario\",\"line\":3,\"refId\":\"[1:3]\","
         + "\"callDepth\":0,\"tags\":[]}");
@@ -81,11 +81,11 @@ public class KarateV2EventProcessorTest {
       "{\"feature\":\"" + USERS + "\",\"name\":\"first scenario\",\"line\":3,\"refId\":\"[1:3]\","
         + "\"callDepth\":0,\"passed\":true,\"skipped\":false,\"durationMillis\":90}");
     process("FEATURE_EXIT",
-      "{\"name\":\"spike feature\",\"relativePath\":\"" + USERS + "\",\"callDepth\":0,\"passed\":true}");
+      "{\"name\":\"sample feature\",\"relativePath\":\"" + USERS + "\",\"callDepth\":0,\"passed\":true}");
 
     assertEquals(8, sink.messages.size());
     // top-level feature: suite under root
-    assertContains(sink.messages.get(0), "testSuiteStarted", "name='spike feature'",
+    assertContains(sink.messages.get(0), "testSuiteStarted", "name='sample feature'",
       "locationHint='file://resolved/" + USERS + ":1'", "|node=1|parent=0");
     // scenario under its feature
     assertContains(sink.messages.get(1), "testStarted", "name='first scenario'",
@@ -98,7 +98,7 @@ public class KarateV2EventProcessorTest {
     assertContains(sink.messages.get(4), "testSuiteFinished", "name='called.feature:4'", "|node=4");
     assertContains(sink.messages.get(5), "testSuiteFinished", "name='called feature'", "|node=3");
     assertContains(sink.messages.get(6), "testFinished", "name='first scenario'", "duration='90'", "|node=2");
-    assertContains(sink.messages.get(7), "testSuiteFinished", "name='spike feature'", "|node=1");
+    assertContains(sink.messages.get(7), "testSuiteFinished", "name='sample feature'", "|node=1");
   }
 
   @Test

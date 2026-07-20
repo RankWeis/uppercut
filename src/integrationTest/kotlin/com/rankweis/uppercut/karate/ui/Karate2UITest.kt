@@ -46,7 +46,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * End-to-end check of the Karate 2.x path: opens the karate2-spike sample project (karate-junit6 on the
+ * End-to-end check of the Karate 2.x path: opens the testProjects/karate-v2 sample project (karate-junit6 on the
  * classpath), runs features from the editor, and verifies the test tree built from <<UPPERCUT-V2>>
  * RunListener events.
  *
@@ -60,7 +60,7 @@ class Karate2UITest {
 
     @Test
     fun runGutterTestOnKarate2Project() {
-        val projectDir = prepareSpikeProjectCopy()
+        val projectDir = prepareSampleProjectCopy()
         val sdk = JdkDownloaderFacade.jdk21.toSdk()
         val testCase = TestCase(IdeInfo.IdeaUltimate, LocalProjectInfo(projectDir)).useRelease()
         val context = Starter.newContext("karate2Gutter", testCase).apply {
@@ -69,7 +69,7 @@ class Karate2UITest {
             PluginConfigurator(this).installPluginFromDir(Path(pathToPlugin))
         }.setupSdk(sdk)
         context.runIdeWithDriver().useDriverAndCloseIde {
-            openFeature(this, "src/test/java/spike/users.feature")
+            openFeature(this, "src/test/java/sample/users.feature")
             takeScreenshot(screenshotDir + "01-editor-open")
             launchRunFromGutterContext(this, settle = true)
             val passingRun = waitForRunDescriptor(this, "users.feature")
@@ -78,7 +78,7 @@ class Karate2UITest {
 
             // Second run in the same session: a failing feature. Exercises the testFailed mapping and
             // proves the converter starts clean rather than carrying node ids over from the first run.
-            openFeature(this, "src/test/java/spike2/broken.feature")
+            openFeature(this, "src/test/java/broken/broken.feature")
             launchRunFromGutterContext(this)
             val failingRun = waitForRunDescriptor(this, "broken.feature")
             verifyFailingRun(this, failingRun)
@@ -98,13 +98,13 @@ class Karate2UITest {
     }
 
     /**
-     * Copies karate2-spike into a temp dir and adds the repo's Gradle wrapper so the IDE can import it.
+     * Copies testProjects/karate-v2 into a temp dir and adds the repo's Gradle wrapper so the IDE can import it.
      * The wrapper distribution is already cached in ~/.gradle from the host build.
      */
-    private fun prepareSpikeProjectCopy(): Path {
+    private fun prepareSampleProjectCopy(): Path {
         val repoRoot = Path(System.getProperty("user.dir"))
-        val source = repoRoot.resolve("karate2-spike")
-        val target = Files.createTempDirectory("karate2-spike-it")
+        val source = repoRoot.resolve("testProjects/karate-v2")
+        val target = Files.createTempDirectory("karate-v2-it")
         copyRecursively(source, target)
         copyRecursively(repoRoot.resolve("gradle/wrapper"), target.resolve("gradle/wrapper"))
         Files.copy(repoRoot.resolve("gradlew"), target.resolve("gradlew"), StandardCopyOption.COPY_ATTRIBUTES)
