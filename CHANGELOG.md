@@ -13,6 +13,7 @@
 
 ### Fixed
 
+- Debugging failed to start when any library path contained a space — including the default JDK location on Windows, `C:\Program Files\...` — with `URISyntaxException: Illegal character in opaque part`
 - Feature path resolution with generated source roots, e.g. the protobuf Gradle plugin (#321)
 - Run configurations offered on non-`.feature` files
 - The `form`, `multipart`, and `soap` step actions never highlighted or completed
