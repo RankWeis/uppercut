@@ -3,7 +3,7 @@ package com.rankweis.uppercut.karate.ui
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.getOpenProjects
 import com.intellij.driver.sdk.invokeAction
-import com.intellij.driver.sdk.ui.components.common.gutter
+import com.intellij.driver.sdk.ui.components.common.GutterUiComponent
 import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.components.elements.list
@@ -24,8 +24,10 @@ import com.intellij.tools.ide.performanceTesting.commands.waitForCodeAnalysisFin
 import com.intellij.tools.ide.performanceTesting.commands.waitForSmartMode
 import com.intellij.tools.ide.starter.product.idea.ultimate.IdeaUltimate
 import com.rankweis.uppercut.karate.ui.util.OutputListenerRef
+import com.rankweis.uppercut.karate.ui.util.RunContentDescriptor
 import com.rankweis.uppercut.karate.ui.util.SMTRunnerConsoleViewRef
 import com.rankweis.uppercut.karate.ui.util.SMTestProxyRef
+import com.rankweis.uppercut.karate.ui.util.SMTestRunnerResultsFormRef
 import com.rankweis.uppercut.karate.ui.util.getRunContentManagerRef
 import com.rankweis.uppercut.karate.ui.util.newProcessListener
 import kotlinx.coroutines.runBlocking
@@ -43,8 +45,12 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * End-to-end check of the Karate 2.x path: opens the karate2-spike sample project (karate-junit6 on the
- * classpath), clicks the gutter runner on a feature, and verifies the test tree built from
- * <<UPPERCUT-V2>> RunListener events. Screenshots land in build/reports/integrationTest/screenshots/karate2/.
+ * classpath), runs features from the editor, and verifies the test tree built from <<UPPERCUT-V2>>
+ * RunListener events.
+ *
+ * <p>Both a passing and a failing feature run in one IDE session - booting the IDE costs ~40s, every
+ * extra assertion after that is nearly free. Running twice also covers converter state leaking between
+ * runs. Screenshots land under the IDE's log/screenshots directory (they capture the whole desktop).
  */
 class Karate2UITest {
 
@@ -55,25 +61,38 @@ class Karate2UITest {
         val projectDir = prepareSpikeProjectCopy()
         val sdk = JdkDownloaderFacade.jdk21.toSdk()
         val testCase = TestCase(IdeInfo.IdeaUltimate, LocalProjectInfo(projectDir)).useRelease()
-        Starter.newContext("karate2Gutter", testCase).apply {
+        val context = Starter.newContext("karate2Gutter", testCase).apply {
             // path.to.build.plugin points at the prepareSandbox plugin DIRECTORY, not a zip
             val pathToPlugin = System.getProperty("path.to.build.plugin")
             PluginConfigurator(this).installPluginFromDir(Path(pathToPlugin))
-        }.setupSdk(sdk).runIdeWithDriver().useDriverAndCloseIde {
-            execute(
-                CommandChain().openFile("src/test/java/spike/users.feature")
-                    .waitForCodeAnalysisFinished()
-                    .waitForSmartMode()
-                    // Caret on the Feature line: the context run action then targets the whole feature
-                    // (WHOLE_FILE), not one scenario, so the tree holds both scenarios plus the called one.
-                    .goto(1, 1)
-            )
+        }.setupSdk(sdk)
+        context.runIdeWithDriver().useDriverAndCloseIde {
+            openFeature(this, "src/test/java/spike/users.feature")
             takeScreenshot(screenshotDir + "01-editor-open")
             launchRunFromGutterContext(this)
-            val outputListener = waitForRunDescriptor(this)
+            val passingRun = waitForRunDescriptor(this, "users.feature")
             takeScreenshot(screenshotDir + "02-run-started")
-            verifyConsoleResults(this, outputListener)
+            verifyPassingRun(this, passingRun)
+
+            // Second run in the same session: a failing feature. Exercises the testFailed mapping and
+            // proves the converter starts clean rather than carrying node ids over from the first run.
+            openFeature(this, "src/test/java/spike2/broken.feature")
+            launchRunFromGutterContext(this)
+            val failingRun = waitForRunDescriptor(this, "broken.feature")
+            verifyFailingRun(this, failingRun)
+            takeScreenshot(screenshotDir + "04-failure-results")
         }
+        assertNoPluginErrorsLogged(context.paths.testHome.resolve("log").resolve("idea.log"))
+    }
+
+    /** Opens a feature and parks the caret on the Feature line so the context run targets the whole file. */
+    private fun openFeature(driver: Driver, relativePath: String) {
+        driver.execute(
+            CommandChain().openFile(relativePath)
+                .waitForCodeAnalysisFinished()
+                .waitForSmartMode()
+                .goto(1, 1)
+        )
     }
 
     /**
@@ -115,15 +134,23 @@ class Karate2UITest {
      * KarateRunConfigurationProducer -> KarateV2TestRunner -> event converter -> test tree.
      */
     private fun launchRunFromGutterContext(driver: Driver) {
-        // gutter() is the SDK's own locator; a byType("EditorGutterComponentImpl") xQuery finds nothing.
-        // getGutterIcons() waits for the line markers, which only appear once the file is analyzed.
         // Waiting on indicators also waits out the Gradle import that the run config's classpath needs.
         // No focus/toFront here: nothing below touches the mouse, so the IDE can stay in the background.
         val frame = driver.ideFrame()
         frame.waitForIndicators(timeout = 10.minutes)
-        val runIcons = frame.gutter().getGutterIcons()
-            .filter { it.getIconPath().contains("run", ignoreCase = true) }
-        assertTrue(runIcons.isNotEmpty(), "No run line marker in the gutter of users.feature")
+        // Once a run console is open, its editor contributes a second EditorGutterComponentImpl, so the
+        // singleton gutter() locator fails. Look for the run marker across all gutters, re-querying while
+        // waiting: line markers only appear once the file is analyzed.
+        waitFor(
+            timeout = 30.seconds,
+            errorMessage = { "No run line marker appeared in any editor gutter" }
+        ) {
+            frame.xx("//div[@class='EditorGutterComponentImpl']", GutterUiComponent::class.java)
+                .list()
+                .any { gutter ->
+                    gutter.icons.any { it.getIconPath().contains("run", ignoreCase = true) }
+                }
+        }
         driver.invokeAction("RunClass")
     }
 
@@ -144,60 +171,117 @@ class Karate2UITest {
         return lines.joinToString("\n")
     }
 
-    private fun waitForRunDescriptor(driver: Driver): OutputListenerRef {
+    /**
+     * Waits for the run of [configNamePart] and attaches the output listener immediately: attaching it
+     * later races with a process that dies early, leaving the failure message with no runner output.
+     * Descriptors are matched by name because a second run adds to the list rather than replacing it.
+     */
+    private fun waitForRunDescriptor(driver: Driver, configNamePart: String): OutputListenerRef {
         return driver.withContext {
             val d = this
             runBlocking {
-                waitFor(timeout = 120.seconds) {
-                    val project = d.getOpenProjects().first()
-                    d.getRunContentManagerRef(project).getAllDescriptors().isNotEmpty()
-                }
+                waitFor(
+                    timeout = 120.seconds,
+                    errorMessage = { "no run descriptor named '$configNamePart' appeared" }
+                ) { descriptorOrNull(d, configNamePart) != null }
             }
-            val descriptor = d.getRunContentManagerRef(d.getOpenProjects().first()).getAllDescriptors().first()
             val listener = d.newProcessListener() as OutputListenerRef
-            descriptor.getProcessHandler()?.addProcessListener(listener)
+            descriptorOrNull(d, configNamePart)!!.getProcessHandler()?.addProcessListener(listener)
             listener
         }
     }
 
-    private fun verifyConsoleResults(driver: Driver, outputListener: OutputListenerRef) {
+    private fun descriptorOrNull(driver: Driver, configNamePart: String): RunContentDescriptor? =
+        driver.getRunContentManagerRef(driver.getOpenProjects().first())
+            .getAllDescriptors()
+            .firstOrNull { it.getDisplayName().contains(configNamePart) }
+
+    /** Waits for the process of [configNamePart] to finish and returns the results form plus diagnostics. */
+    private fun awaitResults(
+        driver: Driver,
+        configNamePart: String,
+        outputListener: OutputListenerRef,
+    ): Pair<SMTestRunnerResultsFormRef, String> {
+        val descriptor = descriptorOrNull(driver, configNamePart)!!
+        val processHandler = descriptor.getProcessHandler()
+        val console = descriptor.getExecutionConsole()
+        assertNotNull(console)
+        assertNotNull(processHandler)
+        runBlocking {
+            waitFor(timeout = 4.minutes) { processHandler!!.isProcessTerminated() }
+        }
+        val results = driver.cast(console, SMTRunnerConsoleViewRef::class).getResultsViewer()
+        val tree = describeTree(results.getTestsRootNode())
+        println("Karate 2 test tree ($configNamePart):\n$tree")
+        val output = outputListener.getOutput()
+        val diagnostics = "\n--- run configuration ---\n${descriptor.getDisplayName()}\n--- test tree ---\n$tree" +
+            "\n--- runner stdout ---\n${output.getStdout()}\n--- stderr ---\n${output.getStderr()}"
+        return results to diagnostics
+    }
+
+    private fun verifyPassingRun(driver: Driver, outputListener: OutputListenerRef) {
         driver.withContext {
-            val descriptor = getRunContentManagerRef(driver.getOpenProjects().first())
-                .getAllDescriptors().first()
-            val processHandler = descriptor.getProcessHandler()
-            val console = descriptor.getExecutionConsole()
-            assertNotNull(console)
-            assertNotNull(processHandler)
-            val launched = descriptor.getDisplayName()
-            runBlocking {
-                waitFor(timeout = 4.minutes) { processHandler.isProcessTerminated() }
-            }
-            assertTrue(processHandler.isProcessTerminated())
-            val smConsole = this.cast(console, SMTRunnerConsoleViewRef::class)
-            val results = smConsole.getResultsViewer()
+            val (results, diagnostics) = awaitResults(driver, "users.feature", outputListener)
             driver.takeScreenshot(screenshotDir + "03-test-results")
-            val output = outputListener.getOutput()
             val tree = describeTree(results.getTestsRootNode())
-            println("Karate 2 test tree:\n$tree")
-            val diagnostics = "\n--- run configuration ---\n$launched\n--- test tree ---\n$tree" +
-                "\n--- runner stdout ---\n${output.getStdout()}\n--- stderr ---\n${output.getStderr()}"
             // users.feature has 2 scenarios; the called feature's scenario is reported as a suite, so
             // it shows in the tree (asserted below) without counting toward the run's test total.
             assertEquals(0, results.getFailedTestCount(), "no scenarios should fail$diagnostics")
             assertEquals(2, results.getFinishedTestCount(), "expected both scenarios in the tree$diagnostics")
-            assertTrue(
-                tree.contains("called.feature:4"),
-                "called feature's scenario should still appear in the tree$diagnostics"
-            )
             // Counts alone would pass on a tree of the right size but the wrong shape.
+            listOf("v2 built-ins and a nested call", "second scenario for tree ordering", "called.feature:4")
+                .forEach { assertTrue(tree.contains(it), "'$it' missing from the tree$diagnostics") }
+
+            val root = results.getTestsRootNode()
+            val scenario = findNode(root, "v2 built-ins and a nested call")
+            assertNotNull(scenario, "scenario node not found$diagnostics")
+            // locationHint must resolve to the source .feature file (not the copy under build/resources)
+            // or gutter navigation from the tree silently breaks - the #321 class of bug.
+            val location = scenario!!.getLocationUrl()
+            assertNotNull(location, "scenario has no location - locationHint did not resolve$diagnostics")
             assertTrue(
-                tree.contains("v2 built-ins and a nested call"),
-                "first scenario missing from the tree$diagnostics"
+                location!!.contains("users.feature"),
+                "scenario location '$location' should point at users.feature$diagnostics"
             )
-            assertTrue(
-                tree.contains("second scenario for tree ordering"),
-                "second scenario missing from the tree$diagnostics"
-            )
+            val called = findNode(root, "called.feature:4")
+            assertTrue(called!!.isSuite(), "called scenario should be a suite, not a test$diagnostics")
         }
+    }
+
+    private fun verifyFailingRun(driver: Driver, outputListener: OutputListenerRef) {
+        driver.withContext {
+            val (results, diagnostics) = awaitResults(driver, "broken.feature", outputListener)
+            val tree = describeTree(results.getTestsRootNode())
+            assertEquals(1, results.getFailedTestCount(), "exactly the bad match should fail$diagnostics")
+            assertEquals(2, results.getFinishedTestCount(), "both scenarios should finish$diagnostics")
+            val failed = findNode(results.getTestsRootNode(), "failing match")
+            assertNotNull(failed, "failing scenario missing from the tree$diagnostics")
+            assertTrue(failed!!.isDefect(), "failing scenario should be marked failed$diagnostics")
+            val error = failed.getErrorMessage()
+            assertNotNull(error, "failure should carry Karate's error message$diagnostics")
+            assertTrue(
+                error!!.contains("match failed", ignoreCase = true),
+                "error message '$error' should be Karate's match failure$diagnostics"
+            )
+            val passing = findNode(results.getTestsRootNode(), "passing sibling")
+            assertTrue(passing!!.isPassed(), "sibling scenario should still pass$diagnostics")
+        }
+    }
+
+    private fun findNode(node: SMTestProxyRef, name: String): SMTestProxyRef? {
+        if (node.getPresentableName() == name || node.getName() == name) {
+            return node
+        }
+        return node.getChildren().firstNotNullOfOrNull { findNode(it, name) }
+    }
+
+    /** The plugin must not have thrown during the session; a stack trace in idea.log fails the test. */
+    private fun assertNoPluginErrorsLogged(ideaLog: Path) {
+        if (!Files.exists(ideaLog)) {
+            return
+        }
+        val errors = Files.readAllLines(ideaLog)
+            .filter { it.contains("ERROR") && it.contains("com.rankweis") }
+        assertTrue(errors.isEmpty(), "plugin logged errors during the session:\n${errors.joinToString("\n")}")
     }
 }

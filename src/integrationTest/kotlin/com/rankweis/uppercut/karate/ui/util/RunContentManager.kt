@@ -81,8 +81,12 @@ interface SMTestProxyRef {
     fun getChildren(): List<SMTestProxyRef>
     fun isPassed(): Boolean
     fun isDefect(): Boolean
+    fun isSuite(): Boolean
     fun getErrorMessage(): String?
     fun getStacktrace(): String?
+
+    /** The locationHint we emitted, resolved by the framework - "file://<path>:<line>" when navigable. */
+    fun getLocationUrl(): String?
 }
 
 /** Console text, for asserting on what the run actually printed. */
