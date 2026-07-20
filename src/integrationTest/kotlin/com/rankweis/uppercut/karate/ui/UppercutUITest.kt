@@ -46,7 +46,7 @@ class UppercutUITest {
             IntellijKarateTestCase
         ).prepareProjectCleanImport().apply {
             val pathToPlugin = System.getProperty("path.to.build.plugin")
-            PluginConfigurator(this).installPluginFromPath(Path(pathToPlugin))
+            PluginConfigurator(this).installPluginFromDir(Path(pathToPlugin))
         }.setupSdk(sdk).runIdeWithDriver().useDriverAndCloseIde {
             execute(
                 CommandChain().openFile("src/test/java/nested/test.feature")

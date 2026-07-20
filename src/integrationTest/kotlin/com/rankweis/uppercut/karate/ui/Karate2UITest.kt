@@ -48,10 +48,12 @@ class Karate2UITest {
     fun runGutterTestOnKarate2Project() {
         val projectDir = prepareSpikeProjectCopy()
         val sdk = JdkDownloaderFacade.jdk21.toSdk()
-        val testCase = TestCase(IdeProductProvider.IU, LocalProjectInfo(projectDir)).useRelease()
+        // Pin to the platform version this plugin build targets (untilBuild would disable it on newer IDEs)
+        val testCase = TestCase(IdeProductProvider.IU, LocalProjectInfo(projectDir)).useRelease("2026.1")
         Starter.newContext("karate2Gutter", testCase).apply {
+            // path.to.build.plugin points at the prepareSandbox plugin DIRECTORY, not a zip
             val pathToPlugin = System.getProperty("path.to.build.plugin")
-            PluginConfigurator(this).installPluginFromPath(Path(pathToPlugin))
+            PluginConfigurator(this).installPluginFromDir(Path(pathToPlugin))
         }.setupSdk(sdk).runIdeWithDriver().useDriverAndCloseIde {
             execute(
                 CommandChain().openFile("src/test/java/spike/users.feature")
