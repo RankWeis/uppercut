@@ -23,6 +23,7 @@
 - Fixed run configurations resolving the wrong working directory and feature path when the protobuf Gradle plugin (or any plugin registering generated source roots such as `build/extracted-include-protos/test`) is present. Paths are now resolved from the content/source root that actually contains the feature file. (#321)
 - Run configurations are no longer offered for non-`.feature` files (e.g. JUnit `.java` test files); the Karate producer now only activates on Karate feature files.
 - Guarded the test runner against a missing `--working-dir` argument so it falls back to Karate's default working directory instead of failing.
+- Fixed Karate 2.x runs dying immediately with "Test framework quit unexpectedly" and an empty test tree. The runner installed its logback console appender unconditionally, but Karate 2.x drops the transitive logback dependency Karate 1.x provided, so the runner JVM failed to link before emitting any events. Logback is now optional: when it is absent, only console log forwarding is disabled.
 
 ## [2.5.2] - 2026-03-23
 
