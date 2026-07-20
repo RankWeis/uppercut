@@ -236,7 +236,7 @@ public class KaratePositionManager implements PositionManager {
   }
 
   @Override
-  public @Nullable Set<? extends FileType> getAcceptedFileTypes() {
-    return Set.of(GherkinFileType.INSTANCE);
+  public boolean isAcceptedFileType(@NotNull FileType fileType) {
+    return GherkinFileType.INSTANCE.equals(fileType);
   }
 }

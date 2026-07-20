@@ -10,6 +10,8 @@
 
 ### Modified
 
+- Raised the minimum supported IntelliJ build from 253 to 261, as `PositionManager.isAcceptedFileType` is unavailable before 261
+- Replaced the deprecated `PositionManager.getAcceptedFileTypes` override in `KaratePositionManager` with `isAcceptedFileType`
 - Updated IntelliJ Platform Gradle Plugin from 2.16.0 to 2.18.1
 - Updated Java toolchain from 21 to 25 (required by IntelliJ 2026.2), including the Java version provisioned in all CI workflows
 - Replaced `org.apache.commons.collections.CollectionUtils` usage with standard Java equivalents
