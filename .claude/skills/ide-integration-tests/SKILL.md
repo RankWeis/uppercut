@@ -38,6 +38,26 @@ Screenshots capture the **entire desktop**, not just the IDE - check before shar
 Two IDEs launch per run: a brief one that registers the JDK (`setupSdk`), then the real driver
 session. That is expected.
 
+## Before guessing at xpaths: use the live hierarchy
+
+The Starter already launches the IDE with `-Dexpose.ui.hierarchy.url=true`, so while a driver test
+is running (or paused at a breakpoint) the whole Swing tree is browsable at
+`http://localhost:<port>/api/remote-driver/` - the port is in the IDE's JVM options in `idea.log`.
+Read the tree there instead of inferring locators from failures. `RobotService.saveHierarchy(dir)`
+dumps the same thing to `ui.html` for a post-mortem.
+
+The remote-driver README (`platform/remote-driver/README.md` in JetBrains/intellij-community) is
+the upstream reference for the driver API; the SDK docs at
+<https://plugins.jetbrains.com/docs/intellij/welcome.html> cover the platform side.
+
+## Structuring a test class
+
+Booting the IDE dominates cost, so share one across tests rather than writing one giant test:
+hold a `BackgroundRun` in a companion, start it in `@BeforeAll`, and `run.closeIdeAndWait()` in
+`@AfterAll` (the pattern the README documents). Order the tests with
+`@TestMethodOrder(MethodOrderer.OrderAnnotation::class)` when later ones depend on earlier state,
+and reach the driver through `run.driver`. A failure then names the behavior that broke.
+
 ## Driver API traps
 
 - **Never click.** Driver clicks are physical screen coordinates, so any window over the IDE
@@ -67,8 +87,8 @@ session. That is expected.
 
 ## Adding coverage
 
-Booting the IDE dominates the cost, so prefer more assertions (or a second run) inside the
-existing session over a new `@Test` that boots again.
+New checks belong in the shared-IDE class above - another `@Test` costs seconds, a new class costs
+another ~40s boot.
 
 Assert on tree *shape*, not just counts - walk `SMTestRunnerResultsFormRef.getTestsRootNode()`.
 `getLocationUrl()` on a node verifies navigation actually resolves; counts alone pass on a

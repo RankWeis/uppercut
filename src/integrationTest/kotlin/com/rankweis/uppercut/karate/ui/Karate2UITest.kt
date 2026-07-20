@@ -10,6 +10,7 @@ import com.intellij.driver.sdk.ui.components.elements.list
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForIndicators
+import com.intellij.ide.starter.driver.engine.BackgroundRun
 import com.intellij.ide.starter.driver.engine.runIdeWithDriver
 import com.intellij.ide.starter.driver.execute
 import com.intellij.ide.starter.models.IdeInfo
@@ -35,9 +36,14 @@ import com.rankweis.uppercut.karate.ui.util.setKarateVersionPreference
 import com.rankweis.uppercut.karate.ui.util.newProcessListener
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.assertNotNull
 import java.nio.file.Files
 import java.nio.file.Path
@@ -59,48 +65,131 @@ import kotlin.time.Duration.Companion.seconds
  *
  * <p>Screenshots land under the IDE's log/screenshots directory - they capture the whole desktop.
  */
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class Karate2UITest {
 
-    private val screenshotDir = "build/reports/integrationTest/screenshots/karate2/"
+    companion object {
+
+        private const val SCREENSHOT_DIR = "build/reports/integrationTest/screenshots/karate2/"
+
+        private lateinit var run: BackgroundRun
+        private lateinit var ideaLog: Path
+
+        /**
+         * One IDE for the whole class - booting costs ~40s while each test's run is seconds. The
+         * shared-BackgroundRun-in-companion shape is the pattern the remote-driver README documents
+         * for exactly this trade-off.
+         */
+        @JvmStatic
+        @BeforeAll
+        fun startIde() {
+            val projectDir = prepareSampleProjectCopy()
+            val sdk = JdkDownloaderFacade.jdk21.toSdk()
+            val testCase = TestCase(IdeInfo.IdeaUltimate, LocalProjectInfo(projectDir)).useRelease()
+            val context = Starter.newContext("karate2Gutter", testCase).apply {
+                // path.to.build.plugin points at the prepareSandbox plugin DIRECTORY, not a zip
+                val pathToPlugin = System.getProperty("path.to.build.plugin")
+                PluginConfigurator(this).installPluginFromDir(Path(pathToPlugin))
+            }.setupSdk(sdk)
+            ideaLog = context.paths.testHome.resolve("log").resolve("idea.log")
+            run = context.runIdeWithDriver()
+        }
+
+        @JvmStatic
+        @AfterAll
+        fun closeIde() {
+            if (Companion::run.isInitialized) {
+                run.closeIdeAndWait()
+            }
+        }
+
+        /**
+         * Copies testProjects/karate-versions into a temp dir and adds the repo's Gradle wrapper so
+         * the IDE can import it. The wrapper distribution is already cached in ~/.gradle.
+         */
+        private fun prepareSampleProjectCopy(): Path {
+            val repoRoot = Path(System.getProperty("user.dir"))
+            val source = repoRoot.resolve("testProjects/karate-versions")
+            val target = Files.createTempDirectory("karate-versions-it")
+            copyRecursively(source, target)
+            copyRecursively(repoRoot.resolve("gradle/wrapper"), target.resolve("gradle/wrapper"))
+            Files.copy(repoRoot.resolve("gradlew"), target.resolve("gradlew"), StandardCopyOption.COPY_ATTRIBUTES)
+            Files.copy(repoRoot.resolve("gradlew.bat"), target.resolve("gradlew.bat"))
+            target.resolve("gradlew").toFile().setExecutable(true)
+            return target
+        }
+
+        private fun copyRecursively(source: Path, target: Path) {
+            Files.walk(source).use { paths ->
+                paths.forEach { path ->
+                    val dest = target.resolve(source.relativize(path).toString())
+                    if (path.isDirectory()) {
+                        Files.createDirectories(dest)
+                    } else {
+                        Files.createDirectories(dest.parent)
+                        Files.copy(path, dest, StandardCopyOption.REPLACE_EXISTING)
+                    }
+                }
+            }
+        }
+    }
+
+    private val screenshotDir = SCREENSHOT_DIR
 
     @Test
-    fun runGutterTestOnKarate2Project() {
-        val projectDir = prepareSampleProjectCopy()
-        val sdk = JdkDownloaderFacade.jdk21.toSdk()
-        val testCase = TestCase(IdeInfo.IdeaUltimate, LocalProjectInfo(projectDir)).useRelease()
-        val context = Starter.newContext("karate2Gutter", testCase).apply {
-            // path.to.build.plugin points at the prepareSandbox plugin DIRECTORY, not a zip
-            val pathToPlugin = System.getProperty("path.to.build.plugin")
-            PluginConfigurator(this).installPluginFromDir(Path(pathToPlugin))
-        }.setupSdk(sdk)
-        context.runIdeWithDriver().useDriverAndCloseIde {
-            openFeature(this, "v2/src/test/java/sample/users.feature")
-            takeScreenshot(screenshotDir + "01-editor-open")
-            launchRunFromGutterContext(this, settle = true)
-            val passingRun = waitForRunDescriptor(this, "users.feature")
-            takeScreenshot(screenshotDir + "02-run-started")
-            verifyPassingRun(this, passingRun)
+    @Order(1)
+    fun v2FeaturePassesWithNavigableTree() {
+        val driver = run.driver
+        openFeature(driver, "v2/src/test/java/sample/users.feature")
+        driver.takeScreenshot(screenshotDir + "01-editor-open")
+        launchRunFromGutterContext(driver, settle = true)
+        val passingRun = waitForRunDescriptor(driver, "users.feature")
+        driver.takeScreenshot(screenshotDir + "02-run-started")
+        verifyPassingRun(driver, passingRun)
+    }
 
-            // Second run in the same session: a failing feature. Exercises the testFailed mapping and
-            // proves the converter starts clean rather than carrying node ids over from the first run.
-            openFeature(this, "v2/src/test/java/broken/broken.feature")
-            launchRunFromGutterContext(this)
-            val failingRun = waitForRunDescriptor(this, "broken.feature")
-            verifyFailingRun(this, failingRun)
-            takeScreenshot(screenshotDir + "04-failure-results")
+    /**
+     * A failing feature in the same session: exercises the testFailed mapping and proves the
+     * converter starts clean rather than carrying node ids over from the first run.
+     */
+    @Test
+    @Order(2)
+    fun v2FailingFeatureReportsTheFailure() {
+        val driver = run.driver
+        openFeature(driver, "v2/src/test/java/broken/broken.feature")
+        launchRunFromGutterContext(driver)
+        val failingRun = waitForRunDescriptor(driver, "broken.feature")
+        verifyFailingRun(driver, failingRun)
+        driver.takeScreenshot(screenshotDir + "04-failure-results")
+    }
 
-            // Third run: the v1 module of the same project. The v2 jars are on a sibling module's
-            // classpath, so this only passes if version detection is scoped to the run's module -
-            // a project-wide scan would drive the v1 module with the v2 runner and produce nothing.
-            openFeature(this, "v1/src/test/java/sample/users-v1.feature")
-            launchRunFromGutterContext(this)
-            val v1Run = waitForRunDescriptor(this, "users-v1.feature")
-            verifyV1Run(this, v1Run)
-            takeScreenshot(screenshotDir + "05-v1-results")
+    /**
+     * The v1 module of the same project. The v2 jars are on a sibling module's classpath, so this
+     * only passes if version detection is scoped to the run's module - a project-wide scan would
+     * drive the v1 module with the v2 runner and produce nothing.
+     */
+    @Test
+    @Order(3)
+    fun v1ModuleRunsThroughTheV1Runner() {
+        val driver = run.driver
+        openFeature(driver, "v1/src/test/java/sample/users-v1.feature")
+        launchRunFromGutterContext(driver)
+        val v1Run = waitForRunDescriptor(driver, "users-v1.feature")
+        verifyV1Run(driver, v1Run)
+        driver.takeScreenshot(screenshotDir + "05-v1-results")
+    }
 
-            verifySettingsOverrideBeatsDetection(this)
-        }
-        assertNoPluginErrorsLogged(context.paths.testHome.resolve("log").resolve("idea.log"))
+    @Test
+    @Order(4)
+    fun versionOverrideDisplacesDetection() {
+        verifySettingsOverrideBeatsDetection(run.driver)
+    }
+
+    /** Runs last while the IDE is still up; idea.log is written through continuously. */
+    @Test
+    @Order(5)
+    fun pluginLoggedNoErrors() {
+        assertNoPluginErrorsLogged(ideaLog)
     }
 
     /** Opens a feature and parks the caret on the Feature line so the context run targets the whole file. */
@@ -111,36 +200,6 @@ class Karate2UITest {
                 .waitForSmartMode()
                 .goto(1, 1)
         )
-    }
-
-    /**
-     * Copies testProjects/karate-versions into a temp dir and adds the repo's Gradle wrapper so the IDE can import it.
-     * The wrapper distribution is already cached in ~/.gradle from the host build.
-     */
-    private fun prepareSampleProjectCopy(): Path {
-        val repoRoot = Path(System.getProperty("user.dir"))
-        val source = repoRoot.resolve("testProjects/karate-versions")
-        val target = Files.createTempDirectory("karate-versions-it")
-        copyRecursively(source, target)
-        copyRecursively(repoRoot.resolve("gradle/wrapper"), target.resolve("gradle/wrapper"))
-        Files.copy(repoRoot.resolve("gradlew"), target.resolve("gradlew"), StandardCopyOption.COPY_ATTRIBUTES)
-        Files.copy(repoRoot.resolve("gradlew.bat"), target.resolve("gradlew.bat"))
-        target.resolve("gradlew").toFile().setExecutable(true)
-        return target
-    }
-
-    private fun copyRecursively(source: Path, target: Path) {
-        Files.walk(source).use { paths ->
-            paths.forEach { path ->
-                val dest = target.resolve(source.relativize(path).toString())
-                if (path.isDirectory()) {
-                    Files.createDirectories(dest)
-                } else {
-                    Files.createDirectories(dest.parent)
-                    Files.copy(path, dest, StandardCopyOption.REPLACE_EXISTING)
-                }
-            }
-        }
     }
 
     /**
