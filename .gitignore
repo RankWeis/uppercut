@@ -15,3 +15,4 @@ target/
 # IDE Starter / integration test artifacts
 out/
 allure-results/
+src/test/resources/karate.log

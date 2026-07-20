@@ -48,8 +48,7 @@ class Karate2UITest {
     fun runGutterTestOnKarate2Project() {
         val projectDir = prepareSpikeProjectCopy()
         val sdk = JdkDownloaderFacade.jdk21.toSdk()
-        // Pin to the platform version this plugin build targets (untilBuild would disable it on newer IDEs)
-        val testCase = TestCase(IdeProductProvider.IU, LocalProjectInfo(projectDir)).useRelease("2026.1")
+        val testCase = TestCase(IdeProductProvider.IU, LocalProjectInfo(projectDir)).useRelease()
         Starter.newContext("karate2Gutter", testCase).apply {
             // path.to.build.plugin points at the prepareSandbox plugin DIRECTORY, not a zip
             val pathToPlugin = System.getProperty("path.to.build.plugin")

@@ -128,7 +128,7 @@ abstract class InstrumentedJarsRule : AttributeCompatibilityRule<LibraryElements
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(25)
 }
 
 java {
