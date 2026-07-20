@@ -262,7 +262,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
    * Decides whether to drive Karate 2.x. Honors the settings override; on AUTO, detects
    * Karate 2 from library jar names (karate-junit5 was renamed to karate-junit6 in v2).
    */
-  static boolean isKarateV2(KarateSettingsState.KarateVersionPreference preference,
+  public static boolean isKarateV2(KarateSettingsState.KarateVersionPreference preference,
     java.util.stream.Stream<String> libraryNames) {
     if (preference == KarateSettingsState.KarateVersionPreference.V1) {
       return false;
