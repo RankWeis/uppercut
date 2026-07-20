@@ -138,6 +138,64 @@ jobs:
         with:
           files: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
 
+  # Run the IDE Starter/Driver UI tests. These boot a real IntelliJ (~4 GB download on a cold
+  # cache, several minutes per run), so they are kept off pull request builds and run only once a
+  # change lands on a release branch.
+  integration-test:
+    name: Integration tests
+    if: ${{ github.event_name == 'push' }}
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+
+      # The IDE (~4 GB) plus a JDK need more room than a hosted runner has spare by default
+      - name: Maximize Build Space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        with:
+          tool-cache: false
+          large-packages: false
+
+      # Check out the current repository
+      - name: Fetch Sources
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      # Set up Java environment for the next steps
+      - name: Setup Java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          distribution: zulu
+          java-version: 25
+
+      # Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92
+
+      # The downloaded IDE and JDK dominate the runtime; keyed on the platform version so a
+      # platformVersion bump fetches a fresh one instead of silently testing against the old build.
+      - name: Cache IDE Starter downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: out/ide-tests/cache
+          key: ide-starter-${{ runner.os }}-${{ hashFiles('gradle.properties') }}
+          restore-keys: ide-starter-${{ runner.os }}-
+
+      # Run integration tests
+      - name: Run Integration Tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" ./gradlew integrationTest
+
+      # Collect results of failed tests, including the IDE's own logs and screenshots
+      - name: Collect Integration Test Results
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: integration-tests-result
+          path: |
+            ${{ github.workspace }}/build/reports/tests/integrationTest
+            ${{ github.workspace }}/out/ide-tests/tests/*/*/log
+
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
     name: Verify plugin
