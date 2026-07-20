@@ -129,6 +129,9 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
   }
 
   private boolean processEventText(final String text) {
+    if (text.startsWith(KarateV2EventProcessor.EVENT_PREFIX)) {
+      return getV2EventProcessor().process(text);
+    }
     Matcher matcher = UPPERCUT_LOG_PATTERN.matcher(text);
     if (text.contains("[config]") || (karateConfigItem != null && text.contains(
       ">> " + karateConfigItem.getName() + " failed"))) {
@@ -342,5 +345,59 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     msg.addAttribute("nodeId", String.valueOf(item.getId()));
     msg.addAttribute("parentNodeId", String.valueOf(item.getParentId()));
     doProcessServiceMessages(msg.toString());
+  }
+
+  private KarateV2EventProcessor v2EventProcessor;
+
+  private KarateV2EventProcessor getV2EventProcessor() {
+    if (v2EventProcessor == null) {
+      v2EventProcessor = new KarateV2EventProcessor(new KarateV2EventProcessor.EventSink() {
+        @Override public void testsStarted() {
+          doProcessServiceMessages(ServiceMessageBuilder.testsStarted().toString());
+        }
+
+        @Override public void emit(@NotNull ServiceMessageBuilder message, int nodeId, int parentNodeId) {
+          message.addAttribute("nodeId", String.valueOf(nodeId));
+          message.addAttribute("parentNodeId", String.valueOf(parentNodeId));
+          doProcessServiceMessages(message.toString());
+        }
+
+        @Override public String resolveLocation(@NotNull String featurePath, int line) {
+          VirtualFile file = findFeatureFile(featurePath);
+          return file == null ? null : "file://" + file.getPath() + ":" + line;
+        }
+      });
+    }
+    return v2EventProcessor;
+  }
+
+  /**
+   * Karate 2.x event paths are relative to the working directory and point at the compiled test
+   * classpath (e.g. {@code build/resources/test/spike/x.feature} for Gradle, {@code target/test-classes/...}
+   * for Maven). Strip leading segments until a suffix resolves against a source root or the project dir.
+   */
+  private VirtualFile findFeatureFile(String featurePath) {
+    List<VirtualFile> roots = new ArrayList<>(
+      Arrays.stream(ModuleManager.getInstance(testConsoleProperties.getProject()).getModules())
+        .flatMap(m -> Arrays.stream(ModuleRootManager.getInstance(m).getSourceRoots()))
+        .toList());
+    roots.add(ProjectUtil.guessProjectDir(testConsoleProperties.getProject()));
+    String candidate = featurePath;
+    while (!candidate.isEmpty()) {
+      String finalCandidate = candidate;
+      VirtualFile found = roots.stream().filter(Objects::nonNull)
+        .map(root -> VfsUtil.findRelativeFile(finalCandidate, root))
+        .filter(Objects::nonNull)
+        .findFirst().orElse(null);
+      if (found != null) {
+        return found;
+      }
+      int slash = candidate.indexOf('/');
+      if (slash < 0) {
+        return null;
+      }
+      candidate = candidate.substring(slash + 1);
+    }
+    return null;
   }
 }

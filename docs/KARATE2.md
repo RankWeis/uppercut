@@ -78,9 +78,9 @@ IDE console (phase 2)
 
 | Phase | Contents | Status |
 |---|---|---|
-| 0 | Spike: verify v2 API surface, runner dispatch skeleton, `karate2-spike/` sample project | this branch |
+| 0 | Spike: verify v2 API surface, runner dispatch skeleton, `karate2-spike/` sample project | done |
 | 1 | Settings override (AUTO/V1/V2) in `KarateSettingsState`, edge-case detection (multi-module mixed versions) | |
-| 2 | `KarateV2EventsConverter` (JSON events -> test tree), nesting via event payloads, failure mapping, tests | |
+| 2 | `KarateV2EventProcessor` (JSON events -> id-based test tree), nesting via callDepth, failure mapping, unit tests | done (this branch) |
 | 3 | Editor niceties: `karate-base.js`/`karate-boot.js` recognition, README/docs, refresh embedded karate-js source | |
 | later | Real debugging via v2 `debugSupport(RunInterceptor, DebugPointFactory)` | |
 

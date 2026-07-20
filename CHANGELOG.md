@@ -7,6 +7,7 @@
 ### Added
 
 - Support for IntelliJ IDEA 2026.2 (build 262.*)
+- Experimental support for running tests with Karate 2.x (karate-junit6). The Karate major version is auto-detected from the project classpath; v2 runs are driven through Karate 2's public `RunListener` event API. (see `docs/KARATE2.md`)
 
 ### Modified
 
