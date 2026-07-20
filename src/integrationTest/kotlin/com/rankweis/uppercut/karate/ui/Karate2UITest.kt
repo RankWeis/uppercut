@@ -9,6 +9,7 @@ import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.components.elements.list
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.waitFor
+import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.ide.starter.driver.engine.runIdeWithDriver
 import com.intellij.ide.starter.driver.execute
 import com.intellij.ide.starter.models.IdeInfo
@@ -69,7 +70,7 @@ class Karate2UITest {
         context.runIdeWithDriver().useDriverAndCloseIde {
             openFeature(this, "src/test/java/spike/users.feature")
             takeScreenshot(screenshotDir + "01-editor-open")
-            launchRunFromGutterContext(this)
+            launchRunFromGutterContext(this, settle = true)
             val passingRun = waitForRunDescriptor(this, "users.feature")
             takeScreenshot(screenshotDir + "02-run-started")
             verifyPassingRun(this, passingRun)
@@ -133,11 +134,13 @@ class Karate2UITest {
      * the context-run action the gutter icon itself delegates to, so this exercises the same path:
      * KarateRunConfigurationProducer -> KarateV2TestRunner -> event converter -> test tree.
      */
-    private fun launchRunFromGutterContext(driver: Driver) {
+    private fun launchRunFromGutterContext(driver: Driver, settle: Boolean = false) {
         // Waiting on indicators also waits out the Gradle import that the run config's classpath needs.
+        // waitSmartLongEnough demands 10 quiet-and-smart seconds before returning - worth it right after
+        // the import (indicators flap as indexing follows), pure dead time on every later launch.
         // No focus/toFront here: nothing below touches the mouse, so the IDE can stay in the background.
         val frame = driver.ideFrame()
-        frame.waitForIndicators(timeout = 10.minutes)
+        driver.waitForIndicators(timeout = 10.minutes, waitSmartLongEnough = settle)
         // Once a run console is open, its editor contributes a second EditorGutterComponentImpl, so the
         // singleton gutter() locator fails. Look for the run marker across all gutters, re-querying while
         // waiting: line markers only appear once the file is analyzed.
