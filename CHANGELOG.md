@@ -17,7 +17,6 @@
 - Feature path resolution with generated source roots, e.g. the protobuf Gradle plugin (#321)
 - Run configurations offered on non-`.feature` files
 - The `form`, `multipart`, and `soap` step actions never highlighted or completed
-- A version override contradicting the module's classpath now fails up front with an explanation instead of an obscure runner crash
 - Running a feature before the project import finishes now says so, instead of failing with "Must have karate-core on the classpath"
 - Security vulnerabilities and library updates
 

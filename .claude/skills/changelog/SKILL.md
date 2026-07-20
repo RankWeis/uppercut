@@ -42,6 +42,21 @@ Bad - describes the diff, not the user's experience:
 One bullet per user-visible change. An internal refactor with no user-visible effect needs no entry;
 test-only changes never do.
 
+## Do not log bugs that never shipped
+
+Only record a fix if the broken behavior exists in a **released** version. A bug introduced and
+fixed within the same `[Unreleased]` cycle is invisible to users, and listing it advertises a
+problem nobody could have had.
+
+The test: check out the last release tag and ask whether a user could hit it there.
+
+- Feature added this cycle, then corrected before release → no entry. The feature's own `Added`
+  bullet describes the shipped behavior; that is the whole story.
+- Bug that predates the cycle → entry, even if the code was touched for other reasons this cycle.
+
+The same applies to a fix for a regression this cycle introduced: the net effect for users is
+nothing changed, so there is nothing to announce.
+
 ## Checking your work
 
 ```bash
