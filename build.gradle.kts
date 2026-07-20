@@ -9,6 +9,7 @@ fun environment(key: String) = providers.environmentVariable(key)
 
 plugins {
     id("java") // Java support
+    alias(libs.plugins.kotlinJvm) // Kotlin support (integration tests use the IDE Starter/Driver Kotlin DSL)
     alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
     alias(libs.plugins.grammarkit)
     alias(libs.plugins.lombok)
@@ -56,7 +57,7 @@ dependencies {
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
         jetbrainsRuntime()
         testFramework(TestFrameworkType.Platform)
-        testFramework(TestFrameworkType.Starter)
+        testFramework(TestFrameworkType.Starter, configurationName = "integrationTestImplementation")
     }
 
     // Plugin Module
@@ -77,6 +78,10 @@ dependencies {
     // --- Mocking ---
     testImplementation(libs.mockito) // Mockito for mocking in tests
     integrationTestImplementation(libs.junitJupiter)
+    // IDE Starter/Driver integration tests are written in Kotlin (see docs: integration-tests-intro)
+    integrationTestImplementation(kotlin("stdlib"))
+    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.1")
+    integrationTestImplementation("org.kodein.di:kodein-di-jvm:7.26.1")
 
     implementation("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") {
         isTransitive = false
@@ -120,6 +125,10 @@ abstract class InstrumentedJarsRule : AttributeCompatibilityRule<LibraryElements
             compatible()
         }
     }
+}
+
+kotlin {
+    jvmToolchain(21)
 }
 
 java {
