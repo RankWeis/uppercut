@@ -11,7 +11,7 @@
 ### Modified
 
 - Updated IntelliJ Platform Gradle Plugin from 2.16.0 to 2.18.1
-- Updated Java toolchain from 21 to 25 (required by IntelliJ 2026.2)
+- Updated Java toolchain from 21 to 25 (required by IntelliJ 2026.2), including the Java version provisioned in all CI workflows
 - Replaced `org.apache.commons.collections.CollectionUtils` usage with standard Java equivalents
 
 ### Fixed
