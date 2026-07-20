@@ -1,13 +1,32 @@
 ---
 name: inspect-dependency-apis
-description: Answer questions about what a dependency or the IntelliJ platform actually ships by interrogating the jars - Gradle cache, IDE distribution, javap, sources jars. Use before trusting any claim about a library's API, emitted output, keywords, or module layout, and whenever a driver/@Remote/platform API needs its real signature.
+description: Answer questions about what a dependency or the IntelliJ platform actually ships - official docs and GitHub sources first for intent and the sanctioned API, then the jars (Gradle cache, IDE distribution, javap) for ground truth. Use before trusting any claim about a library's API, emitted output, keywords, or module layout, and whenever a driver/@Remote/platform API needs its real signature.
 ---
 
-# Interrogate the artifact, not the docs
+# Docs for intent, jars for truth
 
-Every hard question in this repo gets answered faster from the jars than from documentation or
-memory. Claims about what a dependency does that were "verified" only by reading docs have been
-wrong here before (a review finding died to one grep of live output). Rules of thumb:
+Two-step method. Skipping step 1 wastes time rediscovering documented concepts; skipping step 2
+ships claims that turn out wrong (a review finding here died to one grep of live output).
+
+## Step 1 - documentation and upstream sources
+
+Orient first: what is the sanctioned way to do this, is the API deprecated, is there a worked
+example?
+
+| Resource | Use for |
+|---|---|
+| [IntelliJ Platform Plugin SDK](https://plugins.jetbrains.com/docs/intellij/welcome.html) | Concepts, extension points, threading/read-action rules, testing frameworks, deprecation notices |
+| [JetBrains/intellij-community](https://github.com/JetBrains/intellij-community) on GitHub | The platform's actual sources - including `community/platform/remote-driver/README.md`, which driver error messages cite |
+| [IntelliJ Platform Explorer](https://plugins.jetbrains.com/intellij-platform-explorer) | Real-world usages of an extension point across published plugins |
+| [karatelabs/karate](https://github.com/karatelabs/karate) and [karatelabs/karate-js](https://github.com/karatelabs/karate-js) | Karate behavior, release notes, the v2 source that ships as jars below |
+
+Fetch pages with WebFetch/WebSearch when online. If offline or the question is version-exact,
+go straight to step 2 - the jars in the caches match the versions this build actually uses,
+which web docs may not.
+
+## Step 2 - verify against the artifact
+
+Docs describe intent; the jar is what runs. Non-negotiable for three kinds of claim:
 
 - A claim about an **API shape** → `javap` the class.
 - A claim about **what something emits or accepts** → extract string constants (`javap -c`) or run
