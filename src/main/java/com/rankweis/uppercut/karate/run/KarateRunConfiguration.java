@@ -94,10 +94,8 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         final JavaParameters params = super.createJavaParameters();
         String jarPathForClass = PathUtil.getJarPathForClass(KarateTestRunner.class);
         VirtualFile[] libraryRoots = LibraryUtil.getLibraryRoots(env.getProject());
-        // Karate 2.x renamed karate-junit5 to karate-junit6; detect the major version from the project
-        // classpath and tell the test runner which API family to drive.
-        boolean karateV2 = Arrays.stream(libraryRoots)
-          .anyMatch(v -> v.getName().matches("karate-(core|junit6)-2\\..*"));
+        boolean karateV2 = isKarateV2(KarateSettingsState.getInstance().getKarateVersionPreference(),
+          Arrays.stream(libraryRoots).map(VirtualFile::getName));
         if (karateV2) {
           params.getProgramParametersList().add("--karate-major-version", "2");
         } else {
@@ -191,6 +189,21 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     };
   }
 
+
+  /**
+   * Decides whether to drive Karate 2.x. Honors the settings override; on AUTO, detects
+   * Karate 2 from library jar names (karate-junit5 was renamed to karate-junit6 in v2).
+   */
+  static boolean isKarateV2(KarateSettingsState.KarateVersionPreference preference,
+    java.util.stream.Stream<String> libraryNames) {
+    if (preference == KarateSettingsState.KarateVersionPreference.V1) {
+      return false;
+    }
+    if (preference == KarateSettingsState.KarateVersionPreference.V2) {
+      return true;
+    }
+    return libraryNames.anyMatch(n -> n.matches("karate-(core|junit6)-2\\..*"));
+  }
 
   @Override public void checkConfiguration() {
   }

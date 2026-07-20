@@ -2,14 +2,17 @@ package com.rankweis.uppercut.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
 import com.rankweis.uppercut.karate.MyBundle;
+import com.rankweis.uppercut.settings.KarateSettingsState.KarateVersionPreference;
 import java.text.NumberFormat;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JPanel;
@@ -43,6 +46,7 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
   private JTextField defaultEnvironmentField;
   private JFormattedTextField defaultParallelismField;
   private JCheckBox useKarateJsCheckbox;
+  private JComboBox<KarateVersionPreference> karateVersionCombo;
   private JPanel myMainPanel;
 
   @Override
@@ -65,7 +69,8 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
     }
     return !defaultEnvironmentField.getText().equals(settingsState.getDefaultEnvironment())
       || useKarateJsCheckbox.isSelected() != settingsState.isUseKarateJavaScriptEngine()
-      || !defaultParallelism.equals(settingsState.getDefaultParallelism());
+      || !defaultParallelism.equals(settingsState.getDefaultParallelism())
+      || karateVersionCombo.getSelectedItem() != settingsState.getKarateVersionPreference();
   }
 
   @Nullable
@@ -75,6 +80,8 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
       .addLabeledComponent("Default environment:", defaultEnvironmentField = new JBTextField(), true)
       .addLabeledComponent("Default parallelism:", defaultParallelismField = new JFormattedTextField(numberFormatter),
         true)
+      .addLabeledComponent("Karate version:",
+        karateVersionCombo = new ComboBox<>(KarateVersionPreference.values()), true)
       .addComponent(new JBSplitter())
       .addComponent(useKarateJsCheckbox = new JBCheckBox("Use Karate JavaScript engine (restart required)"))
       .getPanel();
@@ -87,6 +94,7 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
     defaultEnvironmentField = null;
     defaultParallelismField = null;
     useKarateJsCheckbox = null;
+    karateVersionCombo = null;
   }
 
   @Override
@@ -95,6 +103,7 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
     defaultEnvironmentField.setText(settingsState.getDefaultEnvironment());
     defaultParallelismField.setText(String.valueOf(settingsState.getDefaultParallelism()));
     useKarateJsCheckbox.setSelected(settingsState.isUseKarateJavaScriptEngine());
+    karateVersionCombo.setSelectedItem(settingsState.getKarateVersionPreference());
   }
 
   @Override
@@ -108,5 +117,7 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
     settingsState.setDefaultEnvironment(defaultEnvironmentField.getText());
     settingsState.setDefaultParallelism(defaultParallelism);
     settingsState.setUseKarateJavaScriptEngine(useKarateJsCheckbox.isSelected());
+    settingsState.setKarateVersionPreference(
+      (KarateVersionPreference) karateVersionCombo.getSelectedItem());
   }
 }
