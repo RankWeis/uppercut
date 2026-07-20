@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [2.5.3] - 2026-07-20
+
 ### Added
 
 - Support for IntelliJ IDEA 2026.2 (build 262.*)
@@ -440,7 +442,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.5.2...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.5.3...HEAD
+[2.5.3]: https://github.com/rankweis/uppercut/compare/v2.5.2...v2.5.3
 [2.5.2]: https://github.com/rankweis/uppercut/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/rankweis/uppercut/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/rankweis/uppercut/compare/v2.4.16...v2.5.0
