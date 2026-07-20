@@ -95,6 +95,16 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
       protected JavaParameters createJavaParameters() throws ExecutionException {
         final JavaParameters params = super.createJavaParameters();
         VirtualFile[] libraryRoots = karateLibraryRoots();
+        if (libraryRoots.length == 0) {
+          // No libraries anywhere is the signature of a project that has not finished (or has
+          // failed) importing. Launching anyway sends the run down the v1 fallback with an empty
+          // classpath, which dies with "Must have karate-core on the classpath" - an error that
+          // points at everything except the actual problem.
+          throw new ExecutionException(
+            "No libraries found on the classpath - the project may still be importing, or the "
+              + "Gradle/Maven sync may have failed. Wait for the import to finish (check the Build "
+              + "tool window) and run again.");
+        }
         List<String> libraryNames = Arrays.stream(libraryRoots).map(VirtualFile::getName).toList();
         KarateSettingsState.KarateVersionPreference preference =
           KarateSettingsState.getInstance().getKarateVersionPreference();

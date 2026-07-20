@@ -1,5 +1,6 @@
 package com.rankweis.uppercut.testrunner;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
@@ -44,5 +45,24 @@ final class UppercutLogbackAppender {
     });
     consoleAppenders.forEach(intuitLogger::detachAppender);
     intuitLogger.addAppender(outputStreamAppender);
+    quietenReportEngines(context);
+  }
+
+  /**
+   * Karate renders its HTML report with Thymeleaf, which dumps its entire engine configuration at
+   * DEBUG. With no logback.xml in the forked test JVM - the common case - logback defaults the root
+   * logger to DEBUG, and that dump buries the run: a two-scenario feature produced 1536 Thymeleaf
+   * lines out of 1577 total.
+   *
+   * <p>Only loggers the user has not configured are touched. {@code exists()} returns non-null only
+   * for loggers logback already created from a configuration file, so anyone who has deliberately
+   * set a level for these keeps it.
+   */
+  private static void quietenReportEngines(LoggerContext context) {
+    for (String noisy : new String[] {"org.thymeleaf", "org.thymeleaf.TemplateEngine"}) {
+      if (context.exists(noisy) == null) {
+        context.getLogger(noisy).setLevel(Level.INFO);
+      }
+    }
   }
 }
