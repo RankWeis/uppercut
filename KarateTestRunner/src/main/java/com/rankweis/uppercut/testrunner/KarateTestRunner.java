@@ -183,7 +183,13 @@ public class KarateTestRunner {
       getOutputStreamAppender();
       KarateTestRunner runner = new KarateTestRunner();
       runner.parseArgs(args);
-      runner.doTest();
+      boolean karateV2 = runner.params.getOrDefault("karate-major-version", List.of())
+        .stream().anyMatch("2"::equals);
+      if (karateV2) {
+        new KarateV2TestRunner(runner.params).doTest();
+      } else {
+        runner.doTest();
+      }
     } catch (ClassNotFoundException | NoClassDefFoundError e) {
       throw new RuntimeException("Must have karate-core on the classpath to use uppercut", e);
     }

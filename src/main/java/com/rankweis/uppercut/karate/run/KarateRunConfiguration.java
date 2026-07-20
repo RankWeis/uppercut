@@ -93,13 +93,23 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
       protected JavaParameters createJavaParameters() throws ExecutionException {
         final JavaParameters params = super.createJavaParameters();
         String jarPathForClass = PathUtil.getJarPathForClass(KarateTestRunner.class);
-        List<String> karateJunit5 = Arrays.stream(LibraryUtil.getLibraryRoots(env.getProject()))
-          .filter(v -> v.getName().contains("karate-junit5"))
-          .map(VirtualFile::getPath).toList();
-        if (karateJunit5.isEmpty()) {
-          log.warn("No junit5 in classpath");
-          params.getProgramParametersList().add("--karate-provided", "true");
-          params.getClassPath().add(PathUtil.getJarPathForClass(Karate.class));
+        VirtualFile[] libraryRoots = LibraryUtil.getLibraryRoots(env.getProject());
+        // Karate 2.x renamed karate-junit5 to karate-junit6; detect the major version from the project
+        // classpath and tell the test runner which API family to drive.
+        boolean karateV2 = Arrays.stream(libraryRoots)
+          .anyMatch(v -> v.getName().matches("karate-(core|junit6)-2\\..*"));
+        if (karateV2) {
+          params.getProgramParametersList().add("--karate-major-version", "2");
+        } else {
+          List<String> karateJunit5 = Arrays.stream(libraryRoots)
+            .filter(v -> v.getName().contains("karate-junit5"))
+            .map(VirtualFile::getPath).toList();
+          if (karateJunit5.isEmpty()) {
+            log.warn("No junit5 in classpath");
+            // The bundled fallback is v1-only; v2 users always have karate on their own classpath.
+            params.getProgramParametersList().add("--karate-provided", "true");
+            params.getClassPath().add(PathUtil.getJarPathForClass(Karate.class));
+          }
         }
         params.setUseDynamicClasspath(true);
         params.getClassPath().add(jarPathForClass);
