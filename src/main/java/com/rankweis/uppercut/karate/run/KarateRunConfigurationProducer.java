@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,10 +21,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.rankweis.uppercut.karate.psi.GherkinFile;
 import com.rankweis.uppercut.karate.psi.GherkinStepsHolder;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import com.rankweis.uppercut.karate.run.KarateRunConfiguration.PreferredTest;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +56,7 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
 
     PsiElement psiElement = context.getLocation().getPsiElement();
     PsiFile containingFile = psiElement.getContainingFile();
-    if (containingFile == null) {
+    if (!(containingFile instanceof GherkinFile)) {
       return false;
     }
     Project project = containingFile.getProject();
@@ -100,23 +103,28 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     @NotNull ConfigurationContext context,
     @NotNull Ref<PsiElement> sourceElement) {
     final PsiElement location = context.getPsiLocation();
+    if (location == null
+      || (!(location instanceof PsiDirectory) && !(location.getContainingFile() instanceof GherkinFile))) {
+      return false;
+    }
     Module contextModule = context.getModule();
     if (contextModule != null) {
       configuration.setModule(contextModule);
     }
-    String moduleDir = getModuleContentRoot(contextModule);
-    if (moduleDir != null) {
-      configuration.setWorkingDirectory(moduleDir);
-    } else {
-      String baseDir = FileUtil.toSystemIndependentName(
-        StringUtil.notNullize(context.getProject().getBasePath()));
-      configuration.setWorkingDirectory(baseDir);
-    }
+    Project contextProject = context.getProject();
     Optional<VirtualFile> virtualFile =
       Optional.of(context).map(ConfigurationContext::getLocation).map(Location::getVirtualFile);
+    // Karate treats the project/module root as its working directory (used to locate karate-config.js). Resolve it
+    // from the content root that actually contains the feature file so generated roots never take precedence.
+    String workingDir = virtualFile.map(vf -> getContentRootForFile(contextProject, vf))
+      .orElseGet(() -> getModuleContentRoot(contextModule));
+    if (workingDir == null) {
+      workingDir = FileUtil.toSystemIndependentName(StringUtil.notNullize(contextProject.getBasePath()));
+    }
+    configuration.setWorkingDirectory(workingDir);
     if (location instanceof PsiDirectory) {
       return virtualFile.map(
-          v -> this.setupRunnerParametersForFolderIfApplicable(contextModule, configuration,
+          v -> this.setupRunnerParametersForFolderIfApplicable(contextProject, contextModule, configuration,
             v))
         .orElse(false);
 
@@ -140,10 +148,6 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     IElementType elementType = PsiUtilCore.getElementType(psiElement);
     if (elementType == KarateTokenTypes.TAG) {
       preferredTest = PreferredTest.ALL_TAGS;
-      String tagModuleDir = getModuleContentRoot(contextModule);
-      if (tagModuleDir != null) {
-        configuration.setWorkingDirectory(tagModuleDir);
-      }
       configuration.setTag(psiElement.getText());
     } else {
       GherkinStepsHolder holder;
@@ -164,7 +168,7 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     configuration.setLineNumber(lineNumber);
     configuration.setTestName(name);
     configuration.setPath(path);
-    String relPath = getRelativePathFromModule(contextModule, path, name);
+    String relPath = getRelativePathFromFile(contextProject, contextModule, virtualFile.orElse(null), name);
     configuration.setRelPath(relPath);
     PsiElement nextElement =
       PsiUtilCore.getElementAtOffset(containingFile, psiElement.getTextOffset() + psiElement.getTextLength() + 1);
@@ -179,7 +183,7 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     return true;
   }
 
-  private boolean setupRunnerParametersForFolderIfApplicable(final Module module,
+  private boolean setupRunnerParametersForFolderIfApplicable(@NotNull final Project project, final Module module,
     @NotNull final KarateRunConfiguration configuration,
     @NotNull final VirtualFile dir) {
     if (module == null) {
@@ -188,7 +192,7 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     if (Arrays.stream(dir.getChildren()).map(VirtualFile::getName).allMatch(s -> s.endsWith(".feature"))) {
       configuration.setAllInFolderAreFeature(true);
     }
-    configuration.setPath(getRelativePathFromModule(module, dir.getPath(), dir.getPath()));
+    configuration.setPath(getRelativePathFromFile(project, module, dir, dir.getPath()));
     configuration.setPreferredTest(PreferredTest.ALL_IN_FOLDER);
     configuration.setName("Karate tests in '" + dir.getName() + "'");
     return true;
@@ -205,16 +209,44 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     return null;
   }
 
-  private static String getRelativePathFromModule(Module contextModule, String path, String name) {
-    if (contextModule == null) {
-      return "";
+  private static @Nullable String getContentRootForFile(@NotNull Project project, @Nullable VirtualFile file) {
+    if (file == null) {
+      return null;
     }
-    return Arrays.stream(ModuleRootManager.getInstance(contextModule).getSourceRoots()).map(
-        VirtualFile::getPath)
+    VirtualFile contentRoot = ProjectFileIndex.getInstance(project).getContentRootForFile(file);
+    return contentRoot == null ? null : FileUtil.toSystemIndependentName(contentRoot.getPath());
+  }
+
+  /**
+   * Resolves a feature file (or folder) path relative to the classpath source root that actually contains it.
+   * Karate resolves {@code classpath:} references against the classpath roots (e.g. {@code src/test/java},
+   * {@code src/test/resources}), so the relative path must come from the specific source root holding the file -
+   * not the first source root alphabetically, which can be a generated directory such as those registered by the
+   * protobuf Gradle plugin (e.g. {@code build/extracted-include-protos/test}).
+   */
+  private static String getRelativePathFromFile(@NotNull Project project, @Nullable Module contextModule,
+    @Nullable VirtualFile file, @Nullable String fallback) {
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+    if (file != null) {
+      VirtualFile sourceRoot = fileIndex.getSourceRootForFile(file);
+      if (sourceRoot != null) {
+        String relative = FileUtil.getRelativePath(sourceRoot.getPath(), file.getPath(), '/');
+        if (relative != null) {
+          return relative;
+        }
+      }
+    }
+    String path = file == null ? null : file.getPath();
+    if (contextModule == null || path == null) {
+      return fallback == null ? "" : fallback;
+    }
+    return Arrays.stream(ModuleRootManager.getInstance(contextModule).getSourceRoots())
+      .sorted(Comparator.comparingInt(root -> fileIndex.isInGeneratedSources(root) ? 1 : 0))
+      .map(VirtualFile::getPath)
       .filter(s -> FileUtil.isAncestor(s, path, false))
       .map(s -> Optional.ofNullable(FileUtil.getRelativePath(s, path, '/')))
       .findFirst()
       .flatMap(Function.identity())
-      .orElse(name);
+      .orElse(fallback);
   }
 }

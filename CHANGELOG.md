@@ -4,9 +4,24 @@
 
 ## [Unreleased]
 
+### Added
+
+- Support for IntelliJ IDEA 2026.2 (build 262.*)
+
+### Modified
+
+- Raised the minimum supported IntelliJ build from 253 to 261, as `PositionManager.isAcceptedFileType` is unavailable before 261
+- Replaced the deprecated `PositionManager.getAcceptedFileTypes` override in `KaratePositionManager` with `isAcceptedFileType`
+- Updated IntelliJ Platform Gradle Plugin from 2.16.0 to 2.18.1
+- Updated Java toolchain from 21 to 25 (required by IntelliJ 2026.2), including the Java version provisioned in all CI workflows
+- Replaced `org.apache.commons.collections.CollectionUtils` usage with standard Java equivalents
+
 ### Fixed
 
 - Security vulnerabilities and library updates.
+- Fixed run configurations resolving the wrong working directory and feature path when the protobuf Gradle plugin (or any plugin registering generated source roots such as `build/extracted-include-protos/test`) is present. Paths are now resolved from the content/source root that actually contains the feature file. (#321)
+- Run configurations are no longer offered for non-`.feature` files (e.g. JUnit `.java` test files); the Karate producer now only activates on Karate feature files.
+- Guarded the test runner against a missing `--working-dir` argument so it falls back to Karate's default working directory instead of failing.
 
 ## [2.5.2] - 2026-03-23
 

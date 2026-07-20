@@ -2,6 +2,7 @@ package com.rankweis.uppercut.karate.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.javascript.JavascriptLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -48,6 +49,13 @@ public class KarateJsFormattingTest extends FormatterTestCase {
   }
 
   private void registerKarateJsExtensionPoint() {
+    if (!ApplicationManager.getApplication().getExtensionArea()
+        .hasExtensionPoint(KarateJavascriptParsingExtensionPoint.EP_NAME.getName())) {
+      ApplicationManager.getApplication().getExtensionArea().registerExtensionPoint(
+        KarateJavascriptParsingExtensionPoint.EP_NAME.getName(),
+        KarateJavascriptParsingExtensionPoint.class.getName(),
+        com.intellij.openapi.extensions.ExtensionPoint.Kind.INTERFACE, false);
+    }
     ExtensionTestUtil.maskExtensions(KarateJavascriptParsingExtensionPoint.EP_NAME,
       List.of(new KarateJsNoPluginExtension()), getTestRootDisposable());
   }

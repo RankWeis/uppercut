@@ -58,7 +58,9 @@ public class KarateTestRunner {
     } else {
       invoke = mRun.invoke(invoke, new Object[]{testNames});
     }
-    invoke = mWorkingDir.invoke(invoke, new File(workingDirectories[0]));
+    if (workingDirectories.length > 0) {
+      invoke = mWorkingDir.invoke(invoke, new File(workingDirectories[0]));
+    }
     Optional<String> env =
       Optional.ofNullable(params.get("environment")).orElse(List.of())
         .stream().filter(s -> !s.isBlank())

@@ -1,6 +1,7 @@
 package com.rankweis.uppercut.karate.ui;
 
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -17,6 +18,13 @@ public class KarateGoToSymbolTest extends BasePlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    if (!ApplicationManager.getApplication().getExtensionArea()
+        .hasExtensionPoint(KarateJavascriptParsingExtensionPoint.EP_NAME.getName())) {
+      ApplicationManager.getApplication().getExtensionArea().registerExtensionPoint(
+        KarateJavascriptParsingExtensionPoint.EP_NAME.getName(),
+        KarateJavascriptParsingExtensionPoint.class.getName(),
+        com.intellij.openapi.extensions.ExtensionPoint.Kind.INTERFACE, false);
+    }
     ExtensionTestUtil.maskExtensions(KarateJavascriptParsingExtensionPoint.EP_NAME,
       List.of(new KarateJsNoPluginExtension()), getTestRootDisposable());
   }

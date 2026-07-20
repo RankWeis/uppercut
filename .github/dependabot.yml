@@ -7,9 +7,13 @@ updates:
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     groups:
       gradle-deps:
+        applies-to: version-updates
+        patterns:
+          - "*"
+      gradle-security:
         applies-to: security-updates
         patterns:
           - "*"
@@ -17,9 +21,13 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     groups:
       github-actions:
+        applies-to: version-updates
+        patterns:
+          - "*"
+      github-actions-security:
         applies-to: security-updates
         patterns:
           - "*"

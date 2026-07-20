@@ -35,14 +35,14 @@ jobs:
 
       # Check out current repository
       - name: Fetch Sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Set up Java environment for the next steps
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
           distribution: zulu
-          java-version: 17
+          java-version: 25
 
       # Setup Gradle
       - name: Setup Gradle

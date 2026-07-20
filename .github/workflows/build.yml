@@ -40,22 +40,22 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       # Validate wrapper
       - name: Gradle Wrapper Validation
-        uses: gradle/actions/wrapper-validation@0f4528296b4bc09e8ae0fc7be30185a4ab435545
+        uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92
 
       # Set up Java environment for the next steps
       - name: Setup Java
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
           distribution: zulu
-          java-version: 21
+          java-version: 25
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92
 
       # Set environment variables
       - name: Export Properties
@@ -104,18 +104,18 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       # Set up Java environment for the next steps
       - name: Setup Java
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
           distribution: zulu
-          java-version: 21
+          java-version: 25
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92
 
       # Run tests
       - name: Run Tests
@@ -134,7 +134,7 @@ jobs:
 
       # Upload the JaCoCo report to CodeCov
       - name: Upload Code Coverage Report
-        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
         with:
           files: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
 
@@ -154,23 +154,23 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       # Set up Java environment for the next steps
       - name: Setup Java
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
           distribution: zulu
-          java-version: 21
+          java-version: 25
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92
 
       # IntelliJ will verify Plugin for us and this is a lot of downloading.
       # Cache Plugin Verifier IDEs
       - name: Setup Plugin Verifier IDEs Cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+        uses: actions/cache@2c8a9bd7457de244a408f35966fab2fb45fda9c8
         with:
           path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
           key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
@@ -205,7 +205,7 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       # Remove old release drafts by using the curl request for the available releases with a draft flag
       - name: Remove Old Release Drafts

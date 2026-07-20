@@ -48,7 +48,7 @@ xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" ./gradlew check
 
 ### JDK Requirements
 
-- **Main project:** Java 21 (jvmToolchain)
+- **Main project:** Java 25 (jvmToolchain)
 - **KarateTestRunner subproject:** Java 17 (jvmToolchain)
 
 ### Gradle Properties
@@ -247,7 +247,7 @@ Key dependencies (see `gradle/libs.versions.toml` and `gradle.properties`):
 
 | Dependency | Version | Purpose |
 |-----------|---------|---------|
-| IntelliJ Platform | 253.x (Ultimate) | IDE platform APIs |
+| IntelliJ Platform | 262.x (Ultimate) | IDE platform APIs |
 | Karate Core | 1.5.1 | Karate framework support |
 | Karate JUnit 5 | 1.5.1 | Karate test runner |
 | Logback | 1.5.6 | Logging |

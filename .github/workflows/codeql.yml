@@ -26,14 +26,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Java
         if: matrix.language == 'java-kotlin'
         uses: actions/setup-java@v5
         with:
           distribution: zulu
-          java-version: 21
+          java-version: 25
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4

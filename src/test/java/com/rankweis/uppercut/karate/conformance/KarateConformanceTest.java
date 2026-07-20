@@ -2,6 +2,7 @@ package com.rankweis.uppercut.karate.conformance;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
@@ -36,6 +37,13 @@ public class KarateConformanceTest extends BasePlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    if (!ApplicationManager.getApplication().getExtensionArea()
+        .hasExtensionPoint(KarateJavascriptParsingExtensionPoint.EP_NAME.getName())) {
+      ApplicationManager.getApplication().getExtensionArea().registerExtensionPoint(
+        KarateJavascriptParsingExtensionPoint.EP_NAME.getName(),
+        KarateJavascriptParsingExtensionPoint.class.getName(),
+        com.intellij.openapi.extensions.ExtensionPoint.Kind.INTERFACE, false);
+    }
     ExtensionTestUtil.maskExtensions(KarateJavascriptParsingExtensionPoint.EP_NAME,
       List.of(new KarateJsNoPluginExtension()), getTestRootDisposable());
   }

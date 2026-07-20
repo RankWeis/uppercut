@@ -34,7 +34,6 @@ import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.apache.commons.collections.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTestEventsConverter {
@@ -303,7 +302,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
         finishMessage(scenarioFinished, idToItem.get(scenarioId));
         idToItem.remove(scenarioId);
         LinkedList<KarateItem> karateItems = threadToScenarioStack.get(threadGroup);
-        if (!CollectionUtils.isEmpty(karateItems)) {
+        if (karateItems != null && !karateItems.isEmpty()) {
           karateItems.pop();
         }
       }
@@ -315,7 +314,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
         finishMessage(scenarioFailed, idToItem.get(scenarioId));
         idToItem.remove(scenarioId);
         LinkedList<KarateItem> karateItems = threadToScenarioStack.get(threadGroup);
-        if (!CollectionUtils.isEmpty(karateItems)) {
+        if (karateItems != null && !karateItems.isEmpty()) {
           karateItems.pop();
         }
       } else if (idToItem.containsKey(featureId)) {
