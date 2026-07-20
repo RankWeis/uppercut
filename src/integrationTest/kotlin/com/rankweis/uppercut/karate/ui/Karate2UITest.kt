@@ -1,7 +1,9 @@
 package com.rankweis.uppercut.karate.ui
 
 import com.intellij.driver.client.Driver
+import com.intellij.driver.sdk.FileEditorManager
 import com.intellij.driver.sdk.getOpenProjects
+import com.intellij.driver.sdk.singleProject
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.components.common.GutterUiComponent
 import com.intellij.driver.sdk.ui.components.common.ideFrame
@@ -21,6 +23,7 @@ import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.sdk.JdkDownloaderFacade
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.performanceTesting.commands.goto
+import com.intellij.tools.ide.performanceTesting.commands.importGradleProject
 import com.intellij.tools.ide.performanceTesting.commands.openFile
 import com.intellij.tools.ide.performanceTesting.commands.waitForCodeAnalysisFinished
 import com.intellij.tools.ide.performanceTesting.commands.waitForSmartMode
@@ -93,6 +96,12 @@ class Karate2UITest {
             }.setupSdk(sdk)
             ideaLog = context.paths.testHome.resolve("log").resolve("idea.log")
             run = context.runIdeWithDriver()
+            // The startup auto-import races the project-SDK registration; when it loses, it fails
+            // fast with "Invalid Gradle JDK configuration", indicators go quiet, and every run in
+            // the session launches against an unimported project (empty classpath, no modules).
+            // An explicit import after the IDE is up cannot lose that race - the SDK is registered
+            // by now - and re-importing an already-imported project is harmless.
+            run.driver.execute(CommandChain().waitForSmartMode().importGradleProject().waitForSmartMode())
         }
 
         @JvmStatic
@@ -113,8 +122,16 @@ class Karate2UITest {
             val target = Files.createTempDirectory("karate-versions-it")
             copyRecursively(source, target)
             copyRecursively(repoRoot.resolve("gradle/wrapper"), target.resolve("gradle/wrapper"))
-            Files.copy(repoRoot.resolve("gradlew"), target.resolve("gradlew"), StandardCopyOption.COPY_ATTRIBUTES)
-            Files.copy(repoRoot.resolve("gradlew.bat"), target.resolve("gradlew.bat"))
+            // REPLACE_EXISTING: opening the fixture in an IDE by hand leaves a wrapper behind, and
+            // without this the copy then fails the whole suite with FileAlreadyExistsException.
+            Files.copy(
+                repoRoot.resolve("gradlew"), target.resolve("gradlew"),
+                StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING
+            )
+            Files.copy(
+                repoRoot.resolve("gradlew.bat"), target.resolve("gradlew.bat"),
+                StandardCopyOption.REPLACE_EXISTING
+            )
             target.resolve("gradlew").toFile().setExecutable(true)
             return target
         }
@@ -179,18 +196,69 @@ class Karate2UITest {
         driver.takeScreenshot(screenshotDir + "05-v1-results")
     }
 
+    /** OUTLINE_ENTER is deliberately unmapped; examples must still surface as individual results. */
     @Test
     @Order(4)
+    fun scenarioOutlineExamplesAppearIndividually() {
+        val driver = run.driver
+        openFeature(driver, "v2/src/test/java/sample/outline.feature")
+        launchRunFromGutterContext(driver)
+        val outlineRun = waitForRunDescriptor(driver, "outline.feature")
+        driver.withContext {
+            val (results, diagnostics) = awaitResults(driver, "outline.feature", outlineRun)
+            assertEquals(0, results.getFailedTestCount(), "outline examples should pass$diagnostics")
+            assertEquals(
+                2, results.getFinishedTestCount(),
+                "each example row should be its own result$diagnostics"
+            )
+        }
+    }
+
+    /**
+     * Editor smoke check: go-to-definition on the argument of call read('called.feature') must open
+     * the called feature. This exercises the reference contributors in a real IDE - unit tests cover
+     * them with LightPlatformTestCase, but not with the JavaScript plugin actually present.
+     */
+    @Test
+    @Order(5)
+    fun goToDefinitionOpensCalledFeature() {
+        val driver = run.driver
+        // Caret inside 'called.feature' on the call step of users.feature (line 9).
+        driver.execute(
+            CommandChain().openFile("v2/src/test/java/sample/users.feature")
+                .waitForCodeAnalysisFinished()
+                .goto(9, 40)
+        )
+        driver.invokeAction("GotoDeclaration")
+        driver.withContext {
+            val d = this
+            runBlocking {
+                waitFor(
+                    timeout = 30.seconds,
+                    errorMessage = {
+                        "GotoDeclaration on 'called.feature' did not open it; current file: " +
+                            currentFileName(d)
+                    }
+                ) { currentFileName(d) == "called.feature" }
+            }
+        }
+    }
+
+    @Test
+    @Order(6)
     fun versionOverrideDisplacesDetection() {
         verifySettingsOverrideBeatsDetection(run.driver)
     }
 
     /** Runs last while the IDE is still up; idea.log is written through continuously. */
     @Test
-    @Order(5)
+    @Order(7)
     fun pluginLoggedNoErrors() {
         assertNoPluginErrorsLogged(ideaLog)
     }
+
+    private fun currentFileName(driver: Driver): String? =
+        driver.service(FileEditorManager::class, driver.singleProject()).getCurrentFile()?.getName()
 
     /** Opens a feature and parks the caret on the Feature line so the context run targets the whole file. */
     private fun openFeature(driver: Driver, relativePath: String) {
@@ -273,6 +341,15 @@ class Karate2UITest {
         }
     }
 
+    /** Everything the run printed, including the per-node output the tree attaches to scenarios. */
+    private fun consoleTextOf(driver: Driver, configNamePart: String): String {
+        val console = descriptorOrNull(driver, configNamePart)!!.getExecutionConsole()!!
+        return driver.cast(
+            driver.cast(console, SMTRunnerConsoleViewRef::class).getConsole(),
+            ConsoleViewImplRef::class
+        ).getText()
+    }
+
     private fun descriptorOrNull(driver: Driver, configNamePart: String): RunContentDescriptor? =
         driver.getRunContentManagerRef(driver.getOpenProjects().first())
             .getAllDescriptors()
@@ -326,6 +403,19 @@ class Karate2UITest {
             // Counts alone would pass on a tree of the right size but the wrong shape.
             listOf("v2 built-ins and a nested call", "second scenario for tree ordering", "called.feature:4")
                 .forEach { assertTrue(tree.contains(it), "'$it' missing from the tree$diagnostics") }
+
+            // Step-level detail: v2 reports structurally, so without STEP_EXIT forwarding the tree
+            // says only whether a scenario passed. The second scenario prints, and that output has
+            // to reach the tree too - it lives on StepResult.getLog(), which toJson() omits.
+            val consoleText = consoleTextOf(driver, "users.feature")
+            assertTrue(
+                consoleText.contains("karate.env"),
+                "step text missing from the run output$diagnostics\n--- console ---\n$consoleText"
+            )
+            assertTrue(
+                consoleText.contains("env is"),
+                "print output missing from the run output$diagnostics\n--- console ---\n$consoleText"
+            )
 
             val root = results.getTestsRootNode()
             val scenario = findNode(root, "v2 built-ins and a nested call")
