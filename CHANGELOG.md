@@ -24,6 +24,7 @@
 - Fixed run configurations resolving the wrong working directory and feature path when the protobuf Gradle plugin (or any plugin registering generated source roots such as `build/extracted-include-protos/test`) is present. Paths are now resolved from the content/source root that actually contains the feature file. (#321)
 - Run configurations are no longer offered for non-`.feature` files (e.g. JUnit `.java` test files); the Karate producer now only activates on Karate feature files.
 - Guarded the test runner against a missing `--working-dir` argument so it falls back to Karate's default working directory instead of failing.
+- The `form`, `multipart`, and `soap` step actions are now recognized as keywords (highlighting and completion). They had been missing since Karate 1 support, so steps like `* form field name = 'x'` never highlighted their action word.
 - Fixed test-tree navigation for Karate 2.x runs opening the generated feature copy under the build directory (where edits and breakpoints are silently discarded) instead of the source file under `src/test`.
 - Unknown or malformed `<<UPPERCUT-V2>>` protocol lines are no longer printed raw into the console; they are consumed and logged.
 - Karate 2.x runs no longer install the plugin's logback console appender in the test process. A Karate 2 project supplying its own logback previously had its console appenders replaced and every log line prefixed with `<<UPPERCUT>>`.

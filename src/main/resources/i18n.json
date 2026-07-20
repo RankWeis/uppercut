@@ -928,6 +928,18 @@
 			"bytes",
 			"bytes "
 		],
+		"form": [
+			"form",
+			"form "
+		],
+		"multipart": [
+			"multipart",
+			"multipart "
+		],
+		"soap": [
+			"soap",
+			"soap "
+		],
 		"delete": [
 			"delete",
 			"delete "
