@@ -253,7 +253,7 @@ jobs:
     name: Release draft
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
-    needs: [ build, test, verify ]
+    needs: [ build, test, verify, integration-test ]
     permissions:
       contents: write
     steps:

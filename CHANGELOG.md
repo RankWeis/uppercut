@@ -6,31 +6,21 @@
 
 ### Added
 
-- Support for IntelliJ IDEA 2026.2 (build 262.*)
-- Experimental support for running tests with Karate 2.x (karate-junit6). The Karate major version is auto-detected from the project classpath; v2 runs are driven through Karate 2's public `RunListener` event API. (see `docs/KARATE2.md`)
+- **Karate 2.x support — early access.** Run Karate 2 (karate-junit6) tests from the IDE. The Karate version is detected per module from the classpath, so a repository can migrate one module at a time; Settings > Tools > Karate pins it if you'd rather choose. The test tree shows each step and its output, nests called features under the calling step, and navigates to the source feature on double-click. Karate 1.x is unchanged and remains the default for existing projects.
 
-### Modified
-
-- Raised the minimum supported IntelliJ build from 253 to 261, as `PositionManager.isAcceptedFileType` is unavailable before 261
-- Replaced the deprecated `PositionManager.getAcceptedFileTypes` override in `KaratePositionManager` with `isAcceptedFileType`
-- Updated IntelliJ Platform Gradle Plugin from 2.16.0 to 2.18.1
-- Updated Java toolchain from 21 to 25 (required by IntelliJ 2026.2), including the Java version provisioned in all CI workflows
-- Replaced `org.apache.commons.collections.CollectionUtils` usage with standard Java equivalents
-- Karate 2.x runs report scenarios reached through a `call` as suites rather than tests. They remain visible and navigable under the calling step, but the run's totals now count only the scenarios that were actually requested, instead of growing with every called scenario.
+  Early access means the run/report path is covered end to end but has less mileage than the Karate 1 support behind it. Debugging Karate 2 features is not wired up yet — breakpoints will not pause a v2 run. Please report anything that misbehaves.
+- Support for IntelliJ IDEA 2026.2 (build 262.*); minimum supported build is now 261.
 
 ### Fixed
 
-- Security vulnerabilities and library updates.
-- Fixed run configurations resolving the wrong working directory and feature path when the protobuf Gradle plugin (or any plugin registering generated source roots such as `build/extracted-include-protos/test`) is present. Paths are now resolved from the content/source root that actually contains the feature file. (#321)
-- Run configurations are no longer offered for non-`.feature` files (e.g. JUnit `.java` test files); the Karate producer now only activates on Karate feature files.
-- Guarded the test runner against a missing `--working-dir` argument so it falls back to Karate's default working directory instead of failing.
-- The `form`, `multipart`, and `soap` step actions are now recognized as keywords (highlighting and completion). They had been missing since Karate 1 support, so steps like `* form field name = 'x'` never highlighted their action word.
-- Fixed test-tree navigation for Karate 2.x runs opening the generated feature copy under the build directory (where edits and breakpoints are silently discarded) instead of the source file under `src/test`.
-- Unknown or malformed `<<UPPERCUT-V2>>` protocol lines are no longer printed raw into the console; they are consumed and logged.
-- Karate 2.x runs no longer install the plugin's logback console appender in the test process. A Karate 2 project supplying its own logback previously had its console appenders replaced and every log line prefixed with `<<UPPERCUT>>`.
-- Pinning the Karate version in Settings > Tools > Karate to a version the module does not have now fails the run immediately with an explanation, naming the setting. Previously the run started and died deep inside the wrong runner with an unrelated-looking error such as `NoSuchMethodException: com.intuit.karate.junit5.Karate.<init>()`.
-- Fixed the Karate version being detected across the whole project instead of the module being run. In a project where modules sit on different Karate majors, one module's Karate 2 dependency made every module run with the Karate 2 runner. Detection now uses the classpath of the module the feature belongs to.
-- Fixed Karate 2.x runs dying immediately with "Test framework quit unexpectedly" and an empty test tree. The runner installed its logback console appender unconditionally, but Karate 2.x drops the transitive logback dependency Karate 1.x provided, so the runner JVM failed to link before emitting any events. Logback is now optional: when it is absent, only console log forwarding is disabled.
+- Feature path resolution with generated source roots, e.g. the protobuf Gradle plugin (#321)
+- Run configurations offered on non-`.feature` files
+- The `form`, `multipart`, and `soap` step actions never highlighted or completed
+- A version override contradicting the module's classpath now fails up front with an explanation instead of an obscure runner crash
+- Running a feature before the project import finishes now says so, instead of failing with "Must have karate-core on the classpath"
+- Security vulnerabilities and library updates
+
+Full details, architecture notes, and the complete change history: <https://github.com/RankWeis/uppercut>
 
 ## [2.5.2] - 2026-03-23
 
