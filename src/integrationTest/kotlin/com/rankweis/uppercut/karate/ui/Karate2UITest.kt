@@ -46,13 +46,15 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * End-to-end check of the Karate 2.x path: opens the testProjects/karate-v2 sample project (karate-junit6 on the
- * classpath), runs features from the editor, and verifies the test tree built from <<UPPERCUT-V2>>
- * RunListener events.
+ * End-to-end check of the run paths, against the testProjects/karate-versions fixture - one project
+ * holding a karate-junit6 (v2) module beside a karate-junit5 (v1) one.
  *
- * <p>Both a passing and a failing feature run in one IDE session - booting the IDE costs ~40s, every
- * extra assertion after that is nearly free. Running twice also covers converter state leaking between
- * runs. Screenshots land under the IDE's log/screenshots directory (they capture the whole desktop).
+ * <p>Three runs share a single IDE session, because booting the IDE costs ~40s while each further run
+ * is seconds: the v2 feature (tree shape, nesting, navigation), the v2 failing feature (failure
+ * mapping, and no converter state carried over), and the v1 feature (the other runner entirely, which
+ * only gets chosen if version detection is scoped to the run's module).
+ *
+ * <p>Screenshots land under the IDE's log/screenshots directory - they capture the whole desktop.
  */
 class Karate2UITest {
 
@@ -69,7 +71,7 @@ class Karate2UITest {
             PluginConfigurator(this).installPluginFromDir(Path(pathToPlugin))
         }.setupSdk(sdk)
         context.runIdeWithDriver().useDriverAndCloseIde {
-            openFeature(this, "src/test/java/sample/users.feature")
+            openFeature(this, "v2/src/test/java/sample/users.feature")
             takeScreenshot(screenshotDir + "01-editor-open")
             launchRunFromGutterContext(this, settle = true)
             val passingRun = waitForRunDescriptor(this, "users.feature")
@@ -78,11 +80,20 @@ class Karate2UITest {
 
             // Second run in the same session: a failing feature. Exercises the testFailed mapping and
             // proves the converter starts clean rather than carrying node ids over from the first run.
-            openFeature(this, "src/test/java/broken/broken.feature")
+            openFeature(this, "v2/src/test/java/broken/broken.feature")
             launchRunFromGutterContext(this)
             val failingRun = waitForRunDescriptor(this, "broken.feature")
             verifyFailingRun(this, failingRun)
             takeScreenshot(screenshotDir + "04-failure-results")
+
+            // Third run: the v1 module of the same project. The v2 jars are on a sibling module's
+            // classpath, so this only passes if version detection is scoped to the run's module -
+            // a project-wide scan would drive the v1 module with the v2 runner and produce nothing.
+            openFeature(this, "v1/src/test/java/sample/users-v1.feature")
+            launchRunFromGutterContext(this)
+            val v1Run = waitForRunDescriptor(this, "users-v1.feature")
+            verifyV1Run(this, v1Run)
+            takeScreenshot(screenshotDir + "05-v1-results")
         }
         assertNoPluginErrorsLogged(context.paths.testHome.resolve("log").resolve("idea.log"))
     }
@@ -98,13 +109,13 @@ class Karate2UITest {
     }
 
     /**
-     * Copies testProjects/karate-v2 into a temp dir and adds the repo's Gradle wrapper so the IDE can import it.
+     * Copies testProjects/karate-versions into a temp dir and adds the repo's Gradle wrapper so the IDE can import it.
      * The wrapper distribution is already cached in ~/.gradle from the host build.
      */
     private fun prepareSampleProjectCopy(): Path {
         val repoRoot = Path(System.getProperty("user.dir"))
-        val source = repoRoot.resolve("testProjects/karate-v2")
-        val target = Files.createTempDirectory("karate-v2-it")
+        val source = repoRoot.resolve("testProjects/karate-versions")
+        val target = Files.createTempDirectory("karate-versions-it")
         copyRecursively(source, target)
         copyRecursively(repoRoot.resolve("gradle/wrapper"), target.resolve("gradle/wrapper"))
         Files.copy(repoRoot.resolve("gradlew"), target.resolve("gradlew"), StandardCopyOption.COPY_ATTRIBUTES)
@@ -282,6 +293,26 @@ class Karate2UITest {
             )
             val passing = findNode(results.getTestsRootNode(), "passing sibling")
             assertTrue(passing!!.isPassed(), "sibling scenario should still pass$diagnostics")
+        }
+    }
+
+    /**
+     * The v1 module of the same project: a different runner (RuntimeHook proxy), a different console
+     * converter (regex over Karate's own output), and no <<UPPERCUT-V2>> protocol at all. Passing here
+     * means module-scoped version detection sent this run down the v1 path despite v2 jars sitting on
+     * a sibling module's classpath.
+     */
+    private fun verifyV1Run(driver: Driver, outputListener: OutputListenerRef) {
+        driver.withContext {
+            val (results, diagnostics) = awaitResults(driver, "users-v1.feature", outputListener)
+            val tree = describeTree(results.getTestsRootNode())
+            assertEquals(0, results.getFailedTestCount(), "no v1 scenarios should fail$diagnostics")
+            assertTrue(
+                results.getFinishedTestCount() >= 2,
+                "expected both v1 scenarios in the tree$diagnostics"
+            )
+            listOf("v1 built-ins and a nested call", "second scenario for tree ordering")
+                .forEach { assertTrue(tree.contains(it), "'$it' missing from the v1 tree$diagnostics") }
         }
     }
 

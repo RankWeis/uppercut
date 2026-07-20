@@ -1,6 +1,6 @@
 Feature: deliberately failing - probes failure event payloads
   Not scanned by the default probe/test runs (lives outside classpath:sample).
-  Run with: ../../gradlew -p testProjects/karate-v2 eventProbe -PprobePath=classpath:broken
+  Run with: ../../gradlew -p testProjects/karate-versions :v2: eventProbe -PprobePath=classpath:broken
 
   Scenario: failing match
     * def actual = { a: 1 }

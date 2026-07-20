@@ -7,7 +7,7 @@ import io.karatelabs.core.SuiteResult;
  * Compiled (non-reflective) twin of what Uppercut's KarateV2TestRunner does reflectively: drive
  * io.karatelabs.core.Runner with a RunListener and dump every event + its toJson() payload.
  *
- * <p>Run with: <pre>../../gradlew -p testProjects/karate-v2 eventProbe</pre></p>
+ * <p>Run with: <pre>../../gradlew -p testProjects/karate-versions :v2: eventProbe</pre></p>
  *
  * <p>Things to verify in the output:</p>
  * <ul>

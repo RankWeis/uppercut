@@ -8,13 +8,13 @@ verified API notes.
 
 ```bash
 # baseline: idiomatic karate-junit6 run (from the repo root)
-./gradlew -p testProjects/karate-v2 test
+./gradlew -p testProjects/karate-versions :v2:test
 
 # dump the v2 RunListener event stream (what Uppercut's runner consumes)
-./gradlew -p testProjects/karate-v2 eventProbe
+./gradlew -p testProjects/karate-versions :v2:eventProbe
 
 # probe the deliberately failing feature's event payloads
-./gradlew -p testProjects/karate-v2 eventProbe -PprobePath=classpath:broken
+./gradlew -p testProjects/karate-versions :v2:eventProbe -PprobePath=classpath:broken
 ```
 
 Requires Java 21+ (Karate 2 uses virtual threads).
@@ -29,7 +29,7 @@ Requires Java 21+ (Karate 2 uses virtual threads).
 ## Testing through the plugin
 
 1. `./gradlew runIde` from the repo root.
-2. Open this `testProjects/karate-v2` project in the sandbox IDE (import the Gradle project so
+2. Open this `testProjects/karate-versions` project in the sandbox IDE (import the Gradle project so
    karate-junit6 lands on the classpath).
 3. Click the gutter run icon in `users.feature` — the run configuration should pass
    `--karate-major-version 2` and the test tree should show both scenarios with the called

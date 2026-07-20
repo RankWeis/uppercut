@@ -19,8 +19,10 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,7 +95,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
       protected JavaParameters createJavaParameters() throws ExecutionException {
         final JavaParameters params = super.createJavaParameters();
         String jarPathForClass = PathUtil.getJarPathForClass(KarateTestRunner.class);
-        VirtualFile[] libraryRoots = LibraryUtil.getLibraryRoots(env.getProject());
+        VirtualFile[] libraryRoots = karateLibraryRoots();
         boolean karateV2 = isKarateV2(KarateSettingsState.getInstance().getKarateVersionPreference(),
           Arrays.stream(libraryRoots).map(VirtualFile::getName));
         if (karateV2) {
@@ -189,6 +191,21 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     };
   }
 
+
+  /**
+   * Libraries to detect the Karate version from, scoped to the run's module when there is one.
+   *
+   * <p>A monorepo can hold modules on different Karate versions; a project-wide scan would see the
+   * v2 jars of one module and pick the v2 runner for all of them. Falls back to the whole project
+   * when the configuration has no module, which is how it behaved before.
+   */
+  private VirtualFile[] karateLibraryRoots() {
+    Module module = getConfigurationModule().getModule();
+    if (module == null) {
+      return LibraryUtil.getLibraryRoots(getProject());
+    }
+    return OrderEnumerator.orderEntries(module).recursively().librariesOnly().classes().getRoots();
+  }
 
   /**
    * Decides whether to drive Karate 2.x. Honors the settings override; on AUTO, detects

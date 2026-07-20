@@ -39,7 +39,7 @@ tasks.test {
 }
 
 // Dumps every RunEvent the way the Uppercut runner will consume them:
-//   ../../gradlew -p testProjects/karate-v2 eventProbe
+//   ../../gradlew -p testProjects/karate-versions :v2:eventProbe
 tasks.register<JavaExec>("eventProbe") {
     classpath = sourceSets.test.get().runtimeClasspath
     mainClass = "sample.EventProbe"
