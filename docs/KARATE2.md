@@ -78,10 +78,10 @@ IDE console (phase 2)
 
 | Phase | Contents | Status |
 |---|---|---|
-| 0 | Spike: verify v2 API surface, runner dispatch skeleton, `testProjects/karate-v2/` sample project | done |
+| 0 | Spike: verify v2 API surface, runner dispatch skeleton,  `testProjects/karate-versions/` fixture | done |
 | 1 | Settings override (AUTO/V1/V2) in `KarateSettingsState` | done |
 | 2 | `KarateV2EventProcessor` (JSON events -> id-based test tree), nesting via callDepth, failure mapping, unit tests | done |
-| 2b | `Karate2UITest` end-to-end integration test (IDE Starter/Driver, screenshots); required reviving Kotlin compilation for `src/integrationTest/kotlin` | this branch |
+| 2b | `Karate2UITest` end-to-end integration test (IDE Starter/Driver); covers both runner paths, the failure path, and the settings override. Surfaced the logback and project-wide-detection bugs | done |
 | 3 | Editor niceties: `karate-base.js`/`karate-boot.js` recognition, README/docs, refresh embedded karate-js source | |
 | later | Real debugging via v2 `debugSupport(RunInterceptor, DebugPointFactory)` | |
 

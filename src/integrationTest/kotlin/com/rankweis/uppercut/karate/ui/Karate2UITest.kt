@@ -31,7 +31,9 @@ import com.rankweis.uppercut.karate.ui.util.SMTRunnerConsoleViewRef
 import com.rankweis.uppercut.karate.ui.util.SMTestProxyRef
 import com.rankweis.uppercut.karate.ui.util.SMTestRunnerResultsFormRef
 import com.rankweis.uppercut.karate.ui.util.getRunContentManagerRef
+import com.rankweis.uppercut.karate.ui.util.setKarateVersionPreference
 import com.rankweis.uppercut.karate.ui.util.newProcessListener
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -95,6 +97,8 @@ class Karate2UITest {
             val v1Run = waitForRunDescriptor(this, "users-v1.feature")
             verifyV1Run(this, v1Run)
             takeScreenshot(screenshotDir + "05-v1-results")
+
+            verifySettingsOverrideBeatsDetection(this)
         }
         assertNoPluginErrorsLogged(context.paths.testHome.resolve("log").resolve("idea.log"))
     }
@@ -332,6 +336,38 @@ class Karate2UITest {
                 findNode(results.getTestsRootNode(), "sample/called.feature") != null,
                 "v1 tree should list the called feature as a top-level node$diagnostics"
             )
+        }
+    }
+
+    /**
+     * Settings > Tools > Karate can pin the version when detection cannot decide - a module carrying
+     * both majors, for instance. The preference is read on every launch, so it takes effect without
+     * restarting the IDE.
+     *
+     * <p>Forcing V1 on a Karate 2 module is a contradiction, and the run is refused before any process
+     * starts (see KarateRunConfiguration#checkVersionOverrideMatchesClasspath). Left to run it used to
+     * fail deep inside the v1 runner with a bare
+     * "NoSuchMethodException: com.intuit.karate.junit5.Karate.<init>()", which says nothing about the
+     * setting that caused it. No run appearing at all is the assertion: the same feature runs green
+     * under AUTO seconds earlier, so only the override can explain it.
+     */
+    private fun verifySettingsOverrideBeatsDetection(driver: Driver) {
+        driver.setKarateVersionPreference("V1")
+        try {
+            openFeature(driver, "v2/src/test/java/sample/override.feature")
+            launchRunFromGutterContext(driver)
+            // Give a run every chance to appear, so this fails loudly if the guard ever stops firing.
+            runBlocking { delay(10.seconds) }
+            driver.withContext {
+                val descriptor = descriptorOrNull(driver, "override.feature")
+                assertTrue(
+                    descriptor == null,
+                    "a run started despite the V1 override contradicting the module's Karate 2 " +
+                        "classpath - the mismatch should be refused up front"
+                )
+            }
+        } finally {
+            driver.setKarateVersionPreference("AUTO")
         }
     }
 

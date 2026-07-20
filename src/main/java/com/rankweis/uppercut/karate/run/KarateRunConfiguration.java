@@ -94,10 +94,12 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
         final JavaParameters params = super.createJavaParameters();
-        String jarPathForClass = PathUtil.getJarPathForClass(KarateTestRunner.class);
         VirtualFile[] libraryRoots = karateLibraryRoots();
-        boolean karateV2 = isKarateV2(KarateSettingsState.getInstance().getKarateVersionPreference(),
-          Arrays.stream(libraryRoots).map(VirtualFile::getName));
+        List<String> libraryNames = Arrays.stream(libraryRoots).map(VirtualFile::getName).toList();
+        KarateSettingsState.KarateVersionPreference preference =
+          KarateSettingsState.getInstance().getKarateVersionPreference();
+        checkVersionOverrideMatchesClasspath(preference, libraryNames);
+        boolean karateV2 = isKarateV2(preference, libraryNames.stream());
         if (karateV2) {
           params.getProgramParametersList().add("--karate-major-version", "2");
         } else {
@@ -112,7 +114,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
           }
         }
         params.setUseDynamicClasspath(true);
-        params.getClassPath().add(jarPathForClass);
+        params.getClassPath().add(PathUtil.getJarPathForClass(KarateTestRunner.class));
 
         if (getTestName().map(String::isBlank).orElse(false)) {
           String[] split = getName().split(":");
@@ -205,6 +207,31 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
       return LibraryUtil.getLibraryRoots(getProject());
     }
     return OrderEnumerator.orderEntries(module).recursively().librariesOnly().classes().getRoots();
+  }
+
+  /**
+   * Fails the run when the version override contradicts what the module actually has.
+   *
+   * <p>Without this the run still fails, just incomprehensibly: forcing V1 onto a Karate 2 module
+   * sends it down the v1 path, which reflects on {@code com.intuit.karate.RuntimeHook} - a class
+   * Karate 2 removed - and reports "Must have karate-core on the classpath", even though karate-core
+   * is right there and it is the setting that is wrong. AUTO never reaches this.
+   */
+  static void checkVersionOverrideMatchesClasspath(
+    KarateSettingsState.KarateVersionPreference preference, List<String> libraryNames)
+    throws ExecutionException {
+    boolean hasKarate2 = libraryNames.stream().anyMatch(n -> n.matches("karate-(core|junit6)-2\\..*"));
+    if (preference == KarateSettingsState.KarateVersionPreference.V1 && hasKarate2) {
+      throw new ExecutionException(
+        "Karate version is pinned to V1 in Settings > Tools > Karate, but this module's classpath "
+          + "only has Karate 2. Set it back to AUTO, or to V2, to run this feature.");
+    }
+    if (preference == KarateSettingsState.KarateVersionPreference.V2 && !hasKarate2) {
+      throw new ExecutionException(
+        "Karate version is pinned to V2 in Settings > Tools > Karate, but this module's classpath "
+          + "has no Karate 2 (expected karate-core 2.x or karate-junit6). Set it back to AUTO, or to "
+          + "V1, to run this feature.");
+    }
   }
 
   /**
