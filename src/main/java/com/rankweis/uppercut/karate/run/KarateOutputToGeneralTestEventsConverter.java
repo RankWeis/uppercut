@@ -9,6 +9,7 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -35,8 +36,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTestEventsConverter {
+
+  private static final Logger LOG = Logger.getInstance(KarateOutputToGeneralTestEventsConverter.class);
 
   enum KarateConfigState {
     SUCCEEDED,
@@ -374,19 +378,40 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
   /**
    * Karate 2.x event paths are relative to the working directory and point at the compiled test
    * classpath (e.g. {@code build/resources/test/sample/x.feature} for Gradle, {@code target/test-classes/...}
-   * for Maven). Strip leading segments until a suffix resolves against a source root or the project dir.
+   * for Maven). Strip leading segments until a suffix resolves against a source root; only when the
+   * whole stripping pass finds nothing, fall back to the project dir.
+   *
+   * <p>The two passes must not be interleaved: the runtime path resolves against the project dir
+   * as-is (the compiled copy under {@code build/} really exists), so a combined root list would
+   * short-circuit on the generated file before stripping ever produced the source-relative suffix.
+   * Navigation would then open the build copy, where edits and breakpoints are silently discarded
+   * on the next build.
    */
   private VirtualFile findFeatureFile(String featurePath) {
-    List<VirtualFile> roots = new ArrayList<>(
+    List<VirtualFile> sourceRoots =
       Arrays.stream(ModuleManager.getInstance(testConsoleProperties.getProject()).getModules())
         .flatMap(m -> Arrays.stream(ModuleRootManager.getInstance(m).getSourceRoots()))
-        .toList());
-    roots.add(ProjectUtil.guessProjectDir(testConsoleProperties.getProject()));
-    String candidate = featurePath;
+        .toList();
+    VirtualFile inSourceRoot = resolveByStripping(featurePath, sourceRoots);
+    if (inSourceRoot != null) {
+      return inSourceRoot;
+    }
+    LOG.info("Karate feature path did not resolve against any source root, falling back to project dir. "
+      + "path=" + featurePath + " sourceRoots=" + sourceRoots);
+    VirtualFile projectDir = ProjectUtil.guessProjectDir(testConsoleProperties.getProject());
+    return projectDir == null ? null : resolveByStripping(featurePath, List.of(projectDir));
+  }
+
+  private static @Nullable VirtualFile resolveByStripping(String featurePath, List<VirtualFile> roots) {
+    // findFileByRelativePath, not VfsUtil.findRelativeFile: the latter treats an absolute path
+    // (e.g. C:/... - what Karate 2 emits when the working dir is not the module root) as absolute and
+    // ignores the base root entirely, resolving the build-output copy on the first iteration no
+    // matter which roots are tried first.
+    String candidate = featurePath.replace('\\', '/');
     while (!candidate.isEmpty()) {
       String finalCandidate = candidate;
       VirtualFile found = roots.stream().filter(Objects::nonNull)
-        .map(root -> VfsUtil.findRelativeFile(finalCandidate, root))
+        .map(root -> root.findFileByRelativePath(finalCandidate))
         .filter(Objects::nonNull)
         .findFirst().orElse(null);
       if (found != null) {

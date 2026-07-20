@@ -122,8 +122,19 @@ public class KarateV2EventProcessorTest {
   }
 
   @Test
-  public void unknownEventTypesAreNotConsumed() {
-    assertFalse(processor.process("<<UPPERCUT-V2>> SOMETHING_NEW {\"a\":1}"));
+  public void unknownEventTypesAreConsumedNotPrinted() {
+    // A false return would have the SM framework print the raw protocol line into the console;
+    // anything carrying the prefix is ours, known type or not.
+    assertTrue(processor.process("<<UPPERCUT-V2>> SOMETHING_NEW {\"a\":1}"));
+    assertTrue(processor.process("<<UPPERCUT-V2>> EMIT_ERROR {\"message\":\"reflection failed\"}"));
+    assertTrue(sink.messages.isEmpty());
+  }
+
+  @Test
+  public void malformedPayloadsAreConsumedNotPrinted() {
+    assertTrue(processor.process("<<UPPERCUT-V2>> SCENARIO_ENTER not-json-at-all"));
+    assertTrue(processor.process("<<UPPERCUT-V2>> FEATURE_ENTER [1,2,3]"));
+    assertTrue(sink.messages.isEmpty());
   }
 
   private void process(String type, String json) {

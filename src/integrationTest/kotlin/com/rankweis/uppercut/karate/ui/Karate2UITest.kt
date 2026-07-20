@@ -275,9 +275,13 @@ class Karate2UITest {
             // or gutter navigation from the tree silently breaks - the #321 class of bug.
             val location = scenario!!.getLocationUrl()
             assertNotNull(location, "scenario has no location - locationHint did not resolve$diagnostics")
+            // The generated copy under build/resources/test also matches a bare "users.feature" check,
+            // and navigating there silently discards edits and breakpoints on the next build. Demand
+            // the source file.
             assertTrue(
-                location!!.contains("users.feature"),
-                "scenario location '$location' should point at users.feature$diagnostics"
+                location!!.contains("src/test/java/sample/users.feature"),
+                "scenario location '$location' should point at the source users.feature, " +
+                    "not the compiled copy under the build directory$diagnostics"
             )
             // Nesting a called feature under the calling scenario is v2-converter behaviour; the v1
             // converter puts called features at the top level. Together with the feature's use of

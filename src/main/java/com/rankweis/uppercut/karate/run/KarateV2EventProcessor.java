@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
+import com.intellij.openapi.diagnostic.Logger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 public class KarateV2EventProcessor {
 
   public static final String EVENT_PREFIX = "<<UPPERCUT-V2>>";
+
+  private static final Logger LOG = Logger.getInstance(KarateV2EventProcessor.class);
 
   /** Where translated service messages go; implemented by the output converter. */
   interface EventSink {
@@ -72,11 +75,15 @@ public class KarateV2EventProcessor {
       return true;
     }
     String type = text.substring(0, space);
+    // Anything carrying the protocol prefix is ours: a false return would have the SM framework print
+    // the raw line into the console. That covers the runner's own EMIT_ERROR marker, event types added
+    // to the runner before this switch learns them, and malformed payloads alike - consume and log.
     JsonObject json;
     try {
       json = JsonParser.parseString(text.substring(space + 1)).getAsJsonObject();
     } catch (JsonSyntaxException | IllegalStateException e) {
-      return false;
+      LOG.warn("Unparseable Karate 2 event payload for type " + type, e);
+      return true;
     }
     switch (type) {
       case "SUITE_ENTER" -> sink.testsStarted();
@@ -87,9 +94,7 @@ public class KarateV2EventProcessor {
       case "SUITE_EXIT", "OUTLINE_ENTER", "ERROR" -> {
         // ERROR details also arrive on SCENARIO_EXIT as 'error'; outlines show through their examples.
       }
-      default -> {
-        return false;
-      }
+      default -> LOG.warn("Unrecognized Karate 2 event type: " + type);
     }
     return true;
   }
