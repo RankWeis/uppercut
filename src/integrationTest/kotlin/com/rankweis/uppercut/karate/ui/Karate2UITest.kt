@@ -42,6 +42,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.Path
 import kotlin.io.path.isDirectory
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -156,8 +157,11 @@ class Karate2UITest {
         // Once a run console is open, its editor contributes a second EditorGutterComponentImpl, so the
         // singleton gutter() locator fails. Look for the run marker across all gutters, re-querying while
         // waiting: line markers only appear once the file is analyzed.
+        // A short poll interval matters here: waitFor sleeps between checks, so the default 1s adds
+        // seconds of dead time after the marker is already on screen.
         waitFor(
             timeout = 30.seconds,
+            interval = 100.milliseconds,
             errorMessage = { "No run line marker appeared in any editor gutter" }
         ) {
             frame.xx("//div[@class='EditorGutterComponentImpl']", GutterUiComponent::class.java)
@@ -271,6 +275,9 @@ class Karate2UITest {
                 location!!.contains("users.feature"),
                 "scenario location '$location' should point at users.feature$diagnostics"
             )
+            // Nesting a called feature under the calling scenario is v2-converter behaviour; the v1
+            // converter puts called features at the top level. Together with the feature's use of
+            // karate.uuid() (a v2-only builtin, which errors on v1) this identifies the runner that ran.
             val called = findNode(root, "called.feature:4")
             assertTrue(called!!.isSuite(), "called scenario should be a suite, not a test$diagnostics")
         }
@@ -313,6 +320,18 @@ class Karate2UITest {
             )
             listOf("v1 built-ins and a nested call", "second scenario for tree ordering")
                 .forEach { assertTrue(tree.contains(it), "'$it' missing from the v1 tree$diagnostics") }
+
+            // Positive proof this went down the v1 path rather than merely "not failing": the v1
+            // converter builds a distinctly different tree - it adds a karate-config.js node and puts
+            // called features at the top level, where the v2 converter nests them under the caller.
+            assertTrue(
+                tree.contains("karate-config.js"),
+                "v1 tree should carry the converter's karate-config.js node$diagnostics"
+            )
+            assertTrue(
+                findNode(results.getTestsRootNode(), "sample/called.feature") != null,
+                "v1 tree should list the called feature as a top-level node$diagnostics"
+            )
         }
     }
 
