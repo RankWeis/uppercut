@@ -10,7 +10,7 @@ import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
 import com.intellij.ide.starter.driver.engine.runIdeWithDriver
 import com.intellij.ide.starter.driver.execute
-import com.intellij.ide.starter.ide.IdeProductProvider
+import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.plugins.PluginConfigurator
 import com.intellij.ide.starter.project.LocalProjectInfo
@@ -20,6 +20,7 @@ import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.performanceTesting.commands.openFile
 import com.intellij.tools.ide.performanceTesting.commands.waitForCodeAnalysisFinished
 import com.intellij.tools.ide.performanceTesting.commands.waitForSmartMode
+import com.intellij.tools.ide.starter.product.idea.ultimate.IdeaUltimate
 import com.rankweis.uppercut.karate.ui.util.SMTRunnerConsoleViewRef
 import com.rankweis.uppercut.karate.ui.util.getRunContentManagerRef
 import kotlinx.coroutines.runBlocking
@@ -48,7 +49,7 @@ class Karate2UITest {
     fun runGutterTestOnKarate2Project() {
         val projectDir = prepareSpikeProjectCopy()
         val sdk = JdkDownloaderFacade.jdk21.toSdk()
-        val testCase = TestCase(IdeProductProvider.IU, LocalProjectInfo(projectDir)).useRelease()
+        val testCase = TestCase(IdeInfo.IdeaUltimate, LocalProjectInfo(projectDir)).useRelease()
         Starter.newContext("karate2Gutter", testCase).apply {
             // path.to.build.plugin points at the prepareSandbox plugin DIRECTORY, not a zip
             val pathToPlugin = System.getProperty("path.to.build.plugin")

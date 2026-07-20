@@ -7,13 +7,14 @@ import com.intellij.driver.sdk.ui.components.elements.PopupItemUiComponent
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.ide.starter.driver.engine.runIdeWithDriver
 import com.intellij.ide.starter.driver.execute
-import com.intellij.ide.starter.ide.IdeProductProvider
+import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.plugins.PluginConfigurator
 import com.intellij.ide.starter.project.GitHubProject
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.sdk.JdkDownloaderFacade
 import com.intellij.tools.ide.performanceTesting.commands.*
+import com.intellij.tools.ide.starter.product.idea.ultimate.IdeaUltimate
 import com.rankweis.uppercut.karate.ui.util.SMTRunnerConsoleViewRef
 import com.rankweis.uppercut.karate.ui.util.getRunContentManagerRef
 import kotlinx.coroutines.delay
@@ -33,7 +34,7 @@ class UppercutUITest {
 
     companion object {
         val IntellijKarateTestCase = TestCase(
-            IdeProductProvider.IU,
+            IdeInfo.IdeaUltimate,
             GitHubProject.fromGithub(branchName = "main", repoRelativeUrl = "RankWeis/uppercutTestProject.git")
         ).useRelease()
     }
