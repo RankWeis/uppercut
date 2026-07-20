@@ -83,7 +83,7 @@ IDE console (phase 2)
 | 2 | `KarateV2EventProcessor` (JSON events -> id-based test tree), nesting via callDepth, failure mapping, unit tests | done |
 | 2b | `Karate2UITest` end-to-end integration test (IDE Starter/Driver); covers both runner paths, the failure path, and the settings override. Surfaced the logback and project-wide-detection bugs | done |
 | 3 | Editor niceties: `karate-base.js`/`karate-boot.js` recognition, README/docs, refresh embedded karate-js source | |
-| later | Real debugging via v2 `debugSupport(RunInterceptor, DebugPointFactory)` | |
+| later | Debugging via v2 `debugSupport(RunInterceptor, DebugPointFactory)`. Pause-only scope (breakpoint suspends a step, Resume continues; no variables/stepping) is designed in `docs/karate2-pause-debugging.md` | designed, not started |
 
 ## Spike results — all questions ANSWERED (live run against karate 2.1.1)
 
