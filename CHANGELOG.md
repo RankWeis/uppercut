@@ -16,6 +16,7 @@
 - Updated IntelliJ Platform Gradle Plugin from 2.16.0 to 2.18.1
 - Updated Java toolchain from 21 to 25 (required by IntelliJ 2026.2), including the Java version provisioned in all CI workflows
 - Replaced `org.apache.commons.collections.CollectionUtils` usage with standard Java equivalents
+- Karate 2.x runs report scenarios reached through a `call` as suites rather than tests. They remain visible and navigable under the calling step, but the run's totals now count only the scenarios that were actually requested, instead of growing with every called scenario.
 
 ### Fixed
 

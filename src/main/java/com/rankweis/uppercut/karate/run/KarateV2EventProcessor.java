@@ -133,7 +133,12 @@ public class KarateV2EventProcessor {
     scenarioIdByKey.put(scenarioKey(json, featurePath, depth), id);
     setAtDepth(lastScenarioAtDepth, depth, id);
     nameById.put(id, display);
-    ServiceMessageBuilder msg = ServiceMessageBuilder.testStarted(display);
+    // Scenarios reached through a call are reported as suites, not tests: they stay visible (and
+    // navigable) under the calling step, but the run's totals keep counting the scenarios the user
+    // actually asked to run rather than inflating with every called scenario.
+    ServiceMessageBuilder msg = depth == 0
+      ? ServiceMessageBuilder.testStarted(display)
+      : ServiceMessageBuilder.testSuiteStarted(display);
     String location = sink.resolveLocation(featurePath, line);
     if (location != null) {
       msg.addAttribute("locationHint", location);
@@ -152,6 +157,12 @@ public class KarateV2EventProcessor {
       return;
     }
     String display = nameById.remove(id);
+    if (depth > 0) {
+      // Opened as a suite in scenarioEnter, so it has to be closed as one. A failure here still
+      // reaches the tree: the calling scenario fails too and reports the error itself.
+      sink.emit(ServiceMessageBuilder.testSuiteFinished(display), id, 0);
+      return;
+    }
     boolean passed = getBoolean(json, "passed");
     ServiceMessageBuilder msg;
     if (passed) {

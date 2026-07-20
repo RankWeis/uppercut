@@ -68,6 +68,27 @@ interface SMTestRunnerResultsFormRef {
     fun getIgnoredTestCount(): Int
     fun getFinishedTestCount(): Int
     fun getFailedTestCount(): Int
+
+    /** Root of the test tree; walk [SMTestProxyRef.getChildren] to assert on node names and status. */
+    fun getTestsRootNode(): SMTestProxyRef
+}
+
+/** A node in the test tree - a feature (suite) or a scenario (test), depending on depth. */
+@Remote("com.intellij.execution.testframework.sm.runner.SMTestProxy", plugin = SM_RUNNER_MODULE)
+interface SMTestProxyRef {
+    fun getName(): String?
+    fun getPresentableName(): String?
+    fun getChildren(): List<SMTestProxyRef>
+    fun isPassed(): Boolean
+    fun isDefect(): Boolean
+    fun getErrorMessage(): String?
+    fun getStacktrace(): String?
+}
+
+/** Console text, for asserting on what the run actually printed. */
+@Remote("com.intellij.execution.impl.ConsoleViewImpl")
+interface ConsoleViewImplRef {
+    fun getText(): String
 }
 
 @Remote("com.intellij.execution.ui.ConsoleView")

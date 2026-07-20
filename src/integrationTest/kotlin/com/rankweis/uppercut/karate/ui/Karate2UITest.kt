@@ -25,6 +25,7 @@ import com.intellij.tools.ide.performanceTesting.commands.waitForSmartMode
 import com.intellij.tools.ide.starter.product.idea.ultimate.IdeaUltimate
 import com.rankweis.uppercut.karate.ui.util.OutputListenerRef
 import com.rankweis.uppercut.karate.ui.util.SMTRunnerConsoleViewRef
+import com.rankweis.uppercut.karate.ui.util.SMTestProxyRef
 import com.rankweis.uppercut.karate.ui.util.getRunContentManagerRef
 import com.rankweis.uppercut.karate.ui.util.newProcessListener
 import kotlinx.coroutines.runBlocking
@@ -130,6 +131,19 @@ class Karate2UITest {
      * Waits for the run to appear and attaches the output listener immediately: attaching it later races
      * with a process that dies early, which leaves the failure message with no runner output to show.
      */
+    /** Renders the SM test tree as indented text, so assertions and failures show its actual shape. */
+    private fun describeTree(node: SMTestProxyRef, depth: Int = 0): String {
+        val label = node.getPresentableName() ?: node.getName() ?: "<unnamed>"
+        val status = when {
+            node.isDefect() -> "FAILED"
+            node.isPassed() -> "passed"
+            else -> "not run"
+        }
+        val lines = mutableListOf("  ".repeat(depth) + "- $label [$status]")
+        node.getChildren().forEach { lines.add(describeTree(it, depth + 1)) }
+        return lines.joinToString("\n")
+    }
+
     private fun waitForRunDescriptor(driver: Driver): OutputListenerRef {
         return driver.withContext {
             val d = this
@@ -163,11 +177,27 @@ class Karate2UITest {
             val results = smConsole.getResultsViewer()
             driver.takeScreenshot(screenshotDir + "03-test-results")
             val output = outputListener.getOutput()
-            val diagnostics = "\n--- run configuration ---\n$launched" +
+            val tree = describeTree(results.getTestsRootNode())
+            println("Karate 2 test tree:\n$tree")
+            val diagnostics = "\n--- run configuration ---\n$launched\n--- test tree ---\n$tree" +
                 "\n--- runner stdout ---\n${output.getStdout()}\n--- stderr ---\n${output.getStderr()}"
-            // users.feature: 2 scenarios + 1 called-feature scenario, all passing
+            // users.feature has 2 scenarios; the called feature's scenario is reported as a suite, so
+            // it shows in the tree (asserted below) without counting toward the run's test total.
             assertEquals(0, results.getFailedTestCount(), "no scenarios should fail$diagnostics")
-            assertEquals(3, results.getFinishedTestCount(), "expected all scenarios in the tree$diagnostics")
+            assertEquals(2, results.getFinishedTestCount(), "expected both scenarios in the tree$diagnostics")
+            assertTrue(
+                tree.contains("called.feature:4"),
+                "called feature's scenario should still appear in the tree$diagnostics"
+            )
+            // Counts alone would pass on a tree of the right size but the wrong shape.
+            assertTrue(
+                tree.contains("v2 built-ins and a nested call"),
+                "first scenario missing from the tree$diagnostics"
+            )
+            assertTrue(
+                tree.contains("second scenario for tree ordering"),
+                "second scenario missing from the tree$diagnostics"
+            )
         }
     }
 }

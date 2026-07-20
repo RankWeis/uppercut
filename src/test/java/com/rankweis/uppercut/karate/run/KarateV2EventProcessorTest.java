@@ -92,9 +92,10 @@ public class KarateV2EventProcessorTest {
       "locationHint='file://resolved/" + USERS + ":3'", "|node=2|parent=1");
     // called feature nests under the calling scenario
     assertContains(sink.messages.get(2), "testSuiteStarted", "name='called feature'", "|node=3|parent=2");
-    // anonymous scenario gets basename:line as display name, nests under called feature
-    assertContains(sink.messages.get(3), "testStarted", "name='called.feature:4'", "|node=4|parent=3");
-    assertContains(sink.messages.get(4), "testFinished", "name='called.feature:4'", "duration='1'", "|node=4");
+    // anonymous scenario gets basename:line as display name, nests under called feature. Called
+    // scenarios are suites, not tests, so they stay visible without inflating the run's test count.
+    assertContains(sink.messages.get(3), "testSuiteStarted", "name='called.feature:4'", "|node=4|parent=3");
+    assertContains(sink.messages.get(4), "testSuiteFinished", "name='called.feature:4'", "|node=4");
     assertContains(sink.messages.get(5), "testSuiteFinished", "name='called feature'", "|node=3");
     assertContains(sink.messages.get(6), "testFinished", "name='first scenario'", "duration='90'", "|node=2");
     assertContains(sink.messages.get(7), "testSuiteFinished", "name='spike feature'", "|node=1");
