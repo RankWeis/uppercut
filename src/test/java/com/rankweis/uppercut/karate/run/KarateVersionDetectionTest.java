@@ -58,6 +58,18 @@ public class KarateVersionDetectionTest {
   }
 
   @Test
+  public void moduleScanOnlyDecidesWhenTheModuleHasKarate() {
+    // Karate jars on a sibling module worked under the old project-wide scan; a module with no
+    // karate at all must widen back to the project instead of triggering the bundled fallback.
+    assertTrue(KarateRunConfiguration.moduleScanIsAuthoritative(
+      Stream.of("junit-jupiter-5.11.4.jar", "karate-junit5-1.5.1.jar")));
+    assertTrue(KarateRunConfiguration.moduleScanIsAuthoritative(Stream.of("karate-core-2.1.1.jar")));
+    assertFalse(KarateRunConfiguration.moduleScanIsAuthoritative(
+      Stream.of("junit-jupiter-5.11.4.jar", "logback-classic-1.5.28.jar")));
+    assertFalse(KarateRunConfiguration.moduleScanIsAuthoritative(Stream.of()));
+  }
+
+  @Test
   public void unrelatedJarsWithKaratePrefixDoNotTrigger() {
     assertFalse(KarateRunConfiguration.isKarateV2(KarateVersionPreference.AUTO,
       Stream.of("karate-core-1.5.1.jar", "karate-gatling-2-utils.jar", "my-karate-junit6-2-helper.jar")));

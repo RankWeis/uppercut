@@ -198,15 +198,29 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
    * Libraries to detect the Karate version from, scoped to the run's module when there is one.
    *
    * <p>A monorepo can hold modules on different Karate versions; a project-wide scan would see the
-   * v2 jars of one module and pick the v2 runner for all of them. Falls back to the whole project
-   * when the configuration has no module, which is how it behaved before.
+   * v2 jars of one module and pick the v2 runner for all of them. But module scoping alone would
+   * regress setups that worked with the old project-wide scan - karate jars attached to a sibling
+   * module (root-module configurations, shared test-support modules) - by triggering the bundled
+   * fallback over the user's real Karate. So: when the module's own classpath has no karate jar at
+   * all, widen back to the project scan; module scoping only decides when the module actually has
+   * karate on it.
    */
   private VirtualFile[] karateLibraryRoots() {
     Module module = getConfigurationModule().getModule();
     if (module == null) {
       return LibraryUtil.getLibraryRoots(getProject());
     }
-    return OrderEnumerator.orderEntries(module).recursively().librariesOnly().classes().getRoots();
+    VirtualFile[] moduleRoots =
+      OrderEnumerator.orderEntries(module).recursively().librariesOnly().classes().getRoots();
+    if (moduleScanIsAuthoritative(Arrays.stream(moduleRoots).map(VirtualFile::getName))) {
+      return moduleRoots;
+    }
+    return LibraryUtil.getLibraryRoots(getProject());
+  }
+
+  /** The module scan decides only when the module actually has karate; otherwise widen to the project. */
+  static boolean moduleScanIsAuthoritative(java.util.stream.Stream<String> libraryNames) {
+    return libraryNames.anyMatch(n -> n.startsWith("karate-"));
   }
 
   /**
