@@ -19,10 +19,15 @@ per-module detection. See `Karate2UITest`.
 
 ## 2. Debugging (no automated coverage at all)
 
-- [ ] v1 module: set a breakpoint in a feature, Debug from the gutter → breakpoint hits,
-      variables render, resume works.
-- [ ] v2 module: Debug currently behaves as plain Run (v2 debugSupport not wired). Confirm it
+- [x] v1 module: set a breakpoint in a feature, Debug from the gutter → breakpoint hits,
+      variables render, resume works. **Verified 2026-07-20.** This pass found the bug fixed in
+      `7b18aab`: any library path containing a space (`C:\Program Files\...`, the default JDK
+      location on Windows) aborted the library scan, so the debugger got no position manager.
+      Re-verified after the fix — breakpoints hit.
+- [x] v2 module: Debug currently behaves as plain Run (v2 debugSupport not wired). Confirm it
       degrades gracefully - runs to completion, no error dialog, no hung session.
+      **Verified 2026-07-20** — degrades gracefully, matching the early-access note in the
+      changelog and marketplace description.
 
 ## 3. Settings UI (the test flips the service, not the form)
 
