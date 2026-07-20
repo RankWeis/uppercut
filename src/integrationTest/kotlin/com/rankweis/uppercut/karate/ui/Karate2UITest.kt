@@ -25,6 +25,7 @@ import com.intellij.tools.ide.performanceTesting.commands.waitForCodeAnalysisFin
 import com.intellij.tools.ide.performanceTesting.commands.waitForSmartMode
 import com.intellij.tools.ide.starter.product.idea.ultimate.IdeaUltimate
 import com.rankweis.uppercut.karate.ui.util.OutputListenerRef
+import com.rankweis.uppercut.karate.ui.util.ConsoleViewImplRef
 import com.rankweis.uppercut.karate.ui.util.RunContentDescriptor
 import com.rankweis.uppercut.karate.ui.util.SMTRunnerConsoleViewRef
 import com.rankweis.uppercut.karate.ui.util.SMTestProxyRef
@@ -213,12 +214,25 @@ class Karate2UITest {
         runBlocking {
             waitFor(timeout = 4.minutes) { processHandler!!.isProcessTerminated() }
         }
-        val results = driver.cast(console, SMTRunnerConsoleViewRef::class).getResultsViewer()
+        val smConsole = driver.cast(console, SMTRunnerConsoleViewRef::class)
+        val results = smConsole.getResultsViewer()
         val tree = describeTree(results.getTestsRootNode())
         println("Karate 2 test tree ($configNamePart):\n$tree")
         val output = outputListener.getOutput()
         val diagnostics = "\n--- run configuration ---\n${descriptor.getDisplayName()}\n--- test tree ---\n$tree" +
             "\n--- runner stdout ---\n${output.getStdout()}\n--- stderr ---\n${output.getStderr()}"
+
+        // What the user actually sees in the console pane. Karate's own summary must be there; the
+        // <<UPPERCUT-V2>> protocol lines must have been consumed by the converter, not printed.
+        val consoleText = driver.cast(smConsole.getConsole(), ConsoleViewImplRef::class).getText()
+        assertTrue(
+            consoleText.contains("scenarios:"),
+            "Karate's summary missing from the visible console$diagnostics\n--- console ---\n$consoleText"
+        )
+        assertTrue(
+            !consoleText.contains("<<UPPERCUT-V2>>"),
+            "v2 protocol lines leaked into the visible console$diagnostics\n--- console ---\n$consoleText"
+        )
         return results to diagnostics
     }
 
