@@ -85,6 +85,13 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/claude">
+                    <img src="https://avatars.githubusercontent.com/u/81847?v=4" width="100;" alt="claude"/>
+                    <br />
+                    <sub><b>Claude</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/qodana-bot">
                     <img src="https://avatars.githubusercontent.com/u/139879315?v=4" width="100;" alt="qodana-bot"/>
                     <br />
