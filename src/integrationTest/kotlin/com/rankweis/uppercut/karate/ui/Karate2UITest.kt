@@ -2,11 +2,12 @@ package com.rankweis.uppercut.karate.ui
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.getOpenProjects
-import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
-import com.intellij.driver.sdk.ui.components.common.GutterUiComponent
+import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.ui.components.common.gutter
 import com.intellij.driver.sdk.ui.components.common.ideFrame
-import com.intellij.driver.sdk.ui.components.elements.PopupItemUiComponent
-import com.intellij.driver.sdk.ui.xQuery
+import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.ui.components.elements.list
+import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.waitFor
 import com.intellij.ide.starter.driver.engine.runIdeWithDriver
 import com.intellij.ide.starter.driver.execute
@@ -17,12 +18,15 @@ import com.intellij.ide.starter.project.LocalProjectInfo
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.sdk.JdkDownloaderFacade
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
+import com.intellij.tools.ide.performanceTesting.commands.goto
 import com.intellij.tools.ide.performanceTesting.commands.openFile
 import com.intellij.tools.ide.performanceTesting.commands.waitForCodeAnalysisFinished
 import com.intellij.tools.ide.performanceTesting.commands.waitForSmartMode
 import com.intellij.tools.ide.starter.product.idea.ultimate.IdeaUltimate
+import com.rankweis.uppercut.karate.ui.util.OutputListenerRef
 import com.rankweis.uppercut.karate.ui.util.SMTRunnerConsoleViewRef
 import com.rankweis.uppercut.karate.ui.util.getRunContentManagerRef
+import com.rankweis.uppercut.karate.ui.util.newProcessListener
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -59,14 +63,15 @@ class Karate2UITest {
                 CommandChain().openFile("src/test/java/spike/users.feature")
                     .waitForCodeAnalysisFinished()
                     .waitForSmartMode()
+                    // Caret on the Feature line: the context run action then targets the whole feature
+                    // (WHOLE_FILE), not one scenario, so the tree holds both scenarios plus the called one.
+                    .goto(1, 1)
             )
             takeScreenshot(screenshotDir + "01-editor-open")
-            ideFrame {
-                clickRunTest(this)
-            }
-            waitForRunDescriptor(this)
+            launchRunFromGutterContext(this)
+            val outputListener = waitForRunDescriptor(this)
             takeScreenshot(screenshotDir + "02-run-started")
-            verifyConsoleResults(this)
+            verifyConsoleResults(this, outputListener)
         }
     }
 
@@ -100,25 +105,33 @@ class Karate2UITest {
         }
     }
 
-    private fun clickRunTest(ideaFrameUI: IdeaFrameUI) {
-        val firstGutter = ideaFrameUI.xx(
-            xQuery { byType("EditorGutterComponentImpl") },
-            GutterUiComponent::class.java
-        ).list().first()
-        val gutter = firstGutter.icons.first {
-            it.mark.getTooltipText()?.contains("Run Test") ?: false
-        }
-        gutter.click()
-        val popupItems = ideaFrameUI.xx(
-            xQuery { or(byType("ActionMenuItem"), byType("ActionMenu")) },
-            PopupItemUiComponent::class.java
-        )
-        runBlocking { waitFor { popupItems.list().isNotEmpty() } }
-        popupItems.list().first().click()
+    /**
+     * Asserts the plugin contributes a run line marker, then launches it.
+     *
+     * The launch deliberately avoids clicking the icon: driver clicks are physical (screen coordinates),
+     * so any window on top of the IDE swallows them ("Click was unsuccessful" in idea.log). RunClass is
+     * the context-run action the gutter icon itself delegates to, so this exercises the same path:
+     * KarateRunConfigurationProducer -> KarateV2TestRunner -> event converter -> test tree.
+     */
+    private fun launchRunFromGutterContext(driver: Driver) {
+        // gutter() is the SDK's own locator; a byType("EditorGutterComponentImpl") xQuery finds nothing.
+        // getGutterIcons() waits for the line markers, which only appear once the file is analyzed.
+        // Waiting on indicators also waits out the Gradle import that the run config's classpath needs.
+        // No focus/toFront here: nothing below touches the mouse, so the IDE can stay in the background.
+        val frame = driver.ideFrame()
+        frame.waitForIndicators(timeout = 10.minutes)
+        val runIcons = frame.gutter().getGutterIcons()
+            .filter { it.getIconPath().contains("run", ignoreCase = true) }
+        assertTrue(runIcons.isNotEmpty(), "No run line marker in the gutter of users.feature")
+        driver.invokeAction("RunClass")
     }
 
-    private fun waitForRunDescriptor(driver: Driver) {
-        driver.withContext {
+    /**
+     * Waits for the run to appear and attaches the output listener immediately: attaching it later races
+     * with a process that dies early, which leaves the failure message with no runner output to show.
+     */
+    private fun waitForRunDescriptor(driver: Driver): OutputListenerRef {
+        return driver.withContext {
             val d = this
             runBlocking {
                 waitFor(timeout = 120.seconds) {
@@ -126,10 +139,14 @@ class Karate2UITest {
                     d.getRunContentManagerRef(project).getAllDescriptors().isNotEmpty()
                 }
             }
+            val descriptor = d.getRunContentManagerRef(d.getOpenProjects().first()).getAllDescriptors().first()
+            val listener = d.newProcessListener() as OutputListenerRef
+            descriptor.getProcessHandler()?.addProcessListener(listener)
+            listener
         }
     }
 
-    private fun verifyConsoleResults(driver: Driver) {
+    private fun verifyConsoleResults(driver: Driver, outputListener: OutputListenerRef) {
         driver.withContext {
             val descriptor = getRunContentManagerRef(driver.getOpenProjects().first())
                 .getAllDescriptors().first()
@@ -137,6 +154,7 @@ class Karate2UITest {
             val console = descriptor.getExecutionConsole()
             assertNotNull(console)
             assertNotNull(processHandler)
+            val launched = descriptor.getDisplayName()
             runBlocking {
                 waitFor(timeout = 4.minutes) { processHandler.isProcessTerminated() }
             }
@@ -144,9 +162,12 @@ class Karate2UITest {
             val smConsole = this.cast(console, SMTRunnerConsoleViewRef::class)
             val results = smConsole.getResultsViewer()
             driver.takeScreenshot(screenshotDir + "03-test-results")
+            val output = outputListener.getOutput()
+            val diagnostics = "\n--- run configuration ---\n$launched" +
+                "\n--- runner stdout ---\n${output.getStdout()}\n--- stderr ---\n${output.getStderr()}"
             // users.feature: 2 scenarios + 1 called-feature scenario, all passing
-            assertEquals(0, results.getFailedTestCount(), "no scenarios should fail")
-            assertEquals(3, results.getFinishedTestCount(), "expected all scenarios in the tree")
+            assertEquals(0, results.getFailedTestCount(), "no scenarios should fail$diagnostics")
+            assertEquals(3, results.getFinishedTestCount(), "expected all scenarios in the tree$diagnostics")
         }
     }
 }

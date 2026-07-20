@@ -39,32 +39,38 @@ interface RunContentDescriptor {
     fun getExecutionConsole(): ExecutionConsoleRef?
 }
 
-@Remote("com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView")
+// The test runner classes are no longer in the core classloader: they ship in the implementation-detail
+// plugin `intellij.testRunner.plugin`, so @Remote has to name the owning plugin/module or the driver
+// answers "No such class ... in plugin null".
+private const val TEST_RUNNER_MODULE = "intellij.testRunner.plugin/intellij.platform.testRunner"
+private const val SM_RUNNER_MODULE = "intellij.testRunner.plugin/intellij.platform.smRunner"
+
+@Remote("com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView", plugin = TEST_RUNNER_MODULE)
 interface BaseTestConsoleViewRef : ExecutionConsoleRef {
     fun getConsole(): ConsoleViewRef
     fun getPrinter(): TestsOutputConsolePrinterRef;
 }
 
-@Remote("com.intellij.execution.testframework.ui.TestsOutputConsolePrinterRef")
+@Remote("com.intellij.execution.testframework.ui.TestsOutputConsolePrinter", plugin = TEST_RUNNER_MODULE)
 interface TestsOutputConsolePrinterRef {
     fun getConsole(): ConsoleViewRef
 }
 
-@Remote("com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView")
+@Remote("com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView", plugin = SM_RUNNER_MODULE)
 interface SMTRunnerConsoleViewRef : ConsoleViewRef {
     fun getConsole(): ConsoleViewRef
     fun getPrinter(): TestsOutputConsolePrinterRef;
     fun getResultsViewer(): SMTestRunnerResultsFormRef
 }
 
-@Remote("com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm")
+@Remote("com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm", plugin = SM_RUNNER_MODULE)
 interface SMTestRunnerResultsFormRef {
     fun getIgnoredTestCount(): Int
     fun getFinishedTestCount(): Int
     fun getFailedTestCount(): Int
 }
 
-@Remote("com.intellij.ui.ConsoleView")
+@Remote("com.intellij.execution.ui.ConsoleView")
 interface ConsoleViewRef : ExecutionConsoleRef {
 }
 

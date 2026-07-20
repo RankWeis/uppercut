@@ -82,6 +82,8 @@ dependencies {
     integrationTestImplementation(kotlin("stdlib"))
     integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.1")
     integrationTestImplementation("org.kodein.di:kodein-di-jvm:7.26.1")
+    // Starter's TeamCityReporter needs it at runtime; not pulled in transitively (intellij-dependencies repo)
+    "integrationTestRuntimeOnly"("org.jetbrains.teamcity:serviceMessages:2024.07")
 
     implementation("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") {
         isTransitive = false
@@ -96,6 +98,13 @@ val integrationTests = tasks.register<Test>("integrationTest") {
     testClassesDirs = integrationTestSourceSet.output.classesDirs
     classpath = integrationTestSourceSet.runtimeClasspath
     systemProperty("path.to.build.plugin", tasks.prepareSandbox.get().pluginDirectory.get().asFile)
+    // IntelliJ's MultiRoutingFileSystem (pulled in by the Starter's JDK/IDE extraction) implements
+    // sun.nio.fs internals, which are not exported to the unnamed module on modern JDKs.
+    jvmArgs(
+        "--add-exports=java.base/sun.nio.fs=ALL-UNNAMED",
+        "--add-opens=java.base/sun.nio.fs=ALL-UNNAMED",
+        "--enable-native-access=ALL-UNNAMED",
+    )
     useJUnitPlatform {
         excludeEngines("junit-vintage")
         includeEngines("junit-jupiter")
