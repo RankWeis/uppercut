@@ -3,6 +3,7 @@ package com.rankweis.uppercut.testrunner;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,9 +26,11 @@ public class KarateV2TestRunner {
   public static final String EVENT_PREFIX = "<<UPPERCUT-V2>>";
 
   /** Event types forwarded to the IDE; STEP_*, HTTP_* and PROGRESS are noise for the test tree. */
+  // STEP_EXIT is forwarded so the IDE can show a per-step trace under each scenario, the way the v1
+  // path does from its log lines. STEP_ENTER adds nothing the exit event does not already carry.
   private static final Set<String> FORWARDED_EVENT_TYPES = Set.of(
     "SUITE_ENTER", "SUITE_EXIT", "FEATURE_ENTER", "FEATURE_EXIT",
-    "OUTLINE_ENTER", "SCENARIO_ENTER", "SCENARIO_EXIT", "ERROR");
+    "OUTLINE_ENTER", "SCENARIO_ENTER", "SCENARIO_EXIT", "STEP_EXIT", "ERROR");
 
   private final Map<String, List<String>> params;
 
@@ -111,12 +114,70 @@ public class KarateV2TestRunner {
       Method toJson = runEvent.getClass().getMethod("toJson");
       toJson.setAccessible(true);
       Object json = toJson.invoke(runEvent);
+      if ("STEP_EXIT".equals(type)) {
+        json = withStepLog(runEvent, json);
+      }
+      // v2 events carry no thread id, but this listener runs on the thread executing the step, so
+      // stamp it here: with parallelism > 1 the IDE cannot otherwise tell whose step it is reading.
+      json = withThread(json);
       // println is atomic per call, safe from Karate's virtual threads
       System.out.println(EVENT_PREFIX + " " + type + " " + toJsonString(json));
     } catch (Exception e) {
       System.out.println(EVENT_PREFIX + " EMIT_ERROR " + toJsonString(Map.of("message", String.valueOf(e))));
     }
     return true;
+  }
+
+  /**
+   * Adds the step's captured log to a STEP_EXIT payload as {@code stepLog}.
+   *
+   * <p>Karate keeps what a step printed - {@code print} output, {@code karate.log} calls - on
+   * {@code StepResult.getLog()}, but {@code StepRunEvent.toJson()} omits it; it only reaches the
+   * aggregate emitted at FEATURE_EXIT, by which time the IDE has already closed the scenario nodes.
+   * Reading it here is what lets the test tree show a step's output beside the step.
+   *
+   * <p>Best effort: any reflection failure returns the original payload, so a Karate version that
+   * reshapes these types costs the log line, not the run.
+   */
+  /** Stamps the emitting thread onto the payload; the IDE keys its per-scenario state on it. */
+  @SuppressWarnings("unchecked")
+  private static Object withThread(Object json) {
+    if (!(json instanceof Map)) {
+      return json;
+    }
+    Map<String, Object> enriched = new LinkedHashMap<>((Map<String, Object>) json);
+    // Karate 2 runs scenarios on virtual threads, which are unnamed - getName() returns "" for all
+    // of them, which would collapse every thread onto one key. The id is always unique.
+    Thread current = Thread.currentThread();
+    String name = current.getName();
+    enriched.put("thread", name == null || name.isBlank() ? "vt-" + current.getId() : name);
+    return enriched;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object withStepLog(Object runEvent, Object json) {
+    try {
+      if (!(json instanceof Map)) {
+        return json;
+      }
+      Method result = runEvent.getClass().getMethod("result");
+      result.setAccessible(true);
+      Object stepResult = result.invoke(runEvent);
+      if (stepResult == null) {
+        return json;
+      }
+      Method getLog = stepResult.getClass().getMethod("getLog");
+      getLog.setAccessible(true);
+      Object log = getLog.invoke(stepResult);
+      if (log == null || String.valueOf(log).isBlank()) {
+        return json;
+      }
+      Map<String, Object> enriched = new LinkedHashMap<>((Map<String, Object>) json);
+      enriched.put("stepLog", String.valueOf(log));
+      return enriched;
+    } catch (Exception e) {
+      return json;
+    }
   }
 
   /** Minimal JSON writer for the Map/List/String/Number/Boolean shapes produced by {@code RunEvent.toJson()}. */

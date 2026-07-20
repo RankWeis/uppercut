@@ -122,6 +122,75 @@ public class KarateV2EventProcessorTest {
   }
 
   @Test
+  public void stepsAreReportedAsOutputOnTheirScenario() {
+    process("FEATURE_ENTER",
+      "{\"path\":\"" + USERS + "\",\"name\":\"sample feature\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"first scenario\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
+    process("STEP_EXIT",
+      "{\"line\":4,\"prefix\":\"*\",\"text\":\"def id = 1\",\"status\":\"passed\",\"durationMillis\":12.3}");
+    process("STEP_EXIT",
+      "{\"line\":5,\"prefix\":\"*\",\"text\":\"match id == 2\",\"status\":\"failed\",\"durationMillis\":1.0}");
+
+    // Steps attach to the scenario that ran them, so the tree shows what a run did - not only
+    // whether it passed. The v1 path gets this from its log lines; v2 reports structurally.
+    assertContains(sink.messages.get(2), "testStdOut", "name='first scenario'", "def id = 1", "|node=2");
+    assertContains(sink.messages.get(3), "testStdOut", "name='first scenario'", "match id == 2", "failed");
+  }
+
+  @Test
+  public void stepOutputIsShownBeneathItsStep() {
+    process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"prints\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
+    // What print/karate.log produced: v2 keeps it on StepResult.getLog(), which the runner adds to
+    // the STEP_EXIT payload because the aggregate carrying it arrives after the nodes are closed.
+    process("STEP_EXIT",
+      "{\"line\":4,\"prefix\":\"*\",\"text\":\"print 'env is', env\",\"status\":\"passed\","
+        + "\"stepLog\":\"env is dev\\nsecond line\\n\"}");
+
+    // Service messages escape quotes and newlines (' -> |', \n -> |n), so assert on the unescaped
+    // fragments: the step text, then each log line indented beneath it.
+    assertContains(sink.messages.get(2), "testStdOut", "name='prints'",
+      "print ", " env", "    env is dev", "    second line");
+  }
+
+  @Test
+  public void stepsOfCalledFeatureAttachToTheCalledScenario() {
+    process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"caller\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"calling scenario\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
+    process("FEATURE_ENTER", "{\"path\":\"" + CALLED + "\",\"name\":\"callee\",\"line\":2,\"callDepth\":1}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + CALLED + "\",\"name\":null,\"line\":4,\"refId\":\"[1:4]\",\"callDepth\":1}");
+    process("STEP_EXIT",
+      "{\"line\":5,\"prefix\":\"*\",\"text\":\"def greeting = 'hi'\",\"status\":\"passed\"}");
+
+    assertContains(sink.messages.get(4), "testStdOut", "name='called.feature:4'", "def greeting");
+  }
+
+  @Test
+  public void interleavedParallelScenariosKeepTheirOwnSteps() {
+    // Karate runs scenarios on several threads and their events interleave on one stdout stream.
+    // The runner stamps each event with its thread; without keying on it, a step lands on whichever
+    // scenario opened most recently - which under parallelism is usually the wrong one.
+    process("FEATURE_ENTER",
+      "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0,\"thread\":\"t1\"}");
+    process("SCENARIO_ENTER", "{\"feature\":\"" + USERS + "\",\"name\":\"alpha\",\"line\":3,"
+      + "\"refId\":\"[1:3]\",\"callDepth\":0,\"thread\":\"t1\"}");
+    process("SCENARIO_ENTER", "{\"feature\":\"" + USERS + "\",\"name\":\"beta\",\"line\":9,"
+      + "\"refId\":\"[2:9]\",\"callDepth\":0,\"thread\":\"t2\"}");
+    // beta opened last; a step from t1 still belongs to alpha
+    process("STEP_EXIT",
+      "{\"line\":4,\"prefix\":\"*\",\"text\":\"alpha step\",\"status\":\"passed\",\"thread\":\"t1\"}");
+    process("STEP_EXIT",
+      "{\"line\":10,\"prefix\":\"*\",\"text\":\"beta step\",\"status\":\"passed\",\"thread\":\"t2\"}");
+
+    assertContains(sink.messages.get(3), "testStdOut", "name='alpha'", "alpha step");
+    assertContains(sink.messages.get(4), "testStdOut", "name='beta'", "beta step");
+  }
+
+  @Test
   public void unknownEventTypesAreConsumedNotPrinted() {
     // A false return would have the SM framework print the raw protocol line into the console;
     // anything carrying the prefix is ours, known type or not.
