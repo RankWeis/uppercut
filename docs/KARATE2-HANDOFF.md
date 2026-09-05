@@ -85,9 +85,10 @@ diagnosis is recorded here so it is not rediscovered:
 1. Editor-level UI coverage: completion offering Karate keywords, go-to-definition on
    `call read('called.feature')`, no error annotations on a valid feature. These exercise PSI and
    the conditional `plugin-withJs.xml` loading, which `LightPlatformTestCase` cannot reach.
-2. Phase 3 polish (see docs/KARATE2.md): `karate-base.js`/`karate-boot.js` recognition,
-   README/marketplace description mention of Karate 2, possibly refreshing the embedded karate-js
-   sources under `src/main/java/io/karatelabs/js/`.
+2. Phase 3 polish (see docs/KARATE2.md): `karate-base.js`/`karate-boot.js` recognition, and a
+   README/marketplace description mention of Karate 2. ~~Refreshing the embedded karate-js
+   sources~~ is done - the modern-JS syntaxes were added surgically to `io.karatelabs.js`
+   (see `KarateJsModernSyntaxTest` and `src/test/testData/js_modern.feature`).
 3. ~~The integration-test CI job has never run.~~ It has now run on Linux; see "First Linux CI run"
    above. `Karate2UITest` is fixed to pass headless and `UppercutUITest` is disabled pending a
    click-free rewrite.

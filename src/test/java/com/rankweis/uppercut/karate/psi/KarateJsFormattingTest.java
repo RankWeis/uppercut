@@ -33,6 +33,12 @@ public class KarateJsFormattingTest extends FormatterTestCase {
     doTest();
   }
 
+  // class bodies, optional chaining and the other karate-js 2.x syntax on the fallback formatter.
+  // FormatterTestCase maps the method name to the fixture: testJs_modern -> js_modern.feature
+  public void testJs_modern() {
+    doTest();
+  }
+
   public void testUnformattedkaratejs() {
     doTest();
   }

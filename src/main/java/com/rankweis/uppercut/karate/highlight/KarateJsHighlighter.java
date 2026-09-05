@@ -10,10 +10,13 @@ import static io.karatelabs.js.Token.B_COMMENT;
 import static io.karatelabs.js.Token.CARET;
 import static io.karatelabs.js.Token.CARET_EQ;
 import static io.karatelabs.js.Token.CASE;
+import static io.karatelabs.js.Token.BIGINT;
 import static io.karatelabs.js.Token.CATCH;
+import static io.karatelabs.js.Token.CLASS;
 import static io.karatelabs.js.Token.COLON;
 import static io.karatelabs.js.Token.COMMA;
 import static io.karatelabs.js.Token.CONST;
+import static io.karatelabs.js.Token.CONTINUE;
 import static io.karatelabs.js.Token.DEFAULT;
 import static io.karatelabs.js.Token.DELETE;
 import static io.karatelabs.js.Token.DO;
@@ -26,6 +29,7 @@ import static io.karatelabs.js.Token.EQ;
 import static io.karatelabs.js.Token.EQ_EQ;
 import static io.karatelabs.js.Token.EQ_EQ_EQ;
 import static io.karatelabs.js.Token.EQ_GT;
+import static io.karatelabs.js.Token.EXTENDS;
 import static io.karatelabs.js.Token.FALSE;
 import static io.karatelabs.js.Token.FINALLY;
 import static io.karatelabs.js.Token.FOR;
@@ -63,7 +67,9 @@ import static io.karatelabs.js.Token.PLUS;
 import static io.karatelabs.js.Token.PLUS_EQ;
 import static io.karatelabs.js.Token.PLUS_PLUS;
 import static io.karatelabs.js.Token.QUES;
+import static io.karatelabs.js.Token.QUES_DOT;
 import static io.karatelabs.js.Token.QUES_QUES;
+import static io.karatelabs.js.Token.QUES_QUES_EQ;
 import static io.karatelabs.js.Token.RETURN;
 import static io.karatelabs.js.Token.R_BRACKET;
 import static io.karatelabs.js.Token.R_CURLY;
@@ -75,8 +81,10 @@ import static io.karatelabs.js.Token.STAR;
 import static io.karatelabs.js.Token.STAR_EQ;
 import static io.karatelabs.js.Token.STAR_STAR;
 import static io.karatelabs.js.Token.STAR_STAR_EQ;
+import static io.karatelabs.js.Token.SUPER;
 import static io.karatelabs.js.Token.SWITCH;
 import static io.karatelabs.js.Token.S_STRING;
+import static io.karatelabs.js.Token.THIS;
 import static io.karatelabs.js.Token.THROW;
 import static io.karatelabs.js.Token.TILDE;
 import static io.karatelabs.js.Token.TRUE;
@@ -84,6 +92,7 @@ import static io.karatelabs.js.Token.TRY;
 import static io.karatelabs.js.Token.TYPEOF;
 import static io.karatelabs.js.Token.T_STRING;
 import static io.karatelabs.js.Token.VAR;
+import static io.karatelabs.js.Token.VOID;
 import static io.karatelabs.js.Token.WHILE;
 import static io.karatelabs.js.Token.WS;
 import static io.karatelabs.js.Token.WS_LF;
@@ -113,16 +122,18 @@ public class KarateJsHighlighter extends SyntaxHighlighterBase {
     register(DefaultLanguageHighlighterColors.PARENTHESES, L_PAREN, R_PAREN);
     register(HighlighterColors.TEXT, COMMA, COLON, SEMI, GT, LT, LT_EQ, GT_EQ,
       DOT_DOT_DOT, DOT, EQ_EQ_EQ, EQ_EQ, EQ, EQ_GT, NOT_EQ_EQ, NOT_EQ, NOT, PIPE_PIPE_EQ, PIPE_PIPE, PIPE_EQ, PIPE,
-      AMP_AMP_EQ, AMP_AMP, AMP_EQ, AMP, CARET_EQ, CARET, QUES_QUES, QUES, PLUS_PLUS, PLUS_EQ, PLUS, MINUS_MINUS,
+      AMP_AMP_EQ, AMP_AMP, AMP_EQ, AMP, CARET_EQ, CARET, QUES_QUES_EQ, QUES_QUES, QUES_DOT, QUES, PLUS_PLUS,
+      PLUS_EQ, PLUS, MINUS_MINUS,
       MINUS_EQ, MINUS, STAR_STAR_EQ, STAR_STAR, STAR_EQ, STAR, SLASH_EQ, SLASH, PERCENT_EQ, PERCENT, TILDE,
       PLUS_PLUS, PLUS_EQ, PLUS, MINUS_MINUS, MINUS_EQ, MINUS, STAR_STAR_EQ, STAR_STAR, STAR_EQ, STAR, SLASH_EQ,
       SLASH, PERCENT_EQ, PERCENT, TILDE);
     register(DefaultLanguageHighlighterColors.KEYWORD, NULL, TRUE, FALSE, RETURN, TRY, CATCH, FINALLY, THROW,
-      NEW, VAR, LET, CONST, IF, ELSE, TYPEOF, INSTANCEOF, DELETE, FOR, IN, OF, DO, WHILE, SWITCH, CASE, DEFAULT, BREAK);
+      NEW, VAR, LET, CONST, IF, ELSE, TYPEOF, INSTANCEOF, DELETE, FOR, IN, OF, DO, WHILE, SWITCH, CASE, DEFAULT, BREAK,
+      CONTINUE, THIS, VOID, CLASS, EXTENDS, SUPER);
     register(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, FUNCTION);
     register(DefaultLanguageHighlighterColors.LINE_COMMENT, L_COMMENT);
     register(DefaultLanguageHighlighterColors.BLOCK_COMMENT, B_COMMENT);
-    register(DefaultLanguageHighlighterColors.NUMBER, NUMBER);
+    register(DefaultLanguageHighlighterColors.NUMBER, NUMBER, BIGINT);
     register(DefaultLanguageHighlighterColors.IDENTIFIER, IDENT, DOLLAR_L_CURLY);
     register(HighlighterColors.NO_HIGHLIGHTING, WS_LF, WS);
   }
