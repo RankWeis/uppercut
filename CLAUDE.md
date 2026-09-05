@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Uppercut is an IntelliJ IDEA plugin providing comprehensive IDE support for the **Karate testing framework**. It adds syntax highlighting, code completion, debugging, navigation, inspections, and run configurations for `.feature` (Karate/Gherkin) and `.featurejs` (KarateJs) files.
+Uppercut is an IntelliJ IDEA plugin providing comprehensive IDE support for the **Karate testing framework**. It adds syntax highlighting, code completion, debugging, navigation, inspections, and run configurations for `.feature` (Karate/Gherkin) files. The `.featurejs` file type is a diagnostic hook, not a Karate file type: it hands a whole file to the embedded KarateJs parser so the JavaScript engine can be exercised in isolation from the Gherkin lexer.
 
 - **Plugin ID:** `com.rankweis`
 - **Group:** `com.rankweis.uppercut`
