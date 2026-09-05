@@ -87,8 +87,9 @@ class Karate2UITest {
         @JvmStatic
         @BeforeAll
         fun startIde() {
-            val projectDir = prepareSampleProjectCopy()
-            val sdk = JdkDownloaderFacade.jdk21.toSdk()
+            val jdk = JdkDownloaderFacade.jdk21
+            val projectDir = prepareSampleProjectCopy(jdk.home)
+            val sdk = jdk.toSdk()
             // The platform the plugin is compiled against (build.gradle.kts passes platformVersion), not
             // whatever IU is newest: with no until-build the plugin would load on the next major, and a
             // moved @Remote module id there would turn the release draft red for reasons unrelated to
@@ -101,18 +102,20 @@ class Karate2UITest {
             }.setupSdk(sdk)
             ideaLog = context.paths.testHome.resolve("log").resolve("idea.log")
             run = context.runIdeWithDriver()
-            // The startup auto-import races the project-SDK registration; when it loses, it fails
-            // fast with "Invalid Gradle JDK configuration" and every run in the session launches
-            // against an unimported project (empty classpath, no modules). The previous answer was an
-            // unconditional explicit re-import, relying on the platform to cancel it when auto-import
-            // had already won. It does on Linux CI ("Build cancelled"); on macOS the second sync ran
-            // long enough to collide with the project rename mid-sync, failed with "project is
-            // closed", and committed a model without the v1/v2 modules - after which every run test
-            // failed with a one-entry classpath and a misleading ClassNotFoundException.
+            // The startup auto-import used to race the project-SDK registration: when it lost, the
+            // IDE fell back to a Gradle JVM of #JAVA_HOME, which it could not always resolve either
+            // (macOS, where the IDE inherits no JAVA_HOME), failed fast with "Invalid Gradle JDK
+            // configuration", and every run in the session launched against an unimported project
+            // (empty classpath, no modules). The fixture copy now pins org.gradle.java.home to the
+            // downloaded JDK, which the IDE's Gradle-JVM resolution takes ahead of JAVA_HOME and which
+            // needs no SDK to be registered first - so the sync no longer depends on the race.
             //
-            // So: wait for the auto-import's own progress indicator, look at whether the fixture's
-            // modules exist, and import explicitly only if they don't. A re-import that then fails is a
-            // real import failure and is left to fail this class loudly, in one place.
+            // The explicit import below stays as the fallback for a sync that still did not produce
+            // the modules. It is conditional on purpose: an unconditional re-import on macOS collided
+            // with the project rename mid-sync ("project is closed") and committed a model without
+            // the v1/v2 modules, after which every run test failed with a one-entry classpath and a
+            // misleading ClassNotFoundException. A re-import that fails here is a real import failure
+            // and fails this class loudly, in one place.
             run.driver.execute(CommandChain().waitForSmartMode())
             run.driver.waitForIndicators(timeout = 10.minutes)
             if (!fixtureModulesImported()) {
@@ -143,10 +146,12 @@ class Karate2UITest {
         }
 
         /**
-         * Copies testProjects/karate-versions into a temp dir and adds the repo's Gradle wrapper so
-         * the IDE can import it. The wrapper distribution is already cached in ~/.gradle.
+         * Copies testProjects/karate-versions into a temp dir, adds the repo's Gradle wrapper so the
+         * IDE can import it (the wrapper distribution is already cached in ~/.gradle), and pins the
+         * build's JVM to [jdkHome] through org.gradle.java.home, so the IDE's Gradle sync never has to
+         * find a JDK on its own.
          */
-        private fun prepareSampleProjectCopy(): Path {
+        private fun prepareSampleProjectCopy(jdkHome: Path): Path {
             val repoRoot = Path(System.getProperty("user.dir"))
             val source = repoRoot.resolve("testProjects/karate-versions")
             // toRealPath: on macOS the temp dir is /var/folders/..., a symlink to /private/var/.... Gradle
@@ -168,6 +173,12 @@ class Karate2UITest {
                 StandardCopyOption.REPLACE_EXISTING
             )
             target.resolve("gradlew").toFile().setExecutable(true)
+            // Forward slashes: a backslash is an escape in a .properties file, and Gradle accepts
+            // either separator on Windows.
+            Files.writeString(
+                target.resolve("gradle.properties"),
+                "org.gradle.java.home=" + jdkHome.toString().replace('\\', '/') + System.lineSeparator()
+            )
             return target
         }
 
