@@ -210,8 +210,9 @@ public class KarateV2EventProcessorTest {
       "{\"path\":\"" + CALLED + "\",\"name\":\"login\",\"line\":1,\"callDepth\":1,\"thread\":\"t2\"}");
     process("SCENARIO_ENTER", "{\"feature\":\"" + CALLED + "\",\"name\":\"do login\",\"line\":4,"
       + "\"refId\":\"[1:4]\",\"callDepth\":1,\"thread\":\"t2\"}");
-    int t1CalledId = 5; // ids are allocated in ENTER order: f=1, alpha=2, beta=3, login(t1)=4, do login(t1)=5
-    int t2CalledId = 7;
+    // ids are allocated in ENTER order: f=1, alpha=2, beta=3, login(t1)=4, do login(t1)=5, ..., do login(t2)=7
+    final int t1CalledId = 5;
+    final int t2CalledId = 7;
     // t1's call finishes first and must close ITS node, not t2's
     process("SCENARIO_EXIT", "{\"feature\":\"" + CALLED + "\",\"name\":\"do login\",\"line\":4,"
       + "\"refId\":\"[1:4]\",\"callDepth\":1,\"passed\":true,\"thread\":\"t1\"}");
@@ -228,7 +229,7 @@ public class KarateV2EventProcessorTest {
   }
 
   @Test
-  public void aFieldOfAnUnexpectedShapeCostsOneEventNotTheRun() {
+  public void unexpectedFieldShapeCostsOneEventNotTheRun() {
     // Payload shapes are Karate's; if a newer 2.x turns 'error' into an object, the scenario still closes
     process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0}");
     process("SCENARIO_ENTER", "{\"feature\":\"" + USERS + "\",\"name\":\"alpha\",\"line\":3,"

@@ -34,7 +34,9 @@ public class KarateJsFormattingTest extends FormatterTestCase {
   }
 
   // class bodies, optional chaining and the other karate-js 2.x syntax on the fallback formatter.
-  // FormatterTestCase maps the method name to the fixture: testJs_modern -> js_modern.feature
+  // FormatterTestCase maps the method name to the fixture: testJs_modern -> js_modern.feature, which
+  // KarateJsHighlightTest loads by that name too - hence the underscore the naming rule dislikes.
+  // CHECKSTYLE.SUPPRESS: MethodName for +1 lines
   public void testJs_modern() {
     doTest();
   }

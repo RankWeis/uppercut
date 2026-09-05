@@ -35,7 +35,7 @@ public class KarateJsModernSyntaxTest {
     assertTokens("f?.()", Token.IDENT, Token.QUES_DOT, Token.L_PAREN, Token.R_PAREN);
   }
 
-  @Test public void ternaryFollowedByALeadingDotNumberIsNotOptionalChaining() {
+  @Test public void ternaryFollowedByLeadingDotNumberIsNotOptionalChaining() {
     // spec lookahead: `?. [lookahead not in DecimalDigit]`, so this stays `flag ? .5 : 0`
     assertTokens("flag ?.5 : 0", Token.IDENT, Token.QUES, Token.NUMBER, Token.COLON, Token.NUMBER);
   }
@@ -99,7 +99,7 @@ public class KarateJsModernSyntaxTest {
   @Test public void classDeclarationParses() {
     assertNotNull(parses("class A { m() { return 1 } }").findFirst(Type.CLASS_EXPR));
     parses("class A extends B { constructor() { super(1) } m() { return this.x } }");
-    parses("class A { static create() { return new A() } get x() { return 1 } set x(v) { } }");
+    parses("class A { static create() { return new A() } get x() { return 1 } set x(v) { this.v = v } }");
     parses("class A { x = 1; y }");
     parses("class A { [key]() { return 1 } }");
     parses("var A = class { m() { return 1 } }");
@@ -126,7 +126,7 @@ public class KarateJsModernSyntaxTest {
     parses("while (true) { continue }");
   }
 
-  @Test public void voidIsAUnaryOperator() {
+  @Test public void voidIsUnaryOperator() {
     assertNotNull(parses("var x = void 0").findFirst(Type.UNARY_EXPR));
     parses("if (void fn() === undefined) { var y = 1 }");
   }
@@ -165,7 +165,7 @@ public class KarateJsModernSyntaxTest {
   }
 
   @Test(timeout = 5000)
-  public void unterminatedTemplateLiteralIsAnErrorNotAHang() {
+  public void unterminatedTemplateLiteralIsErrorNotHang() {
     // The template loop only ever consumed T_STRING, ${ or the closing backtick; at end of input it
     // consumed nothing and never advanced. In the IDE that was a parse that never finished.
     for (String source : new String[]{"var x = `abc", "var x = `a ${b", "class A { m() { `abc"}) {
