@@ -436,7 +436,16 @@ class Karate2UITest {
 
         // What the user actually sees in the console pane. Karate's own summary must be there; the
         // <<UPPERCUT-V2>> protocol lines must have been consumed by the converter, not printed.
-        val consoleText = driver.cast(smConsole.getConsole(), ConsoleViewImplRef::class).getText()
+        //
+        // Read after it settles, not at process exit: the console paints from a deferred buffer on a
+        // timer, and when the run finishes the results form selects a node, which clears the console
+        // and reprints that node's output - so right at exit the document can be momentarily empty.
+        // A sub-second v1 run hit exactly that window.
+        val consoleView = driver.cast(smConsole.getConsole(), ConsoleViewImplRef::class)
+        runCatching {
+            waitFor(timeout = 30.seconds, interval = 250.milliseconds) { consoleView.getText().contains("scenarios:") }
+        }
+        val consoleText = consoleView.getText()
         assertTrue(
             consoleText.contains("scenarios:"),
             "Karate's summary missing from the visible console$diagnostics\n--- console ---\n$consoleText"
