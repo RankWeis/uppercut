@@ -8,6 +8,11 @@ description: Run and debug the IDE Starter/Driver UI tests (Karate2UITest, Upper
 These tests boot a real IntelliJ (IDE Starter), install the built plugin, and drive it (Driver).
 One run is ~45s in-IDE plus a ~4 GB first-time download into `out/ide-tests/`.
 
+`Karate2UITest` is the suite that matters: one IDE, seven ordered tests (v2 pass, v2 fail, v1,
+Scenario Outline, go-to-definition, version override, no plugin errors logged). `UppercutUITest`
+is `@Disabled` - it clicks. The IDE it boots is the `platformVersion` the plugin is built against
+(`useRelease(platformVersion())`), not the newest release.
+
 ## Running
 
 ```bash
@@ -84,6 +89,17 @@ and reach the driver through `run.driver`. A failure then names the behavior tha
 - **`@Remote` needs the owning module** for classes outside the core classloader, or the driver
   answers `No such class ... in plugin null`. Example:
   `@Remote("...SMTestProxy", plugin = "intellij.testRunner.plugin/intellij.platform.smRunner")`.
+- **Process exit is not console settled.** `ConsoleViewImpl.text` reads the editor document, which
+  fills from a deferred buffer on a timer, and the results form clears and reprints the console
+  when the finished run selects a node. A sub-second run can have `isProcessTerminated()` true and
+  an empty document. Poll for the text you expect (`waitFor { console.getText().contains(...) }`)
+  before asserting on it - `awaitResults` does.
+- **The test tree is not the Gradle tree.** If a run shows `SampleTest` → `testSample` → dynamic
+  test names, it went through Gradle's "Tests in ..." configuration, not the plugin. The plugin's
+  folder configuration is named "Karate tests in '<folder>'".
+- **Read `idea.log` before the assertion when every run test fails with a one-entry classpath.**
+  That shape always means the fixture did not import; the four import failure modes and their
+  fixes are recorded in `docs/KARATE2-HANDOFF.md`.
   Confirm a module name exists before guessing:
   `grep -o "intellij\.[a-zA-Z.]*" out/ide-tests/cache/builds/IU-*/product-info.json | sort -u`
 - **Attach process listeners the moment the run descriptor appears.** Attaching after the fact

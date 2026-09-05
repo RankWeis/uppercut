@@ -13,6 +13,13 @@ per-module detection. See `Karate2UITest`.
 - [ ] Click the gutter icon on `v2/.../users.feature` line 1 → popup shows Run/Debug → Run works.
 - [ ] Same on a single `Scenario:` line → only that scenario runs (SINGLE_SCENARIO).
 - [ ] Right-click in the editor → context menu offers the Karate run configuration.
+- [x] Right-click the `v2/.../sample` *folder* in the Project view → the menu offers
+      **Run 'Karate tests in 'sample''** (not only Gradle's "Tests in 'sample'"), and the run
+      goes through the plugin (feature nodes with scenarios beneath, not `SampleTest` →
+      `testSample`). **Verified 2026-09-05** on macOS; this is what the producer's `shouldReplace`
+      change fixed.
+- [ ] Cmd+7 / Alt+7 (Structure) on a feature lists the feature, its scenarios and their steps, and
+      clicking a node moves the caret. The element was rewritten on the public API for 2026.2.
 - [ ] Double-click a scenario in the results tree → editor opens `src/test/java/...`, not
       `build/resources/...`, caret on the scenario line.
 - [ ] Click a step-log line in the console → hyperlinks (if any) resolve.
@@ -33,6 +40,8 @@ per-module detection. See `Karate2UITest`.
 
 - [ ] Settings > Tools > Karate shows the Karate version combo (AUTO/V1/V2); changing it and
       hitting Apply persists across IDE restart.
+- [ ] The **?** button on that page and the "What each setting means" link both open
+      https://rankweis.github.io/uppercut/settings in the browser.
 - [ ] Pin V1, run the v2 feature → error balloon/dialog names the setting and says how to fix it
       (not a stack trace).
 - [ ] Set back to AUTO → same feature runs green with no restart.
@@ -50,8 +59,12 @@ per-module detection. See `Karate2UITest`.
 ## 5. Scale and concurrency (fixture is 2-3 scenarios)
 
 - [ ] A feature with 30+ scenarios: tree stays responsive, order stable.
-- [ ] `parallelism > 1` on the v2 module: tree correct-ish (called-feature nesting is heuristic
-      under parallelism - events carry no thread id; expect right totals, possibly odd nesting).
+- [x] `parallelism > 1` on the v2 module: tree correct - the runner stamps every event with its
+      thread and the processor keys scenarios on it, so nesting holds under parallelism.
+      **Verified 2026-09-05** at parallelism 4 over the `sample` folder. To *prove* concurrency
+      rather than eyeball it: a throwaway feature with four scenarios each doing
+      `* karate.pause(2000)` runs in ~8 s at parallelism 1 and ~2 s at 4 (Karate's own
+      `efficiency` figure in the summary is per feature, so ignore it for a single-feature probe).
 - [ ] Scenario Outline with examples: one node per example row, failures attribute to the row.
 - [ ] Stop button mid-run: process dies, tree marks unfinished, IDE usable, second run clean.
 
@@ -61,12 +74,15 @@ per-module detection. See `Karate2UITest`.
       project. Then install this build over it: settings survive (version pref = AUTO),
       v1 project still runs identically.
 - [ ] plugin.xml compatibility range: verify the build installs on the oldest supported IDE
-      (261) - the UI test only exercises the newest.
+      (261) - the UI test pins `platformVersion`, and CI's verifyPlugin only covers the newest
+      release and EAP. `./gradlew verifyPlugin -PpluginVerifierScope=all` covers every major from
+      since-build up; run it before a release.
 
 ## 7. Environment matrix
 
 - [ ] Linux run of the whole automated suite (first CI run covers this - watch it).
-- [ ] macOS: one manual gutter-run smoke on any module.
+- [x] macOS: one manual gutter-run smoke on any module. **Verified 2026-09-05**, and `Karate2UITest`
+      passes 7/7 on macOS after the fixture-import fixes recorded in `docs/KARATE2-HANDOFF.md`.
 - [ ] A JDK older than the toolchain on PATH (user machines rarely match ours): runIde project
       import still resolves and runs.
 

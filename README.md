@@ -92,7 +92,7 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
 
 ## Contributors
 
-<!-- readme: contributors -start -->
+<!-- readme: contributors,-claude -start -->
 <table>
 	<tbody>
 		<tr>
@@ -101,13 +101,6 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
                     <img src="https://avatars.githubusercontent.com/u/733691?v=4" width="100;" alt="RankWeis"/>
                     <br />
                     <sub><b>RankWeis</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/claude">
-                    <img src="https://avatars.githubusercontent.com/u/81847?v=4" width="100;" alt="claude"/>
-                    <br />
-                    <sub><b>Claude</b></sub>
                 </a>
             </td>
             <td align="center">

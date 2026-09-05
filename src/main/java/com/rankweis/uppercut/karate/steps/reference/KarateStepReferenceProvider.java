@@ -44,28 +44,32 @@ public class KarateStepReferenceProvider extends PsiReferenceProvider {
       Matcher m = VARIABLE_PATTERN.matcher(element.getText());
       while (m.find()) {
         int start = m.start();
-        int end = m.end();
         if (pystringRange != null && pystringRange.containsOffset(start)) {
           continue;
         }
         if (QUOTED_STRING.contains(element.findElementAt(start).getNode().getElementType())) {
           continue;
         }
-        references.add(new KarateReference(element, new TextRange(start, end), true));
-        String[] dotSplitted = DOT_PATTERN.split(m.group());
-        for (int i = 0; i < dotSplitted.length; i++) {
-          StringBuilder builder = new StringBuilder();
-          for (int j = 0; j <= i; j++) {
-            if (!builder.isEmpty()) {
-              builder.append(".");
-            }
-            builder.append(dotSplitted[j]);
+        char first = m.group().charAt(0);
+        if (Character.isDigit(first) || first == '.') {
+          continue; // a number such as 158.0 or .5, not a variable
+        }
+        // One reference per segment of a dotted path, each keyed on the path up to it: on
+        // `auth.token` the caret on `token` resolves through `auth`'s call read(...) into the called
+        // feature, while the caret on `auth` resolves to `auth` itself - see KarateReference.
+        String[] segments = DOT_PATTERN.split(m.group());
+        int segmentStart = start;
+        StringBuilder path = new StringBuilder();
+        for (String segment : segments) {
+          if (!path.isEmpty()) {
+            path.append('.');
           }
-          int splittedEnd = start + builder.length();
-          TextRange textRange = new TextRange(start, splittedEnd);
-          KarateReference reference =
-            new KarateReference(element, textRange, true);
-          references.add(reference);
+          path.append(segment);
+          if (!segment.isEmpty()) {
+            TextRange range = new TextRange(segmentStart, segmentStart + segment.length());
+            references.add(new KarateReference(element, range, path.toString(), true));
+          }
+          segmentStart += segment.length() + 1;
         }
       }
       return references.toArray(new PsiReference[0]);

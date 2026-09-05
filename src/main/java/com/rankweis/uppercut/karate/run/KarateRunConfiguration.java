@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.intuit.karate.junit5.Karate;
+import com.rankweis.uppercut.help.UppercutWebHelpProvider;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import com.rankweis.uppercut.testrunner.KarateTestRunner;
 import java.io.File;
@@ -164,6 +166,9 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         }
         if (!StringUtils.isBlank(getTag())) {
           params.getProgramParametersList().add("--tag", getTag());
+          for (String root : tagScanRoots(module)) {
+            params.getProgramParametersList().add("--tag-root", root);
+          }
         }
         if (!StringUtils.isBlank(getWorkingDirectory())) {
           params.getProgramParametersList().add("--working-dir", getWorkingDirectory());
@@ -242,6 +247,23 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     return LibraryUtil.getLibraryRoots(getProject());
   }
 
+  /**
+   * Where a tag run looks for features: the module's source and resource roots, not the module
+   * directory. A tag run has no file to name, so the runner hands Karate directories to walk;
+   * walking the module root also walks the build output ({@code target/test-classes},
+   * {@code build/resources/test}), where Maven and Gradle keep a copy of every feature - and each
+   * tagged scenario ran twice, once per copy. With no module (or a module with no roots) the runner
+   * falls back to the working directory as before.
+   */
+  static List<String> tagScanRoots(@Nullable Module module) {
+    if (module == null) {
+      return List.of();
+    }
+    return Arrays.stream(ModuleRootManager.getInstance(module).getSourceRoots(true))
+      .map(VirtualFile::getPath)
+      .toList();
+  }
+
   /** The module scan decides only when the module actually has karate; otherwise widen to the project. */
   static boolean moduleScanIsAuthoritative(java.util.stream.Stream<String> libraryNames) {
     return libraryNames.anyMatch(n -> n.startsWith("karate-"));
@@ -258,12 +280,15 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     if (moduleName == null) {
       return "This feature file is not inside any module, so the run has no classpath. Open the project "
         + "folder (not just the pom.xml or build file), or re-import the project from the Maven/Gradle tool "
-        + "window, and run again.";
+        + "window, and run again. " + TROUBLESHOOTING;
     }
     return "Module '" + moduleName + "' has no Karate on its classpath, so the run would fail with \"Must "
       + "have karate-core on the classpath\". Add karate-junit5 (Karate 1) or karate-junit6 (Karate 2) to "
-      + "the module, or run the feature from a module that has it.";
+      + "the module, or run the feature from a module that has it. " + TROUBLESHOOTING;
   }
+
+  /** Every message the plugin refuses a run with is explained on this page. */
+  static final String TROUBLESHOOTING = "See " + UppercutWebHelpProvider.SITE + "troubleshooting";
 
   /**
    * Fails the run only when the version override cannot possibly work: pinning V1 on a classpath that
@@ -286,13 +311,13 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     if (preference == KarateSettingsState.KarateVersionPreference.V1 && hasKarate2 && !hasKarate1) {
       throw new ExecutionException(
         "Karate version is pinned to V1 in Settings > Tools > Karate, but this module's classpath "
-          + "only has Karate 2. Set it back to AUTO, or to V2, to run this feature.");
+          + "only has Karate 2. Set it back to AUTO, or to V2, to run this feature. " + TROUBLESHOOTING);
     }
     if (preference == KarateSettingsState.KarateVersionPreference.V2 && hasKarate1 && !hasKarate2) {
       throw new ExecutionException(
         "Karate version is pinned to V2 in Settings > Tools > Karate, but this module's classpath "
           + "only has Karate 1 (expected karate-core 2.x or karate-junit6). Set it back to AUTO, or to "
-          + "V1, to run this feature.");
+          + "V1, to run this feature. " + TROUBLESHOOTING);
     }
   }
 

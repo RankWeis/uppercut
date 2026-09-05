@@ -12,6 +12,8 @@
 
   Note for Karate 2 projects: `karate-junit6` brings `slf4j-api` but no logging provider, so without logback on the module's test classpath Karate's console output is silent (`SLF4J(W): No SLF4J providers were found`). The plugin's step output doesn't depend on it; see the troubleshooting page for the one-line fix.
 - Completion for `karate.*` members (`karate.get`, `karate.call`, `karate.match`, …) after typing `karate.` on a step line, matched to the Karate version on the module's classpath
+- Go to declaration follows a `call read(...)`: on `auth.token`, where `auth` is `call read('auth.feature')`, `token` now jumps to the `def token` inside `auth.feature` instead of back to `auth`, and Find Usages on that `def` finds `auth.token` in the callers
+- The docs site is one click away from where you'd need it: the **?** button and a link on Settings > Tools > Karate open the settings reference, and every message the plugin refuses a run with ends with the troubleshooting page's address
 - Support for IntelliJ IDEA 2026.2; minimum supported build is now 261. There is no longer an upper compatibility bound, so the plugin stays installable on newer IDE releases instead of waiting for a compatibility release.
 
 ### Fixed
@@ -22,6 +24,7 @@
 - Feature path resolution with generated source roots, e.g. the protobuf Gradle plugin (#321)
 - Run configurations offered on non-`.feature` files
 - The `form`, `multipart`, and `soap` step actions never highlighted or completed
+- Running by tag ran every feature twice in Maven and Gradle projects - once from `src/test/...` and once from the copy the build keeps under `target/test-classes` or `build/resources/test`. Tag runs now scan the module's source roots instead of the whole module directory
 - Running a feature before the project import finishes now says so, instead of failing with "Must have karate-core on the classpath"
 - Right-clicking a folder that holds feature files next to their JUnit runner class - Karate's standard layout - offered no Karate run in Gradle projects, only Gradle's "Tests in '...'". The Karate run now takes that folder's entry; the runner class itself stays runnable from its own gutter
 - Running a feature that isn't inside any module - a project opened from its `pom.xml` rather than imported, or a symlinked project path - now says so up front, instead of launching a JVM with no classpath and failing with "Must have karate-core on the classpath"

@@ -5,9 +5,11 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.components.BrowserLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
+import com.rankweis.uppercut.help.UppercutWebHelpProvider;
 import com.rankweis.uppercut.karate.MyBundle;
 import com.rankweis.uppercut.settings.KarateSettingsState.KarateVersionPreference;
 import java.text.NumberFormat;
@@ -59,6 +61,12 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
     return MyBundle.message("settings.configurable.name");
   }
 
+  /** The "?" button on this page opens the settings reference on the docs site; see UppercutWebHelpProvider. */
+  @Override
+  public @NotNull String getHelpTopic() {
+    return UppercutWebHelpProvider.SETTINGS_TOPIC;
+  }
+
   @Override
   public boolean isModified() {
     Integer defaultParallelism = 1;
@@ -84,6 +92,8 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
         karateVersionCombo = new ComboBox<>(KarateVersionPreference.values()), true)
       .addComponent(new JBSplitter())
       .addComponent(useKarateJsCheckbox = new JBCheckBox("Use Karate JavaScript engine (restart required)"))
+      .addVerticalGap(8)
+      .addComponent(new BrowserLink("What each setting means", UppercutWebHelpProvider.SITE + "settings"))
       .getPanel();
   }
 

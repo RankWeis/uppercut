@@ -49,7 +49,7 @@ public class KarateTestRunner {
     Method mKarateEnv = clazz.getMethod("karateEnv", String.class);
     Method mDebug = clazz.getMethod("debugMode", boolean.class);
     if (tags.length > 0) {
-      invoke = mRun.invoke(invoke, new Object[]{workingDirectories});
+      invoke = mRun.invoke(invoke, new Object[]{tagScanRoots(params, workingDirectories)});
       invoke = mTags.invoke(invoke, new Object[]{tags});
     } else {
       invoke = mRun.invoke(invoke, new Object[]{testNames});
@@ -215,6 +215,20 @@ public class KarateTestRunner {
         params.put(key, list);
       }
     }
+  }
+
+  /**
+   * The directories a tag run asks Karate to walk: the {@code --tag-root} values the IDE sends
+   * (the module's source and resource roots), or the working directory when there are none.
+   *
+   * <p>Walking the working directory also walks the build output, where Maven and Gradle keep a
+   * copy of every feature, and every tagged scenario ran twice. Older run configurations and
+   * callers outside the IDE send no roots and keep the working-directory behaviour.
+   */
+  static String[] tagScanRoots(Map<String, List<String>> params, String[] workingDirectories) {
+    List<String> roots = Optional.ofNullable(params.get("tag-root")).orElse(List.of())
+      .stream().filter(s -> !s.isBlank()).toList();
+    return roots.isEmpty() ? workingDirectories : roots.toArray(new String[0]);
   }
 
   /**
