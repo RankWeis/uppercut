@@ -1,16 +1,18 @@
 package com.rankweis.uppercut.karate.run;
 
-import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
+import com.intellij.debugger.impl.RemoteConnectionBuilder;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.impl.ConsoleViewUtil;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
@@ -95,6 +97,15 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
 
     return new JavaApplicationCommandLineState<>(this, env) {
+      /**
+       * The RemoteConnection to hand to the debugger when the user pinned a debug port. Built and
+       * cached in {@link #createJavaParameters()} so the JVM args and the debugger's attach target
+       * agree on the same port; returned from {@link #createRemoteConnection} so the platform's
+       * port-0 auto-allocation fallback in {@code GenericDebuggerRunner.createContentDescriptor} is
+       * skipped in favour of ours. Null on Run, and on Debug when no port is pinned.
+       */
+      private RemoteConnection myFixedPortConnection;
+
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
         final JavaParameters params = super.createJavaParameters();
@@ -190,21 +201,29 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
           params.getProgramParametersList().add("--environment", getEnv());
         }
 
+        // If the user pinned a debug port in the run-config UI, wire it in the normal way: patch
+        // -agentlib:jdwp on the params with server=y,suspend=y at that port, and cache the
+        // RemoteConnection so createRemoteConnection() can hand it back to IntelliJ's own debugger.
+        // Without this, GenericDebuggerRunner.createContentDescriptor's fallback allocates a random
+        // port; the field was previously wired in startProcess() with a server=y override that
+        // fought the platform's server=n setup - IntelliJ never attached, and only external tools
+        // (jdb, other IDEs) could use the port. Non-Debug runs and blank ports leave params alone.
+        if (DefaultDebugExecutor.EXECUTOR_ID.equals(env.getExecutor().getId())
+          && !StringUtils.isBlank(getDebugPort())) {
+          myFixedPortConnection = new RemoteConnectionBuilder(
+            false, DebuggerSettings.getInstance().getTransport(), getDebugPort())
+            .suspend(true)
+            .asyncAgent(true)
+            .project(env.getProject())
+            .create(params);
+        }
+
         return params;
       }
 
-      @Override protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
-        JavaParameters params = this.getJavaParameters();
-        if (env.getRunnerSettings() instanceof GenericDebuggerRunnerSettings genericDebuggerRunnerSettings) {
-          boolean customDebugPort = !StringUtils.isBlank(getDebugPort());
-          if (customDebugPort) {
-            String debugStr = "-agentlib:jdwp=transport=dt_socket,address=*:%s,server=y,suspend=y";
-            genericDebuggerRunnerSettings.setDebugPort(getDebugPort());
-            params.getVMParametersList()
-              .replaceOrPrepend("-agentlib:jdwp", String.format(debugStr, getDebugPort()));
-          }
-        }
-        return super.startProcess();
+      @Override
+      public @Nullable RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+        return myFixedPortConnection != null ? myFixedPortConnection : super.createRemoteConnection(environment);
       }
 
       @Override protected @Nullable ConsoleView createConsole(@NotNull Executor executor) {
