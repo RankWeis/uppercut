@@ -19,6 +19,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
@@ -105,6 +106,12 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
        * skipped in favour of ours. Null on Run, and on Debug when no port is pinned.
        */
       private RemoteConnection myFixedPortConnection;
+      /**
+       * True when the launch is going down the Karate 2 path; set in {@link #createJavaParameters()}
+       * (which resolves the Karate version from the module's classpath). Used by {@link #createConsole}
+       * to print the "feature-file breakpoints won't pause on v2" notice at the top of a Debug run.
+       */
+      private boolean karateV2Detected;
 
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
@@ -137,6 +144,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
           KarateSettingsState.getInstance().getKarateVersionPreference();
         checkVersionOverrideMatchesClasspath(preference, libraryNames);
         boolean karateV2 = isKarateV2(preference, libraryNames.stream());
+        karateV2Detected = karateV2;
         if (karateV2) {
           params.getProgramParametersList().add("--karate-major-version", "2");
         } else {
@@ -236,6 +244,18 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
             SMTestRunnerConnectionUtil.createConsole(consoleProperties);
           console.initUI();
           console.addMessageFilter(new UppercutConsoleFilter(getProject()));
+          // Print the "feature-file breakpoints won't pause on v2" notice at the top of the console
+          // for a Karate 2 Debug run. See site/status.md and site/troubleshooting.md for the why;
+          // startProcess writes to this console right after, so this line lands first. karateV2Detected
+          // is populated by createJavaParameters, which runs before createConsole (both are called
+          // during CommandLineState.execute, in that order).
+          if (karateV2Detected && DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId())) {
+            console.print(
+              "Karate 2: feature-file breakpoints will not pause the run (not planned; see "
+                + UppercutWebHelpProvider.SITE + "status#debugging). Java breakpoints in "
+                + "step-definition code still work.\n",
+              ConsoleViewContentType.SYSTEM_OUTPUT);
+          }
           consoles.add(console);
         }, ModalityState.any());
 

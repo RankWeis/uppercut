@@ -90,3 +90,9 @@ Add a provider to the module, e.g. `testRuntimeOnly("ch.qos.logback:logback-clas
 ## The test tree shows the run but no scenarios
 
 On Karate 2 the tree is built from Karate's live event stream. If the run prints results in the console but the tree stays empty, the plugin isn't seeing the events - most often because output is being redirected or wrapped by a custom logging setup. Please report it with the console output; the lines beginning `<<UPPERCUT-V2>>` are the ones the tree is built from.
+
+## A breakpoint on a step in a Karate 2 `.feature` file never pauses
+
+By design, and not planned to change - see the [debugging table](status#debugging) for why. Karate 1 maps a Gherkin step to a discrete Java method and sets a JDI breakpoint on it; Karate 2 runs steps through the karate-js interpreter on virtual threads, so there is no Java bytecode location to bind to, and Karate Labs' own DAP server isn't available on Maven Central. A v2 debug run prints a one-line notice about this at the top of the console.
+
+Java breakpoints in step-definition code (`@When`, custom Java methods, anything the JVM debugger can reach) do still stop under Karate 2 Debug - the JVM launches with JDWP and IntelliJ attaches to it as normal. Only breakpoints placed on lines inside the `.feature` file itself are skipped.

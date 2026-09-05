@@ -158,5 +158,12 @@ path is covered click-free by `Karate2UITest.v1ModuleRunsThroughTheV1Runner`. A 
   plugin-description block. Not "experimental".
 - `releaseDraft` stays gated on `integration-test` (`needs: [ build, test, verify, integration-test ]`
   in `.github/workflows/build.yml`). A failing IDE integration test is meant to block a release draft.
-- Phase-3 task 4 (pause-only debugging for v2) is shelved: too much scope for the release that carries
-  Karate 2 early access. The design in `docs/karate2-pause-debugging.md` (PR #342 branch) stands for later.
+- Phase-3 task 4 (pause-only debugging for v2) is **not planned.** The design (commit `0b99a31`,
+  `docs/karate2-pause-debugging.md` on that commit) is a reasonable walking skeleton but the delivered
+  scope - pause + resume only, no variables, no stepping - is thin next to what Karate 1 already offers,
+  and Karate Labs' own DAP backend needs a jar (`io/karatelabs/karate-ide`) that isn't on Maven Central,
+  so the plugin can never match the v1 UX for v2. Documented as unsupported in `site/status.md` and
+  `site/troubleshooting.md`; a v2 Debug run prints a one-line console notice at startup so users don't
+  wait for a breakpoint that will never fire. Java breakpoints in step-definition code still work
+  because the JVM is a plain Java debug target. Revisit only if the karate-ide jar reaches a public
+  Maven repo, or if a v2 API surfaces that gives us the same UX as the v1 JDI path.

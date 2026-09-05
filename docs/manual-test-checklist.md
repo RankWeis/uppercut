@@ -31,10 +31,12 @@ per-module detection. See `Karate2UITest`.
       `7b18aab`: any library path containing a space (`C:\Program Files\...`, the default JDK
       location on Windows) aborted the library scan, so the debugger got no position manager.
       Re-verified after the fix — breakpoints hit.
-- [x] v2 module: Debug currently behaves as plain Run (v2 debugSupport not wired). Confirm it
-      degrades gracefully - runs to completion, no error dialog, no hung session.
-      **Verified 2026-07-20** — degrades gracefully, matching the early-access note in the
-      changelog and marketplace description.
+- [ ] v2 module: **feature-file breakpoints are not planned**, see the GitHub issue and
+      `site/status.md`. Confirm on a v2 module that: Debug prints a one-line notice at the top
+      of the console ("Karate 2: feature-file breakpoints will not pause the run. Java
+      breakpoints in step definitions still work."), the run completes normally (no error
+      dialog, no hung session), a breakpoint set on a Gherkin step is silently skipped, and a
+      Java breakpoint in step-definition code (if the fixture has any) does pause.
 
 ## 3. Settings UI (the test flips the service, not the form)
 

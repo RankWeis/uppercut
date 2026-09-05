@@ -56,12 +56,16 @@ These are the same for Karate 1 and Karate 2 - the language is the same.
 
 | Feature | Karate 1 | Karate 2 |
 |:--|:--|:--|
-| Debug a run from the IDE (breakpoints in feature files) | Supported | Planned |
+| Breakpoints on a step in a `.feature` file | Supported | **Not planned** |
+| Java breakpoints in step definitions | Supported | Supported (through the JVM's own debugger) |
 | Fixed debug port for the test JVM | Supported | Supported |
-| Pause at a breakpoint and resume | Supported | Planned - first piece of the design |
-| Step over, variables view for feature steps | Not planned | Later, after pause/resume |
+| Step over, variables view for feature steps | Not planned | **Not planned** |
 
-Karate 2 debugging is designed around Karate 2's own `debugSupport` hook - pause at a breakpoint, resume - and is the next piece of Karate 2 work. It was held back from 3.0.0 to keep that release small.
+**Karate 2 has no feature-file breakpoint support in the plugin, and none is planned.** Karate 1's path relies on mapping a Gherkin step to a discrete Java method and setting a JDI breakpoint on it (via `KaratePositionManager` + `StepRuntime.findMethodsMatching`). Karate 2 runs steps through the karate-js interpreter on virtual threads; there are no per-step Java methods and no stable bytecode locations to bind JDI to, and `StepRuntime.findMethodsMatching` was removed. Karate Labs' own DAP server (`io.karatelabs.debug.Main`) needs a jar (`io/karatelabs/karate-ide`) that isn't on Maven Central, so it isn't a route for a free plugin either.
+
+**What still works when you hit Debug on a Karate 2 run:** the JVM launches with JDWP, IntelliJ attaches, and Java breakpoints in any Java step-definition code (`@When`, custom step methods, called Java) stop the debugger as normal. Only breakpoints placed on lines inside a `.feature` file are silently skipped. The console prints a one-line notice at the start of a v2 debug run to make this explicit.
+
+If Karate ever ships its `karate-ide` jar to a public Maven repo, or if a supported in-process pause API surfaces that also handles the virtual-thread model without per-step Java hooks, this may be revisited. As of Karate 2.1.1, neither exists.
 
 ## Known limitations
 
