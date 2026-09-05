@@ -84,7 +84,8 @@ per-module detection. See `Karate2UITest`.
 
 - [ ] Linux run of the whole automated suite (first CI run covers this - watch it).
 - [x] macOS: one manual gutter-run smoke on any module. **Verified 2026-09-05**, and `Karate2UITest`
-      passes 7/7 on macOS after the fixture-import fixes recorded in `docs/KARATE2-HANDOFF.md`.
+      passes 7/7 on macOS after the fixture-import fixes recorded in
+      `.claude/skills/ide-integration-tests/SKILL.md` ("Fixture import" section).
 - [ ] A JDK older than the toolchain on PATH (user machines rarely match ours): runIde project
       import still resolves and runs.
 

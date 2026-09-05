@@ -1,10 +1,10 @@
 # Karate 2.x Support — Verified Findings & Plan
 
-Status: **shipping as early access in 3.0.0** - phases 0 through 3 are done; only debugging remains
-(shelved, see the last phase row). API facts below were verified against the real
+Status: **shipping as early access since 3.0.0** - phases 0 through 3 are done. Feature-file
+debugging is not planned; see `docs/KARATE2-HANDOFF.md` for that decision and
+`site/status.md` for the user-facing story. API facts below were verified against the real
 `karate-core-2.1.1.jar` / `karate-junit6-2.1.1.jar` from Maven Central (javap), not from docs alone,
-and the event-stream findings against a live run. `docs/KARATE2-HANDOFF.md` has the working state and
-the traps; this file is the design.
+and the event-stream findings against a live run. This file is the design.
 
 ## Why the current runner cannot work on v2
 
