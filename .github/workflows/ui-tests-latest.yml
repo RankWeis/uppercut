@@ -7,6 +7,9 @@
 # no effect on any build of a commit.
 name: UI tests (latest IDEA)
 
+permissions:
+  contents: read
+
 on:
   schedule:
     # 06:00 UTC on Mondays.
