@@ -84,7 +84,7 @@ IDE console (phase 2)
 | 2b | `Karate2UITest` end-to-end integration test (IDE Starter/Driver); covers both runner paths, the failure path, and the settings override. Surfaced the logback and project-wide-detection bugs | done |
 | 3a | Modern JS in the embedded engine: `?.`, `??`/`??=`, `class`/`extends`/`super`/`this`, `continue`, `void`, BigInt - added to `io.karatelabs.js` rather than re-vendoring | done |
 | 3b | `karate-base.js`/`karate-boot.js` recognition - **nothing to do**: the plugin never keys off the config filename (the v1 console converter reads Karate's own `[config] <path>` line; run configs hand Karate the content root and it finds its own config). Verified against karate-core 2.1.1: base is a per-scenario sibling of karate-config.js evaluated before it, boot is a once-per-suite ext loader at the workdir root | n/a |
-| 3c | README/marketplace mention of Karate 2 | |
+| 3c | README/marketplace mention of Karate 2 - the README's `<!-- Plugin description -->` block carries the early-access paragraph, and `build.gradle.kts` generates the marketplace description from that block, so there is one source for both | done |
 | later | Real debugging via v2 `debugSupport(RunInterceptor, DebugPointFactory)` | |
 
 ## Spike results — all questions ANSWERED (live run against karate 2.1.1)
