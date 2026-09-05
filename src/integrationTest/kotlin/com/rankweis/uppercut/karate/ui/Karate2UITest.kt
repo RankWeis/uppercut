@@ -182,9 +182,20 @@ class Karate2UITest {
             return target
         }
 
+        /**
+         * Directories an IDE or a Gradle run leaves behind in the fixture; never part of what the
+         * test imports. `.idea` in particular carries a linked-project `gradleJvm` (whatever the IDE
+         * that opened the fixture had, e.g. `#JAVA_HOME`), and the starter IDE reuses that setting
+         * instead of resolving a JVM - the sync then fails with "Invalid Gradle JDK configuration".
+         */
+        private val LEFTOVER_DIRS = setOf(".idea", ".gradle", "build", "out")
+
         private fun copyRecursively(source: Path, target: Path) {
             Files.walk(source).use { paths ->
-                paths.forEach { path ->
+                paths.filter { path ->
+                    val relative = source.relativize(path)
+                    (0 until relative.nameCount).none { relative.getName(it).toString() in LEFTOVER_DIRS }
+                }.forEach { path ->
                     val dest = target.resolve(source.relativize(path).toString())
                     if (path.isDirectory()) {
                         Files.createDirectories(dest)

@@ -38,8 +38,9 @@ Screenshots capture the **entire desktop**, not just the IDE - check before shar
 Two IDEs launch per run: a brief one that registers the JDK (`setupSdk`), then the real driver
 session. That is expected.
 
-`Karate2UITest` also writes `org.gradle.java.home=<downloaded JDK>` into its fixture copy's
-`gradle.properties`. Without it the IDE's Gradle sync picks its JVM from the project SDK (racing
+`Karate2UITest` copies the fixture without `.idea`, `.gradle`, `build` and `out` - opening the
+fixture in an IDE by hand leaves a `.idea/gradle.xml` whose `gradleJvm` the starter IDE would reuse
+verbatim - and writes `org.gradle.java.home=<downloaded JDK>` into the copy's `gradle.properties`. Without it the IDE's Gradle sync picks its JVM from the project SDK (racing
 `setupSdk`) or `#JAVA_HOME` (unset in the IDE process on macOS) and fails with "Invalid Gradle JDK
 configuration found" - after which every run test fails with a one-entry classpath.
 
