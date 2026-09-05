@@ -9,8 +9,8 @@ grammarkit = "2023.3.0.4"
 # plugins
 changelog = "2.5.0"
 gradleIntelliJPlugin = "2.18.1"
-kotlin = "2.3.20"
-qodana = "2026.2.0"
+kotlin = "2.4.10"
+qodana = "2026.2.1"
 lombok = "9.5.0"
 
 [libraries]
