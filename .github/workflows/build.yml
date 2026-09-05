@@ -259,7 +259,11 @@ jobs:
       # The IDEs the verifier runs against are Gradle dependencies, downloaded here (see the cache
       # note above). Which IDEs: see pluginVerification in build.gradle.kts.
       - name: Run Plugin Verification tasks
-        run: ./gradlew verifyPlugin
+        # Pull requests verify against the newest release only; a merge to main widens to the
+        # last three majors. See pluginVerification in build.gradle.kts.
+        run: ./gradlew verifyPlugin $SCOPE
+        env:
+          SCOPE: ${{ github.event_name == 'pull_request' && '' || '-PpluginVerifierScope=last3' }}
 
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
