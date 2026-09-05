@@ -144,7 +144,7 @@ path is covered click-free by `Karate2UITest.v1ModuleRunsThroughTheV1Runner`. A 
 
 - Plugin Verifier: CI checks the newest release and newest EAP of the platform major only;
   `-PpluginVerifierScope=all` covers every major from since-build up (the release check by hand).
-  Kian's policy: support the three latest IntelliJ releases, raise since-build only when a
+  Project policy: support the three latest IntelliJ releases, raise since-build only when a
   deprecation would otherwise force a fork.
 - CI cache: extracted IDEs (`caches/*/transforms`) are excluded and the verify job is read-only;
   the repository's 10 GB cache budget held ~23 GB of entries before, so everything was being evicted.
