@@ -1,12 +1,8 @@
 package com.rankweis.uppercut.karate.run;
 
+import com.intellij.execution.PsiLocation;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -44,13 +40,8 @@ public class KarateRunConfigurationProducerTest extends BasePlatformTestCase {
   }
 
   private ConfigurationFromContext configurationFor(PsiDirectory directory) {
-    DataContext dataContext = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, getProject())
-      .add(PlatformCoreDataKeys.MODULE, getModule())
-      .add(CommonDataKeys.PSI_ELEMENT, directory)
-      .add(CommonDataKeys.VIRTUAL_FILE, directory.getVirtualFile())
-      .build();
-    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
+    ConfigurationContext context = ConfigurationContext.createEmptyContextForLocation(
+      new PsiLocation<>(getProject(), getModule(), directory));
     return new KarateRunConfigurationProducer().createConfigurationFromContext(context);
   }
 }
