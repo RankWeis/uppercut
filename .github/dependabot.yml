@@ -8,6 +8,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # One catch-all group per kind, and one open version-update PR at a time, so routine
+    # bumps arrive as a single PR to review rather than a queue of them.
+    open-pull-requests-limit: 1
     groups:
       gradle-deps:
         applies-to: version-updates
@@ -22,6 +25,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 1
     groups:
       github-actions:
         applies-to: version-updates
