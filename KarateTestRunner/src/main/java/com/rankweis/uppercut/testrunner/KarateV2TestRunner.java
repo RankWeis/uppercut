@@ -40,7 +40,9 @@ public class KarateV2TestRunner {
 
   void doTest() throws Exception {
     String[] testNames =
-      Optional.ofNullable(params.get("testname")).orElse(List.of()).stream().map(s -> "classpath:" + s).toList()
+      Optional.ofNullable(params.get("testname")).orElse(List.of()).stream()
+        .map(KarateTestRunner::withDefaultScheme)
+        .toList()
         .toArray(new String[0]);
     String[] workingDirectories =
       Optional.ofNullable(params.get("working-dir")).orElse(List.of()).toArray(new String[0]);

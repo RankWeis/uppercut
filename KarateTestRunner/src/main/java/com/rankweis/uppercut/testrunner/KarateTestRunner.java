@@ -25,7 +25,9 @@ public class KarateTestRunner {
 
   void doTest() throws Exception {
     String[] testNames =
-      Optional.ofNullable(params.get("testname")).orElse(List.of()).stream().map(s -> "classpath:" + s).toList()
+      Optional.ofNullable(params.get("testname")).orElse(List.of()).stream()
+        .map(KarateTestRunner::withDefaultScheme)
+        .toList()
         .toArray(new String[0]);
     String[] workingDirectories =
       Optional.ofNullable(params.get("working-dir")).orElse(List.of()).stream().toList()
@@ -192,6 +194,15 @@ public class KarateTestRunner {
     } catch (ClassNotFoundException | NoClassDefFoundError e) {
       throw new RuntimeException("Must have karate-core on the classpath to use uppercut", e);
     }
+  }
+
+  /**
+   * Keeps the older behaviour (bare names get {@code classpath:}) for run configs the plugin has
+   * always sent. New runs from the plugin arrive as {@code file:<abs>} so an edit is picked up on
+   * the next run without rebuilding {@code target/test-classes}; those are passed through as-is.
+   */
+  static String withDefaultScheme(String testname) {
+    return testname.startsWith("classpath:") || testname.startsWith("file:") ? testname : "classpath:" + testname;
   }
 
   public void parseArgs(String[] args) {

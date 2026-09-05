@@ -151,18 +151,25 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         }
         String escapedName = myConfiguration.getTestName().map(s -> s.replace(" ", "_")).orElse("");
         String testNameParameter = "--testname";
+        // Prefer the absolute source path (file: URL) when we have one, so an edit in the IDE is
+        // reflected on the next run without a rebuild. classpath: resolves against target/test-classes
+        // (or build/resources/test), which is only refreshed by process-test-resources / processTestResources.
+        // The producer stores the feature's absolute path in `path` for file-based runs and a relative
+        // folder name for ALL_IN_FOLDER, so the isAbsolute() check picks the right branch on its own.
+        String featurePath = myConfiguration.getPath();
+        boolean useFileUrl = !StringUtils.isBlank(featurePath) && new File(featurePath).isAbsolute();
         if (preferredTest == PreferredTest.WHOLE_FILE) {
           params.getProgramParametersList().add(testNameParameter,
-            Optional.ofNullable(myConfiguration.getRelPath()).filter(s -> !s.isBlank())
-              .orElse(escapedName));
+            useFileUrl ? "file:" + featurePath
+              : Optional.ofNullable(myConfiguration.getRelPath()).filter(s -> !s.isBlank()).orElse(escapedName));
         } else if (preferredTest == PreferredTest.SINGLE_SCENARIO) {
           params.getProgramParametersList().add(testNameParameter,
-            Optional.ofNullable(myConfiguration.getRelPath()).map(s -> s + ":" + lineNumber)
-              .orElse(escapedName));
+            useFileUrl ? "file:" + featurePath + ":" + lineNumber
+              : Optional.ofNullable(myConfiguration.getRelPath()).map(s -> s + ":" + lineNumber)
+                .orElse(escapedName));
         } else if (preferredTest == PreferredTest.ALL_IN_FOLDER) {
           params.getProgramParametersList().add(testNameParameter,
-            Optional.ofNullable(myConfiguration.getPath())
-              .orElse(escapedName));
+            Optional.ofNullable(featurePath).orElse(escapedName));
         }
         if (!StringUtils.isBlank(getTag())) {
           params.getProgramParametersList().add("--tag", getTag());
