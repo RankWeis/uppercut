@@ -46,6 +46,9 @@ public class KarateCalledFeatureReferenceTest extends BasePlatformTestCase {
     assertEquals("auth.feature", tokenTarget.getContainingFile().getName());
     // the reference sits on the `token` segment only, so navigation lands there and `auth` keeps its own
     assertEquals("token", token.getRangeInElement().substring(bearerStep.getText()));
+    // and, resolving, it is not soft - otherwise the step-definition reference over the whole line
+    // outranks it and Cmd-hover underlines the entire step instead of `token`
+    assertFalse(token.isSoft());
     assertEquals("auth", ((KarateDeclaration) auth.resolve()).getName());
     assertEquals("orders.feature", auth.resolve().getContainingFile().getName());
   }

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.ResolveResult;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.rankweis.uppercut.karate.navigation.KarateFeatureFiles;
@@ -50,10 +51,29 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
     return resolve() == element;
   }
 
+  /**
+   * Soft only while unresolved. Several references share an offset on a step line - this one and
+   * the step-definition reference over the whole step - and the platform picks the one to underline
+   * on Cmd-hover by: non-soft first, then resolving, then innermost. A resolving variable reference
+   * has to be non-soft to win that, or the whole line lights up; an unresolved one stays soft so an
+   * unknown name is never marked as an error.
+   */
+  @Override public boolean isSoft() {
+    return multiResolve(false).length == 0;
+  }
+
   @Override public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     if (!myElement.isValid()) {
-      return new ResolveResult[0];
+      return ResolveResult.EMPTY_ARRAY;
     }
+    return ResolveCache.getInstance(myElement.getProject())
+      .resolveWithCaching(this, RESOLVER, false, incompleteCode);
+  }
+
+  private static final ResolveCache.PolyVariantResolver<KarateReference> RESOLVER =
+    (reference, incompleteCode) -> reference.resolveInner();
+
+  private ResolveResult @NotNull [] resolveInner() {
     String[] segments = key.split("\\.");
     KarateDeclaration declaration = resolveInScope(segments[0]);
     for (int i = 1; declaration != null && i < segments.length && i <= MAX_CALL_DEPTH; i++) {
@@ -61,7 +81,7 @@ public class KarateReference extends PsiReferenceBase<PsiElement> implements Psi
       declaration = called == null ? null : findDeclarationInFile(called, segments[i]);
     }
     return declaration == null
-      ? new ResolveResult[0]
+      ? ResolveResult.EMPTY_ARRAY
       : new PsiElementResolveResult[]{new PsiElementResolveResult(declaration)};
   }
 
