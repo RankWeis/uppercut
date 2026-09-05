@@ -1,0 +1,53 @@
+# Warns when the platform the plugin is built against falls behind the newest IntelliJ IDEA
+# release. Everything else about verification derives from platformVersion - the PR check calls
+# its major "the newest release", and the merge check walks three majors back from it - so a
+# stale value degrades those checks silently, with all of them still green.
+name: Platform freshness
+
+on:
+  schedule:
+    # 09:00 UTC on the 1st of each month; platform majors ship about three times a year.
+    - cron: "0 9 1 * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Check platformVersion against the newest release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v7
+
+      - name: Compare
+        run: |
+          set -euo pipefail
+          # Both sides normalised to the major (YYYY.N): the API reports patch releases such as
+          # 2026.2.2, and platformVersion is the major the plugin builds against.
+          built=$(grep -E '^platformVersion\s*=' gradle.properties | sed 's/.*=[[:space:]]*//' | cut -d. -f1,2)
+          latest=$(curl -sSf 'https://data.services.jetbrains.com/products/releases?code=IIU&latest=true&type=release' \
+            | jq -r '.IIU[0].version' | cut -d. -f1,2)
+
+          echo "built against : $built"
+          echo "newest release: $latest"
+
+          if [ -z "$latest" ] || [ "$latest" = "null" ]; then
+            echo "::warning::Could not read the newest release; leaving this run green."
+            exit 0
+          fi
+
+          if [ "$built" = "$latest" ]; then
+            echo "Up to date."
+            exit 0
+          fi
+
+          # Same YYYY.N shape both sides, so a plain sort orders them correctly.
+          newer=$(printf '%s\n%s\n' "$built" "$latest" | sort -V | tail -1)
+          if [ "$newer" = "$built" ]; then
+            echo "Building against a newer platform than the latest release ($built > $latest) - fine, that's an EAP."
+            exit 0
+          fi
+
+          echo "::error::platformVersion is $built but IntelliJ IDEA $latest has shipped."
+          echo "Bump platformVersion in gradle.properties. Until then the PR verifier check calls $built"
+          echo "the newest release when it is not, and the merge check's three-major window lags by one."
+          exit 1
