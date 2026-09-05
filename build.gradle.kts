@@ -98,8 +98,16 @@ val integrationTests = tasks.register<Test>("integrationTest") {
     testClassesDirs = integrationTestSourceSet.output.classesDirs
     classpath = integrationTestSourceSet.runtimeClasspath
     systemProperty("path.to.build.plugin", tasks.prepareSandbox.get().pluginDirectory.get().asFile)
-    // the IDE the Starter boots: the same major the plugin is built against, not whatever is newest
-    systemProperty("platform.version", providers.gradleProperty("platformVersion").get())
+    // The IDE the Starter boots. Defaults to the major the plugin is built against, so a local
+    // run is reproducible and needs no network to decide what to download. CI overrides it with
+    // the newest release (-PintegrationPlatformVersion=...), because the point of the UI tests is
+    // the IDE people actually have, not the one this build happens to compile against.
+    systemProperty(
+        "platform.version",
+        providers.gradleProperty("integrationPlatformVersion")
+            .orElse(providers.gradleProperty("platformVersion"))
+            .get(),
+    )
     // IntelliJ's MultiRoutingFileSystem (pulled in by the Starter's JDK/IDE extraction) implements
     // sun.nio.fs internals, which are not exported to the unnamed module on modern JDKs.
     jvmArgs(

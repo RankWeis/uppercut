@@ -1,0 +1,82 @@
+# The UI tests in the Build workflow boot platformVersion, so they are reproducible: the same
+# commit tests the same IDE every time. That leaves a gap - nothing exercises the plugin against
+# the IDE people are actually running until someone bumps the property.
+#
+# This job closes it out of band. It runs the same tests against the newest IntelliJ IDEA release
+# on a schedule, so a break caused by a JetBrains release surfaces here, on its own red run, with
+# no effect on any build of a commit.
+name: UI tests (latest IDEA)
+
+on:
+  schedule:
+    # 06:00 UTC on Mondays.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  ui-tests:
+    name: UI tests against the newest release
+    runs-on: ubuntu-latest
+    # five IDE launches with multi-minute waits each
+    timeout-minutes: 60
+    steps:
+
+      # The IDE (~4 GB) plus a JDK need more room than a hosted runner has spare by default
+      - name: Maximize Build Space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        with:
+          tool-cache: false
+          large-packages: false
+
+      - name: Fetch Sources
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Setup Java
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+        with:
+          distribution: zulu
+          java-version: 25
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
+        with:
+          gradle-home-cache-excludes: |
+            caches/*/transforms
+
+      - name: Resolve newest IDEA release
+        id: idea
+        run: |
+          set -euo pipefail
+          latest=$(curl -sSf --max-time 30 \
+            'https://data.services.jetbrains.com/products/releases?code=IIU&latest=true&type=release' \
+            | jq -r '.IIU[0].version')
+          if [ -z "$latest" ] || [ "$latest" = "null" ]; then
+            echo "::error::Could not resolve the newest IntelliJ IDEA release."
+            exit 1
+          fi
+          echo "Newest IDEA release: $latest"
+          echo "version=$latest" >> $GITHUB_OUTPUT
+
+      - name: Cache IDE Starter downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: out/ide-tests/cache
+          key: ide-starter-latest-${{ runner.os }}-${{ steps.idea.outputs.version }}
+          restore-keys: ide-starter-latest-${{ runner.os }}-
+
+      - name: Run Integration Tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" \
+            ./gradlew integrationTest -PintegrationPlatformVersion=${{ steps.idea.outputs.version }}
+
+      # The IDE's own logs and screenshots are the only way to read a UI test failure after the fact
+      - name: Collect Integration Test Results
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ui-tests-latest-result
+          path: |
+            ${{ github.workspace }}/build/reports/tests/integrationTest
+            ${{ github.workspace }}/out/ide-tests/tests/*/*/log
