@@ -46,6 +46,30 @@ public class KarateVersionDetectionTest {
   }
 
   @Test
+  public void pinWinsWhenBothMajorsOrNeitherAreVisible() throws Exception {
+    // A stale transitive karate-core 2.x on a v1 module: AUTO would pick v2 and die; the V1 pin is the
+    // documented escape hatch, so it must be honoured rather than refused.
+    KarateRunConfiguration.checkVersionOverrideMatchesClasspath(
+      KarateVersionPreference.V1, List.of("karate-junit5-1.5.1.jar", "karate-core-1.5.1.jar", "karate-core-2.0.3.jar"));
+    // A module mid-migration with both runners present: either pin is a legitimate choice.
+    KarateRunConfiguration.checkVersionOverrideMatchesClasspath(
+      KarateVersionPreference.V2, List.of("karate-junit5-1.5.1.jar", "karate-junit6-2.1.1.jar"));
+    // Unversioned local jars say nothing about the major; the pin is all there is to go on.
+    KarateRunConfiguration.checkVersionOverrideMatchesClasspath(
+      KarateVersionPreference.V2, List.of("karate-core.jar", "some-lib.jar"));
+    KarateRunConfiguration.checkVersionOverrideMatchesClasspath(
+      KarateVersionPreference.V1, List.of("karate-core.jar", "some-lib.jar"));
+  }
+
+  @Test
+  public void unversionedJunit6JarStillMeansKarate2() {
+    assertTrue(KarateRunConfiguration.isKarateV2(KarateVersionPreference.AUTO,
+      Stream.of("karate-junit6.jar", "karate-core.jar")));
+    assertFalse(KarateRunConfiguration.isKarateV2(KarateVersionPreference.AUTO,
+      Stream.of("karate-junit5.jar", "karate-core.jar")));
+  }
+
+  @Test
   public void overrideMatchingTheClasspathIsAllowed() throws Exception {
     KarateRunConfiguration.checkVersionOverrideMatchesClasspath(
       KarateVersionPreference.V2, List.of("karate-junit6-2.1.1.jar"));

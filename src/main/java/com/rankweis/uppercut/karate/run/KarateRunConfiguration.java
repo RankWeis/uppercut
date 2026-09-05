@@ -234,26 +234,32 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   }
 
   /**
-   * Fails the run when the version override contradicts what the module actually has.
+   * Fails the run only when the version override cannot possibly work: pinning V1 on a classpath that
+   * has Karate 2 and no Karate 1, or V2 on one that has Karate 1 and no Karate 2.
    *
    * <p>Without this the run still fails, just incomprehensibly: forcing V1 onto a Karate 2 module
    * sends it down the v1 path, which reflects on {@code com.intuit.karate.RuntimeHook} - a class
    * Karate 2 removed - and reports "Must have karate-core on the classpath", even though karate-core
    * is right there and it is the setting that is wrong. AUTO never reaches this.
+   *
+   * <p>When both majors are visible (a stale transitive karate-core 2.x on a v1 module, or a module
+   * mid-migration), or when the jar names say nothing about the version (unversioned local jars), the
+   * pin is the user's word and wins - that is what the setting is for.
    */
   static void checkVersionOverrideMatchesClasspath(
     KarateSettingsState.KarateVersionPreference preference, List<String> libraryNames)
     throws ExecutionException {
-    boolean hasKarate2 = libraryNames.stream().anyMatch(n -> n.matches("karate-(core|junit6)-2\\..*"));
-    if (preference == KarateSettingsState.KarateVersionPreference.V1 && hasKarate2) {
+    boolean hasKarate2 = libraryNames.stream().anyMatch(KarateRunConfiguration::isKarate2Jar);
+    boolean hasKarate1 = libraryNames.stream().anyMatch(KarateRunConfiguration::isKarate1Jar);
+    if (preference == KarateSettingsState.KarateVersionPreference.V1 && hasKarate2 && !hasKarate1) {
       throw new ExecutionException(
         "Karate version is pinned to V1 in Settings > Tools > Karate, but this module's classpath "
           + "only has Karate 2. Set it back to AUTO, or to V2, to run this feature.");
     }
-    if (preference == KarateSettingsState.KarateVersionPreference.V2 && !hasKarate2) {
+    if (preference == KarateSettingsState.KarateVersionPreference.V2 && hasKarate1 && !hasKarate2) {
       throw new ExecutionException(
         "Karate version is pinned to V2 in Settings > Tools > Karate, but this module's classpath "
-          + "has no Karate 2 (expected karate-core 2.x or karate-junit6). Set it back to AUTO, or to "
+          + "only has Karate 1 (expected karate-core 2.x or karate-junit6). Set it back to AUTO, or to "
           + "V1, to run this feature.");
     }
   }
@@ -270,7 +276,17 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     if (preference == KarateSettingsState.KarateVersionPreference.V2) {
       return true;
     }
-    return libraryNames.anyMatch(n -> n.matches("karate-(core|junit6)-2\\..*"));
+    return libraryNames.anyMatch(KarateRunConfiguration::isKarate2Jar);
+  }
+
+  /** karate-core/karate-junit6 2.x, or a karate-junit6 jar of any version - that artifact only exists in v2. */
+  static boolean isKarate2Jar(String name) {
+    return name.matches("karate-(core|junit6)-2\\..*") || name.matches("karate-junit6(-.*)?\\.jar");
+  }
+
+  /** karate-core/karate-junit5 1.x, or a karate-junit5 jar of any version - that artifact only exists in v1. */
+  static boolean isKarate1Jar(String name) {
+    return name.matches("karate-(core|junit5)-1\\..*") || name.matches("karate-junit5(-.*)?\\.jar");
   }
 
   @Override public void checkConfiguration() {
