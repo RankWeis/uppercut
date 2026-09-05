@@ -30,7 +30,44 @@ You pinned a version in Settings > Tools > Karate that can't run on this module.
 
 ## "Test framework quit unexpectedly" with an empty test tree
 
-The test JVM exited before it reported anything. Scroll up in the console: the runner prints the full `java` command line and the exception. The usual causes are the two messages above, a `karate-config.js` that throws, or a feature path Karate couldn't resolve (`cannot find resource: classpath:...`), which points at a working directory that isn't the module root.
+The test JVM exited before it reported anything. Scroll up in the console: the runner prints the full `java` command line and the exception. The usual causes are the two messages above, a `karate-config.js` that throws, or a feature path Karate couldn't resolve - see the next section.
+
+## `RuntimeException: not found: <feature>` and the run never starts
+
+The feature files aren't on the test classpath. The plugin passes each feature to Karate as its path relative to the source root that holds it, prefixed with `classpath:` - so `src/test/java/orders/checkout.feature` is handed over as `classpath:orders/checkout.feature`. Karate then resolves that against the module's *built* test output, and reports the path without the prefix when it finds nothing. The stack trace comes back wrapped in an `InvocationTargetException` from the test runner, which buries the real line; it is the `Caused by: java.lang.RuntimeException: not found: ...` that matters.
+
+Look in the build output rather than in `src`. For Maven that is `target/test-classes`, for Gradle `build/resources/test`. If the feature you ran isn't there, nothing on the classpath can find it.
+
+**Maven.** Feature files kept next to the Java sources under `src/test/java` are only copied if that directory is declared as a test resource:
+
+```xml
+<build>
+  <testResources>
+    <testResource><directory>src/test/java</directory></testResource>
+    <testResource><directory>src/test/resources</directory></testResource>
+  </testResources>
+</build>
+```
+
+Having it declared is not enough on its own - the copy happens in Maven's `process-test-resources` phase, and the IDE's **Build > Rebuild Project** compiles the sources without necessarily running it. Run Maven itself once:
+
+```
+mvn process-test-resources
+```
+
+and confirm the features appear under `target/test-classes`. A later IDE rebuild clears the output directory again, so if this keeps coming back, turn on **Settings > Build, Execution, Deployment > Build Tools > Maven > Runner > Delegate IDE build/run actions to Maven** and every build runs the full lifecycle.
+
+**Gradle.** Features under `src/test/resources` are copied by `processTestResources` with no extra configuration. Features kept under `src/test/java` need that directory added to the test resources:
+
+```kotlin
+sourceSets.test {
+    resources.srcDir("src/test/java")
+}
+```
+
+Then check `build/resources/test`.
+
+Either way, a `call read('classpath:...')` inside a feature fails for exactly the same reason, while a plain relative `call read('helper.feature')` keeps working - that form resolves against the calling feature's own location on disk and never touches the classpath. A suite where the relative form works and the `classpath:` form doesn't is this problem, not a syntax error.
 
 ## A step shows "Uppercut could not find a version of karate-junit5 in the classpath. It is using a provided one"
 

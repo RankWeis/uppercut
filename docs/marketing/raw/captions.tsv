@@ -1,0 +1,6 @@
+# filename<TAB>caption  -- edit freely; keep captions short, they set the tone of the listing
+01-run-from-gutter.png	Run from the gutter, see every step in the results
+02-go-to-called-feature.png	Ctrl-click a called feature to jump to its source
+03-embedded-json.png	Completion and error checking inside embedded JSON
+04-debugger.png	Break on a step and inspect the Karate context
+05-karate2.png	Karate 1 and 2 side by side, detected per module
