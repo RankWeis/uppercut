@@ -148,6 +148,9 @@ jobs:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     needs: [ build ]
     runs-on: ubuntu-latest
+    # five IDE launches with multi-minute waits each; a hung IDE must not hold the release draft for
+    # GitHub's six-hour default
+    timeout-minutes: 60
     steps:
 
       # The IDE (~4 GB) plus a JDK need more room than a hosted runner has spare by default
@@ -172,8 +175,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
 
-      # The downloaded IDE and JDK dominate the runtime; keyed on the platform version so a
-      # platformVersion bump fetches a fresh one instead of silently testing against the old build.
+      # The downloaded IDE and JDK dominate the runtime. The test boots the platformVersion from
+      # gradle.properties, so hashing that file gives a fresh cache on a platform bump.
       - name: Cache IDE Starter downloads
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:

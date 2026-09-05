@@ -54,7 +54,7 @@ class UppercutUITest {
         val IntellijKarateTestCase = TestCase(
             IdeInfo.IdeaUltimate,
             GitHubProject.fromGithub(branchName = "main", repoRelativeUrl = "RankWeis/uppercutTestProject.git")
-        ).useRelease()
+        ).useRelease(System.getProperty("platform.version") ?: "")
     }
 
     @Test

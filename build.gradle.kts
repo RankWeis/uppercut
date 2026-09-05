@@ -98,6 +98,8 @@ val integrationTests = tasks.register<Test>("integrationTest") {
     testClassesDirs = integrationTestSourceSet.output.classesDirs
     classpath = integrationTestSourceSet.runtimeClasspath
     systemProperty("path.to.build.plugin", tasks.prepareSandbox.get().pluginDirectory.get().asFile)
+    // the IDE the Starter boots: the same major the plugin is built against, not whatever is newest
+    systemProperty("platform.version", providers.gradleProperty("platformVersion").get())
     // IntelliJ's MultiRoutingFileSystem (pulled in by the Starter's JDK/IDE extraction) implements
     // sun.nio.fs internals, which are not exported to the unnamed module on modern JDKs.
     jvmArgs(

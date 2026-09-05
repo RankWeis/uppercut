@@ -2,6 +2,7 @@ package com.rankweis.uppercut.karate.ui
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.FileEditorManager
+import com.intellij.driver.sdk.getModules
 import com.intellij.driver.sdk.getOpenProjects
 import com.intellij.driver.sdk.singleProject
 import com.intellij.driver.sdk.invokeAction
@@ -88,7 +89,11 @@ class Karate2UITest {
         fun startIde() {
             val projectDir = prepareSampleProjectCopy()
             val sdk = JdkDownloaderFacade.jdk21.toSdk()
-            val testCase = TestCase(IdeInfo.IdeaUltimate, LocalProjectInfo(projectDir)).useRelease()
+            // The platform the plugin is compiled against (build.gradle.kts passes platformVersion), not
+            // whatever IU is newest: with no until-build the plugin would load on the next major, and a
+            // moved @Remote module id there would turn the release draft red for reasons unrelated to
+            // the change being merged.
+            val testCase = TestCase(IdeInfo.IdeaUltimate, LocalProjectInfo(projectDir)).useRelease(platformVersion())
             val context = Starter.newContext("karate2Gutter", testCase).apply {
                 // path.to.build.plugin points at the prepareSandbox plugin DIRECTORY, not a zip
                 val pathToPlugin = System.getProperty("path.to.build.plugin")
@@ -97,26 +102,37 @@ class Karate2UITest {
             ideaLog = context.paths.testHome.resolve("log").resolve("idea.log")
             run = context.runIdeWithDriver()
             // The startup auto-import races the project-SDK registration; when it loses, it fails
-            // fast with "Invalid Gradle JDK configuration", indicators go quiet, and every run in
-            // the session launches against an unimported project (empty classpath, no modules).
-            // An explicit import after the IDE is up cannot lose that race - the SDK is registered
-            // by now - and re-importing an already-imported project is normally harmless.
+            // fast with "Invalid Gradle JDK configuration" and every run in the session launches
+            // against an unimported project (empty classpath, no modules). The previous answer was an
+            // unconditional explicit re-import, relying on the platform to cancel it when auto-import
+            // had already won. It does on Linux CI ("Build cancelled"); on macOS the second sync ran
+            // long enough to collide with the project rename mid-sync, failed with "project is
+            // closed", and committed a model without the v1/v2 modules - after which every run test
+            // failed with a one-entry classpath and a misleading ClassNotFoundException.
             //
-            // But when auto-import *wins* - as it reliably does on headless Linux CI, where it
-            // finishes before this line runs - the re-import is redundant, and the platform cancels
-            // the now-pointless second sync ("Could not build GradleSourceSetModel model. Build
-            // cancelled."). That cancellation surfaces here as "Gradle sync failed" and, thrown from
-            // @BeforeAll, fails every test in the class with a single initializationError. Swallow
-            // it and wait out smart mode instead: the project is already imported, so the run tests
-            // proceed. A genuinely unimported project still fails loudly in each test's own run.
-            try {
-                run.driver.execute(CommandChain().waitForSmartMode().importGradleProject().waitForSmartMode())
-            } catch (e: Throwable) {
-                println("Explicit Gradle re-import was not needed (auto-import already completed); " +
-                    "continuing against the imported project: ${e.message}")
-                run.driver.execute(CommandChain().waitForSmartMode())
+            // So: wait for the auto-import's own progress indicator, look at whether the fixture's
+            // modules exist, and import explicitly only if they don't. A re-import that then fails is a
+            // real import failure and is left to fail this class loudly, in one place.
+            run.driver.execute(CommandChain().waitForSmartMode())
+            run.driver.waitForIndicators(timeout = 10.minutes)
+            if (!fixtureModulesImported()) {
+                println("Auto-import did not produce the fixture modules (${moduleNames()}); importing explicitly")
+                run.driver.execute(CommandChain().importGradleProject().waitForSmartMode())
+                run.driver.waitForIndicators(timeout = 10.minutes)
+                check(fixtureModulesImported()) {
+                    "Gradle import of the fixture did not produce the v1/v2 test modules; modules: ${moduleNames()}"
+                }
             }
         }
+
+        /** The version to boot, e.g. "2026.2" - the Gradle build passes platformVersion; empty means newest. */
+        private fun platformVersion(): String = System.getProperty("platform.version") ?: ""
+
+        private fun moduleNames(): List<String> = run.driver.getModules().map { it.getName() }
+
+        /** Gradle names the test source-set modules karate-versions.v1.test / .v2.test. */
+        private fun fixtureModulesImported(): Boolean =
+            moduleNames().let { names -> names.any { it.endsWith("v1.test") } && names.any { it.endsWith("v2.test") } }
 
         @JvmStatic
         @AfterAll
@@ -545,13 +561,27 @@ class Karate2UITest {
         return node.getChildren().firstNotNullOfOrNull { findNode(it, name) }
     }
 
-    /** The plugin must not have thrown during the session; a stack trace in idea.log fails the test. */
+    /**
+     * The plugin must not have thrown during the session; a stack trace in idea.log fails the test.
+     *
+     * idea.log writes LOG.error as "SEVERE" and abbreviates the category ("#c.r.u.k.r.KarateRunConfiguration");
+     * the full "at com.rankweis..." names only appear in the stack frames that follow. So: find the
+     * SEVERE lines, and blame the plugin when its own category or a frame of its own follows within
+     * the trace.
+     */
     private fun assertNoPluginErrorsLogged(ideaLog: Path) {
         if (!Files.exists(ideaLog)) {
             return
         }
-        val errors = Files.readAllLines(ideaLog)
-            .filter { it.contains("ERROR") && it.contains("com.rankweis") }
+        val lines = Files.readAllLines(ideaLog)
+        val errors = lines.indices
+            .filter { i -> lines[i].contains(" SEVERE ") }
+            .filter { i ->
+                val trace = lines.subList(i + 1, minOf(lines.size, i + 40))
+                    .takeWhile { it.startsWith("\t") || it.startsWith("Caused by") }
+                lines[i].contains("#c.r.u") || lines[i].contains("com.rankweis") || trace.any { it.contains("com.rankweis") }
+            }
+            .map { i -> lines[i] }
         assertTrue(errors.isEmpty(), "plugin logged errors during the session:\n${errors.joinToString("\n")}")
     }
 }
