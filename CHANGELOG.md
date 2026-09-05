@@ -17,6 +17,7 @@ What works, what's in progress, and what every setting means: <https://rankweis.
 
 ### Added
 
+- Go to declaration follows a `call read(...)`: on `auth.token`, where `auth` is `call read('auth.feature')`, `token` now jumps to the `def token` inside `auth.feature` instead of back to `auth`, and Find Usages on that `def` finds `auth.token` in the callers
 - The docs site is one click away from where you'd need it: the **?** button and a link on Settings > Tools > Karate open the settings reference, and every message the plugin refuses a run with ends with the troubleshooting page's address
 
 ### Fixed
