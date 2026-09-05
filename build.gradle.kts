@@ -156,7 +156,11 @@ intellijPlatform {
         version = properties("pluginVersion")
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
-            untilBuild = providers.gradleProperty("pluginUntilBuild")
+            // No upper bound on purpose: the plugin stays installable on newer IDE releases instead of
+            // waiting for a compatibility release. verifyPlugin (recommended IDEs) and the Marketplace
+            // verifier are what catch a breaking platform change. The Gradle plugin would otherwise
+            // default this to "<platform major>.*", so it has to be nulled explicitly.
+            untilBuild = provider { null }
         }
         // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
         description =
@@ -252,6 +256,5 @@ tasks {
     printProductsReleases {
         channels = listOf(ProductRelease.Channel.EAP)
         types = listOf(IntelliJPlatformType.IntellijIdea)
-        untilBuild = "262.*"
     }
 }

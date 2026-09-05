@@ -74,8 +74,9 @@ diagnosis is recorded here so it is not rediscovered:
   MultiRoutingFileSystem implements those internals.
 - `path.to.build.plugin` points at the prepareSandbox plugin **directory** ->
   `PluginConfigurator.installPluginFromDir` (NOT installPluginFromPath).
-- `useRelease()` = latest IU release; fine while untilBuild is 262.*. If untilBuild ever lags the
-  newest IDE the plugin silently disables and the gutter never appears - pin `useRelease("<version>")`.
+- `useRelease()` = latest IU release. The plugin has no until-build (since 3.0.0), so it always loads
+  there; if that ever changes, a lagging until-build makes the plugin silently disable in the test and
+  the gutter never appears - pin `useRelease("<version>")`.
 - The v1 `RuntimeHook` proxy CANNOT work on Karate 2 (class removed); don't try to unify the runners.
 - More driver traps (physical clicks, gutter locators, `@Remote` module ids) live in
   `.claude/skills/ide-integration-tests/`. Runner debugging technique: `.claude/skills/debug-test-runner/`.
