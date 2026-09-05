@@ -87,6 +87,14 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
       if (text.startsWith(UPPERCUT_PREFIX)) {
         text = text.substring(UPPERCUT_PREFIX.length());
       }
+      // The platform buffers a partial stdout line until its newline and keys that buffer by output
+      // type. Recolouring is only ever applied to stdout: a real stderr chunk must keep its own type,
+      // or it gets appended into a half-received stdout line - for a v2 run that is a <<UPPERCUT-V2>>
+      // event line long enough to span several reads, and the splice corrupts its JSON.
+      if (ProcessOutputType.isStderr(outputType)) {
+        super.process(text, outputType);
+        return;
+      }
       Matcher matcher = UPPERCUT_LOG_PATTERN.matcher(text);
       if (matcher.matches()) {
         String logLevel = matcher.group(3);
