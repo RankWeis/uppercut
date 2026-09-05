@@ -23,7 +23,7 @@ Completion
 : Step actions as you type, and `karate.*` members matched to the Karate version on your module's classpath, so `karate.` offers what your Karate actually has.
 
 Navigation
-: Jump from a `call read('other.feature')` to the feature, from a variable to its `def`, and from a step to its definition. Find usages and rename work across features.
+: Jump from a `call read('other.feature')` to the feature, from a variable to its `def`, and from a step to its definition. A variable that holds a called feature's result follows the call: on `auth.token`, where `auth` is `call read('auth.feature')`, `token` jumps to the `def token` inside `auth.feature`, and Find Usages on that `def` finds `auth.token` in the callers. Find usages and rename work across features.
 
 Formatting
 : Reformat feature files, including the JavaScript and JSON inside them.

@@ -3,9 +3,6 @@ package com.rankweis.uppercut.karate.navigation;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -66,18 +63,7 @@ public class KarateGoToSymbolProvider implements GotoDeclarationHandler {
     if (containingFile == null) {
       return new PsiElement[0];
     }
-    Module module = ModuleUtilCore.findModuleForFile(containingFile);
-    if (module == null) {
-      return new PsiElement[0];
-    }
-    @NotNull VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-    PsiManager instance = PsiManager.getInstance(sourceElement.getProject());
-    List<PsiFile> list = Arrays.stream(sourceRoots)
-      .map(r -> r.findFileByRelativePath(filePaths.get(0)))
-      .filter(Objects::nonNull)
-      .map(instance::findFile)
-      .filter(Objects::nonNull)
-      .toList();
+    List<PsiFile> list = KarateFeatureFiles.findInSourceRoots(containingFile, filePaths.get(0));
     if (filePaths.size() == 1) {
       return list.toArray(PsiElement[]::new);
     } else if (filePaths.size() == 2) {
