@@ -80,8 +80,8 @@ dependencies {
     integrationTestImplementation(libs.junitJupiter)
     // IDE Starter/Driver integration tests are written in Kotlin (see docs: integration-tests-intro)
     integrationTestImplementation(kotlin("stdlib"))
-    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.1")
-    integrationTestImplementation("org.kodein.di:kodein-di-jvm:7.26.1")
+    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0")
+    integrationTestImplementation("org.kodein.di:kodein-di-jvm:7.33.0")
     // Starter's TeamCityReporter needs it at runtime; not pulled in transitively (intellij-dependencies repo)
     "integrationTestRuntimeOnly"("org.jetbrains.teamcity:serviceMessages:2024.07")
 
