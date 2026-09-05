@@ -1,5 +1,6 @@
 package com.rankweis.uppercut.testrunner;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collection;
@@ -41,7 +42,7 @@ public class KarateV2TestRunner {
   void doTest() throws Exception {
     String[] testNames =
       Optional.ofNullable(params.get("testname")).orElse(List.of()).stream()
-        .map(KarateTestRunner::withDefaultScheme)
+        .map(KarateV2TestRunner::toV2Path)
         .toList()
         .toArray(new String[0]);
     String[] workingDirectories =
@@ -99,6 +100,34 @@ public class KarateV2TestRunner {
         .map(Integer::parseInt)
         .orElse(1);
     builderClass.getMethod("parallel", int.class).invoke(builder, parallelism);
+  }
+
+  /**
+   * Rewrites a {@code --testname} into something {@code Runner.Builder.path()} understands on Karate 2.
+   *
+   * <p>v1's {@code Karate.path()} accepts a {@code file:} URL; v2 does not - it resolves a bare
+   * filesystem path (absolute, or relative to the working dir), with an optional {@code :line}
+   * suffix, and understands {@code classpath:}, but a {@code file:}-prefixed path matches nothing and
+   * the suite ends with "features: 0 | passed: 0 | all passed" and exit code 0. The IDE sends
+   * {@code file:<abs-path>} for every file-based run, so strip the scheme here rather than teaching
+   * the IDE two dialects.
+   *
+   * <p>Bare names keep v1's {@code classpath:} fallback for older serialized run configurations, but
+   * only when they are relative - an absolute path is handed to v2 as-is.</p>
+   */
+  static String toV2Path(String testname) {
+    if (testname.startsWith("file:")) {
+      String path = testname.substring("file:".length());
+      // file:/abs, file://abs and file:///abs all name the same local path once the scheme is gone.
+      while (path.startsWith("//")) {
+        path = path.substring(1);
+      }
+      return path;
+    }
+    if (testname.startsWith("classpath:") || new File(testname).isAbsolute()) {
+      return testname;
+    }
+    return "classpath:" + testname;
   }
 
   /**
