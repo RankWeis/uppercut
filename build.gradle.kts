@@ -155,6 +155,9 @@ java {
 
 intellijPlatform {
     pluginConfiguration {
+        // The Marketplace display name. Without this the manifest keeps the <name> baked into
+        // plugin.xml and pluginName only affects artifact naming.
+        name = properties("pluginName")
         version = properties("pluginVersion")
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
