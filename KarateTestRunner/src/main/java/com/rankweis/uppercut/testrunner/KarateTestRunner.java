@@ -1,10 +1,5 @@
 package com.rankweis.uppercut.testrunner;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.ConsoleAppender;
 import com.intuit.karate.core.FeatureRuntime;
 import com.intuit.karate.core.ScenarioCall;
 import java.io.File;
@@ -18,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class KarateTestRunner {
@@ -81,7 +77,7 @@ public class KarateTestRunner {
   }
 
   Object createRuntimeHook() {
-    Logger myLogger = (Logger) LoggerFactory.getLogger(KarateTestRunner.class);
+    Logger myLogger = LoggerFactory.getLogger(KarateTestRunner.class);
     // Load the RuntimeHook class using reflection
     boolean uppercutProvidedKarate =
       Optional.ofNullable(params.get("karate-provided")).orElse(List.of())
@@ -180,10 +176,19 @@ public class KarateTestRunner {
 
   public static void main(String[] args) throws Exception {
     try {
-      getOutputStreamAppender();
       KarateTestRunner runner = new KarateTestRunner();
       runner.parseArgs(args);
-      runner.doTest();
+      boolean karateV2 = runner.params.getOrDefault("karate-major-version", List.of())
+        .stream().anyMatch("2"::equals);
+      if (karateV2) {
+        // No appender on the v2 path: it reports through RunListener events, and a Karate 2 project
+        // that brings its own logback would otherwise have its console appenders detached and every
+        // line <<UPPERCUT>>-prefixed - v1-shaped noise the converter then misroutes.
+        new KarateV2TestRunner(runner.params).doTest();
+      } else {
+        getOutputStreamAppender();
+        runner.doTest();
+      }
     } catch (ClassNotFoundException | NoClassDefFoundError e) {
       throw new RuntimeException("Must have karate-core on the classpath to use uppercut", e);
     }
@@ -212,27 +217,23 @@ public class KarateTestRunner {
     }
   }
 
+  /**
+   * Installs the {@code <<UPPERCUT>>} console appender when logback is on the classpath.
+   *
+   * <p>Reflective on purpose: Karate 2.x drops the transitive logback dependency Karate 1.x brought,
+   * so a direct reference would fail to link on a v2 project and take the whole runner down before
+   * any test event is emitted. The v2 path does not need the appender - it reports through
+   * RunListener events - and the v1 path only loses log forwarding if logback is genuinely absent.
+   */
   private static void getOutputStreamAppender() {
-    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-
-    ConsoleAppender<ILoggingEvent> outputStreamAppender = new ConsoleAppender<>();
-    outputStreamAppender.setContext(context);
-    PatternLayoutEncoder encoder = new PatternLayoutEncoder();
-    encoder.setContext(context);
-    encoder.setPattern("<<UPPERCUT>>[%thread] %d{HH:mm:ss} %-5level %logger{36} - %msg%n");
-    encoder.start();
-    outputStreamAppender.setName("KarateAppender");
-    outputStreamAppender.setEncoder(encoder);
-    outputStreamAppender.start();
-    Logger intuitLogger = context.getLogger(Logger.ROOT_LOGGER_NAME);
-    List<ConsoleAppender<ILoggingEvent>> consoleAppenders = new ArrayList<>();
-    intuitLogger.iteratorForAppenders().forEachRemaining(appender -> {
-      if (appender instanceof ConsoleAppender) {
-        consoleAppenders.add((ConsoleAppender<ILoggingEvent>) appender);
-      }
-    });
-    consoleAppenders.forEach(intuitLogger::detachAppender);
-    intuitLogger.addAppender(outputStreamAppender);
+    try {
+      Class.forName("com.rankweis.uppercut.testrunner.UppercutLogbackAppender")
+        .getDeclaredMethod("install")
+        .invoke(null);
+    } catch (Throwable t) {
+      System.err.println("Uppercut: logback not on the classpath, console log forwarding disabled ("
+        + t.getClass().getSimpleName() + ")");
+    }
   }
 
 }

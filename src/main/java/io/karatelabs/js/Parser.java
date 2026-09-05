@@ -310,6 +310,37 @@ public class Parser {
         return false;
     }
 
+    private Token peekAhead(int offset) {
+        int index = position + offset;
+        return index >= size ? null : chunks.get(index).token;
+    }
+
+    private boolean peekObjectKey() {
+        if (position == size) {
+            return false;
+        }
+        Token token = chunks.get(position).token;
+        return token == Token.IDENT || token.keyword
+                || token == Token.S_STRING || token == Token.D_STRING
+                || token == Token.NUMBER || token == Token.BIGINT;
+    }
+
+    private boolean peekKeywordOrIdent() {
+        if (position == size) {
+            return false;
+        }
+        Token token = chunks.get(position).token;
+        return token == Token.IDENT || token.keyword;
+    }
+
+    private String lastConsumedText() {
+        return position == 0 ? "" : chunks.get(position - 1).text;
+    }
+
+    private boolean atEof() {
+        return position == size;
+    }
+
     private boolean peekAnyOf(Token... tokens) {
         for (Token token : tokens) {
             if (peekIf(token)) {
@@ -371,8 +402,10 @@ public class Parser {
         result = result || while_stmt();
         result = result || switch_stmt();
         result = result || (break_stmt() && eos());
+        result = result || (continue_stmt() && eos());
         result = result || (delete_stmt() && eos());
         result = result || fn_decl();
+        result = result || class_decl();
         result = result || (expr(-1, false) && eos());
         result = result || block(false);
         result = result || consumeIf(Token.SEMI); // empty statement
@@ -549,6 +582,13 @@ public class Parser {
         return exit();
     }
 
+    private boolean continue_stmt() {
+        if (!enter(Type.CONTINUE_STMT, Token.CONTINUE)) {
+            return false;
+        }
+        return exit();
+    }
+
     // as per spec this is an expression
     private boolean delete_stmt() {
         if (!enter(Type.DELETE_STMT, Token.DELETE)) {
@@ -580,6 +620,8 @@ public class Parser {
         enter(Type.EXPR);
         boolean result = fn_arrow_expr();
         result = result || fn_expr();
+        result = result || class_expr();
+        result = result || super_expr();
         result = result || new_expr();
         result = result || typeof_expr();
         result = result || ref_expr();
@@ -596,7 +638,9 @@ public class Parser {
             if (priority < 0 && enter(Type.ASSIGN_EXPR,
                     Token.EQ, Token.PLUS_EQ, Token.MINUS_EQ,
                     Token.STAR_EQ, Token.SLASH_EQ, Token.PERCENT_EQ, Token.STAR_STAR_EQ,
-                    Token.GT_GT_EQ, Token.LT_LT_EQ, Token.GT_GT_GT_EQ)) {
+                    Token.GT_GT_EQ, Token.LT_LT_EQ, Token.GT_GT_GT_EQ,
+                    Token.AMP_EQ, Token.PIPE_EQ, Token.CARET_EQ,
+                    Token.PIPE_PIPE_EQ, Token.AMP_AMP_EQ, Token.QUES_QUES_EQ)) {
                 expr(-1, true);
                 exit(Shift.RIGHT);
             } else if (priority < 1 && enter(Type.LOGIC_TERN_EXPR, Token.QUES)) {
@@ -605,6 +649,9 @@ public class Parser {
                 expr(-1, true);
                 exit(Shift.RIGHT);
             } else if (priority < 2 && enter(Type.LOGIC_AND_EXPR, Token.AMP_AMP, Token.PIPE_PIPE)) {
+                expr(2, true);
+                exit(Shift.LEFT);
+            } else if (priority < 2 && enter(Type.LOGIC_NULLISH_EXPR, Token.QUES_QUES)) {
                 expr(2, true);
                 exit(Shift.LEFT);
             } else if (priority < 3 && enter(Type.LOGIC_EXPR,
@@ -636,8 +683,30 @@ public class Parser {
                 fn_call_args();
                 consume(Token.R_PAREN);
                 exit(Shift.LEFT);
-            } else if (enter(Type.REF_DOT_EXPR, Token.DOT)) {
-                consume(Token.IDENT);
+            } else if (peekIf(Token.QUES_DOT) && peekAhead(1) == Token.L_BRACKET) {
+                // `?.[expr]` - the same node as a plain `[expr]` access, with the `?.` in front,
+                // so the chain stays flat and left-recursive
+                enter(Type.REF_BRACKET_EXPR);
+                consumeNext(); // ?.
+                consume(Token.L_BRACKET);
+                expr(-1, true);
+                consume(Token.R_BRACKET);
+                exit(Shift.LEFT);
+            } else if (peekIf(Token.QUES_DOT) && peekAhead(1) == Token.L_PAREN) {
+                enter(Type.FN_CALL_EXPR); // `?.(args)`
+                consumeNext(); // ?.
+                consume(Token.L_PAREN);
+                fn_call_args();
+                consume(Token.R_PAREN);
+                exit(Shift.LEFT);
+            } else if (peekAnyOf(Token.DOT, Token.QUES_DOT)) {
+                enter(Type.REF_DOT_EXPR);
+                consumeNext(); // the DOT or QUES_DOT
+                if (peekKeywordOrIdent()) {
+                    consumeNext(); // an identifier, or a reserved word used as a property name
+                } else {
+                    error(Token.IDENT);
+                }
                 exit(Shift.LEFT);
             } else if (enter(Type.REF_BRACKET_EXPR, Token.L_BRACKET)) {
                 expr(-1, true);
@@ -685,6 +754,105 @@ public class Parser {
         fn_decl_args();
         consume(Token.R_PAREN);
         block(true);
+        return exit();
+    }
+
+    // a class declaration is a statement; `var A = class {}` goes through expr() -> class_expr()
+    private boolean class_decl() {
+        if (!peekIf(Token.CLASS)) {
+            return false;
+        }
+        enter(Type.EXPR);
+        boolean result = class_expr();
+        exit(result, false);
+        if (result) {
+            eos(); // optional trailing semicolon
+        }
+        return result;
+    }
+
+    // class [name] [extends <lhs-expr>] { <member>* }
+    private boolean class_expr() {
+        if (!enter(Type.CLASS_EXPR, Token.CLASS)) {
+            return false;
+        }
+        consumeIf(Token.IDENT); // optional class name
+        if (consumeIf(Token.EXTENDS)) {
+            expr(8, true); // same operand priority as `new`
+        }
+        if (!consumeIf(Token.L_CURLY)) {
+            error(Token.L_CURLY);
+            return exit(false, false);
+        }
+        while (true) {
+            if (peekIf(Token.R_CURLY) || atEof()) {
+                break;
+            }
+            if (consumeIf(Token.SEMI)) { // empty member, allowed and ignored
+                continue;
+            }
+            if (!class_member()) {
+                return exit(false, false);
+            }
+        }
+        boolean result = consumeIf(Token.R_CURLY);
+        return exit(result, true);
+    }
+
+    // one member: [static|get|set]* <key> ( "(" args ")" block | [= expr] ). `static`, `get` and
+    // `set` lex as plain identifiers, so each is a modifier only when another key token follows.
+    private boolean class_member() {
+        enter(Type.CLASS_MEMBER);
+        while (true) {
+            if (consumeIf(Token.L_BRACKET)) { // computed key [expr] - always the final key
+                expr(-1, true);
+                if (!consumeIf(Token.R_BRACKET)) {
+                    error(Token.R_BRACKET);
+                    return exit(false, false);
+                }
+                break;
+            }
+            if (!peekObjectKey()) {
+                error("expected class member name");
+                return exit(false, false);
+            }
+            consumeNext();
+            if (peekIf(Token.L_PAREN)) {
+                break; // the token just consumed was the member name
+            }
+            String text = lastConsumedText();
+            if (("static".equals(text) || "get".equals(text) || "set".equals(text))
+                    && (peekObjectKey() || peekIf(Token.L_BRACKET))) {
+                continue; // it was a modifier - go round again for the real key
+            }
+            return class_field_tail(); // a field, not a method
+        }
+        if (!peekIf(Token.L_PAREN)) {
+            return class_field_tail(); // computed-key field
+        }
+        enter(Type.FN_EXPR);
+        consume(Token.L_PAREN);
+        fn_decl_args();
+        consume(Token.R_PAREN);
+        block(true);
+        exit();
+        return exit();
+    }
+
+    // a field has no FN_EXPR child - that is how a reader tells it from a method
+    private boolean class_field_tail() {
+        if (consumeIf(Token.EQ)) {
+            expr(-1, true);
+        }
+        consumeIf(Token.SEMI); // optional - a newline or the next member ends it otherwise
+        return exit();
+    }
+
+    // `super` on its own; the trailing `(args)` / `.x` / `[k]` is chained on by expr_rhs
+    private boolean super_expr() {
+        if (!enter(Type.SUPER_EXPR, Token.SUPER)) {
+            return false;
+        }
         return exit();
     }
 
@@ -753,7 +921,7 @@ public class Parser {
     }
 
     private boolean ref_expr() {
-        if (!enter(Type.REF_EXPR, Token.IDENT)) {
+        if (!enter(Type.REF_EXPR, Token.IDENT, Token.THIS)) {
             return false;
         }
         return exit();
@@ -762,7 +930,8 @@ public class Parser {
     private boolean lit_expr() {
         enter(Type.LIT_EXPR);
         boolean result = lit_object() || lit_array();
-        result = result || anyOf(Token.S_STRING, Token.D_STRING, Token.NUMBER, Token.TRUE, Token.FALSE, Token.NULL, Token.REGEX);
+        result = result || anyOf(Token.S_STRING, Token.D_STRING, Token.NUMBER, Token.BIGINT, Token.TRUE, Token.FALSE,
+                Token.NULL, Token.REGEX);
         result = result || lit_template();
         return exit(result, false);
     }
@@ -775,18 +944,23 @@ public class Parser {
             if (consumeIf(Token.BACKTICK)) {
                 break;
             }
-            if (!consumeIf(Token.T_STRING)) {
-                if (consumeIf(Token.DOLLAR_L_CURLY)) {
-                    expr(-1, false);
-                    consume(Token.R_CURLY);
-                }
+            if (consumeIf(Token.T_STRING)) {
+                continue;
             }
+            if (consumeIf(Token.DOLLAR_L_CURLY)) {
+                expr(-1, false);
+                consume(Token.R_CURLY);
+                continue;
+            }
+            // nothing consumable - an unterminated template at end of input. Without this the loop
+            // never advances, and in the IDE that is a parse that never finishes.
+            error(Token.BACKTICK);
         }
         return exit();
     }
 
     private boolean unary_expr() {
-        if (!enter(Type.UNARY_EXPR, Token.NOT, Token.TILDE)) {
+        if (!enter(Type.UNARY_EXPR, Token.NOT, Token.TILDE, Token.VOID)) {
             return false;
         }
         expr(-1, true);
@@ -797,7 +971,7 @@ public class Parser {
         if (!enter(Type.MATH_PRE_EXPR, Token.PLUS_PLUS, Token.MINUS_MINUS, Token.MINUS, Token.PLUS)) {
             return false;
         }
-        if (expr(8, false) || consumeIf(Token.NUMBER)) {
+        if (expr(8, false) || consumeIf(Token.NUMBER) || consumeIf(Token.BIGINT)) {
             // all good
         } else {
             error(Type.EXPR);
@@ -822,9 +996,11 @@ public class Parser {
     }
 
     private boolean object_elem() {
-        if (!enter(Type.OBJECT_ELEM, Token.IDENT, Token.S_STRING, Token.D_STRING, Token.NUMBER)) {
+        if (!peekObjectKey()) {
             return false;
         }
+        enter(Type.OBJECT_ELEM);
+        consumeNext(); // the key - an identifier, a reserved word, or a string/number literal
         if (!consumeIf(Token.COLON)) {
             return exit(false, false); // could be block
         }

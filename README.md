@@ -7,6 +7,8 @@
 <!-- Plugin description -->
 This *100% free* IntelliJ plugin gives many useful upgrades to the usage of the Karate language.
 
+**Docs:** what works, what's in progress, and what every setting means: <https://rankweis.github.io/uppercut/>
+
 Features include 
 - Syntax highlighting
 - Go-To definitions/references
@@ -14,6 +16,10 @@ Features include
 - Embedded JSON, Javascript and XML support
 - Formatting
 - attaching a debugger to a running karate test.
+
+Karate 2.x (karate-junit6) is supported as **early access**: the version is detected per module, so a
+repository can migrate one module at a time, and Karate 1.x projects keep working exactly as before.
+Debugging Karate 2 features is not wired up yet.
 
 This project is open sourced via the Apache Commons 2.0 license and is a **work in progress**. 
 Please report bugs and issues so we can make this plugin something we all enjoy using.

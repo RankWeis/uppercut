@@ -16,6 +16,9 @@
     <fileType name="Karate"
       implementationClass="com.rankweis.uppercut.karate.psi.GherkinFileType"
       fieldName="INSTANCE" language="Karate" extensions="feature"/>
+    <!-- Karate has no .featurejs files. The type exists so a file can be handed to the KarateJs
+         parser on its own - to isolate the embedded JavaScript engine from the Gherkin lexer when
+         diagnosing a highlighting or parsing problem. Keep it. -->
     <fileType name="KarateJs"
       implementationClass="com.rankweis.uppercut.karate.psi.KarateJsFileType"
       fieldName="INSTANCE" language="KarateJs" extensions="featurejs"/>
@@ -47,8 +50,6 @@
       implementationClass="com.rankweis.uppercut.karate.structure.GherkinStructureViewFactory"/>
     <lang.formatter language="Karate"
       implementationClass="com.rankweis.uppercut.karate.format.KarateFormattingModelBuilder"/>
-    <lang.formatter language="KarateJs"
-      implementationClass="com.rankweis.uppercut.karate.format.KarateJsFormattingModelBuilder"/>
     <annotator language="Karate"
       implementationClass="com.rankweis.uppercut.karate.annotator.GherkinAnnotator"/>
     <lang.foldingBuilder language="Karate"

@@ -19,6 +19,8 @@ on:
     branches: [ main, ij-2024.2 ]
   # Trigger the workflow on any pull request
   pull_request:
+  # Manual runs, mainly to exercise the integration-test job without merging (it is push-gated)
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -44,18 +46,18 @@ jobs:
 
       # Validate wrapper
       - name: Gradle Wrapper Validation
-        uses: gradle/actions/wrapper-validation@3f131e8634966bd73d06cc69884922b02e6faf92
+        uses: gradle/actions/wrapper-validation@9c971963bec38e04b3d30dcc455b5382be2fdbfb
 
       # Set up Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
         with:
           distribution: zulu
           java-version: 25
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
 
       # Set environment variables
       - name: Export Properties
@@ -108,14 +110,14 @@ jobs:
 
       # Set up Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
         with:
           distribution: zulu
           java-version: 25
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
 
       # Run tests
       - name: Run Tests
@@ -138,6 +140,67 @@ jobs:
         with:
           files: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
 
+  # Run the IDE Starter/Driver UI tests. These boot a real IntelliJ (~4 GB download on a cold
+  # cache, several minutes per run), so they are kept off pull request builds and run only once a
+  # change lands on a release branch.
+  integration-test:
+    name: Integration tests
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    # five IDE launches with multi-minute waits each; a hung IDE must not hold the release draft for
+    # GitHub's six-hour default
+    timeout-minutes: 60
+    steps:
+
+      # The IDE (~4 GB) plus a JDK need more room than a hosted runner has spare by default
+      - name: Maximize Build Space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        with:
+          tool-cache: false
+          large-packages: false
+
+      # Check out the current repository
+      - name: Fetch Sources
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      # Set up Java environment for the next steps
+      - name: Setup Java
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+        with:
+          distribution: zulu
+          java-version: 25
+
+      # Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
+
+      # The downloaded IDE and JDK dominate the runtime. The test boots the platformVersion from
+      # gradle.properties, so hashing that file gives a fresh cache on a platform bump.
+      - name: Cache IDE Starter downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: out/ide-tests/cache
+          key: ide-starter-${{ runner.os }}-${{ hashFiles('gradle.properties') }}
+          restore-keys: ide-starter-${{ runner.os }}-
+
+      # Run integration tests
+      - name: Run Integration Tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" ./gradlew integrationTest
+
+      # Collect results of failed tests, including the IDE's own logs and screenshots
+      - name: Collect Integration Test Results
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: integration-tests-result
+          path: |
+            ${{ github.workspace }}/build/reports/tests/integrationTest
+            ${{ github.workspace }}/out/ide-tests/tests/*/*/log
+
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
     name: Verify plugin
@@ -158,14 +221,14 @@ jobs:
 
       # Set up Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
         with:
           distribution: zulu
           java-version: 25
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
 
       # IntelliJ will verify Plugin for us and this is a lot of downloading.
       # Cache Plugin Verifier IDEs
@@ -193,7 +256,7 @@ jobs:
     name: Release draft
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
-    needs: [ build, test, verify ]
+    needs: [ build, test, verify, integration-test ]
     permissions:
       contents: write
     steps:

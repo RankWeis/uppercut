@@ -411,7 +411,7 @@ public class Lexer {
       while (!isAtEnd() && isHexDigit(peek())) {
         advance();
       }
-      return Token.NUMBER;
+      return bigIntSuffix();
     }
 
     // octal: 0o...
@@ -421,7 +421,7 @@ public class Lexer {
       while (!isAtEnd() && peek() >= '0' && peek() <= '7') {
         advance();
       }
-      return Token.NUMBER;
+      return bigIntSuffix();
     }
 
     // binary: 0b...
@@ -431,11 +431,14 @@ public class Lexer {
       while (!isAtEnd() && (peek() == '0' || peek() == '1')) {
         advance();
       }
-      return Token.NUMBER;
+      return bigIntSuffix();
     }
+
+    boolean isInteger = true;
 
     // starts with dot (.5)
     if (c == '.') {
+      isInteger = false;
       advance();
     } else {
       // integer part
@@ -445,6 +448,7 @@ public class Lexer {
       // optional fractional part
       if (!isAtEnd() && peek() == '.'
           && (zzCurrentPos + 1 >= zzEndRead || isDigit(peek(1)))) {
+        isInteger = false;
         advance(); // consume '.'
       }
     }
@@ -456,6 +460,7 @@ public class Lexer {
 
     // exponent
     if (!isAtEnd() && (peek() == 'e' || peek() == 'E')) {
+      isInteger = false;
       advance();
       if (!isAtEnd() && (peek() == '+' || peek() == '-')) {
         advance();
@@ -465,6 +470,19 @@ public class Lexer {
       }
     }
 
+    // BigInt suffix - only valid on integer literals, so `1.5n` stays NUMBER + IDENT
+    if (isInteger) {
+      return bigIntSuffix();
+    }
+    return Token.NUMBER;
+  }
+
+  // consumes a trailing 'n' (BigInt literal) if present
+  private Token bigIntSuffix() {
+    if (!isAtEnd() && peek() == 'n') {
+      advance();
+      return Token.BIGINT;
+    }
     return Token.NUMBER;
   }
 
@@ -559,6 +577,12 @@ public class Lexer {
     if (c0 == 'c' && matchKeyword(start, "case")) {
       return Token.CASE;
     }
+    if (c0 == 't' && matchKeyword(start, "this")) {
+      return Token.THIS;
+    }
+    if (c0 == 'v' && matchKeyword(start, "void")) {
+      return Token.VOID;
+    }
     return Token.IDENT;
   }
 
@@ -574,6 +598,9 @@ public class Lexer {
       if (matchKeyword(start, "catch")) {
         return Token.CATCH;
       }
+      if (matchKeyword(start, "class")) {
+        return Token.CLASS;
+      }
     }
     if (c0 == 't' && matchKeyword(start, "throw")) {
       return Token.THROW;
@@ -583,6 +610,9 @@ public class Lexer {
     }
     if (c0 == 'b' && matchKeyword(start, "break")) {
       return Token.BREAK;
+    }
+    if (c0 == 's' && matchKeyword(start, "super")) {
+      return Token.SUPER;
     }
     return Token.IDENT;
   }
@@ -612,6 +642,9 @@ public class Lexer {
     if (c0 == 'd' && matchKeyword(start, "default")) {
       return Token.DEFAULT;
     }
+    if (c0 == 'e' && matchKeyword(start, "extends")) {
+      return Token.EXTENDS;
+    }
     return Token.IDENT;
   }
 
@@ -619,6 +652,9 @@ public class Lexer {
     char c0 = zzBuffer.charAt(start);
     if (c0 == 'f' && matchKeyword(start, "function")) {
       return Token.FUNCTION;
+    }
+    if (c0 == 'c' && matchKeyword(start, "continue")) {
+      return Token.CONTINUE;
     }
     return Token.IDENT;
   }
@@ -672,8 +708,15 @@ public class Lexer {
         }
         return Token.DOT;
       case '?':
+        // `?.` is the optional-chaining punctuator UNLESS the next char is a decimal digit -
+        // the spec lookahead `?. [lookahead not in DecimalDigit]` keeps `flag ?.5 : 0` lexing
+        // as `flag ? .5 : 0` rather than `flag ?. 5 : 0`
+        if (peek() == '.' && !isDigit(peek(1))) {
+          match('.');
+          return Token.QUES_DOT;
+        }
         if (match('?')) {
-          return Token.QUES_QUES;
+          return match('=') ? Token.QUES_QUES_EQ : Token.QUES_QUES;
         }
         return Token.QUES;
       case '=':
@@ -790,6 +833,7 @@ public class Lexer {
       case TILDE:
       case QUES:
       case QUES_QUES:
+      case QUES_QUES_EQ:
       case EQ_GT:
       case RETURN:
       case TYPEOF:
@@ -804,6 +848,8 @@ public class Lexer {
       case NEW:
       case THROW:
       case CASE:
+      case VOID:
+      case EXTENDS:
       case INSTANCEOF:
       case VAR:
       case LET:
@@ -816,6 +862,9 @@ public class Lexer {
       case R_CURLY:
       case IDENT:
       case NUMBER:
+      case BIGINT:
+      case THIS:
+      case SUPER:
       case S_STRING:
       case D_STRING:
       case T_STRING:

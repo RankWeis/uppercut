@@ -27,7 +27,7 @@ public class KarateJsHighlightTest extends BasePlatformTestCase {
   public void testHighlight() {
     myFixture.configureByFile("testData/random.feature");
     myFixture.testHighlightingAllFiles(true, false, false, "testData/random.feature", "testData/js.feature",
-      "testData/complicated.feature");
+      "testData/js_modern.feature", "testData/complicated.feature");
     myFixture.configureByFile("testData/badjs.feature");
     List<HighlightInfo> highlightInfos = myFixture.doHighlighting(HighlightSeverity.ERROR);
     assertEquals(1, highlightInfos.size());

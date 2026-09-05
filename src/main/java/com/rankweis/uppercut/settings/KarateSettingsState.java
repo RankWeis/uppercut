@@ -17,9 +17,17 @@ import org.jetbrains.annotations.Nullable;
 @Service(Service.Level.APP)
 public final class KarateSettingsState implements PersistentStateComponent<KarateSettingsState> {
 
+  /** Karate major version driving run configurations: AUTO (classpath detection), V1, or V2. */
+  public enum KarateVersionPreference {
+    AUTO,
+    V1,
+    V2
+  }
+
   private String defaultEnvironment = "";
   private Integer defaultParallelism = 1;
   private boolean useKarateJavaScriptEngine = false;
+  private KarateVersionPreference karateVersionPreference = KarateVersionPreference.AUTO;
 
   public static KarateSettingsState getInstance() {
     return com.intellij.openapi.application.ApplicationManager.getApplication()
@@ -37,6 +45,8 @@ public final class KarateSettingsState implements PersistentStateComponent<Karat
     this.defaultEnvironment = state.defaultEnvironment;
     this.useKarateJavaScriptEngine = state.useKarateJavaScriptEngine;
     this.defaultParallelism = state.defaultParallelism == null ? 1 : state.defaultParallelism;
+    this.karateVersionPreference =
+      state.karateVersionPreference == null ? KarateVersionPreference.AUTO : state.karateVersionPreference;
   }
 
 }

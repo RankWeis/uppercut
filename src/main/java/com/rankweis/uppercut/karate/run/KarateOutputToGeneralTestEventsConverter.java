@@ -9,6 +9,7 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -35,8 +36,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTestEventsConverter {
+
+  private static final Logger LOG = Logger.getInstance(KarateOutputToGeneralTestEventsConverter.class);
 
   enum KarateConfigState {
     SUCCEEDED,
@@ -82,6 +86,14 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     if (text != null) {
       if (text.startsWith(UPPERCUT_PREFIX)) {
         text = text.substring(UPPERCUT_PREFIX.length());
+      }
+      // The platform buffers a partial stdout line until its newline and keys that buffer by output
+      // type. Recolouring is only ever applied to stdout: a real stderr chunk must keep its own type,
+      // or it gets appended into a half-received stdout line - for a v2 run that is a <<UPPERCUT-V2>>
+      // event line long enough to span several reads, and the splice corrupts its JSON.
+      if (ProcessOutputType.isStderr(outputType)) {
+        super.process(text, outputType);
+        return;
       }
       Matcher matcher = UPPERCUT_LOG_PATTERN.matcher(text);
       if (matcher.matches()) {
@@ -129,6 +141,9 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
   }
 
   private boolean processEventText(final String text) {
+    if (text.startsWith(KarateV2EventProcessor.EVENT_PREFIX)) {
+      return getV2EventProcessor().process(text);
+    }
     Matcher matcher = UPPERCUT_LOG_PATTERN.matcher(text);
     if (text.contains("[config]") || (karateConfigItem != null && text.contains(
       ">> " + karateConfigItem.getName() + " failed"))) {
@@ -342,5 +357,80 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     msg.addAttribute("nodeId", String.valueOf(item.getId()));
     msg.addAttribute("parentNodeId", String.valueOf(item.getParentId()));
     doProcessServiceMessages(msg.toString());
+  }
+
+  private KarateV2EventProcessor v2EventProcessor;
+
+  private KarateV2EventProcessor getV2EventProcessor() {
+    if (v2EventProcessor == null) {
+      v2EventProcessor = new KarateV2EventProcessor(new KarateV2EventProcessor.EventSink() {
+        @Override public void testsStarted() {
+          doProcessServiceMessages(ServiceMessageBuilder.testsStarted().toString());
+        }
+
+        @Override public void emit(@NotNull ServiceMessageBuilder message, int nodeId, int parentNodeId) {
+          message.addAttribute("nodeId", String.valueOf(nodeId));
+          message.addAttribute("parentNodeId", String.valueOf(parentNodeId));
+          doProcessServiceMessages(message.toString());
+        }
+
+        @Override public String resolveLocation(@NotNull String featurePath, int line) {
+          VirtualFile file = findFeatureFile(featurePath);
+          return file == null ? null : "file://" + file.getPath() + ":" + line;
+        }
+      });
+    }
+    return v2EventProcessor;
+  }
+
+  /**
+   * Karate 2.x event paths are relative to the working directory and point at the compiled test
+   * classpath (e.g. {@code build/resources/test/sample/x.feature} for Gradle, {@code target/test-classes/...}
+   * for Maven). Strip leading segments until a suffix resolves against a source root; only when the
+   * whole stripping pass finds nothing, fall back to the project dir.
+   *
+   * <p>The two passes must not be interleaved: the runtime path resolves against the project dir
+   * as-is (the compiled copy under {@code build/} really exists), so a combined root list would
+   * short-circuit on the generated file before stripping ever produced the source-relative suffix.
+   * Navigation would then open the build copy, where edits and breakpoints are silently discarded
+   * on the next build.
+   */
+  private VirtualFile findFeatureFile(String featurePath) {
+    List<VirtualFile> sourceRoots =
+      Arrays.stream(ModuleManager.getInstance(testConsoleProperties.getProject()).getModules())
+        .flatMap(m -> Arrays.stream(ModuleRootManager.getInstance(m).getSourceRoots()))
+        .toList();
+    VirtualFile inSourceRoot = resolveByStripping(featurePath, sourceRoots);
+    if (inSourceRoot != null) {
+      return inSourceRoot;
+    }
+    LOG.info("Karate feature path did not resolve against any source root, falling back to project dir. "
+      + "path=" + featurePath + " sourceRoots=" + sourceRoots);
+    VirtualFile projectDir = ProjectUtil.guessProjectDir(testConsoleProperties.getProject());
+    return projectDir == null ? null : resolveByStripping(featurePath, List.of(projectDir));
+  }
+
+  private static @Nullable VirtualFile resolveByStripping(String featurePath, List<VirtualFile> roots) {
+    // findFileByRelativePath, not VfsUtil.findRelativeFile: the latter treats an absolute path
+    // (e.g. C:/... - what Karate 2 emits when the working dir is not the module root) as absolute and
+    // ignores the base root entirely, resolving the build-output copy on the first iteration no
+    // matter which roots are tried first.
+    String candidate = featurePath.replace('\\', '/');
+    while (!candidate.isEmpty()) {
+      String finalCandidate = candidate;
+      VirtualFile found = roots.stream().filter(Objects::nonNull)
+        .map(root -> root.findFileByRelativePath(finalCandidate))
+        .filter(Objects::nonNull)
+        .findFirst().orElse(null);
+      if (found != null) {
+        return found;
+      }
+      int slash = candidate.indexOf('/');
+      if (slash < 0) {
+        return null;
+      }
+      candidate = candidate.substring(slash + 1);
+    }
+    return null;
   }
 }

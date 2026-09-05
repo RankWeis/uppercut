@@ -9,6 +9,7 @@ fun environment(key: String) = providers.environmentVariable(key)
 
 plugins {
     id("java") // Java support
+    alias(libs.plugins.kotlinJvm) // Kotlin support (integration tests use the IDE Starter/Driver Kotlin DSL)
     alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
     alias(libs.plugins.grammarkit)
     alias(libs.plugins.lombok)
@@ -41,12 +42,12 @@ configure<SourceSetContainer> {
     }
 }
 
-val integrationTestImplementation by configurations.getting {
-    extendsFrom(configurations.testImplementation.get())
-}
-val platformTestImplementation by configurations.getting {
-    extendsFrom(configurations.testImplementation.get())
-}
+// `by getting { }` with a configuration block is deprecated as of Gradle 9.7 (removed in 10);
+// the delegates stay because the dependencies block refers to these configurations by name
+val integrationTestImplementation by configurations.getting
+integrationTestImplementation.extendsFrom(configurations.testImplementation.get())
+val platformTestImplementation by configurations.getting
+platformTestImplementation.extendsFrom(configurations.testImplementation.get())
 
 dependencies {
     intellijPlatform {
@@ -56,7 +57,7 @@ dependencies {
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
         jetbrainsRuntime()
         testFramework(TestFrameworkType.Platform)
-        testFramework(TestFrameworkType.Starter)
+        testFramework(TestFrameworkType.Starter, configurationName = "integrationTestImplementation")
     }
 
     // Plugin Module
@@ -77,6 +78,12 @@ dependencies {
     // --- Mocking ---
     testImplementation(libs.mockito) // Mockito for mocking in tests
     integrationTestImplementation(libs.junitJupiter)
+    // IDE Starter/Driver integration tests are written in Kotlin (see docs: integration-tests-intro)
+    integrationTestImplementation(kotlin("stdlib"))
+    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.1")
+    integrationTestImplementation("org.kodein.di:kodein-di-jvm:7.26.1")
+    // Starter's TeamCityReporter needs it at runtime; not pulled in transitively (intellij-dependencies repo)
+    "integrationTestRuntimeOnly"("org.jetbrains.teamcity:serviceMessages:2024.07")
 
     implementation("io.karatelabs:karate-junit5:${properties("karateVersion").get()}") {
         isTransitive = false
@@ -91,6 +98,15 @@ val integrationTests = tasks.register<Test>("integrationTest") {
     testClassesDirs = integrationTestSourceSet.output.classesDirs
     classpath = integrationTestSourceSet.runtimeClasspath
     systemProperty("path.to.build.plugin", tasks.prepareSandbox.get().pluginDirectory.get().asFile)
+    // the IDE the Starter boots: the same major the plugin is built against, not whatever is newest
+    systemProperty("platform.version", providers.gradleProperty("platformVersion").get())
+    // IntelliJ's MultiRoutingFileSystem (pulled in by the Starter's JDK/IDE extraction) implements
+    // sun.nio.fs internals, which are not exported to the unnamed module on modern JDKs.
+    jvmArgs(
+        "--add-exports=java.base/sun.nio.fs=ALL-UNNAMED",
+        "--add-opens=java.base/sun.nio.fs=ALL-UNNAMED",
+        "--enable-native-access=ALL-UNNAMED",
+    )
     useJUnitPlatform {
         excludeEngines("junit-vintage")
         includeEngines("junit-jupiter")
@@ -122,6 +138,10 @@ abstract class InstrumentedJarsRule : AttributeCompatibilityRule<LibraryElements
     }
 }
 
+kotlin {
+    jvmToolchain(25)
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_25
     targetCompatibility = JavaVersion.VERSION_25
@@ -138,7 +158,11 @@ intellijPlatform {
         version = properties("pluginVersion")
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
-            untilBuild = providers.gradleProperty("pluginUntilBuild")
+            // No upper bound on purpose: the plugin stays installable on newer IDE releases instead of
+            // waiting for a compatibility release. verifyPlugin (recommended IDEs) and the Marketplace
+            // verifier are what catch a breaking platform change. The Gradle plugin would otherwise
+            // default this to "<platform major>.*", so it has to be nulled explicitly.
+            untilBuild = provider { null }
         }
         // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
         description =
@@ -156,9 +180,13 @@ intellijPlatform {
             }
 
         val changelog = project.changelog // local variable for configuration cache compatibility
-        // Get the latest available change notes from the changelog file
+        // Get the latest available change notes from the changelog file. The docs link goes first in
+        // every version's notes here, rather than as a line in CHANGELOG.md that someone has to
+        // remember to keep.
         changeNotes = properties("pluginVersion").map { pluginVersion ->
-            with(changelog) {
+            val docsLink = "<p>What works, what's in progress, and what every setting means: " +
+                "<a href=\"https://rankweis.github.io/uppercut/\">rankweis.github.io/uppercut</a></p>\n"
+            docsLink + with(changelog) {
                 renderItem(
                     (getOrNull(pluginVersion) ?: getUnreleased())
                         .withHeader(false)
@@ -234,6 +262,5 @@ tasks {
     printProductsReleases {
         channels = listOf(ProductRelease.Channel.EAP)
         types = listOf(IntelliJPlatformType.IntellijIdea)
-        untilBuild = "262.*"
     }
 }

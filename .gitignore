@@ -11,3 +11,15 @@ target/
 .idea-sandbox
 /out/
 /.claude/settings.local.json
+
+# IDE Starter / integration test artifacts
+out/
+allure-results/
+src/test/resources/karate.log
+
+# Opening the test fixtures in an IDE by hand leaves a wrapper and IDE metadata behind;
+# the integration test supplies its own copy at runtime.
+/testProjects/*/gradlew
+/testProjects/*/gradlew.bat
+/testProjects/*/gradle/
+/testProjects/*/.idea/

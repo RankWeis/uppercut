@@ -22,7 +22,10 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +38,10 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.rankweis.uppercut.karate.run.KarateRunConfiguration;
 import com.rankweis.uppercut.karate.psi.UppercutElementTypes;
+import com.rankweis.uppercut.settings.KarateSettingsState;
 import com.rankweis.uppercut.karate.psi.GherkinFeature;
 import com.rankweis.uppercut.karate.psi.GherkinFile;
 import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
@@ -64,6 +70,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public final class CucumberCompletionContributor extends CompletionContributor {
+  private static final String KARATE_OBJECT = "karate.";
   private static final Map<String, String> GROUP_TYPE_MAP = new HashMap<>();
   private static final Map<String, String> PARAMETERS_MAP = new HashMap<>();
 
@@ -163,6 +170,42 @@ public final class CucumberCompletionContributor extends CompletionContributor {
         addStepDefinitions(result, parameters.getOriginalFile());
       }
     });
+
+    extend(CompletionType.BASIC, inStep, new CompletionProvider<>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    @NotNull ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        addKarateBuiltins(parameters, result);
+      }
+    });
+  }
+
+  /**
+   * Members of the {@code karate} object, offered after typing {@code karate.} in a step.
+   *
+   * <p>The set depends on the project's Karate major version: v2 turned v1's getters into
+   * properties and dropped several helpers, so offering the union would suggest calls that fail at
+   * runtime. Detection reuses the run configuration's, keeping one definition of "which Karate".
+   */
+  private static void addKarateBuiltins(@NotNull CompletionParameters parameters,
+    @NotNull CompletionResultSet result) {
+    Document document = parameters.getEditor().getDocument();
+    int offset = parameters.getOffset();
+    int lineStart = document.getLineStartOffset(document.getLineNumber(offset));
+    String upToCaret = document.getText(new TextRange(lineStart, offset));
+    int dot = upToCaret.lastIndexOf(KARATE_OBJECT);
+    if (dot < 0 || upToCaret.indexOf(' ', dot) >= 0) {
+      return;
+    }
+    Project project = parameters.getOriginalFile().getProject();
+    boolean karateV2 = KarateRunConfiguration.isKarateV2(
+      KarateSettingsState.getInstance().getKarateVersionPreference(),
+      Arrays.stream(LibraryUtil.getLibraryRoots(project)).map(VirtualFile::getName));
+    CompletionResultSet members = result.withPrefixMatcher(upToCaret.substring(dot + KARATE_OBJECT.length()));
+    for (String builtin : KarateBuiltins.forVersion(karateV2)) {
+      members.addElement(LookupElementBuilder.create(builtin));
+    }
   }
 
   private static void addRuleKeyword(@NotNull CompletionResultSet result,

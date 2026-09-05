@@ -19,8 +19,10 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,6 +31,7 @@ import com.intellij.util.PathUtil;
 import com.intuit.karate.junit5.Karate;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import com.rankweis.uppercut.testrunner.KarateTestRunner;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -70,7 +73,8 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   @Getter @Setter private String path;
   @Getter @Setter private PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
   @Setter private String parallelism;
-  @Getter @Setter private boolean allInFolderAreFeature = false;
+  /** True when the run was created on a folder that holds feature files; see the producer's shouldReplace. */
+  @Getter @Setter private boolean folderHasFeatures = false;
   @Getter @Setter private int remotePort = 0;
   private String environment;
 
@@ -92,17 +96,49 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
         final JavaParameters params = super.createJavaParameters();
-        String jarPathForClass = PathUtil.getJarPathForClass(KarateTestRunner.class);
-        List<String> karateJunit5 = Arrays.stream(LibraryUtil.getLibraryRoots(env.getProject()))
-          .filter(v -> v.getName().contains("karate-junit5"))
-          .map(VirtualFile::getPath).toList();
-        if (karateJunit5.isEmpty()) {
-          log.warn("No junit5 in classpath");
-          params.getProgramParametersList().add("--karate-provided", "true");
-          params.getClassPath().add(PathUtil.getJarPathForClass(Karate.class));
+        VirtualFile[] libraryRoots = karateLibraryRoots();
+        if (libraryRoots.length == 0) {
+          // No libraries anywhere is the signature of a project that has not finished (or has
+          // failed) importing. Launching anyway sends the run down the v1 fallback with an empty
+          // classpath, which dies with "Must have karate-core on the classpath" - an error that
+          // points at everything except the actual problem.
+          throw new ExecutionException(
+            "No libraries found on the classpath - the project may still be importing, or the "
+              + "Gradle/Maven sync may have failed. Wait for the import to finish (check the Build "
+              + "tool window) and run again.");
+        }
+        List<String> libraryNames = Arrays.stream(libraryRoots).map(VirtualFile::getName).toList();
+        // The library scan above can see Karate through the project-wide library table while the
+        // classpath the JVM is about to get - built from the run configuration's module - has none
+        // of it. That happens when the feature file is not inside any module (a project opened from
+        // its pom.xml or build file rather than imported, or a symlinked project path). Refuse with
+        // the cause rather than launch into "Must have karate-core on the classpath".
+        List<String> classpathJars = params.getClassPath().getPathList().stream()
+          .map(path -> new File(path).getName()).toList();
+        Module module = getConfigurationModule().getModule();
+        String classpathProblem = classpathProblem(classpathJars, module == null ? null : module.getName());
+        if (classpathProblem != null) {
+          throw new ExecutionException(classpathProblem);
+        }
+        KarateSettingsState.KarateVersionPreference preference =
+          KarateSettingsState.getInstance().getKarateVersionPreference();
+        checkVersionOverrideMatchesClasspath(preference, libraryNames);
+        boolean karateV2 = isKarateV2(preference, libraryNames.stream());
+        if (karateV2) {
+          params.getProgramParametersList().add("--karate-major-version", "2");
+        } else {
+          List<String> karateJunit5 = Arrays.stream(libraryRoots)
+            .filter(v -> v.getName().contains("karate-junit5"))
+            .map(VirtualFile::getPath).toList();
+          if (karateJunit5.isEmpty()) {
+            log.warn("No junit5 in classpath");
+            // The bundled fallback is v1-only; v2 users always have karate on their own classpath.
+            params.getProgramParametersList().add("--karate-provided", "true");
+            params.getClassPath().add(PathUtil.getJarPathForClass(Karate.class));
+          }
         }
         params.setUseDynamicClasspath(true);
-        params.getClassPath().add(jarPathForClass);
+        params.getClassPath().add(PathUtil.getJarPathForClass(KarateTestRunner.class));
 
         if (getTestName().map(String::isBlank).orElse(false)) {
           String[] split = getName().split(":");
@@ -182,6 +218,109 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   }
 
 
+  /**
+   * Libraries to detect the Karate version from, scoped to the run's module when there is one.
+   *
+   * <p>A monorepo can hold modules on different Karate versions; a project-wide scan would see the
+   * v2 jars of one module and pick the v2 runner for all of them. But module scoping alone would
+   * regress setups that worked with the old project-wide scan - karate jars attached to a sibling
+   * module (root-module configurations, shared test-support modules) - by triggering the bundled
+   * fallback over the user's real Karate. So: when the module's own classpath has no karate jar at
+   * all, widen back to the project scan; module scoping only decides when the module actually has
+   * karate on it.
+   */
+  private VirtualFile[] karateLibraryRoots() {
+    Module module = getConfigurationModule().getModule();
+    if (module == null) {
+      return LibraryUtil.getLibraryRoots(getProject());
+    }
+    VirtualFile[] moduleRoots =
+      OrderEnumerator.orderEntries(module).recursively().librariesOnly().classes().getRoots();
+    if (moduleScanIsAuthoritative(Arrays.stream(moduleRoots).map(VirtualFile::getName))) {
+      return moduleRoots;
+    }
+    return LibraryUtil.getLibraryRoots(getProject());
+  }
+
+  /** The module scan decides only when the module actually has karate; otherwise widen to the project. */
+  static boolean moduleScanIsAuthoritative(java.util.stream.Stream<String> libraryNames) {
+    return libraryNames.anyMatch(n -> n.startsWith("karate-"));
+  }
+
+  /**
+   * Why the classpath the JVM would be launched with cannot run Karate, or null if it can. Checked
+   * before the bundled-Karate fallback, which would otherwise add its own jar and mask the problem.
+   */
+  static @Nullable String classpathProblem(List<String> classpathJarNames, @Nullable String moduleName) {
+    if (classpathJarNames.stream().anyMatch(n -> n.startsWith("karate-"))) {
+      return null;
+    }
+    if (moduleName == null) {
+      return "This feature file is not inside any module, so the run has no classpath. Open the project "
+        + "folder (not just the pom.xml or build file), or re-import the project from the Maven/Gradle tool "
+        + "window, and run again.";
+    }
+    return "Module '" + moduleName + "' has no Karate on its classpath, so the run would fail with \"Must "
+      + "have karate-core on the classpath\". Add karate-junit5 (Karate 1) or karate-junit6 (Karate 2) to "
+      + "the module, or run the feature from a module that has it.";
+  }
+
+  /**
+   * Fails the run only when the version override cannot possibly work: pinning V1 on a classpath that
+   * has Karate 2 and no Karate 1, or V2 on one that has Karate 1 and no Karate 2.
+   *
+   * <p>Without this the run still fails, just incomprehensibly: forcing V1 onto a Karate 2 module
+   * sends it down the v1 path, which reflects on {@code com.intuit.karate.RuntimeHook} - a class
+   * Karate 2 removed - and reports "Must have karate-core on the classpath", even though karate-core
+   * is right there and it is the setting that is wrong. AUTO never reaches this.
+   *
+   * <p>When both majors are visible (a stale transitive karate-core 2.x on a v1 module, or a module
+   * mid-migration), or when the jar names say nothing about the version (unversioned local jars), the
+   * pin is the user's word and wins - that is what the setting is for.
+   */
+  static void checkVersionOverrideMatchesClasspath(
+    KarateSettingsState.KarateVersionPreference preference, List<String> libraryNames)
+    throws ExecutionException {
+    boolean hasKarate2 = libraryNames.stream().anyMatch(KarateRunConfiguration::isKarate2Jar);
+    boolean hasKarate1 = libraryNames.stream().anyMatch(KarateRunConfiguration::isKarate1Jar);
+    if (preference == KarateSettingsState.KarateVersionPreference.V1 && hasKarate2 && !hasKarate1) {
+      throw new ExecutionException(
+        "Karate version is pinned to V1 in Settings > Tools > Karate, but this module's classpath "
+          + "only has Karate 2. Set it back to AUTO, or to V2, to run this feature.");
+    }
+    if (preference == KarateSettingsState.KarateVersionPreference.V2 && hasKarate1 && !hasKarate2) {
+      throw new ExecutionException(
+        "Karate version is pinned to V2 in Settings > Tools > Karate, but this module's classpath "
+          + "only has Karate 1 (expected karate-core 2.x or karate-junit6). Set it back to AUTO, or to "
+          + "V1, to run this feature.");
+    }
+  }
+
+  /**
+   * Decides whether to drive Karate 2.x. Honors the settings override; on AUTO, detects
+   * Karate 2 from library jar names (karate-junit5 was renamed to karate-junit6 in v2).
+   */
+  public static boolean isKarateV2(KarateSettingsState.KarateVersionPreference preference,
+    java.util.stream.Stream<String> libraryNames) {
+    if (preference == KarateSettingsState.KarateVersionPreference.V1) {
+      return false;
+    }
+    if (preference == KarateSettingsState.KarateVersionPreference.V2) {
+      return true;
+    }
+    return libraryNames.anyMatch(KarateRunConfiguration::isKarate2Jar);
+  }
+
+  /** karate-core/karate-junit6 2.x, or a karate-junit6 jar of any version - that artifact only exists in v2. */
+  static boolean isKarate2Jar(String name) {
+    return name.matches("karate-(core|junit6)-2\\..*") || name.matches("karate-junit6(-.*)?\\.jar");
+  }
+
+  /** karate-core/karate-junit5 1.x, or a karate-junit5 jar of any version - that artifact only exists in v1. */
+  static boolean isKarate1Jar(String name) {
+    return name.matches("karate-(core|junit5)-1\\..*") || name.matches("karate-junit5(-.*)?\\.jar");
+  }
+
   @Override public void checkConfiguration() {
   }
 
@@ -201,7 +340,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     element.setAttribute("preferredTest", preferredTest.name);
     element.setAttribute("parallelism", Optional.ofNullable(parallelism).orElse(
       Optional.ofNullable(KarateSettingsState.getInstance().getDefaultParallelism()).map(String::valueOf).orElse("1")));
-    element.setAttribute("allInFolderAreFeature", String.valueOf(allInFolderAreFeature));
+    element.setAttribute("folderHasFeatures", String.valueOf(folderHasFeatures));
     element.setAttribute("relPath", Optional.ofNullable(relPath).orElse(""));
     super.writeExternal(element);
   }
@@ -221,7 +360,9 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
       Arrays.stream(PreferredTest.values()).filter(s -> s.name.equals(element.getAttributeValue("preferredTest")))
         .findFirst().orElse(PreferredTest.WHOLE_FILE);
     parallelism = element.getAttributeValue("parallelism");
-    allInFolderAreFeature = Boolean.parseBoolean(element.getAttributeValue("allInFolderAreFeature"));
+    folderHasFeatures = Boolean.parseBoolean(element.getAttributeValue("folderHasFeatures"))
+      // the attribute's name before the rule widened from "only features" to "any features"
+      || Boolean.parseBoolean(element.getAttributeValue("allInFolderAreFeature"));
     relPath = element.getAttributeValue("relPath");
   }
 

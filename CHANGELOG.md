@@ -4,24 +4,30 @@
 
 ## [Unreleased]
 
+Full details, architecture notes, and the complete change history: <https://github.com/RankWeis/uppercut>. What works, what's in progress, and what every setting means: <https://rankweis.github.io/uppercut/>
+
 ### Added
 
-- Support for IntelliJ IDEA 2026.2 (build 262.*)
+- **Karate 2.x support — early access.** Run Karate 2 (karate-junit6) tests from the IDE. The Karate version is detected per module from the classpath, so a repository can migrate one module at a time; Settings > Tools > Karate pins it if you'd rather choose. The test tree shows each scenario with its steps and their output, nests called features under the calling scenario, and navigates to the source feature on double-click. Karate 1.x is unchanged and remains the default for existing projects.
 
-### Modified
+  Early access means the run/report path is covered end to end but has less mileage than the Karate 1 support behind it. Debugging Karate 2 features is not wired up yet — breakpoints will not pause a v2 run. Please report anything that misbehaves.
 
-- Raised the minimum supported IntelliJ build from 253 to 261, as `PositionManager.isAcceptedFileType` is unavailable before 261
-- Replaced the deprecated `PositionManager.getAcceptedFileTypes` override in `KaratePositionManager` with `isAcceptedFileType`
-- Updated IntelliJ Platform Gradle Plugin from 2.16.0 to 2.18.1
-- Updated Java toolchain from 21 to 25 (required by IntelliJ 2026.2), including the Java version provisioned in all CI workflows
-- Replaced `org.apache.commons.collections.CollectionUtils` usage with standard Java equivalents
+  Note for Karate 2 projects: `karate-junit6` brings `slf4j-api` but no logging provider, so without logback on the module's test classpath Karate's console output is silent (`SLF4J(W): No SLF4J providers were found`). The plugin's step output doesn't depend on it; see the troubleshooting page for the one-line fix.
+- Completion for `karate.*` members (`karate.get`, `karate.call`, `karate.match`, …) inside feature-file JavaScript, matched to the Karate version on the module's classpath
+- Support for IntelliJ IDEA 2026.2; minimum supported build is now 261. There is no longer an upper compatibility bound, so the plugin stays installable on newer IDE releases instead of waiting for a compatibility release.
 
 ### Fixed
 
-- Security vulnerabilities and library updates.
-- Fixed run configurations resolving the wrong working directory and feature path when the protobuf Gradle plugin (or any plugin registering generated source roots such as `build/extracted-include-protos/test`) is present. Paths are now resolved from the content/source root that actually contains the feature file. (#321)
-- Run configurations are no longer offered for non-`.feature` files (e.g. JUnit `.java` test files); the Karate producer now only activates on Karate feature files.
-- Guarded the test runner against a missing `--working-dir` argument so it falls back to Karate's default working directory instead of failing.
+- Modern JavaScript in feature files was flagged as invalid and mis-highlighted in IDEs without the JavaScript plugin (IntelliJ IDEA Community). Optional chaining (`a?.b`, `a?.[k]`, `f?.()`), nullish coalescing and assignment (`??`, `??=`, `||=`, `&&=`), `class` / `extends` / `super` / `this`, `continue`, `void`, and BigInt literals (`10n`) are now recognized, as are reserved words used as property names or object keys (`a.default`, `{ class: 1 }`)
+- In IDEs without the JavaScript plugin, typing an opening backtick in feature-file JavaScript with no closing one made the editor's highlighting for that file spin at full CPU until the literal was closed
+- Debugging failed to start when any library path contained a space — including the default JDK location on Windows, `C:\Program Files\...` — with `URISyntaxException: Illegal character in opaque part`
+- Feature path resolution with generated source roots, e.g. the protobuf Gradle plugin (#321)
+- Run configurations offered on non-`.feature` files
+- The `form`, `multipart`, and `soap` step actions never highlighted or completed
+- Running a feature before the project import finishes now says so, instead of failing with "Must have karate-core on the classpath"
+- Right-clicking a folder that holds feature files next to their JUnit runner class - Karate's standard layout - offered no Karate run in Gradle projects, only Gradle's "Tests in '...'". The Karate run now takes that folder's entry; the runner class itself stays runnable from its own gutter
+- Running a feature that isn't inside any module - a project opened from its `pom.xml` rather than imported, or a symlinked project path - now says so up front, instead of launching a JVM with no classpath and failing with "Must have karate-core on the classpath"
+- Security vulnerabilities and library updates
 
 ## [2.5.2] - 2026-03-23
 

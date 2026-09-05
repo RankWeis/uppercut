@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Uppercut is an IntelliJ IDEA plugin providing comprehensive IDE support for the **Karate testing framework**. It adds syntax highlighting, code completion, debugging, navigation, inspections, and run configurations for `.feature` (Karate/Gherkin) and `.featurejs` (KarateJs) files.
+Uppercut is an IntelliJ IDEA plugin providing comprehensive IDE support for the **Karate testing framework**. It adds syntax highlighting, code completion, debugging, navigation, inspections, and run configurations for `.feature` (Karate/Gherkin) files. The `.featurejs` file type is a diagnostic hook, not a Karate file type: it hands a whole file to the embedded KarateJs parser so the JavaScript engine can be exercised in isolation from the Gherkin lexer.
 
 - **Plugin ID:** `com.rankweis`
 - **Group:** `com.rankweis.uppercut`
@@ -37,8 +37,6 @@ Uppercut is an IntelliJ IDEA plugin providing comprehensive IDE support for the 
 # Verify plugin compatibility
 ./gradlew verifyPlugin
 
-# Generate JavaScript lexer from JFlex grammar
-./gradlew generateLexer
 ```
 
 Tests in CI run under `xvfb` for headless display:
@@ -56,7 +54,7 @@ xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" ./gradlew check
 Key version properties are in `gradle.properties`:
 - `pluginVersion` - Current plugin version (SemVer)
 - `platformVersion` - Target IntelliJ platform version
-- `pluginSinceBuild` / `pluginUntilBuild` - Compatibility range
+- `pluginSinceBuild` - Minimum supported build. There is deliberately no `until-build` (see the `ideaVersion` block in `build.gradle.kts`)
 - `karateVersion` - Karate framework version (1.5.1)
 
 Dependency versions are managed in `gradle/libs.versions.toml`.
@@ -97,8 +95,10 @@ uppercut/
 │   │   └── testData/             # Test fixture files (.feature)
 │   ├── integrationTest/          # IDE integration tests (IDE Starter + Driver)
 │   └── platformTest/             # Platform compatibility tests
+├── site/                         # User docs (GitHub Pages): what works, status by Karate version, settings
 └── .github/workflows/
     ├── build.yml                 # CI: build, test, verify, draft release
+    ├── docs.yml                  # Publish site/ to https://rankweis.github.io/uppercut/
     ├── release.yml               # Publish to JetBrains Marketplace
     ├── contrib.yml               # Contributor attribution
     └── run-ui-tests.yml          # Cross-platform UI tests
@@ -186,9 +186,9 @@ Inline suppression is available via comments:
 5. **Cached Values:** `CachedValuesManager` for expensive computations in PSI
 6. **Smart Pointers:** `SmartPsiElementPointer` for safe PSI element references
 
-### Generated Code
+### The embedded JavaScript engine
 
-The JavaScript lexer is generated from `src/main/java/io/karatelabs/js/js.jflex` via the GrammarKit plugin. Run `./gradlew generateLexer` to regenerate. Do not manually edit the generated `Lexer.java` in `src/main/java/io/karatelabs/js/`.
+`src/main/java/io/karatelabs/js/` is a hand-written port of the karate-js lexer and parser (it replaced an earlier JFlex-generated lexer; there is no `.jflex` source any more, and nothing regenerates these files). It is used only when the IntelliJ JavaScript plugin is absent, and only to lex and parse - `Interpreter.java` and friends are unused. Edit `Lexer.java`, `Parser.java`, `Token.java` and `Type.java` directly; `.claude/skills/karate-version-parity/` describes how to keep the token set in step with karate-js, and `KarateJsModernSyntaxTest` is the unit-level guard.
 
 ## Testing
 
@@ -257,6 +257,10 @@ Key dependencies (see `gradle/libs.versions.toml` and `gradle.properties`):
 | GrammarKit | 2022.3.2.2 | Lexer/parser generation |
 | Kotlin | 2.2.10 | Kotlin support |
 
+## User docs
+
+`site/` is the user-facing documentation, published by `.github/workflows/docs.yml` and linked from the top of every version's Marketplace change notes (the link is prepended in `build.gradle.kts`, not written in CHANGELOG.md). Written for plugin users, not contributors: features in their terms, a support-status matrix per Karate version, a settings reference, and the messages the plugin emits. When a change alters what works, what a setting means, or a message a user sees, update `site/status.md`, `site/settings.md` or `site/troubleshooting.md` alongside the changelog entry.
+
 ## Changelog
 
 Update `CHANGELOG.md` for every major change. Add entries under the `## [Unreleased]` section using [Keep a Changelog](https://keepachangelog.com) format (`### Added`, `### Fixed`, `### Modified`, etc.). The CI deploy action handles version bumping and release — do not manually create version entries.
@@ -277,8 +281,9 @@ Update `CHANGELOG.md` for every major change. Add entries under the `## [Unrelea
 3. Register element type in the parser/element type definitions
 4. Update the visitor if needed (`GherkinElementVisitor`)
 
-### Modifying the JavaScript Lexer
+### Modifying the JavaScript Lexer or Parser
 
-1. Edit `src/main/java/io/karatelabs/js/js.jflex`
-2. Run `./gradlew generateLexer`
-3. The generated `Lexer.java` will be placed in `src/main/java/io/karatelabs/js/`
+1. Add the token to `Token.java` (mark it `keyword` if it is a reserved word) and teach `Lexer.java` to produce it - longest match first, and check `updateRegexAllowed`
+2. Add the grammar rule to `Parser.java` (and a node type to `Type.java` if it needs one)
+3. Map the token in `highlight/KarateJsHighlighter.java`
+4. Cover it in `KarateJsModernSyntaxTest` and in a `.feature` fixture under `src/test/testData/` that `KarateJsHighlightTest` loads

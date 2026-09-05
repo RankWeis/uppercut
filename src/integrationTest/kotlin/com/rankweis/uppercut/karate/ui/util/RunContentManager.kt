@@ -39,32 +39,63 @@ interface RunContentDescriptor {
     fun getExecutionConsole(): ExecutionConsoleRef?
 }
 
-@Remote("com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView")
+// The test runner classes are no longer in the core classloader: they ship in the implementation-detail
+// plugin `intellij.testRunner.plugin`, so @Remote has to name the owning plugin/module or the driver
+// answers "No such class ... in plugin null".
+private const val TEST_RUNNER_MODULE = "intellij.testRunner.plugin/intellij.platform.testRunner"
+private const val SM_RUNNER_MODULE = "intellij.testRunner.plugin/intellij.platform.smRunner"
+
+@Remote("com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView", plugin = TEST_RUNNER_MODULE)
 interface BaseTestConsoleViewRef : ExecutionConsoleRef {
     fun getConsole(): ConsoleViewRef
     fun getPrinter(): TestsOutputConsolePrinterRef;
 }
 
-@Remote("com.intellij.execution.testframework.ui.TestsOutputConsolePrinterRef")
+@Remote("com.intellij.execution.testframework.ui.TestsOutputConsolePrinter", plugin = TEST_RUNNER_MODULE)
 interface TestsOutputConsolePrinterRef {
     fun getConsole(): ConsoleViewRef
 }
 
-@Remote("com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView")
+@Remote("com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView", plugin = SM_RUNNER_MODULE)
 interface SMTRunnerConsoleViewRef : ConsoleViewRef {
     fun getConsole(): ConsoleViewRef
     fun getPrinter(): TestsOutputConsolePrinterRef;
     fun getResultsViewer(): SMTestRunnerResultsFormRef
 }
 
-@Remote("com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm")
+@Remote("com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm", plugin = SM_RUNNER_MODULE)
 interface SMTestRunnerResultsFormRef {
     fun getIgnoredTestCount(): Int
     fun getFinishedTestCount(): Int
     fun getFailedTestCount(): Int
+
+    /** Root of the test tree; walk [SMTestProxyRef.getChildren] to assert on node names and status. */
+    fun getTestsRootNode(): SMTestProxyRef
 }
 
-@Remote("com.intellij.ui.ConsoleView")
+/** A node in the test tree - a feature (suite) or a scenario (test), depending on depth. */
+@Remote("com.intellij.execution.testframework.sm.runner.SMTestProxy", plugin = SM_RUNNER_MODULE)
+interface SMTestProxyRef {
+    fun getName(): String?
+    fun getPresentableName(): String?
+    fun getChildren(): List<SMTestProxyRef>
+    fun isPassed(): Boolean
+    fun isDefect(): Boolean
+    fun isSuite(): Boolean
+    fun getErrorMessage(): String?
+    fun getStacktrace(): String?
+
+    /** The locationHint we emitted, resolved by the framework - "file://<path>:<line>" when navigable. */
+    fun getLocationUrl(): String?
+}
+
+/** Console text, for asserting on what the run actually printed. */
+@Remote("com.intellij.execution.impl.ConsoleViewImpl")
+interface ConsoleViewImplRef {
+    fun getText(): String
+}
+
+@Remote("com.intellij.execution.ui.ConsoleView")
 interface ConsoleViewRef : ExecutionConsoleRef {
 }
 

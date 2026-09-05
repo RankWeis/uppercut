@@ -30,6 +30,8 @@ import static io.karatelabs.js.Token.WS;
 import static io.karatelabs.js.Token.WS_LF;
 import static io.karatelabs.js.Type.ASSIGN_EXPR;
 import static io.karatelabs.js.Type.BLOCK;
+import static io.karatelabs.js.Type.CLASS_EXPR;
+import static io.karatelabs.js.Type.CLASS_MEMBER;
 import static io.karatelabs.js.Type.FN_EXPR;
 import static io.karatelabs.js.Type.LIT_OBJECT;
 import static io.karatelabs.js.Type.LOGIC_EXPR;
@@ -72,7 +74,7 @@ public class KarateJsBlock implements ASTBlock {
     getElements(R_CURLY, L_CURLY).toArray(IElementType[]::new));
 
   private static final TokenSet BLOCKS_TO_INDENT_CHILDREN = TokenSet.create(
-    getTypes(BLOCK, LIT_OBJECT).toArray(IElementType[]::new));
+    getTypes(BLOCK, LIT_OBJECT, CLASS_EXPR).toArray(IElementType[]::new));
 
   private static final TokenSet BLOCKS_TO_NOT_LINE_FEED_BEFORE =
     TokenSet.create(getTypes(L_CURLY).toArray(IElementType[]::new));
@@ -81,7 +83,11 @@ public class KarateJsBlock implements ASTBlock {
     TokenSet.create(getTypes(FN_EXPR).toArray(IElementType[]::new));
 
   private static final TokenSet BLOCKS_TO_LINE_FEED_AFTER = TokenSet.create(
-    getType(STATEMENT), getElement(L_COMMENT), getElement(B_COMMENT), getType(FN_EXPR));
+    getType(STATEMENT), getElement(L_COMMENT), getElement(B_COMMENT), getType(FN_EXPR), getType(CLASS_MEMBER));
+
+  // the `{` of these opens a body whose first child starts on a new line
+  private static final TokenSet BODIES = TokenSet.create(
+    getTypes(BLOCK, CLASS_EXPR).toArray(IElementType[]::new));
 
   private static final TokenSet BLOCKS_TO_SPACE;
 
@@ -248,10 +254,20 @@ public class KarateJsBlock implements ASTBlock {
       spaces = 1;
     }
 
+    // a class method is CLASS_MEMBER -> [modifiers...] name FN_EXPR, where the FN_EXPR is the
+    // `(args) { body }` part. It stays glued to its name: no space, and none of the line feed a
+    // top-level FN_EXPR gets.
+    boolean methodBody = elem2 == getType(FN_EXPR) && node2.getTreeParent() != null
+      && node2.getTreeParent().getElementType() == getType(CLASS_MEMBER);
+    if (methodBody) {
+      makeChange = true;
+      spaces = 0;
+    }
+
     int lineFeeds = 0;
-    if ((BLOCKS_TO_LINE_FEED_BEFORE.contains(elem2)
+    if (((BLOCKS_TO_LINE_FEED_BEFORE.contains(elem2) && !methodBody)
       || (BLOCKS_TO_LINE_FEED_AFTER.contains(elem1) && elem2 != getElement(L_COMMENT))
-      || (elem1 == getElement(L_CURLY) && node1.getTreeParent().getElementType() == getType(BLOCK)))
+      || (elem1 == getElement(L_CURLY) && BODIES.contains(node1.getTreeParent().getElementType())))
       && !(elem1 == getType(STATEMENT) && (elem2 == getElement(ELSE)))) {
       makeChange = true;
       lineFeeds = 1;
