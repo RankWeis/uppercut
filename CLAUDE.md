@@ -11,7 +11,7 @@ Uppercut is an IntelliJ IDEA plugin providing comprehensive IDE support for the 
 
 ## Build System
 
-**Gradle 8.13** with Kotlin DSL (`build.gradle.kts`). Uses the Gradle wrapper (`./gradlew`).
+**Gradle 9.7** with Kotlin DSL (`build.gradle.kts`) and the IntelliJ Platform Gradle Plugin 2.x. Uses the Gradle wrapper (`./gradlew`).
 
 ### Key Commands
 
@@ -28,8 +28,8 @@ Uppercut is an IntelliJ IDEA plugin providing comprehensive IDE support for the 
 # Run platform tests (JUnit Vintage engine)
 ./gradlew platformTest
 
-# Run integration tests (requires prepareSandbox)
-./gradlew integrationTest
+# Run the IDE integration tests (boots a real IntelliJ; see .claude/skills/ide-integration-tests/)
+./gradlew integrationTest --tests com.rankweis.uppercut.karate.ui.Karate2UITest
 
 # Launch IntelliJ with the plugin loaded for manual testing
 ./gradlew runIde
@@ -58,7 +58,8 @@ Key version properties are in `gradle.properties`:
 - `pluginVersion` - Current plugin version (SemVer)
 - `platformVersion` - Target IntelliJ platform version
 - `pluginSinceBuild` - Minimum supported build. There is deliberately no `until-build` (see the `ideaVersion` block in `build.gradle.kts`)
-- `karateVersion` - Karate framework version (1.5.1)
+- `karateVersion` - Karate 1.x version bundled as the v1 fallback runner (1.5.1). Karate 2 is never bundled; the v2 path reflects on whatever `karate-core` 2.x the user's module has
+- `logbackVersion` - logback used by the plugin itself
 
 Dependency versions are managed in `gradle/libs.versions.toml`.
 
@@ -77,14 +78,12 @@ uppercut/
 │   └── build.gradle.kts
 ├── src/
 │   ├── main/
-│   │   ├── kotlin/               # Main source (mostly Java despite the path)
+│   │   ├── java/
 │   │   │   ├── com/rankweis/uppercut/
-│   │   │   │   ├── karate/       # Core plugin logic
-│   │   │   │   ├── parser/       # AST parsing utilities
-│   │   │   │   ├── settings/     # Plugin settings UI & persistence
-│   │   │   │   └── util/         # General utilities
-│   │   │   └── io/karatelabs/js/ # JavaScript language support + JFlex grammar
-│   │   ├── java/io/karatelabs/js/# Generated lexer output (js.jflex source also here)
+│   │   │   │   ├── karate/       # Core plugin logic (packages below)
+│   │   │   │   ├── help/         # WebHelpProvider: routes IDE context help to the docs site
+│   │   │   │   └── settings/     # Plugin settings UI & persistence
+│   │   │   └── io/karatelabs/js/ # Embedded JS lexer/parser (hand-written port of karate-js)
 │   │   └── resources/
 │   │       ├── META-INF/
 │   │       │   ├── plugin.xml        # Main plugin descriptor
@@ -94,13 +93,14 @@ uppercut/
 │   │       ├── messages/         # Localization bundles
 │   │       └── i18n.json         # Internationalization keywords
 │   ├── test/                     # Unit tests
-│   │   ├── kotlin/               # Test classes
+│   │   ├── java/                 # Test classes
 │   │   └── testData/             # Test fixture files (.feature)
-│   ├── integrationTest/          # IDE integration tests (IDE Starter + Driver)
-│   └── platformTest/             # Platform compatibility tests
+│   └── integrationTest/kotlin/   # IDE integration tests (IDE Starter + Driver) - the only Kotlin in the repo
+├── testProjects/karate-versions/ # Standalone Gradle fixture (NOT in settings.gradle.kts): v1 + v2 modules
 ├── site/                         # User docs (GitHub Pages): what works, status by Karate version, settings
+├── docs/                         # Contributor notes: Karate 2 design/handoff, manual checklist, risk register
 └── .github/workflows/
-    ├── build.yml                 # CI: build, test, verify, draft release
+    ├── build.yml                 # CI: build, test, integration-test, verify, draft release
     ├── docs.yml                  # Publish site/ to https://rankweis.github.io/uppercut/
     ├── release.yml               # Publish to JetBrains Marketplace
     ├── contrib.yml               # Contributor attribution
@@ -116,7 +116,7 @@ uppercut/
 | `psi/parser/` | Parser builders (KarateJs parser) |
 | `psi/annotator/` | Syntax error annotations |
 | `psi/formatter/` | Code style settings providers |
-| `psi/structure/` | File structure view |
+| `structure/` | File structure view (public `StructureViewTreeElement` API - the platform's `PsiTreeElementBase` is not exposed to this plugin from 2026.2) |
 | `psi/refactoring/` | Rename/refactoring support |
 | `psi/i18n/` | Internationalization support |
 | `lexer/` | Lexer interface and implementations |
@@ -133,7 +133,7 @@ uppercut/
 | `intentions/` | Quick fix actions (ScenarioToOutline) |
 | `manipulator/` | PSI element manipulation |
 | `navigation/` | Go-to-definition, find references, symbol contributors |
-| `run/` | Run configurations, execution, console |
+| `run/` | Run configurations, execution, console. Two runner paths: v1 (`RuntimeHook` proxy + `<<UPPERCUT>>` logback appender + regex converter) and v2 (`KarateV2TestRunner` → `<<UPPERCUT-V2>>` JSON event lines → `KarateV2EventProcessor`); see `docs/KARATE2.md` |
 | `spellchecker/` | Spell checker integration |
 | `steps/` | Step definition reference and completion |
 | `steps/reference/` | Reference contributors for step definitions |
@@ -143,7 +143,7 @@ uppercut/
 
 ### Language Mix
 
-The project is **~98% Java, ~2% Kotlin** despite source living under `src/main/kotlin/`. Kotlin is used only for `MyBundle.kt` (resource bundle) and `CucumberStepDefinitionCreationContext.kt` (data class). New code should follow the existing language of the file being modified.
+Production and unit-test code is **all Java** (`src/main/java`, `src/test/java`). Kotlin exists only in `src/integrationTest/kotlin`, because the IDE Starter/Driver SDK is Kotlin-first. New code should follow the existing language of the source set.
 
 ### Style Rules
 
@@ -180,6 +180,14 @@ Inline suppression is available via comments:
 // CHECKSTYLE.SUPPRESS: CheckName for +N lines
 ```
 
+### Run configurations on folders
+
+`KarateRunConfigurationProducer.shouldReplace` returns true for any folder that directly holds a `.feature` file. It has to: Gradle's test producer replaces every competing configuration when tests run through Gradle (the default), and the platform keeps only one side, so without replacing back a Karate folder run is never offered on Karate's own layout (features beside their JUnit runner class under `src/test/java`). Folders with no features are left to the build tool. `KarateRunConfigurationProducerTest` pins both.
+
+### Refusing a run early
+
+`KarateRunConfiguration.createJavaParameters` refuses, with a message ending in the troubleshooting page's URL, before launching a JVM that cannot work: no libraries at all (import not finished), a feature outside any module, a module with no `karate-*` jar (`classpathProblem`), or a version pin the classpath cannot satisfy (`checkVersionOverrideMatchesClasspath`). Each message has a section on `site/troubleshooting.md`; keep them in step.
+
 ### Architecture Patterns
 
 1. **PSI (Program Structure Interface):** Core IntelliJ pattern. Interface + `Impl` class pairs for AST elements (e.g., `GherkinFile` / `GherkinFileImpl`)
@@ -199,18 +207,19 @@ Inline suppression is available via comments:
 
 | Suite | Source Set | Engine | Command |
 |-------|-----------|--------|---------|
-| Unit tests | `src/test/` | JUnit 5 + Vintage | `./gradlew test` |
-| Platform tests | `src/platformTest/` | JUnit Vintage | `./gradlew platformTest` |
-| Integration tests | `src/integrationTest/` | JUnit Jupiter | `./gradlew integrationTest` |
+| Unit tests | `src/test/` | JUnit 4 on the Vintage engine (both `BasePlatformTestCase` fixtures and plain `@Test` classes) | `./gradlew test` |
+| Platform tests | `src/platformTest/` (source set declared, currently empty) | JUnit Vintage | `./gradlew platformTest` |
+| Integration tests | `src/integrationTest/` | JUnit Jupiter + IDE Starter/Driver; `Karate2UITest` boots one IDE for its seven tests, `UppercutUITest` is `@Disabled` | `./gradlew integrationTest` |
 | UI tests | Via IDE Starter/Driver | Manual workflow | `.github/workflows/run-ui-tests.yml` |
 
 ### Test Conventions
 
-- Test classes extend `LightPlatformTestCase` or `ParsingTestCase` (IntelliJ test framework)
+- Tests that need PSI or a project extend `BasePlatformTestCase` (or `ParsingTestCase`, `FormatterTestCase`); those use `test*` method names because the IntelliJ base classes are JUnit 3-style. Pure logic (`KarateJsModernSyntaxTest`, `KarateV2EventProcessorTest`, `KarateVersionDetectionTest`) is plain JUnit 4 with `@Test` and descriptive names
+- Checkstyle runs on test sources too: `MethodName` pattern applies (suppress with `// CHECKSTYLE.SUPPRESS: MethodName for +1 lines` where a fixture base class forces a name), and `FormatterTestCase` derives the fixture file from the method name (`testJs_modern` → `js_modern.feature`)
 - Mocking with Mockito (`@Mock`, `MockitoAnnotations.openMocks(this)`)
 - Test data files (`.feature`) go in `src/test/testData/`
-- Test method names: `test*` prefix (JUnit 3/4 convention used by IntelliJ test base classes)
 - Class names: `*Test` suffix
+- Run-configuration producer tests build their context with `ConfigurationContext.createEmptyContextForLocation(new PsiLocation<>(project, module, element))` - `getFromContext(DataContext)` reads `PSI_ELEMENT_ARRAY`, not `PSI_ELEMENT`, and yields no location
 
 ### Running Tests Locally
 
@@ -237,8 +246,15 @@ JavaScript support is conditionally loaded via `plugin-withJs.xml` when the Inte
 Triggers on push to `main`/`ij-2024.2` and pull requests. Jobs:
 1. **Build** - Compile and create plugin artifact
 2. **Test** - Run `check` (excluding integration tests) with Kover code coverage
-3. **Verify** - IntelliJ Plugin Verifier for API compatibility
-4. **Release Draft** - Auto-create GitHub release draft (push to main only)
+3. **Integration tests** - `Karate2UITest` under xvfb; only on push, not pull requests
+4. **Verify** - IntelliJ Plugin Verifier against the newest release and newest EAP of the platform major (`pluginVerification` in `build.gradle.kts`; `-PpluginVerifierScope=all` for the full since-build range)
+5. **Release Draft** - Auto-create GitHub release draft (push to main only); gated on all four jobs above, integration tests included
+
+Caching: the IntelliJ platform and verifier IDEs are Gradle dependencies, cached by `setup-gradle`. The extracted copies (`caches/*/transforms`) are excluded everywhere and the verify job is read-only - the repository has a 10 GB cache budget, and caching the extracted IDEs per job blew past it and evicted everything.
+
+### Docs site (`.github/workflows/docs.yml`)
+
+Publishes `site/` to https://rankweis.github.io/uppercut/ on push to `main` when `site/**` changes, or by hand (`workflow_dispatch`). Requires Settings → Pages → Source: GitHub Actions on the repository.
 
 ### Release Pipeline (`.github/workflows/release.yml`)
 
@@ -250,15 +266,13 @@ Key dependencies (see `gradle/libs.versions.toml` and `gradle.properties`):
 
 | Dependency | Version | Purpose |
 |-----------|---------|---------|
-| IntelliJ Platform | 262.x (Ultimate) | IDE platform APIs |
-| Karate Core | 1.5.1 | Karate framework support |
-| Karate JUnit 5 | 1.5.1 | Karate test runner |
-| Logback | 1.5.6 | Logging |
-| Kodein DI | 7.26.1 | Dependency injection (integration tests) |
-| JUnit 5 | 5.13.4 | Testing |
-| Mockito | 5.19.0 | Mocking |
-| GrammarKit | 2022.3.2.2 | Lexer/parser generation |
-| Kotlin | 2.2.10 | Kotlin support |
+| IntelliJ Platform | `platformVersion` in `gradle.properties` (Ultimate) | IDE platform APIs |
+| Karate Core / JUnit 5 | `karateVersion` (1.5.1) | Bundled v1 fallback runner |
+| Logback | `logbackVersion` | Logging |
+| Kodein DI | `libs.versions.toml` | Dependency injection (integration tests) |
+| JUnit Jupiter / Platform, JUnit 4, Mockito, Kotlin, GrammarKit | `gradle/libs.versions.toml` | Testing, integration-test language, build |
+
+Versions are pinned in those two files and bumped by dependabot; the table names where to look rather than repeating numbers that go stale.
 
 ## User docs
 

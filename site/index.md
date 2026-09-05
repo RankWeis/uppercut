@@ -8,6 +8,8 @@ nav_order: 1
 Uppercut makes `.feature` files first-class in IntelliJ IDEA. It works in IDEA Community and Ultimate, from 2026.1 on, with **Karate 1.x fully supported** and **Karate 2.x in early access** since version 3.0.0.
 {: .fs-5 }
 
+Free and open source under Apache 2.0 - no account, no license key, no paid tier. The [source is on GitHub](https://github.com/RankWeis/uppercut); issues and pull requests are welcome.
+
 [Support status](status){: .btn .btn-primary } [Settings reference](settings){: .btn } [Troubleshooting](troubleshooting){: .btn }
 
 ## Full Karate syntax support
