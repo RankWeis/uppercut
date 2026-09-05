@@ -2,7 +2,7 @@
 <idea-plugin>
   <id>com.rankweis</id>
   <name>uppercut</name>
-  <vendor>rankweis</vendor>
+  <vendor url="https://rankweis.github.io/uppercut/">rankweis</vendor>
 
   <depends>com.intellij.modules.platform</depends>
   <depends optional="true" config-file="plugin-withJs.xml">JavaScript</depends>
@@ -65,6 +65,8 @@
       implementationClass="com.rankweis.uppercut.karate.psi.refactoring.KarateRefactorSupportProvider"/>
     <colorSettingsPage
       implementation="com.rankweis.uppercut.karate.highlight.GherkinColorsPage"/>
+
+    <webHelpProvider implementation="com.rankweis.uppercut.help.UppercutWebHelpProvider"/>
 
     <projectConfigurable
       parentId="tools"

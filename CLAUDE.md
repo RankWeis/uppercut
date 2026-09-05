@@ -262,7 +262,7 @@ Key dependencies (see `gradle/libs.versions.toml` and `gradle.properties`):
 
 ## User docs
 
-`site/` is the user-facing documentation, published by `.github/workflows/docs.yml` and linked from the top of every version's Marketplace change notes (the link is prepended in `build.gradle.kts`, not written in CHANGELOG.md). Written for plugin users, not contributors: features in their terms, a support-status matrix per Karate version, a settings reference, and the messages the plugin emits. When a change alters what works, what a setting means, or a message a user sees, update `site/status.md`, `site/settings.md` or `site/troubleshooting.md` alongside the changelog entry.
+`site/` is the user-facing documentation, published by `.github/workflows/docs.yml` and linked from the top of every version's Marketplace change notes (the link is prepended in `build.gradle.kts`, not written in CHANGELOG.md). Written for plugin users, not contributors: features in their terms, a support-status matrix per Karate version, a settings reference, and the messages the plugin emits. When a change alters what works, what a setting means, or a message a user sees, update `site/status.md`, `site/settings.md` or `site/troubleshooting.md` alongside the changelog entry. The IDE links to it too: `UppercutWebHelpProvider` maps help topic `com.rankweis.<page>` to `<site>/<page>` (the Settings page's **?** button uses it), and `KarateRunConfiguration.TROUBLESHOOTING` is appended to every message that refuses a run - so page names on the site are part of the plugin's contract.
 
 ## Changelog
 

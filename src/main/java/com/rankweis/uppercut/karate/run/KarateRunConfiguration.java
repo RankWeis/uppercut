@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.intuit.karate.junit5.Karate;
+import com.rankweis.uppercut.help.UppercutWebHelpProvider;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import com.rankweis.uppercut.testrunner.KarateTestRunner;
 import java.io.File;
@@ -258,12 +259,15 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     if (moduleName == null) {
       return "This feature file is not inside any module, so the run has no classpath. Open the project "
         + "folder (not just the pom.xml or build file), or re-import the project from the Maven/Gradle tool "
-        + "window, and run again.";
+        + "window, and run again. " + TROUBLESHOOTING;
     }
     return "Module '" + moduleName + "' has no Karate on its classpath, so the run would fail with \"Must "
       + "have karate-core on the classpath\". Add karate-junit5 (Karate 1) or karate-junit6 (Karate 2) to "
-      + "the module, or run the feature from a module that has it.";
+      + "the module, or run the feature from a module that has it. " + TROUBLESHOOTING;
   }
+
+  /** Every message the plugin refuses a run with is explained on this page. */
+  static final String TROUBLESHOOTING = "See " + UppercutWebHelpProvider.SITE + "troubleshooting";
 
   /**
    * Fails the run only when the version override cannot possibly work: pinning V1 on a classpath that
@@ -286,13 +290,13 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     if (preference == KarateSettingsState.KarateVersionPreference.V1 && hasKarate2 && !hasKarate1) {
       throw new ExecutionException(
         "Karate version is pinned to V1 in Settings > Tools > Karate, but this module's classpath "
-          + "only has Karate 2. Set it back to AUTO, or to V2, to run this feature.");
+          + "only has Karate 2. Set it back to AUTO, or to V2, to run this feature. " + TROUBLESHOOTING);
     }
     if (preference == KarateSettingsState.KarateVersionPreference.V2 && hasKarate1 && !hasKarate2) {
       throw new ExecutionException(
         "Karate version is pinned to V2 in Settings > Tools > Karate, but this module's classpath "
           + "only has Karate 1 (expected karate-core 2.x or karate-junit6). Set it back to AUTO, or to "
-          + "V1, to run this feature.");
+          + "V1, to run this feature. " + TROUBLESHOOTING);
     }
   }
 
