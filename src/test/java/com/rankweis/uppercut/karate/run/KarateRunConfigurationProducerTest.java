@@ -28,7 +28,7 @@ public class KarateRunConfigurationProducerTest extends BasePlatformTestCase {
     assertNotNull("no Karate run offered on a folder holding a feature", fromContext);
     KarateRunConfiguration configuration = (KarateRunConfiguration) fromContext.getConfiguration();
     assertEquals("Karate tests in 'sample'", configuration.getName());
-    assertEquals(PreferredTest.ALL_IN_FOLDER, configuration.getPreferredTest());
+    assertEquals(KarateRunConfiguration.PreferredTest.ALL_IN_FOLDER, configuration.getPreferredTest());
     assertTrue("must displace the build tool's folder run, or it is dropped",
       new KarateRunConfigurationProducer().shouldReplace(fromContext, fromContext));
   }
