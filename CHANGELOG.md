@@ -4,7 +4,7 @@
 
 ## [Unreleased]
 
-Full details, architecture notes, and the complete change history: <https://github.com/RankWeis/uppercut>. What works, what's in progress, and what every setting means: <https://rankweis.github.io/uppercut/>
+## [3.0.0] - 2026-09-05
 
 ### Added
 
@@ -446,7 +446,8 @@ Full details, architecture notes, and the complete change history: <https://gith
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.5.2...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/rankweis/uppercut/compare/v2.5.2...v3.0.0
 [2.5.2]: https://github.com/rankweis/uppercut/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/rankweis/uppercut/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/rankweis/uppercut/compare/v2.4.16...v2.5.0
