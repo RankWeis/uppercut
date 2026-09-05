@@ -38,7 +38,6 @@ public class KarateCalledFeatureReferenceTest extends BasePlatformTestCase {
 
     GherkinStep bearerStep = stepContaining(orders, "auth.token");
     KarateReference token = referenceWithKey(bearerStep, "auth.token");
-    KarateReference auth = referenceWithKey(bearerStep, "auth");
 
     PsiElement tokenTarget = token.resolve();
     assertNotNull("auth.token should resolve into auth.feature", tokenTarget);
@@ -49,6 +48,7 @@ public class KarateCalledFeatureReferenceTest extends BasePlatformTestCase {
     // and, resolving, it is not soft - otherwise the step-definition reference over the whole line
     // outranks it and Cmd-hover underlines the entire step instead of `token`
     assertFalse(token.isSoft());
+    KarateReference auth = referenceWithKey(bearerStep, "auth");
     assertEquals("auth", ((KarateDeclaration) auth.resolve()).getName());
     assertEquals("orders.feature", auth.resolve().getContainingFile().getName());
   }
