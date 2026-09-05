@@ -34,8 +34,11 @@ Uppercut is an IntelliJ IDEA plugin providing comprehensive IDE support for the 
 # Launch IntelliJ with the plugin loaded for manual testing
 ./gradlew runIde
 
-# Verify plugin compatibility
+# Verify plugin compatibility against the newest release + newest EAP (what CI runs)
 ./gradlew verifyPlugin
+
+# ... against every supported major, since-build up to the newest EAP (before a release)
+./gradlew verifyPlugin -PpluginVerifierScope=all
 
 ```
 

@@ -212,7 +212,26 @@ intellijPlatform {
     }
     pluginVerification {
         ides {
-            recommended()
+            // Every push verifies against the newest release and the newest EAP of the platform major
+            // the plugin is built on - the two builds that can break it after it compiled - and
+            // nothing older: with no until-build, `recommended()` would otherwise add one ~1.2 GB IDE
+            // per major release from since-build up, forever. The full support range is one flag away
+            // for a release check by hand:
+            //
+            //   ./gradlew verifyPlugin -PpluginVerifierScope=all
+            //
+            if (properties("pluginVerifierScope").orNull == "all") {
+                recommended()
+            } else {
+                select {
+                    types = listOf(IntelliJPlatformType.IntellijIdeaUltimate)
+                    channels = listOf(ProductRelease.Channel.RELEASE, ProductRelease.Channel.EAP)
+                    // "2026.2" -> "262": the platform's own major build, so the list follows platformVersion
+                    sinceBuild = properties("platformVersion").map { v ->
+                        v.split('.').let { (year, minor) -> year.takeLast(2) + minor }
+                    }
+                }
+            }
         }
     }
 }

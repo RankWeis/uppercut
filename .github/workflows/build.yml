@@ -37,7 +37,6 @@ jobs:
     outputs:
       version: ${{ steps.properties.outputs.version }}
       changelog: ${{ steps.properties.outputs.changelog }}
-      pluginVerifierHomeDir: ${{ steps.properties.outputs.pluginVerifierHomeDir }}
     steps:
 
       # Check out the current repository
@@ -58,6 +57,12 @@ jobs:
       # Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
+        with:
+          # The extracted IntelliJ platform (caches/<gradle>/transforms) is ~1.4 GB per job and is
+          # re-created from the cached archive in under a minute; caching it as well blew the
+          # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
+          gradle-home-cache-excludes: |
+            caches/*/transforms
 
       # Set environment variables
       - name: Export Properties
@@ -69,7 +74,6 @@ jobs:
           CHANGELOG="$(./gradlew getChangelog --unreleased --no-header --console=plain -q)"
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "pluginVerifierHomeDir=~/.pluginVerifier" >> $GITHUB_OUTPUT
           
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
@@ -118,6 +122,12 @@ jobs:
       # Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
+        with:
+          # The extracted IntelliJ platform (caches/<gradle>/transforms) is ~1.4 GB per job and is
+          # re-created from the cached archive in under a minute; caching it as well blew the
+          # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
+          gradle-home-cache-excludes: |
+            caches/*/transforms
 
       # Run tests
       - name: Run Tests
@@ -174,6 +184,12 @@ jobs:
       # Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
+        with:
+          # The extracted IntelliJ platform (caches/<gradle>/transforms) is ~1.4 GB per job and is
+          # re-created from the cached archive in under a minute; caching it as well blew the
+          # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
+          gradle-home-cache-excludes: |
+            caches/*/transforms
 
       # The downloaded IDE and JDK dominate the runtime. The test boots the platformVersion from
       # gradle.properties, so hashing that file gives a fresh cache on a platform bump.
@@ -229,18 +245,21 @@ jobs:
       # Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
-
-      # IntelliJ will verify Plugin for us and this is a lot of downloading.
-      # Cache Plugin Verifier IDEs
-      - name: Setup Plugin Verifier IDEs Cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
-          key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
+          # The extracted IntelliJ platform (caches/<gradle>/transforms) is ~1.4 GB per job and is
+          # re-created from the cached archive in under a minute; caching it as well blew the
+          # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
+          gradle-home-cache-excludes: |
+            caches/*/transforms
+          # Read-only: the two verifier IDEs are ~2.4 GB of archives that change with every EAP
+          # build. Restoring another job's entry gives this one the platform and dependencies; the
+          # verifier IDEs are downloaded fresh each run rather than kept in the shared budget.
+          cache-read-only: true
 
-      # Run Verify Plugin task and IntelliJ Plugin Verifier tool
+      # The IDEs the verifier runs against are Gradle dependencies, downloaded here (see the cache
+      # note above). Which IDEs: see pluginVerification in build.gradle.kts.
       - name: Run Plugin Verification tasks
-        run: ./gradlew verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
+        run: ./gradlew verifyPlugin
 
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
