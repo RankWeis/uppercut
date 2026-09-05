@@ -4,7 +4,7 @@
 
 ## [Unreleased]
 
-Full details, architecture notes, and the complete change history: <https://github.com/RankWeis/uppercut>
+Full details, architecture notes, and the complete change history: <https://github.com/RankWeis/uppercut>. What works, what's in progress, and what every setting means: <https://rankweis.github.io/uppercut/>
 
 ### Added
 

@@ -95,8 +95,10 @@ uppercut/
 │   │   └── testData/             # Test fixture files (.feature)
 │   ├── integrationTest/          # IDE integration tests (IDE Starter + Driver)
 │   └── platformTest/             # Platform compatibility tests
+├── site/                         # User docs (GitHub Pages): what works, status by Karate version, settings
 └── .github/workflows/
     ├── build.yml                 # CI: build, test, verify, draft release
+    ├── docs.yml                  # Publish site/ to https://rankweis.github.io/uppercut/
     ├── release.yml               # Publish to JetBrains Marketplace
     ├── contrib.yml               # Contributor attribution
     └── run-ui-tests.yml          # Cross-platform UI tests
@@ -254,6 +256,10 @@ Key dependencies (see `gradle/libs.versions.toml` and `gradle.properties`):
 | Mockito | 5.19.0 | Mocking |
 | GrammarKit | 2022.3.2.2 | Lexer/parser generation |
 | Kotlin | 2.2.10 | Kotlin support |
+
+## User docs
+
+`site/` is the user-facing documentation, published by `.github/workflows/docs.yml` and linked from the top of every version's Marketplace change notes (the link is prepended in `build.gradle.kts`, not written in CHANGELOG.md). Written for plugin users, not contributors: features in their terms, a support-status matrix per Karate version, a settings reference, and the messages the plugin emits. When a change alters what works, what a setting means, or a message a user sees, update `site/status.md`, `site/settings.md` or `site/troubleshooting.md` alongside the changelog entry.
 
 ## Changelog
 

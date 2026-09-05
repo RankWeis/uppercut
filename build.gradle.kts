@@ -180,9 +180,13 @@ intellijPlatform {
             }
 
         val changelog = project.changelog // local variable for configuration cache compatibility
-        // Get the latest available change notes from the changelog file
+        // Get the latest available change notes from the changelog file. The docs link goes first in
+        // every version's notes here, rather than as a line in CHANGELOG.md that someone has to
+        // remember to keep.
         changeNotes = properties("pluginVersion").map { pluginVersion ->
-            with(changelog) {
+            val docsLink = "<p>What works, what's in progress, and what every setting means: " +
+                "<a href=\"https://rankweis.github.io/uppercut/\">rankweis.github.io/uppercut</a></p>\n"
+            docsLink + with(changelog) {
                 renderItem(
                     (getOrNull(pluginVersion) ?: getUnreleased())
                         .withHeader(false)

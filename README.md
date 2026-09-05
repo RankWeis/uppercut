@@ -7,6 +7,8 @@
 <!-- Plugin description -->
 This *100% free* IntelliJ plugin gives many useful upgrades to the usage of the Karate language.
 
+**Docs:** what works, what's in progress, and what every setting means: <https://rankweis.github.io/uppercut/>
+
 Features include 
 - Syntax highlighting
 - Go-To definitions/references

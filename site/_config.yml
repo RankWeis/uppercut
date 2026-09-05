@@ -1,0 +1,15 @@
+title: Uppercut
+description: Karate support for IntelliJ IDEA - what works, what is in progress, and what every setting means
+url: https://rankweis.github.io
+baseurl: /uppercut
+remote_theme: just-the-docs/just-the-docs
+plugins:
+  - jekyll-remote-theme
+color_scheme: dark
+search_enabled: true
+heading_anchors: true
+aux_links:
+  Plugin on JetBrains Marketplace: https://plugins.jetbrains.com/plugin/24736
+  Source on GitHub: https://github.com/RankWeis/uppercut
+  Report an issue: https://github.com/RankWeis/uppercut/issues
+footer_content: Apache 2.0. Uppercut is not affiliated with Karate Labs or JetBrains.
