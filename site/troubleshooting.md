@@ -12,6 +12,14 @@ The messages the plugin writes on purpose, what each one means, and what to do. 
 
 The run configuration's module has no libraries at all. Almost always the Gradle or Maven import hasn't finished, or it failed - check the Build tool window. Once the import is done, run again. (In earlier versions this launched anyway and died with the message below.)
 
+## "This feature file is not inside any module, so the run has no classpath"
+
+The IDE doesn't consider the feature part of any module, so there is nothing to build a classpath from. Usually the project was opened from its `pom.xml` or build file instead of being imported - open the project *folder*, or reload it from the Maven or Gradle tool window - and occasionally the project is open through a symlinked path that differs from the one the build tool reports. Either way, once the feature's directory belongs to a module, the run gets its classpath.
+
+## "Module '...' has no Karate on its classpath"
+
+The feature's module exists but declares no Karate dependency of its own. Add `karate-junit5` (Karate 1) or `karate-junit6` (Karate 2) to that module, or run the feature from the module that has it. The plugin no longer launches a run it knows will fail this way.
+
 ## "Must have karate-core on the classpath to use uppercut"
 
 The test JVM started but couldn't load Karate. Either the module really doesn't have `karate-core`, or the run went down the wrong path for the Karate it has - a `ClassNotFoundException: io.karatelabs.core.Runner` beneath it means the Karate 2 path was taken on a Karate 1 classpath, or the reverse. Check **Settings > Tools > Karate > Karate version**: on `AUTO`, make sure the module (not just a sibling) declares its Karate dependency; if you've pinned a version, pin the other one or go back to `AUTO`.

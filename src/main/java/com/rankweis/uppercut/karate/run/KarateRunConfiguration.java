@@ -32,6 +32,7 @@ import com.intuit.karate.junit5.Karate;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import com.rankweis.uppercut.testrunner.KarateTestRunner;
 import java.util.ArrayList;
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -106,6 +107,18 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
               + "tool window) and run again.");
         }
         List<String> libraryNames = Arrays.stream(libraryRoots).map(VirtualFile::getName).toList();
+        // The library scan above can see Karate through the project-wide library table while the
+        // classpath the JVM is about to get - built from the run configuration's module - has none
+        // of it. That happens when the feature file is not inside any module (a project opened from
+        // its pom.xml or build file rather than imported, or a symlinked project path). Refuse with
+        // the cause rather than launch into "Must have karate-core on the classpath".
+        List<String> classpathJars = params.getClassPath().getPathList().stream()
+          .map(path -> new File(path).getName()).toList();
+        Module module = getConfigurationModule().getModule();
+        String classpathProblem = classpathProblem(classpathJars, module == null ? null : module.getName());
+        if (classpathProblem != null) {
+          throw new ExecutionException(classpathProblem);
+        }
         KarateSettingsState.KarateVersionPreference preference =
           KarateSettingsState.getInstance().getKarateVersionPreference();
         checkVersionOverrideMatchesClasspath(preference, libraryNames);
@@ -231,6 +244,24 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   /** The module scan decides only when the module actually has karate; otherwise widen to the project. */
   static boolean moduleScanIsAuthoritative(java.util.stream.Stream<String> libraryNames) {
     return libraryNames.anyMatch(n -> n.startsWith("karate-"));
+  }
+
+  /**
+   * Why the classpath the JVM would be launched with cannot run Karate, or null if it can. Checked
+   * before the bundled-Karate fallback, which would otherwise add its own jar and mask the problem.
+   */
+  static @Nullable String classpathProblem(List<String> classpathJarNames, @Nullable String moduleName) {
+    if (classpathJarNames.stream().anyMatch(n -> n.startsWith("karate-"))) {
+      return null;
+    }
+    if (moduleName == null) {
+      return "This feature file is not inside any module, so the run has no classpath. Open the project "
+        + "folder (not just the pom.xml or build file), or re-import the project from the Maven/Gradle tool "
+        + "window, and run again.";
+    }
+    return "Module '" + moduleName + "' has no Karate on its classpath, so the run would fail with \"Must "
+      + "have karate-core on the classpath\". Add karate-junit5 (Karate 1) or karate-junit6 (Karate 2) to "
+      + "the module, or run the feature from a module that has it.";
   }
 
   /**

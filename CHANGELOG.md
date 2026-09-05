@@ -23,6 +23,7 @@ Full details, architecture notes, and the complete change history: <https://gith
 - Run configurations offered on non-`.feature` files
 - The `form`, `multipart`, and `soap` step actions never highlighted or completed
 - Running a feature before the project import finishes now says so, instead of failing with "Must have karate-core on the classpath"
+- Running a feature that isn't inside any module - a project opened from its `pom.xml` rather than imported, or a symlinked project path - now says so up front, instead of launching a JVM with no classpath and failing with "Must have karate-core on the classpath"
 - Security vulnerabilities and library updates
 
 ## [2.5.2] - 2026-03-23

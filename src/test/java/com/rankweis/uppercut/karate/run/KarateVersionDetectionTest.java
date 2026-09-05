@@ -1,6 +1,7 @@
 package com.rankweis.uppercut.karate.run;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -91,6 +92,19 @@ public class KarateVersionDetectionTest {
     assertFalse(KarateRunConfiguration.moduleScanIsAuthoritative(
       Stream.of("junit-jupiter-5.11.4.jar", "logback-classic-1.5.28.jar")));
     assertFalse(KarateRunConfiguration.moduleScanIsAuthoritative(Stream.of()));
+  }
+
+  @Test
+  public void classpathWithoutKarateIsRefusedWithTheCause() {
+    // The library scan may see Karate through the project-wide library table while the module's own
+    // classpath has none of it - a feature outside any module, or a project opened from its pom.xml.
+    assertNull(KarateRunConfiguration.classpathProblem(
+      List.of("karate-junit5-1.5.1.jar", "karate-core-1.5.1.jar"), "app.test"));
+    assertNull(KarateRunConfiguration.classpathProblem(List.of("karate-core-1.5.1.jar"), "app.test"));
+    String noModule = KarateRunConfiguration.classpathProblem(List.of("KarateTestRunner.jar"), null);
+    assertTrue(noModule, noModule.contains("not inside any module"));
+    String noKarate = KarateRunConfiguration.classpathProblem(List.of("junit-jupiter-5.11.4.jar"), "app.test");
+    assertTrue(noKarate, noKarate.contains("'app.test'") && noKarate.contains("karate-junit6"));
   }
 
   @Test
