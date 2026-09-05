@@ -5,6 +5,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -89,7 +90,7 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
       }
       if (holder != null) {
         preferredTest = PreferredTest.SINGLE_SCENARIO;
-        textOffset = holder.getTextOffset();
+        textOffset = scenarioKeywordOffset(holder);
       }
     }
     VirtualFile virtualFile = context.getLocation().getVirtualFile();
@@ -168,7 +169,7 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
       }
       if (holder != null) {
         preferredTest = PreferredTest.SINGLE_SCENARIO;
-        textOffset = holder.getTextOffset();
+        textOffset = scenarioKeywordOffset(holder);
       }
     }
 
@@ -216,6 +217,24 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
       return FileUtil.toSystemIndependentName(contentRoots[0].getPath());
     }
     return null;
+  }
+
+  /**
+   * The offset of the {@code Scenario:} (or Outline/Example/Background) keyword inside the holder.
+   *
+   * <p>The holder's own {@code getTextOffset()} points at the first tag when the scenario is tagged,
+   * because tags are children of the scenario PSI. Sending that line to Karate skips the scenario:
+   * Karate 1.x matches by {@code Scenario.line} - the keyword line - and reports "skipping scenario
+   * at line: N, needed: M" when the caller line doesn't equal it. So we walk to the keyword.
+   */
+  private static int scenarioKeywordOffset(@NotNull GherkinStepsHolder holder) {
+    for (ASTNode node = holder.getNode().getFirstChildNode(); node != null; node = node.getTreeNext()) {
+      IElementType type = node.getElementType();
+      if (KarateTokenTypes.SCENARIOS_KEYWORDS.contains(type) || type == KarateTokenTypes.BACKGROUND_KEYWORD) {
+        return node.getStartOffset();
+      }
+    }
+    return holder.getTextOffset();
   }
 
   private static @Nullable String getContentRootForFile(@NotNull Project project, @Nullable VirtualFile file) {

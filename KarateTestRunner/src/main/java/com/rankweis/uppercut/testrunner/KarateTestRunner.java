@@ -25,7 +25,9 @@ public class KarateTestRunner {
 
   void doTest() throws Exception {
     String[] testNames =
-      Optional.ofNullable(params.get("testname")).orElse(List.of()).stream().map(s -> "classpath:" + s).toList()
+      Optional.ofNullable(params.get("testname")).orElse(List.of()).stream()
+        .map(KarateTestRunner::withDefaultScheme)
+        .toList()
         .toArray(new String[0]);
     String[] workingDirectories =
       Optional.ofNullable(params.get("working-dir")).orElse(List.of()).stream().toList()
@@ -49,7 +51,7 @@ public class KarateTestRunner {
     Method mKarateEnv = clazz.getMethod("karateEnv", String.class);
     Method mDebug = clazz.getMethod("debugMode", boolean.class);
     if (tags.length > 0) {
-      invoke = mRun.invoke(invoke, new Object[]{workingDirectories});
+      invoke = mRun.invoke(invoke, new Object[]{tagScanRoots(params, workingDirectories)});
       invoke = mTags.invoke(invoke, new Object[]{tags});
     } else {
       invoke = mRun.invoke(invoke, new Object[]{testNames});
@@ -194,6 +196,15 @@ public class KarateTestRunner {
     }
   }
 
+  /**
+   * Keeps the older behaviour (bare names get {@code classpath:}) for run configs the plugin has
+   * always sent. New runs from the plugin arrive as {@code file:<abs>} so an edit is picked up on
+   * the next run without rebuilding {@code target/test-classes}; those are passed through as-is.
+   */
+  static String withDefaultScheme(String testname) {
+    return testname.startsWith("classpath:") || testname.startsWith("file:") ? testname : "classpath:" + testname;
+  }
+
   public void parseArgs(String[] args) {
     for (int i = 0; i < args.length; i += 2) {
       String key = args[i].toLowerCase();
@@ -215,6 +226,20 @@ public class KarateTestRunner {
         params.put(key, list);
       }
     }
+  }
+
+  /**
+   * The directories a tag run asks Karate to walk: the {@code --tag-root} values the IDE sends
+   * (the module's source and resource roots), or the working directory when there are none.
+   *
+   * <p>Walking the working directory also walks the build output, where Maven and Gradle keep a
+   * copy of every feature, and every tagged scenario ran twice. Older run configurations and
+   * callers outside the IDE send no roots and keep the working-directory behaviour.
+   */
+  static String[] tagScanRoots(Map<String, List<String>> params, String[] workingDirectories) {
+    List<String> roots = Optional.ofNullable(params.get("tag-root")).orElse(List.of())
+      .stream().filter(s -> !s.isBlank()).toList();
+    return roots.isEmpty() ? workingDirectories : roots.toArray(new String[0]);
   }
 
   /**

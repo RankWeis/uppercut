@@ -264,6 +264,12 @@ idea {
 }
 
 tasks {
+    // pluginName is the Marketplace display name and carries spaces; keep the distribution
+    // archive on the short, URL-friendly name so release asset URLs stay stable.
+    buildPlugin {
+        archiveBaseName = "uppercut"
+    }
+
     wrapper {
         gradleVersion = properties("gradleVersion").get()
     }

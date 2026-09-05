@@ -5,24 +5,39 @@
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/24736.svg)](https://plugins.jetbrains.com/plugin/24736)
 
 <!-- Plugin description -->
-This *100% free* IntelliJ plugin gives many useful upgrades to the usage of the Karate language.
+Full IDE support for the [Karate](https://github.com/karatelabs/karate) API testing framework — syntax
+highlighting, navigation, run/debug and formatting for `.feature` files. Free and open source, Apache 2.0.
 
 **Docs:** what works, what's in progress, and what every setting means: <https://rankweis.github.io/uppercut/>
 
-Features include 
-- Syntax highlighting
-- Go-To definitions/references
-- Running tests from intelliJ,
-- Embedded JSON, Javascript and XML support
-- Formatting
-- attaching a debugger to a running karate test.
+**Features**
 
-Karate 2.x (karate-junit6) is supported as **early access**: the version is detected per module, so a
-repository can migrate one module at a time, and Karate 1.x projects keep working exactly as before.
-Debugging Karate 2 features is not wired up yet.
+- **Syntax highlighting** for `.feature` files, including Karate-specific keywords and expressions.
+- **Embedded JSON, JavaScript and XML** — highlighting, completion and error checking *inside* the payloads in
+  your feature files, not just around them.
+- **Run tests from the editor** — click the gutter arrow on any feature or scenario, or build your own run
+  configurations. Results land in the standard test runner window, step by step.
+- **Attach a debugger** to a running Karate test and step through it (Karate 1.x only). Breakpoints hit
+  and execution pauses, but stepping lands in Karate's Java internals rather than in your feature file.
+- **Go to definition and find usages** across feature files — ctrl-click a `call` to open the called
+  feature, or a variable read from its result to land on the `def` inside it. Find usages works in both
+  directions.
+- **Formatting** for feature files, wired to the usual reformat action.
 
-This project is open sourced via the Apache Commons 2.0 license and is a **work in progress**. 
-Please report bugs and issues so we can make this plugin something we all enjoy using.
+**Why Uppercut**
+
+Uppercut is a free, open source alternative to the official Karate IntelliJ plugin, released under the
+Apache License 2.0 — no license key, no seat management, no EULA to route through legal. Install it on
+every machine on the team, including contractors and short-term hires.
+
+**Karate 2.x — early access**
+
+Karate 2.x (`karate-junit6`) is supported as early access. The version is detected per module from the
+classpath, so a repository can migrate one module at a time, and Karate 1.x projects keep working exactly as
+before. Debugging Karate 2 features is not wired up yet.
+
+**Work in progress.** Please [report bugs and feature requests](https://github.com/rankweis/uppercut/issues) so
+we can make this plugin something we all enjoy using.
 
 <!-- Plugin description end -->
 
@@ -79,7 +94,7 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
 
 ## Contributors
 
-<!-- readme: contributors -start -->
+<!-- readme: contributors,-claude -start -->
 <table>
 	<tbody>
 		<tr>
@@ -88,13 +103,6 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
                     <img src="https://avatars.githubusercontent.com/u/733691?v=4" width="100;" alt="RankWeis"/>
                     <br />
                     <sub><b>RankWeis</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/claude">
-                    <img src="https://avatars.githubusercontent.com/u/81847?v=4" width="100;" alt="claude"/>
-                    <br />
-                    <sub><b>Claude</b></sub>
                 </a>
             </td>
             <td align="center">

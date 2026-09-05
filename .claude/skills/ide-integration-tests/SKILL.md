@@ -8,6 +8,11 @@ description: Run and debug the IDE Starter/Driver UI tests (Karate2UITest, Upper
 These tests boot a real IntelliJ (IDE Starter), install the built plugin, and drive it (Driver).
 One run is ~45s in-IDE plus a ~4 GB first-time download into `out/ide-tests/`.
 
+`Karate2UITest` is the suite that matters: one IDE, seven ordered tests (v2 pass, v2 fail, v1,
+Scenario Outline, go-to-definition, version override, no plugin errors logged). `UppercutUITest`
+is `@Disabled` - it clicks. The IDE it boots is the `platformVersion` the plugin is built against
+(`useRelease(platformVersion())`), not the newest release.
+
 ## Running
 
 ```bash
@@ -38,11 +43,31 @@ Screenshots capture the **entire desktop**, not just the IDE - check before shar
 Two IDEs launch per run: a brief one that registers the JDK (`setupSdk`), then the real driver
 session. That is expected.
 
-`Karate2UITest` copies the fixture without `.idea`, `.gradle`, `build` and `out` - opening the
-fixture in an IDE by hand leaves a `.idea/gradle.xml` whose `gradleJvm` the starter IDE would reuse
-verbatim - and writes `org.gradle.java.home=<downloaded JDK>` into the copy's `gradle.properties`. Without it the IDE's Gradle sync picks its JVM from the project SDK (racing
-`setupSdk`) or `#JAVA_HOME` (unset in the IDE process on macOS) and fails with "Invalid Gradle JDK
-configuration found" - after which every run test fails with a one-entry classpath.
+## Fixture import — four ways it silently fails
+
+`Karate2UITest` opens a copy of `testProjects/karate-versions` in a fresh IDE and needs Gradle to
+import it. When import fails, all run tests fail with a one-entry classpath and a misleading
+`ClassNotFoundException` - read `idea.log` before trusting the assertion. Four failure modes are
+already wired around; watch for them if the fixture ever grows a new one.
+
+- **Auto-import race on Linux CI.** An unconditional `importGradleProject()` in `@BeforeAll` races
+  with the startup auto-import: on headless Linux the auto-import wins and finishes, and the
+  platform cancels the second sync ("Build cancelled" → "Gradle sync failed"). Fix: wait for the
+  auto-import's own indicators, check whether the v1/v2 modules exist (`driver.getModules()`), and
+  import explicitly only if not.
+- **Project-close race on macOS.** The same unconditional re-import collides with the project
+  rename mid-sync ("project is closed") and commits a model without the v1/v2 modules. Same fix as
+  above.
+- **`Invalid Gradle JDK configuration found` on macOS.** The IDE picks a linked project's Gradle
+  JVM from the project SDK (racing `setupSdk`), then `org.gradle.java.home`, then `$JAVA_HOME` -
+  which the IDE process on a Mac does not have. Two fixes, both needed: write
+  `org.gradle.java.home=<downloaded JDK>` into the fixture copy's `gradle.properties`, **and copy
+  the fixture without `.idea/`, `.gradle/`, `build/`, `out/`** - a gitignored `.idea/gradle.xml`
+  from opening the fixture in an IDE by hand carries a bad `gradleJvm=#JAVA_HOME` that the
+  starter would reuse verbatim.
+- **`cannot find resource: classpath:outline.feature` on macOS.** The temp dir is `/var/…`, a
+  symlink to `/private/var/…`; Gradle canonicalises roots, so the project index can't place the
+  feature under any module. `Files.createTempDirectory(...).toRealPath()`.
 
 ## Before guessing at xpaths: use the live hierarchy
 
@@ -84,6 +109,17 @@ and reach the driver through `run.driver`. A failure then names the behavior tha
 - **`@Remote` needs the owning module** for classes outside the core classloader, or the driver
   answers `No such class ... in plugin null`. Example:
   `@Remote("...SMTestProxy", plugin = "intellij.testRunner.plugin/intellij.platform.smRunner")`.
+- **Process exit is not console settled.** `ConsoleViewImpl.text` reads the editor document, which
+  fills from a deferred buffer on a timer, and the results form clears and reprints the console
+  when the finished run selects a node. A sub-second run can have `isProcessTerminated()` true and
+  an empty document. Poll for the text you expect (`waitFor { console.getText().contains(...) }`)
+  before asserting on it - `awaitResults` does.
+- **The test tree is not the Gradle tree.** If a run shows `SampleTest` → `testSample` → dynamic
+  test names, it went through Gradle's "Tests in ..." configuration, not the plugin. The plugin's
+  folder configuration is named "Karate tests in '<folder>'".
+- **Read `idea.log` before the assertion when every run test fails with a one-entry classpath.**
+  That shape always means the fixture did not import; the four failure modes are in the
+  "Fixture import" section above.
   Confirm a module name exists before guessing:
   `grep -o "intellij\.[a-zA-Z.]*" out/ide-tests/cache/builds/IU-*/product-info.json | sort -u`
 - **Attach process listeners the moment the run descriptor appears.** Attaching after the fact

@@ -4,16 +4,16 @@
 
 ## [Unreleased]
 
-## [3.0.0] - 2026-09-05
-
 ### Added
 
 - **Karate 2.x support — early access.** Run Karate 2 (karate-junit6) tests from the IDE. The Karate version is detected per module from the classpath, so a repository can migrate one module at a time; Settings > Tools > Karate pins it if you'd rather choose. The test tree shows each scenario with its steps and their output, nests called features under the calling scenario, and navigates to the source feature on double-click. Karate 1.x is unchanged and remains the default for existing projects.
 
-  Early access means the run/report path is covered end to end but has less mileage than the Karate 1 support behind it. Debugging Karate 2 features is not wired up yet — breakpoints will not pause a v2 run. Please report anything that misbehaves.
+  Early access means the run/report path is covered end to end but has less mileage than the Karate 1 support behind it. **Debugging Karate 2 features is not planned** — breakpoints on lines inside a `.feature` file are silently skipped on v2 (the console prints a one-line notice about this at debug launch); Java breakpoints in step-definition code still stop as normal. See the [debugging section of the status page](https://rankweis.github.io/uppercut/status#debugging) for the why. Please report anything else that misbehaves.
 
   Note for Karate 2 projects: `karate-junit6` brings `slf4j-api` but no logging provider, so without logback on the module's test classpath Karate's console output is silent (`SLF4J(W): No SLF4J providers were found`). The plugin's step output doesn't depend on it; see the troubleshooting page for the one-line fix.
-- Completion for `karate.*` members (`karate.get`, `karate.call`, `karate.match`, …) inside feature-file JavaScript, matched to the Karate version on the module's classpath
+- Completion for `karate.*` members (`karate.get`, `karate.call`, `karate.match`, …) after typing `karate.` on a step line, matched to the Karate version on the module's classpath
+- Go to declaration follows a `call read(...)`: on `auth.token`, where `auth` is `call read('auth.feature')`, `token` now jumps to the `def token` inside `auth.feature` instead of back to `auth`, and Find Usages on that `def` finds `auth.token` in the callers
+- The docs site is one click away from where you'd need it: the **?** button and a link on Settings > Tools > Karate open the settings reference, and every message the plugin refuses a run with ends with the troubleshooting page's address
 - Support for IntelliJ IDEA 2026.2; minimum supported build is now 261. There is no longer an upper compatibility bound, so the plugin stays installable on newer IDE releases instead of waiting for a compatibility release.
 
 ### Fixed
@@ -21,9 +21,14 @@
 - Modern JavaScript in feature files was flagged as invalid and mis-highlighted in IDEs without the JavaScript plugin (IntelliJ IDEA Community). Optional chaining (`a?.b`, `a?.[k]`, `f?.()`), nullish coalescing and assignment (`??`, `??=`, `||=`, `&&=`), `class` / `extends` / `super` / `this`, `continue`, `void`, and BigInt literals (`10n`) are now recognized, as are reserved words used as property names or object keys (`a.default`, `{ class: 1 }`)
 - In IDEs without the JavaScript plugin, typing an opening backtick in feature-file JavaScript with no closing one made the editor's highlighting for that file spin at full CPU until the literal was closed
 - Debugging failed to start when any library path contained a space — including the default JDK location on Windows, `C:\Program Files\...` — with `URISyntaxException: Illegal character in opaque part`
+- Debug on a Karate 1 scenario died with "Test framework quit unexpectedly" and no stack trace on macOS/2026.2. The run configuration was suppressing the platform's debugger-connection setup, leaving the launch on a fragile fallback path; it now uses the same setup any Java Application Debug does
+- Running (or debugging) a tagged scenario from the gutter or right-click ran zero scenarios and reported "Test framework quit unexpectedly": the producer picked the tag's line number, which Karate 1.x filters against the `Scenario:` keyword line and rejects. The run now points at the keyword line
+- Edits to a feature file were not picked up by the next run: the runner sent `classpath:<relative-path>`, which resolves against `target/test-classes` / `build/resources/test`, and those directories only refresh when the build tool runs `process-test-resources` / `processTestResources`. Runs from the gutter or right-click on a feature now use a `file:` URL to the source file, so the edit is always what runs. (Folder runs — right-click on a directory — still use the classpath form; that path stays subject to the build-tool refresh)
+- The **Debug port** field in the run-config UI ("Debug port (will suspend if set)") now works with IntelliJ's own debugger: the JVM listens on the pinned port with `server=y,suspend=y` and the IDE attaches there. Previously the port was patched into the JVM args in `startProcess` in a way that fought the platform's own port-0 auto-allocation - IntelliJ never attached, and only external tools (jdb, another IDE) could reach the port. Leave the field blank for the default behaviour (random port, IntelliJ attaches automatically)
 - Feature path resolution with generated source roots, e.g. the protobuf Gradle plugin (#321)
 - Run configurations offered on non-`.feature` files
 - The `form`, `multipart`, and `soap` step actions never highlighted or completed
+- Running by tag ran every feature twice in Maven and Gradle projects - once from `src/test/...` and once from the copy the build keeps under `target/test-classes` or `build/resources/test`. Tag runs now scan the module's source roots instead of the whole module directory
 - Running a feature before the project import finishes now says so, instead of failing with "Must have karate-core on the classpath"
 - Right-clicking a folder that holds feature files next to their JUnit runner class - Karate's standard layout - offered no Karate run in Gradle projects, only Gradle's "Tests in '...'". The Karate run now takes that folder's entry; the runner class itself stays runnable from its own gutter
 - Running a feature that isn't inside any module - a project opened from its `pom.xml` rather than imported, or a symlinked project path - now says so up front, instead of launching a JVM with no classpath and failing with "Must have karate-core on the classpath"
@@ -446,8 +451,7 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.0.0...HEAD
-[3.0.0]: https://github.com/rankweis/uppercut/compare/v2.5.2...v3.0.0
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.5.2...HEAD
 [2.5.2]: https://github.com/rankweis/uppercut/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/rankweis/uppercut/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/rankweis/uppercut/compare/v2.4.16...v2.5.0

@@ -1,27 +1,31 @@
 package com.rankweis.uppercut.karate.run;
 
-import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
+import com.intellij.debugger.impl.RemoteConnectionBuilder;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.impl.ConsoleViewUtil;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.intuit.karate.junit5.Karate;
+import com.rankweis.uppercut.help.UppercutWebHelpProvider;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import com.rankweis.uppercut.testrunner.KarateTestRunner;
 import java.io.File;
@@ -93,6 +98,21 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
 
     return new JavaApplicationCommandLineState<>(this, env) {
+      /**
+       * The RemoteConnection to hand to the debugger when the user pinned a debug port. Built and
+       * cached in {@link #createJavaParameters()} so the JVM args and the debugger's attach target
+       * agree on the same port; returned from {@link #createRemoteConnection} so the platform's
+       * port-0 auto-allocation fallback in {@code GenericDebuggerRunner.createContentDescriptor} is
+       * skipped in favour of ours. Null on Run, and on Debug when no port is pinned.
+       */
+      private RemoteConnection myFixedPortConnection;
+      /**
+       * True when the launch is going down the Karate 2 path; set in {@link #createJavaParameters()}
+       * (which resolves the Karate version from the module's classpath). Used by {@link #createConsole}
+       * to print the "feature-file breakpoints won't pause on v2" notice at the top of a Debug run.
+       */
+      private boolean karateV2Detected;
+
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
         final JavaParameters params = super.createJavaParameters();
@@ -124,6 +144,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
           KarateSettingsState.getInstance().getKarateVersionPreference();
         checkVersionOverrideMatchesClasspath(preference, libraryNames);
         boolean karateV2 = isKarateV2(preference, libraryNames.stream());
+        karateV2Detected = karateV2;
         if (karateV2) {
           params.getProgramParametersList().add("--karate-major-version", "2");
         } else {
@@ -149,21 +170,31 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         }
         String escapedName = myConfiguration.getTestName().map(s -> s.replace(" ", "_")).orElse("");
         String testNameParameter = "--testname";
+        // Prefer the absolute source path (file: URL) when we have one, so an edit in the IDE is
+        // reflected on the next run without a rebuild. classpath: resolves against target/test-classes
+        // (or build/resources/test), which is only refreshed by process-test-resources / processTestResources.
+        // The producer stores the feature's absolute path in `path` for file-based runs and a relative
+        // folder name for ALL_IN_FOLDER, so the isAbsolute() check picks the right branch on its own.
+        String featurePath = myConfiguration.getPath();
+        boolean useFileUrl = !StringUtils.isBlank(featurePath) && new File(featurePath).isAbsolute();
         if (preferredTest == PreferredTest.WHOLE_FILE) {
           params.getProgramParametersList().add(testNameParameter,
-            Optional.ofNullable(myConfiguration.getRelPath()).filter(s -> !s.isBlank())
-              .orElse(escapedName));
+            useFileUrl ? "file:" + featurePath
+              : Optional.ofNullable(myConfiguration.getRelPath()).filter(s -> !s.isBlank()).orElse(escapedName));
         } else if (preferredTest == PreferredTest.SINGLE_SCENARIO) {
           params.getProgramParametersList().add(testNameParameter,
-            Optional.ofNullable(myConfiguration.getRelPath()).map(s -> s + ":" + lineNumber)
-              .orElse(escapedName));
+            useFileUrl ? "file:" + featurePath + ":" + lineNumber
+              : Optional.ofNullable(myConfiguration.getRelPath()).map(s -> s + ":" + lineNumber)
+                .orElse(escapedName));
         } else if (preferredTest == PreferredTest.ALL_IN_FOLDER) {
           params.getProgramParametersList().add(testNameParameter,
-            Optional.ofNullable(myConfiguration.getPath())
-              .orElse(escapedName));
+            Optional.ofNullable(featurePath).orElse(escapedName));
         }
         if (!StringUtils.isBlank(getTag())) {
           params.getProgramParametersList().add("--tag", getTag());
+          for (String root : tagScanRoots(module)) {
+            params.getProgramParametersList().add("--tag-root", root);
+          }
         }
         if (!StringUtils.isBlank(getWorkingDirectory())) {
           params.getProgramParametersList().add("--working-dir", getWorkingDirectory());
@@ -178,25 +209,29 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
           params.getProgramParametersList().add("--environment", getEnv());
         }
 
+        // If the user pinned a debug port in the run-config UI, wire it in the normal way: patch
+        // -agentlib:jdwp on the params with server=y,suspend=y at that port, and cache the
+        // RemoteConnection so createRemoteConnection() can hand it back to IntelliJ's own debugger.
+        // Without this, GenericDebuggerRunner.createContentDescriptor's fallback allocates a random
+        // port; the field was previously wired in startProcess() with a server=y override that
+        // fought the platform's server=n setup - IntelliJ never attached, and only external tools
+        // (jdb, other IDEs) could use the port. Non-Debug runs and blank ports leave params alone.
+        if (DefaultDebugExecutor.EXECUTOR_ID.equals(env.getExecutor().getId())
+          && !StringUtils.isBlank(getDebugPort())) {
+          myFixedPortConnection = new RemoteConnectionBuilder(
+            false, DebuggerSettings.getInstance().getTransport(), getDebugPort())
+            .suspend(true)
+            .asyncAgent(true)
+            .project(env.getProject())
+            .create(params);
+        }
+
         return params;
       }
 
-      @Override protected boolean shouldPrepareDebuggerConnection() {
-        return false;
-      }
-
-      @Override protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
-        JavaParameters params = this.getJavaParameters();
-        if (env.getRunnerSettings() instanceof GenericDebuggerRunnerSettings genericDebuggerRunnerSettings) {
-          boolean customDebugPort = !StringUtils.isBlank(getDebugPort());
-          if (customDebugPort) {
-            String debugStr = "-agentlib:jdwp=transport=dt_socket,address=*:%s,server=y,suspend=y";
-            genericDebuggerRunnerSettings.setDebugPort(getDebugPort());
-            params.getVMParametersList()
-              .replaceOrPrepend("-agentlib:jdwp", String.format(debugStr, getDebugPort()));
-          }
-        }
-        return super.startProcess();
+      @Override
+      public @Nullable RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+        return myFixedPortConnection != null ? myFixedPortConnection : super.createRemoteConnection(environment);
       }
 
       @Override protected @Nullable ConsoleView createConsole(@NotNull Executor executor) {
@@ -209,6 +244,18 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
             SMTestRunnerConnectionUtil.createConsole(consoleProperties);
           console.initUI();
           console.addMessageFilter(new UppercutConsoleFilter(getProject()));
+          // Print the "feature-file breakpoints won't pause on v2" notice at the top of the console
+          // for a Karate 2 Debug run. See site/status.md and site/troubleshooting.md for the why;
+          // startProcess writes to this console right after, so this line lands first. karateV2Detected
+          // is populated by createJavaParameters, which runs before createConsole (both are called
+          // during CommandLineState.execute, in that order).
+          if (karateV2Detected && DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId())) {
+            console.print(
+              "Karate 2: feature-file breakpoints will not pause the run (not planned; see "
+                + UppercutWebHelpProvider.SITE + "status#debugging). Java breakpoints in "
+                + "step-definition code still work.\n",
+              ConsoleViewContentType.SYSTEM_OUTPUT);
+          }
           consoles.add(console);
         }, ModalityState.any());
 
@@ -242,6 +289,23 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     return LibraryUtil.getLibraryRoots(getProject());
   }
 
+  /**
+   * Where a tag run looks for features: the module's source and resource roots, not the module
+   * directory. A tag run has no file to name, so the runner hands Karate directories to walk;
+   * walking the module root also walks the build output ({@code target/test-classes},
+   * {@code build/resources/test}), where Maven and Gradle keep a copy of every feature - and each
+   * tagged scenario ran twice, once per copy. With no module (or a module with no roots) the runner
+   * falls back to the working directory as before.
+   */
+  static List<String> tagScanRoots(@Nullable Module module) {
+    if (module == null) {
+      return List.of();
+    }
+    return Arrays.stream(ModuleRootManager.getInstance(module).getSourceRoots(true))
+      .map(VirtualFile::getPath)
+      .toList();
+  }
+
   /** The module scan decides only when the module actually has karate; otherwise widen to the project. */
   static boolean moduleScanIsAuthoritative(java.util.stream.Stream<String> libraryNames) {
     return libraryNames.anyMatch(n -> n.startsWith("karate-"));
@@ -258,12 +322,15 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     if (moduleName == null) {
       return "This feature file is not inside any module, so the run has no classpath. Open the project "
         + "folder (not just the pom.xml or build file), or re-import the project from the Maven/Gradle tool "
-        + "window, and run again.";
+        + "window, and run again. " + TROUBLESHOOTING;
     }
     return "Module '" + moduleName + "' has no Karate on its classpath, so the run would fail with \"Must "
       + "have karate-core on the classpath\". Add karate-junit5 (Karate 1) or karate-junit6 (Karate 2) to "
-      + "the module, or run the feature from a module that has it.";
+      + "the module, or run the feature from a module that has it. " + TROUBLESHOOTING;
   }
+
+  /** Every message the plugin refuses a run with is explained on this page. */
+  static final String TROUBLESHOOTING = "See " + UppercutWebHelpProvider.SITE + "troubleshooting";
 
   /**
    * Fails the run only when the version override cannot possibly work: pinning V1 on a classpath that
@@ -286,13 +353,13 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     if (preference == KarateSettingsState.KarateVersionPreference.V1 && hasKarate2 && !hasKarate1) {
       throw new ExecutionException(
         "Karate version is pinned to V1 in Settings > Tools > Karate, but this module's classpath "
-          + "only has Karate 2. Set it back to AUTO, or to V2, to run this feature.");
+          + "only has Karate 2. Set it back to AUTO, or to V2, to run this feature. " + TROUBLESHOOTING);
     }
     if (preference == KarateSettingsState.KarateVersionPreference.V2 && hasKarate1 && !hasKarate2) {
       throw new ExecutionException(
         "Karate version is pinned to V2 in Settings > Tools > Karate, but this module's classpath "
           + "only has Karate 1 (expected karate-core 2.x or karate-junit6). Set it back to AUTO, or to "
-          + "V1, to run this feature.");
+          + "V1, to run this feature. " + TROUBLESHOOTING);
     }
   }
 

@@ -551,8 +551,14 @@ class Karate2UITest {
                 tree.contains("karate-config.js"),
                 "v1 tree should carry the converter's karate-config.js node$diagnostics"
             )
+            // Matched by suffix and only among the root's own children: Karate 1.x names a feature by
+            // its path relative to the working directory, so the fixture's src/test/java layout reports
+            // "java/sample/called.feature". Top-level placement is the point - the v2 converter would
+            // have nested this node under the calling scenario.
             assertTrue(
-                findNode(results.getTestsRootNode(), "sample/called.feature") != null,
+                results.getTestsRootNode().getChildren().any {
+                    (it.getPresentableName() ?: it.getName() ?: "").endsWith("sample/called.feature")
+                },
                 "v1 tree should list the called feature as a top-level node$diagnostics"
             )
         }

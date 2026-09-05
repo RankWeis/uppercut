@@ -15,19 +15,18 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -243,9 +242,11 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
   private KarateItem addFeatureToTree(String featureName, int id) {
     KarateItem item = KarateItem.builder().id(id).name(featureName).parentId(0).build();
     ServiceMessageBuilder testStarted = ServiceMessageBuilder.testSuiteStarted(featureName);
-    Arrays.stream(ModuleManager.getInstance(testConsoleProperties.getProject()).getModules())
-      .flatMap(m -> Arrays.stream(ModuleRootManager.getInstance(m).getSourceRoots()))
-      .map(root -> VfsUtil.findRelativeFile(featureName, root)).filter(Objects::nonNull).findFirst()
+    // findFeatureFile, not a plain source-root lookup: Karate 1.x names a feature by its path
+    // relative to the run's working directory, so the standard src/test/java layout reports
+    // "java/sample/x.feature" - a leading segment no source root can resolve. Stripping is what the
+    // v2 path already does, and without it the feature node loses its double-click navigation.
+    Optional.ofNullable(findFeatureFile(featureName))
       .ifPresent(file -> testStarted.addAttribute("locationHint", "file://" + file.getPath() + ":1"));
 
     if (!idToItem.containsKey(id)) {
@@ -279,14 +280,7 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     if (startOrFinish.equals("START")) {
       ServiceMessageBuilder scenarioStarted = ServiceMessageBuilder.testStarted(scenarioName);
       String finalScenarioName = scenarioName;
-      Arrays.stream(ModuleManager.getInstance(testConsoleProperties.getProject()).getModules())
-        .flatMap(m -> {
-          ArrayList<VirtualFile> vfs =
-            new ArrayList<>(Arrays.stream(ModuleRootManager.getInstance(m).getSourceRoots()).toList());
-          vfs.add(ProjectUtil.guessProjectDir(testConsoleProperties.getProject()));
-          return vfs.stream();
-        })
-        .map(root -> VfsUtil.findRelativeFile(featureName, root)).filter(Objects::nonNull).findFirst()
+      Optional.ofNullable(findFeatureFile(featureName))
         .ifPresent(file -> {
           int lineNumber = ApplicationManager.getApplication()
             .runReadAction((Computable<Integer>) () -> {

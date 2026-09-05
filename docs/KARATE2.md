@@ -1,7 +1,10 @@
 # Karate 2.x Support — Verified Findings & Plan
 
-Status: **phase-0 spike**. API facts below were verified against the real
-`karate-core-2.1.1.jar` / `karate-junit6-2.1.1.jar` from Maven Central (javap), not from docs alone.
+Status: **shipping as early access since 3.0.0** - phases 0 through 3 are done. Feature-file
+debugging is not planned; see `docs/KARATE2-HANDOFF.md` for that decision and
+`site/status.md` for the user-facing story. API facts below were verified against the real
+`karate-core-2.1.1.jar` / `karate-junit6-2.1.1.jar` from Maven Central (javap), not from docs alone,
+and the event-stream findings against a live run. This file is the design.
 
 ## Why the current runner cannot work on v2
 
@@ -69,9 +72,13 @@ KarateV2TestRunner
   deps anyway - same FQNs, different APIs)
   + RunListener proxy -> stdout lines:  <<UPPERCUT-V2>> SCENARIO_ENTER {json}
 
-IDE console (phase 2)
-  KarateV2EventsConverter parses <<UPPERCUT-V2>> lines -> ServiceMessageBuilder test tree
-  (sibling of the v1 regex-based KarateOutputToGeneralTestEventsConverter)
+IDE console
+  KarateOutputToGeneralTestEventsConverter hands <<UPPERCUT-V2>> lines to KarateV2EventProcessor,
+  which builds the SM test tree; everything else goes down the v1 regex path. The runner stamps
+  every event with its emitting (virtual) thread, and the processor keys its per-scenario state
+  on thread + feature + refId + call depth, so parallel runs and parallel calls of the same
+  feature keep separate nodes. STEP_EXIT payloads carry the step's captured log (`stepLog`,
+  read reflectively from StepResult.getLog()), which is what shows under each step node.
 ```
 
 ## Phases
@@ -85,7 +92,7 @@ IDE console (phase 2)
 | 3a | Modern JS in the embedded engine: `?.`, `??`/`??=`, `class`/`extends`/`super`/`this`, `continue`, `void`, BigInt - added to `io.karatelabs.js` rather than re-vendoring | done |
 | 3b | `karate-base.js`/`karate-boot.js` recognition - **nothing to do**: the plugin never keys off the config filename (the v1 console converter reads Karate's own `[config] <path>` line; run configs hand Karate the content root and it finds its own config). Verified against karate-core 2.1.1: base is a per-scenario sibling of karate-config.js evaluated before it, boot is a once-per-suite ext loader at the workdir root | n/a |
 | 3c | README/marketplace mention of Karate 2 - the README's `<!-- Plugin description -->` block carries the early-access paragraph, and `build.gradle.kts` generates the marketplace description from that block, so there is one source for both | done |
-| later | Real debugging via v2 `debugSupport(RunInterceptor, DebugPointFactory)` | |
+| later | Debugging via v2 `debugSupport(RunInterceptor, DebugPointFactory)`. A pause-only first cut is designed in `docs/karate2-pause-debugging.md` on the PR #342 branch; **shelved** for the 3.0.0 release (2026-09-05) as too much scope. Debug on a v2 feature currently behaves as Run | shelved |
 
 ## Spike results — all questions ANSWERED (live run against karate 2.1.1)
 
@@ -108,9 +115,18 @@ The `eventProbe` task was executed against real Karate 2.1.1; observed:
 - Gradle projects need the classic `sourceSets.test.resources.srcDir("src/test/java")` setup for
   feature files — unchanged from v1.
 
-Remaining to verify in the IDE (phase 2): interplay of the `<<UPPERCUT>>` logback appender with
-v2's logging, and event paths (relative to workingDir/classpath output dir) mapping back to
-source `.feature` files — the v1 converter's source-root lookup should transfer as-is.
+Both open items from the spike were settled in the IDE:
+
+- The `<<UPPERCUT>>` logback appender is never installed on the v2 path (`KarateTestRunner.main`
+  branches before it), so a v2 project's own logging is untouched. Note that Karate 2 ships no
+  logback outside its fat jar - a project without a provider gets SLF4J's NOP logger and a silent
+  console; the plugin's step output does not depend on it (see `site/troubleshooting.md`).
+- Event paths resolve back to source features through the same source-root lookup as v1;
+  `Karate2UITest.v2FeaturePassesWithNavigableTree` asserts the `locationHint` lands in
+  `src/test/java`, not `build/resources`.
+
+Verified by hand on 2026-09-05: parallelism 4 over the fixture's `sample` folder produces the
+expected tree (feature nodes, scenarios with steps, called features nested under their caller).
 
 ## Editor impact: JS syntax only
 

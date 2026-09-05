@@ -1,0 +1,4 @@
+# filename<TAB>caption  -- edit freely; keep captions short, they set the tone of the listing
+01-run-from-gutter.png	Run from the gutter, see every step in the results
+02-go-to-definition.png	Ctrl-click a variable to reach its definition across a call
+03-karate-completion.png	Completion for karate.*, matched to your Karate version

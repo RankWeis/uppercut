@@ -8,6 +8,8 @@ nav_order: 1
 Uppercut makes `.feature` files first-class in IntelliJ IDEA. It works in IDEA Community and Ultimate, from 2026.1 on, with **Karate 1.x fully supported** and **Karate 2.x in early access** since version 3.0.0.
 {: .fs-5 }
 
+Free and open source under Apache 2.0 - no account, no license key, no paid tier. The [source is on GitHub](https://github.com/RankWeis/uppercut); issues and pull requests are welcome.
+
 [Support status](status){: .btn .btn-primary } [Settings reference](settings){: .btn } [Troubleshooting](troubleshooting){: .btn }
 
 ## Full Karate syntax support
@@ -21,7 +23,7 @@ Completion
 : Step actions as you type, and `karate.*` members matched to the Karate version on your module's classpath, so `karate.` offers what your Karate actually has.
 
 Navigation
-: Jump from a `call read('other.feature')` to the feature, from a variable to its `def`, and from a step to its definition. Find usages and rename work across features.
+: Jump from a `call read('other.feature')` to the feature, from a variable to its `def`, and from a step to its definition. A variable that holds a called feature's result follows the call: on `auth.token`, where `auth` is `call read('auth.feature')`, `token` jumps to the `def token` inside `auth.feature`, and Find Usages on that `def` finds `auth.token` in the callers. Find usages and rename work across features.
 
 Formatting
 : Reformat feature files, including the JavaScript and JSON inside them.
