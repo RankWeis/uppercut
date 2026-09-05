@@ -82,7 +82,8 @@ IDE console (phase 2)
 | 1 | Settings override (AUTO/V1/V2) in `KarateSettingsState` | done |
 | 2 | `KarateV2EventProcessor` (JSON events -> id-based test tree), nesting via callDepth, failure mapping, unit tests | done |
 | 2b | `Karate2UITest` end-to-end integration test (IDE Starter/Driver); covers both runner paths, the failure path, and the settings override. Surfaced the logback and project-wide-detection bugs | done |
-| 3 | Editor niceties: `karate-base.js`/`karate-boot.js` recognition, README/docs, refresh embedded karate-js source | |
+| 3a | Modern JS in the embedded engine: `?.`, `??`/`??=`, `class`/`extends`/`super`/`this`, `continue`, `void`, BigInt - added to `io.karatelabs.js` rather than re-vendoring | done |
+| 3b | Editor niceties: `karate-base.js`/`karate-boot.js` recognition, README/marketplace mention of Karate 2 | |
 | later | Real debugging via v2 `debugSupport(RunInterceptor, DebugPointFactory)` | |
 
 ## Spike results — all questions ANSWERED (live run against karate 2.1.1)
@@ -110,8 +111,15 @@ Remaining to verify in the IDE (phase 2): interplay of the `<<UPPERCUT>>` logbac
 v2's logging, and event paths (relative to workingDir/classpath output dir) mapping back to
 source `.feature` files — the v1 converter's source-root lookup should transfer as-is.
 
-## Editor impact: none required
+## Editor impact: JS syntax only
 
-Lexer/parser/PSI/highlighting/completion/navigation are Gherkin-generic. The embedded
-`io.karatelabs.js` sources ARE the karate-js engine v2 ships. `@lock` tags and new
+Lexer/parser/PSI/highlighting/completion/navigation are Gherkin-generic. `@lock` tags and new
 `karate.*` builtins need no grammar changes.
+
+The one gap was the embedded `io.karatelabs.js` engine - a hand-written port of karate-js used
+only when the IntelliJ JavaScript plugin is absent (`KarateJsNoPluginExtension`). It predated
+several JS features karate-js 2.1.1 supports, so modern JS in a feature file drew false errors on
+that fallback path. Phase 3a closed that: 9 tokens added (95 -> 104), plus the grammar for each,
+and reserved words accepted as property names / object keys. The engine's other 13 new tokens are
+karate-js's own Gherkin tokens (`G_*`), which the plugin does not use - it lexes Gherkin itself.
+See `.claude/skills/karate-version-parity/` for how the two token sets are diffed.

@@ -37,8 +37,6 @@ Uppercut is an IntelliJ IDEA plugin providing comprehensive IDE support for the 
 # Verify plugin compatibility
 ./gradlew verifyPlugin
 
-# Generate JavaScript lexer from JFlex grammar
-./gradlew generateLexer
 ```
 
 Tests in CI run under `xvfb` for headless display:
@@ -186,9 +184,9 @@ Inline suppression is available via comments:
 5. **Cached Values:** `CachedValuesManager` for expensive computations in PSI
 6. **Smart Pointers:** `SmartPsiElementPointer` for safe PSI element references
 
-### Generated Code
+### The embedded JavaScript engine
 
-The JavaScript lexer is generated from `src/main/java/io/karatelabs/js/js.jflex` via the GrammarKit plugin. Run `./gradlew generateLexer` to regenerate. Do not manually edit the generated `Lexer.java` in `src/main/java/io/karatelabs/js/`.
+`src/main/java/io/karatelabs/js/` is a hand-written port of the karate-js lexer and parser (it replaced an earlier JFlex-generated lexer; there is no `.jflex` source any more, and nothing regenerates these files). It is used only when the IntelliJ JavaScript plugin is absent, and only to lex and parse - `Interpreter.java` and friends are unused. Edit `Lexer.java`, `Parser.java`, `Token.java` and `Type.java` directly; `.claude/skills/karate-version-parity/` describes how to keep the token set in step with karate-js, and `KarateJsModernSyntaxTest` is the unit-level guard.
 
 ## Testing
 
@@ -277,8 +275,9 @@ Update `CHANGELOG.md` for every major change. Add entries under the `## [Unrelea
 3. Register element type in the parser/element type definitions
 4. Update the visitor if needed (`GherkinElementVisitor`)
 
-### Modifying the JavaScript Lexer
+### Modifying the JavaScript Lexer or Parser
 
-1. Edit `src/main/java/io/karatelabs/js/js.jflex`
-2. Run `./gradlew generateLexer`
-3. The generated `Lexer.java` will be placed in `src/main/java/io/karatelabs/js/`
+1. Add the token to `Token.java` (mark it `keyword` if it is a reserved word) and teach `Lexer.java` to produce it - longest match first, and check `updateRegexAllowed`
+2. Add the grammar rule to `Parser.java` (and a node type to `Type.java` if it needs one)
+3. Map the token in `highlight/KarateJsHighlighter.java`
+4. Cover it in `KarateJsModernSyntaxTest` and in a `.feature` fixture under `src/test/testData/` that `KarateJsHighlightTest` loads
