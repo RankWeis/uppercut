@@ -102,11 +102,14 @@ diagnosis is recorded here so it is not rediscovered:
 - The version override is application-level, not per-project — awkward when working across projects
   on different majors. Less pressing now that detection is per-module.
 
-## Open questions for the user
+## Decisions (2026-09-05)
 
-- Should the v1 bundled-karate fallback also exist for v2 (currently intentionally not)?
-- Marketplace/changelog wording for "experimental" Karate 2 support.
-- A failing integration test now blocks the release draft: `releaseDraft` has
-  `needs: [ build, test, verify, integration-test ]` in `.github/workflows/build.yml`, and
-  integration-test runs on push. Until the two fixes above land, no draft releases are produced.
-  Confirm this gating is intended, or drop `integration-test` from that `needs` list.
+- The bundled-Karate fallback stays v1-only. Reasoning in `docs/risks/karate-v1-regressions.md`,
+  "Decisions on record"; revisit only on real reports of Karate 2 users with `karate-core` but no
+  runnable JUnit artifact.
+- Marketplace/changelog wording: "early access", as already used in CHANGELOG.md and the README's
+  plugin-description block. Not "experimental".
+- `releaseDraft` stays gated on `integration-test` (`needs: [ build, test, verify, integration-test ]`
+  in `.github/workflows/build.yml`). A failing IDE integration test is meant to block a release draft.
+- Phase-3 task 4 (pause-only debugging for v2) is shelved: too much scope for the release that carries
+  Karate 2 early access. The design in `docs/karate2-pause-debugging.md` (PR #342 branch) stands for later.
