@@ -186,10 +186,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         return params;
       }
 
-      @Override protected boolean shouldPrepareDebuggerConnection() {
-        return false;
-      }
-
       @Override protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
         JavaParameters params = this.getJavaParameters();
         if (env.getRunnerSettings() instanceof GenericDebuggerRunnerSettings genericDebuggerRunnerSettings) {
