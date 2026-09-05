@@ -944,12 +944,17 @@ public class Parser {
             if (consumeIf(Token.BACKTICK)) {
                 break;
             }
-            if (!consumeIf(Token.T_STRING)) {
-                if (consumeIf(Token.DOLLAR_L_CURLY)) {
-                    expr(-1, false);
-                    consume(Token.R_CURLY);
-                }
+            if (consumeIf(Token.T_STRING)) {
+                continue;
             }
+            if (consumeIf(Token.DOLLAR_L_CURLY)) {
+                expr(-1, false);
+                consume(Token.R_CURLY);
+                continue;
+            }
+            // nothing consumable - an unterminated template at end of input. Without this the loop
+            // never advances, and in the IDE that is a parse that never finishes.
+            error(Token.BACKTICK);
         }
         return exit();
     }

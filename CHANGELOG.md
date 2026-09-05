@@ -17,6 +17,7 @@ Full details, architecture notes, and the complete change history: <https://gith
 ### Fixed
 
 - Modern JavaScript in feature files was flagged as invalid and mis-highlighted in IDEs without the JavaScript plugin (IntelliJ IDEA Community). Optional chaining (`a?.b`, `a?.[k]`, `f?.()`), nullish coalescing and assignment (`??`, `??=`, `||=`, `&&=`), `class` / `extends` / `super` / `this`, `continue`, `void`, and BigInt literals (`10n`) are now recognized, as are reserved words used as property names or object keys (`a.default`, `{ class: 1 }`)
+- In IDEs without the JavaScript plugin, typing an opening backtick in feature-file JavaScript with no closing one made the editor's highlighting for that file spin at full CPU until the literal was closed
 - Debugging failed to start when any library path contained a space — including the default JDK location on Windows, `C:\Program Files\...` — with `URISyntaxException: Illegal character in opaque part`
 - Feature path resolution with generated source roots, e.g. the protobuf Gradle plugin (#321)
 - Run configurations offered on non-`.feature` files

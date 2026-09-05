@@ -164,6 +164,20 @@ public class KarateJsModernSyntaxTest {
     parses("function fn() {\n  var token = karate.get('token')\n  return { Authorization: token }\n}");
   }
 
+  @Test(timeout = 5000)
+  public void unterminatedTemplateLiteralIsAnErrorNotAHang() {
+    // The template loop only ever consumed T_STRING, ${ or the closing backtick; at end of input it
+    // consumed nothing and never advanced. In the IDE that was a parse that never finished.
+    for (String source : new String[]{"var x = `abc", "var x = `a ${b", "class A { m() { `abc"}) {
+      try {
+        new Parser(new Source(source)).parse();
+        fail("expected a parse error for: " + source);
+      } catch (RuntimeException expected) {
+        // an error is the point; a hang would trip the timeout
+      }
+    }
+  }
+
   // ===== helpers =====
 
   private static Node parses(String source) {
