@@ -191,6 +191,57 @@ public class KarateV2EventProcessorTest {
   }
 
   @Test
+  public void parallelCallsOfTheSameFeatureKeepSeparateNodes() {
+    // Two top-level scenarios on different threads call the same feature at the same depth. Without
+    // the thread in the scenario key the second ENTER overwrote the first's id, the first EXIT closed
+    // the second's node, and the first caller's later steps attached to a stale called-scenario node.
+    process("FEATURE_ENTER",
+      "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0,\"thread\":\"t1\"}");
+    process("SCENARIO_ENTER", "{\"feature\":\"" + USERS + "\",\"name\":\"alpha\",\"line\":3,"
+      + "\"refId\":\"[1:3]\",\"callDepth\":0,\"thread\":\"t1\"}");
+    process("SCENARIO_ENTER", "{\"feature\":\"" + USERS + "\",\"name\":\"beta\",\"line\":9,"
+      + "\"refId\":\"[2:9]\",\"callDepth\":0,\"thread\":\"t2\"}");
+    // both call login.feature concurrently: same path, refId and depth
+    process("FEATURE_ENTER",
+      "{\"path\":\"" + CALLED + "\",\"name\":\"login\",\"line\":1,\"callDepth\":1,\"thread\":\"t1\"}");
+    process("SCENARIO_ENTER", "{\"feature\":\"" + CALLED + "\",\"name\":\"do login\",\"line\":4,"
+      + "\"refId\":\"[1:4]\",\"callDepth\":1,\"thread\":\"t1\"}");
+    process("FEATURE_ENTER",
+      "{\"path\":\"" + CALLED + "\",\"name\":\"login\",\"line\":1,\"callDepth\":1,\"thread\":\"t2\"}");
+    process("SCENARIO_ENTER", "{\"feature\":\"" + CALLED + "\",\"name\":\"do login\",\"line\":4,"
+      + "\"refId\":\"[1:4]\",\"callDepth\":1,\"thread\":\"t2\"}");
+    int t1CalledId = 5; // ids are allocated in ENTER order: f=1, alpha=2, beta=3, login(t1)=4, do login(t1)=5
+    int t2CalledId = 7;
+    // t1's call finishes first and must close ITS node, not t2's
+    process("SCENARIO_EXIT", "{\"feature\":\"" + CALLED + "\",\"name\":\"do login\",\"line\":4,"
+      + "\"refId\":\"[1:4]\",\"callDepth\":1,\"passed\":true,\"thread\":\"t1\"}");
+    String t1Close = sink.messages.get(sink.messages.size() - 1);
+    assertContains(t1Close, "testSuiteFinished", "name='do login'", "|node=" + t1CalledId + "|");
+    // a step from t1 after its call returned belongs to alpha again, not to a stale called node
+    process("STEP_EXIT",
+      "{\"line\":5,\"prefix\":\"*\",\"text\":\"after call\",\"status\":\"passed\",\"thread\":\"t1\"}");
+    assertContains(sink.messages.get(sink.messages.size() - 1), "testStdOut", "name='alpha'", "after call");
+    // and t2's call still closes its own node
+    process("SCENARIO_EXIT", "{\"feature\":\"" + CALLED + "\",\"name\":\"do login\",\"line\":4,"
+      + "\"refId\":\"[1:4]\",\"callDepth\":1,\"passed\":true,\"thread\":\"t2\"}");
+    assertContains(sink.messages.get(sink.messages.size() - 1), "testSuiteFinished", "|node=" + t2CalledId + "|");
+  }
+
+  @Test
+  public void aFieldOfAnUnexpectedShapeCostsOneEventNotTheRun() {
+    // Payload shapes are Karate's; if a newer 2.x turns 'error' into an object, the scenario still closes
+    process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER", "{\"feature\":\"" + USERS + "\",\"name\":\"alpha\",\"line\":3,"
+      + "\"refId\":\"[1:3]\",\"callDepth\":0}");
+    process("SCENARIO_EXIT", "{\"feature\":\"" + USERS + "\",\"name\":\"alpha\",\"line\":3,"
+      + "\"refId\":\"[1:3]\",\"callDepth\":0,\"passed\":false,\"error\":{\"message\":\"boom\"}}");
+    assertContains(sink.messages.get(sink.messages.size() - 1), "testFailed", "name='alpha'", "boom");
+    // and a line that is a boolean where an int is expected is a no-op, not an exception
+    assertTrue(processor.process(
+      "<<UPPERCUT-V2>> FEATURE_ENTER {\"path\":\"x.feature\",\"line\":true,\"callDepth\":\"zero\"}"));
+  }
+
+  @Test
   public void unknownEventTypesAreConsumedNotPrinted() {
     // A false return would have the SM framework print the raw protocol line into the console;
     // anything carrying the prefix is ours, known type or not.

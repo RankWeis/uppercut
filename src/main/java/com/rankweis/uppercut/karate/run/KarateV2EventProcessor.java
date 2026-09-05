@@ -88,6 +88,17 @@ public class KarateV2EventProcessor {
       LOG.warn("Unparseable Karate 2 event payload for type " + type, e);
       return true;
     }
+    try {
+      dispatch(type, json);
+    } catch (RuntimeException e) {
+      // The payload shapes are Karate's, not ours; a field that changed type in a newer 2.x must cost
+      // one event, not the rest of the run.
+      LOG.warn("Failed to process Karate 2 event " + type, e);
+    }
+    return true;
+  }
+
+  private void dispatch(String type, JsonObject json) {
     switch (type) {
       case "SUITE_ENTER" -> sink.testsStarted();
       case "FEATURE_ENTER" -> featureEnter(json);
@@ -100,7 +111,6 @@ public class KarateV2EventProcessor {
       }
       default -> LOG.warn("Unrecognized Karate 2 event type: " + type);
     }
-    return true;
   }
 
   private void featureEnter(JsonObject json) {
@@ -267,12 +277,19 @@ public class KarateV2EventProcessor {
     sink.emit(ServiceMessageBuilder.testSuiteFinished(display), id, 0);
   }
 
+  /**
+   * Identifies a scenario between its ENTER and EXIT. The thread is part of the key: under
+   * parallelism, two scenarios can be calling the same feature at the same time, so path, refId and
+   * depth alone collide - the second ENTER would overwrite the first's id and the first EXIT would
+   * close the wrong node. Karate runs a scenario, including everything it calls, on one thread, so
+   * ENTER and EXIT always carry the same stamp.
+   */
   private static String scenarioKey(JsonObject json, String featurePath, int depth) {
     String refId = getString(json, "refId");
     if (refId == null) {
       refId = String.valueOf(getInt(json, "line", -1));
     }
-    return featurePath + "|" + refId + "|" + depth;
+    return threadOf(json) + "|" + featurePath + "|" + refId + "|" + depth;
   }
 
   private static String basename(String path) {
@@ -302,14 +319,25 @@ public class KarateV2EventProcessor {
     list.set(depth, id);
   }
 
+  /** A non-primitive (a future payload shape) is rendered as JSON text rather than thrown on. */
   private static @Nullable String getString(JsonObject json, String key) {
     JsonElement e = json.get(key);
-    return e == null || e.isJsonNull() ? null : e.getAsString();
+    if (e == null || e.isJsonNull()) {
+      return null;
+    }
+    return e.isJsonPrimitive() ? e.getAsString() : e.toString();
   }
 
   private static int getInt(JsonObject json, String key, int fallback) {
     JsonElement e = json.get(key);
-    return e == null || e.isJsonNull() || !e.isJsonPrimitive() ? fallback : e.getAsInt();
+    if (e == null || e.isJsonNull() || !e.isJsonPrimitive()) {
+      return fallback;
+    }
+    try {
+      return e.getAsInt();
+    } catch (NumberFormatException | UnsupportedOperationException ex) {
+      return fallback;
+    }
   }
 
   private static boolean getBoolean(JsonObject json, String key) {
