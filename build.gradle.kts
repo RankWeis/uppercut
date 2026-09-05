@@ -42,12 +42,12 @@ configure<SourceSetContainer> {
     }
 }
 
-val integrationTestImplementation by configurations.getting {
-    extendsFrom(configurations.testImplementation.get())
-}
-val platformTestImplementation by configurations.getting {
-    extendsFrom(configurations.testImplementation.get())
-}
+// `by getting { }` with a configuration block is deprecated as of Gradle 9.7 (removed in 10);
+// the delegates stay because the dependencies block refers to these configurations by name
+val integrationTestImplementation by configurations.getting
+integrationTestImplementation.extendsFrom(configurations.testImplementation.get())
+val platformTestImplementation by configurations.getting
+platformTestImplementation.extendsFrom(configurations.testImplementation.get())
 
 dependencies {
     intellijPlatform {
