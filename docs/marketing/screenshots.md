@@ -1,6 +1,6 @@
 # Marketplace screenshots
 
-Five images, each showing exactly one thing, all 1600x1000. You capture the
+Three images, each showing exactly one thing, all 1600x1000. You capture the
 *region* that matters; `compose_screenshots.py` puts every capture on an
 identical canvas with a caption, so they can't drift out of sync.
 
@@ -44,17 +44,15 @@ ultrawide capture will sit in a band with dead space above and below it.
 - `Cmd+Shift+5` > Options > uncheck **Show Floating Thumbnail** so the preview
   doesn't land in the next capture.
 
-## The five images
+## The images
 
 Name the files with a leading number - it sets the carousel order.
 
 | File | What to capture |
 | --- | --- |
 | `01-run-from-gutter.png` | Editor with the gutter run arrow on a scenario, plus the run window below showing the test tree with steps expanded. The money shot: it's the main reason people install. |
-| `02-go-to-called-feature.png` | A `call read('classpath:...')` line with the called feature open beside it, cursor on the reference. Shows navigation nothing else in the ecosystem does well. |
-| `03-embedded-json.png` | A JSON payload inside a feature file with a completion popup open, or a JSON error highlighted. Proves the embedded-language claim in one glance. |
-| `04-debugger.png` | Paused on a breakpoint in a Karate step, with the variables panel showing the Karate context. Currently invisible on the listing. |
-| `05-karate2.png` | Settings > Tools > Karate with version detection, or a Karate 2 run in the test tree. The newest work and the reason to look again. |
+| `02-go-to-definition.png` | Split Down: `orders.feature` on top with the caret on `auth.token`, `auth.feature` below with the `* def token = ...` line it resolves to. Resolving a variable across a `call` boundary is the part nothing else in the ecosystem does - a plain path jump is much weaker. No breakpoints in the gutter, and end both panes on whole lines. |
+| `03-karate-completion.png` | `* karate.` on a step line with the completion popup open, listing the whole `karate.*` API. The list is matched to the Karate major version on the module's classpath. Keep the code above the popup fully visible and let the list drop into empty space below. |
 
 ## Composing
 
@@ -64,11 +62,22 @@ Name the files with a leading number - it sets the carousel order.
    (`01-run-from-gutter.png` -> "Run from gutter"), which is usually worse -
    write real captions, they're the only words on the image.
 3. `python3 docs/marketing/compose_screenshots.py`
+
+   The script needs [Pillow](https://pypi.org/project/Pillow/). macOS system python doesn't have it, and
+   `pip install pillow` there usually fails with `externally-managed-environment`, so use a venv:
+
+   ```
+   python3 -m venv ~/.venvs/marketing && ~/.venvs/marketing/bin/pip install pillow
+   ~/.venvs/marketing/bin/python docs/marketing/compose_screenshots.py
+   ```
+
 4. Results land in `docs/marketing/out/`, all exactly 1600x1000. Upload those to
    the Marketplace listing, in filename order.
 
 The script never upscales a capture - a blown-up screenshot reads as blurry - so
 it warns instead and tells you to recapture larger.
+
+The debugger and Karate 2 are deliberately not shown: debugging is experimental and does not pause a Karate 2 run at all, and a screenshot cannot carry that caveat. A formatting before/after is the obvious fourth if one is ever wanted - stable, easy to stage, and nothing to overstate.
 
 ## Also worth doing
 

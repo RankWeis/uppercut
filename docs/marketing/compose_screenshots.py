@@ -21,10 +21,10 @@ CANVAS = (1600, 1000)          # 16:10, what the Marketplace carousel wants
 BG = "#141517"                 # canvas behind the card
 CARD_BORDER = "#3C3F41"        # IntelliJ-ish separator grey
 CAPTION_COLOR = "#EAEAEA"
-CAPTION_SIZE = 36
-MARGIN = 56                    # canvas edge -> content
-CAPTION_TOP = 44
-CONTENT_TOP = 128              # below the caption bar
+CAPTION_SIZE = 34
+MARGIN = 36                    # canvas edge -> content
+CAPTION_TOP = 34
+CONTENT_TOP = 96               # below the caption bar
 RADIUS = 12
 
 HERE = Path(__file__).resolve().parent

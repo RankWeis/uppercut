@@ -17,9 +17,11 @@ highlighting, navigation, run/debug and formatting for `.feature` files. Free an
   your feature files, not just around them.
 - **Run tests from the editor** — click the gutter arrow on any feature or scenario, or build your own run
   configurations. Results land in the standard test runner window, step by step.
-- **Attach a debugger** to a running Karate test and step through it.
-- **Go to definition and find usages** across feature files — ctrl-click a `call` to jump straight to the
-  called feature.
+- **Attach a debugger** to a running Karate test and step through it (Karate 1.x only). Breakpoints hit
+  and execution pauses, but stepping lands in Karate's Java internals rather than in your feature file.
+- **Go to definition and find usages** across feature files — ctrl-click a `call` to open the called
+  feature, or a variable read from its result to land on the `def` inside it. Find usages works in both
+  directions.
 - **Formatting** for feature files, wired to the usual reformat action.
 
 **Why Uppercut**
