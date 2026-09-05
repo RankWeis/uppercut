@@ -71,6 +71,7 @@ Feature: modern javascript in feature files
     * def loop =
     """
       function fn(items) {
+        var big = 9007199254740993n
         var kept = []
         for (var i = 0; i < items.length; i++) {
           if (items[i] == null) {
