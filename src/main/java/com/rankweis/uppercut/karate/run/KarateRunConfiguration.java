@@ -73,7 +73,8 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   @Getter @Setter private String path;
   @Getter @Setter private PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
   @Setter private String parallelism;
-  @Getter @Setter private boolean allInFolderAreFeature = false;
+  /** True when the run was created on a folder that holds feature files; see the producer's shouldReplace. */
+  @Getter @Setter private boolean folderHasFeatures = false;
   @Getter @Setter private int remotePort = 0;
   private String environment;
 
@@ -339,7 +340,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     element.setAttribute("preferredTest", preferredTest.name);
     element.setAttribute("parallelism", Optional.ofNullable(parallelism).orElse(
       Optional.ofNullable(KarateSettingsState.getInstance().getDefaultParallelism()).map(String::valueOf).orElse("1")));
-    element.setAttribute("allInFolderAreFeature", String.valueOf(allInFolderAreFeature));
+    element.setAttribute("folderHasFeatures", String.valueOf(folderHasFeatures));
     element.setAttribute("relPath", Optional.ofNullable(relPath).orElse(""));
     super.writeExternal(element);
   }
@@ -359,7 +360,9 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
       Arrays.stream(PreferredTest.values()).filter(s -> s.name.equals(element.getAttributeValue("preferredTest")))
         .findFirst().orElse(PreferredTest.WHOLE_FILE);
     parallelism = element.getAttributeValue("parallelism");
-    allInFolderAreFeature = Boolean.parseBoolean(element.getAttributeValue("allInFolderAreFeature"));
+    folderHasFeatures = Boolean.parseBoolean(element.getAttributeValue("folderHasFeatures"))
+      // the attribute's name before the rule widened from "only features" to "any features"
+      || Boolean.parseBoolean(element.getAttributeValue("allInFolderAreFeature"));
     relPath = element.getAttributeValue("relPath");
   }
 

@@ -31,7 +31,7 @@ Inspections and quick fixes
 
 ## Run from the gutter
 
-Click the run icon next to a feature, a scenario or a tag. Results appear in IntelliJ's test tree as they happen, with each scenario's steps and their output beneath it, called features nested under the scenario that called them, and a double-click that takes you to the source line. Environment and parallelism come from the run configuration or from the defaults you set once.
+Click the run icon next to a feature, a scenario or a tag, or right-click a folder that holds feature files and choose **Karate tests in '...'** - in a Gradle project that entry takes the place of Gradle's own "Tests in" for that folder, since the folder's Java runner class is still runnable on its own. Results appear in IntelliJ's test tree as they happen, with each scenario's steps and their output beneath it, called features nested under the scenario that called them, and a double-click that takes you to the source line. Environment and parallelism come from the run configuration or from the defaults you set once.
 
 Karate 1 and Karate 2 projects both work, and the version is detected **per module**, so a repository can migrate one module at a time. If you'd rather decide yourself, one setting pins it.
 

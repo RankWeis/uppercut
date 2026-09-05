@@ -25,6 +25,7 @@ Full details, architecture notes, and the complete change history: <https://gith
 - Run configurations offered on non-`.feature` files
 - The `form`, `multipart`, and `soap` step actions never highlighted or completed
 - Running a feature before the project import finishes now says so, instead of failing with "Must have karate-core on the classpath"
+- Right-clicking a folder that holds feature files next to their JUnit runner class - Karate's standard layout - offered no Karate run in Gradle projects, only Gradle's "Tests in '...'". The Karate run now takes that folder's entry; the runner class itself stays runnable from its own gutter
 - Running a feature that isn't inside any module - a project opened from its `pom.xml` rather than imported, or a symlinked project path - now says so up front, instead of launching a JVM with no classpath and failing with "Must have karate-core on the classpath"
 - Security vulnerabilities and library updates
 

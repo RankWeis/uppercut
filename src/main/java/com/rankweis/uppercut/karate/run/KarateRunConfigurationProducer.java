@@ -45,9 +45,19 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     return super.isPreferredConfiguration(self, other);
   }
 
+  /**
+   * On a folder that holds feature files, the Karate run wins over the build tool's "Tests in ..." one.
+   *
+   * <p>The Gradle test producer replaces every other configuration for a package folder whenever
+   * the project runs tests through Gradle (the default), and the platform keeps only one of two
+   * configurations when either side replaces the other - so unless this producer replaces back, a
+   * feature folder in a Gradle project offers no Karate run at all. Karate's own layout puts features
+   * next to their JUnit runner class under {@code src/test/java}, which made that the common case.
+   * Folders with no feature files of their own are left to the build tool.
+   */
   @Override
   public boolean shouldReplace(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
-    return ((KarateRunConfiguration) self.getConfiguration()).isAllInFolderAreFeature();
+    return ((KarateRunConfiguration) self.getConfiguration()).isFolderHasFeatures();
   }
 
   @Override
@@ -189,9 +199,8 @@ public class KarateRunConfigurationProducer extends LazyRunConfigurationProducer
     if (module == null) {
       return false;
     }
-    if (Arrays.stream(dir.getChildren()).map(VirtualFile::getName).allMatch(s -> s.endsWith(".feature"))) {
-      configuration.setAllInFolderAreFeature(true);
-    }
+    configuration.setFolderHasFeatures(
+      Arrays.stream(dir.getChildren()).map(VirtualFile::getName).anyMatch(s -> s.endsWith(".feature")));
     configuration.setPath(getRelativePathFromFile(project, module, dir, dir.getPath()));
     configuration.setPreferredTest(PreferredTest.ALL_IN_FOLDER);
     configuration.setName("Karate tests in '" + dir.getName() + "'");
