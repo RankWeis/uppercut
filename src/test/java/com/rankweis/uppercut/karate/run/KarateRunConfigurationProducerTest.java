@@ -63,19 +63,16 @@ public class KarateRunConfigurationProducerTest extends BasePlatformTestCase {
         + "  @smoke\n"
         + "  Scenario: Place an order\n"
         + "    * def x = 1\n");
-    // caret on the @smoke tag's line
-    PsiElement onTag = feature.findElementAt(feature.getText().indexOf("@smoke"));
-    // caret on any step of the scenario
     PsiElement onStep = feature.findElementAt(feature.getText().indexOf("def"));
-
-    KarateRunConfiguration fromTag = (KarateRunConfiguration) configurationFor(onTag).getConfiguration();
     KarateRunConfiguration fromStep = (KarateRunConfiguration) configurationFor(onStep).getConfiguration();
-
     assertEquals(KarateRunConfiguration.PreferredTest.SINGLE_SCENARIO, fromStep.getPreferredTest());
     assertEquals("Scenario keyword sits on line 4; the tag on line 3 is not what Karate matches on",
       4, fromStep.getLineNumber());
-    // Right-clicking the tag itself is the ALL_TAGS path (@smoke run), so lineNumber is not asserted;
-    // this branch is only here to pin the SINGLE_SCENARIO path used by the gutter/step/keyword clicks.
+
+    // Right-clicking the tag itself is the ALL_TAGS path (@smoke run); this branch is only here to
+    // pin the SINGLE_SCENARIO path used by the gutter/step/keyword clicks.
+    PsiElement onTag = feature.findElementAt(feature.getText().indexOf("@smoke"));
+    KarateRunConfiguration fromTag = (KarateRunConfiguration) configurationFor(onTag).getConfiguration();
     assertEquals(KarateRunConfiguration.PreferredTest.ALL_TAGS, fromTag.getPreferredTest());
   }
 
