@@ -54,7 +54,7 @@ xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" ./gradlew check
 Key version properties are in `gradle.properties`:
 - `pluginVersion` - Current plugin version (SemVer)
 - `platformVersion` - Target IntelliJ platform version
-- `pluginSinceBuild` / `pluginUntilBuild` - Compatibility range
+- `pluginSinceBuild` - Minimum supported build. There is deliberately no `until-build` (see the `ideaVersion` block in `build.gradle.kts`)
 - `karateVersion` - Karate framework version (1.5.1)
 
 Dependency versions are managed in `gradle/libs.versions.toml`.

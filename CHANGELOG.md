@@ -9,7 +9,7 @@
 - **Karate 2.x support — early access.** Run Karate 2 (karate-junit6) tests from the IDE. The Karate version is detected per module from the classpath, so a repository can migrate one module at a time; Settings > Tools > Karate pins it if you'd rather choose. The test tree shows each step and its output, nests called features under the calling step, and navigates to the source feature on double-click. Karate 1.x is unchanged and remains the default for existing projects.
 
   Early access means the run/report path is covered end to end but has less mileage than the Karate 1 support behind it. Debugging Karate 2 features is not wired up yet — breakpoints will not pause a v2 run. Please report anything that misbehaves.
-- Support for IntelliJ IDEA 2026.2 (build 262.*); minimum supported build is now 261.
+- Support for IntelliJ IDEA 2026.2; minimum supported build is now 261. There is no longer an upper compatibility bound, so the plugin stays installable on newer IDE releases instead of waiting for a compatibility release.
 
 ### Fixed
 
