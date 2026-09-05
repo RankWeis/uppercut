@@ -57,6 +57,12 @@ jobs:
       # Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
+        with:
+          # The extracted IntelliJ platform (caches/<gradle>/transforms) is ~1.4 GB per job and is
+          # re-created from the cached archive in under a minute; caching it as well blew the
+          # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
+          gradle-home-cache-excludes: |
+            caches/*/transforms
 
       # Set environment variables
       - name: Export Properties
@@ -116,6 +122,12 @@ jobs:
       # Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
+        with:
+          # The extracted IntelliJ platform (caches/<gradle>/transforms) is ~1.4 GB per job and is
+          # re-created from the cached archive in under a minute; caching it as well blew the
+          # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
+          gradle-home-cache-excludes: |
+            caches/*/transforms
 
       # Run tests
       - name: Run Tests
@@ -172,6 +184,12 @@ jobs:
       # Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
+        with:
+          # The extracted IntelliJ platform (caches/<gradle>/transforms) is ~1.4 GB per job and is
+          # re-created from the cached archive in under a minute; caching it as well blew the
+          # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
+          gradle-home-cache-excludes: |
+            caches/*/transforms
 
       # The downloaded IDE and JDK dominate the runtime. The test boots the platformVersion from
       # gradle.properties, so hashing that file gives a fresh cache on a platform bump.
@@ -227,10 +245,19 @@ jobs:
       # Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
+        with:
+          # The extracted IntelliJ platform (caches/<gradle>/transforms) is ~1.4 GB per job and is
+          # re-created from the cached archive in under a minute; caching it as well blew the
+          # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
+          gradle-home-cache-excludes: |
+            caches/*/transforms
+          # Read-only: the two verifier IDEs are ~2.4 GB of archives that change with every EAP
+          # build. Restoring another job's entry gives this one the platform and dependencies; the
+          # verifier IDEs are downloaded fresh each run rather than kept in the shared budget.
+          cache-read-only: true
 
-      # The IDEs the verifier runs against are Gradle dependencies (~/.gradle/caches), so they are
-      # covered by setup-gradle's cache above; there is no separate verifier IDE cache to keep. Which
-      # IDEs: see pluginVerification in build.gradle.kts.
+      # The IDEs the verifier runs against are Gradle dependencies, downloaded here (see the cache
+      # note above). Which IDEs: see pluginVerification in build.gradle.kts.
       - name: Run Plugin Verification tasks
         run: ./gradlew verifyPlugin
 
