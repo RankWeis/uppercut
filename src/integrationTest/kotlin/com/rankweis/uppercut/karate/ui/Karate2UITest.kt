@@ -149,7 +149,12 @@ class Karate2UITest {
         private fun prepareSampleProjectCopy(): Path {
             val repoRoot = Path(System.getProperty("user.dir"))
             val source = repoRoot.resolve("testProjects/karate-versions")
-            val target = Files.createTempDirectory("karate-versions-it")
+            // toRealPath: on macOS the temp dir is /var/folders/..., a symlink to /private/var/.... Gradle
+            // reports content and source roots canonicalized, so a project opened at the symlinked path
+            // has files the project index cannot place under any module - the run configuration then
+            // gets no module, the feature's classpath-relative path degrades to its bare file name, and
+            // Karate fails with "cannot find resource: classpath:users.feature".
+            val target = Files.createTempDirectory("karate-versions-it").toRealPath()
             copyRecursively(source, target)
             copyRecursively(repoRoot.resolve("gradle/wrapper"), target.resolve("gradle/wrapper"))
             // REPLACE_EXISTING: opening the fixture in an IDE by hand leaves a wrapper behind, and
