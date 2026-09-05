@@ -14,7 +14,7 @@ in its jars. When `karateVersion` moves, diff them - do not trust release notes.
 |---|---|
 | Step action keywords (highlight/completion) | `src/main/resources/i18n.json` (the `"en"` section; other languages only localize Gherkin structure words) **and** `src/main/java/.../psi/PlainKarateKeywordProvider.java` - both must be updated together |
 | Gherkin structure words | same files (`feature`, `scenario`, ...) - Cucumber-standard, effectively frozen |
-| Embedded JS lexer/parser | `src/main/java/io/karatelabs/js/` (generated from `js.jflex`; used when the IntelliJ JS plugin is absent) |
+| Embedded JS lexer/parser | `src/main/java/io/karatelabs/js/` (a hand-written port of karate-js; used when the IntelliJ JS plugin is absent) |
 
 ## Where Karate's truth lives
 
@@ -46,10 +46,17 @@ sed -n '/"en": {/,/^\t},/p' src/main/resources/i18n.json | grep -o '"[a-z]*": \[
 - `@lock` tag: lexed generically, no grammar work.
 - The plugin was missing `form`, `multipart`, `soap` since the v1 days - fixed on the karate2
   branch. That gap survived years because nothing diffed the lists; hence this skill.
-- **Known open gap**: karate-js 2.1.1 supports `?.`, `??=`, `class`/`extends`/`super`/`this`,
-  `continue`, `void`, and BigInt literals; the embedded lexer (95 tokens vs the engine's 118)
-  predates them. Modern JS in feature files mis-highlights on the no-JS-plugin fallback path.
-  Fix = refresh `src/main/java/io/karatelabs/js/` from current karate-js (KARATE2.md phase 3).
+- **Closed**: the embedded engine now covers `?.`, `??`/`??=`, `class`/`extends`/`super`/`this`,
+  `continue`, `void` and BigInt - added surgically (9 tokens, 95 -> 104), not re-vendored, because
+  karate-js 2.1.1 moved tokens to `io.karatelabs.parser.TokenType` and split the packages, which
+  would collide with the plugin's own additions in `io.karatelabs.js`. The remaining 13 tokens of
+  the 118 are karate-js's own Gherkin tokens (`G_*`); the plugin lexes Gherkin itself, so they are
+  deliberately not pulled in.
+- **One deliberate divergence from karate-js**: `this` lexes as a keyword token here, where the
+  engine lexes it as `IDENT` and special-cases it in the interpreter. The plugin only ever lexes
+  and parses (the embedded `Interpreter` is unused in `src/main`), and an IDE should colour `this`
+  as a keyword. Reserved words are accepted as property names and object keys - `Token.keyword` -
+  so this costs nothing at parse time.
 
 ## After changing keyword lists
 

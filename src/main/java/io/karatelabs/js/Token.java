@@ -39,6 +39,7 @@ public enum Token {
     COLON,
     SEMI,
     DOT_DOT_DOT,
+    QUES_DOT,
     DOT,
     //====
     NULL,
@@ -68,6 +69,12 @@ public enum Token {
     CASE,
     DEFAULT,
     BREAK,
+    CONTINUE,
+    THIS,
+    VOID,
+    CLASS,
+    EXTENDS,
+    SUPER,
     //====
     EQ_EQ_EQ,
     EQ_EQ,
@@ -97,6 +104,7 @@ public enum Token {
     AMP,
     CARET_EQ,
     CARET,
+    QUES_QUES_EQ,
     QUES_QUES,
     QUES,
     //====
@@ -121,6 +129,7 @@ public enum Token {
     S_STRING,
     D_STRING,
     NUMBER,
+    BIGINT,
     IDENT,
     //====
     DOLLAR_L_CURLY,
@@ -128,13 +137,62 @@ public enum Token {
     REGEX;
 
     public final boolean primary;
+    /**
+     * True for reserved words. Used where the spec allows an IdentifierName rather than an
+     * Identifier - property accessors ({@code a.default}) and object literal keys
+     * ({@code {default: 1}}) - so a keyword in those positions is not a syntax error.
+     */
+    public final boolean keyword;
 
     Token() {
-        primary = true;
+        this(true);
     }
 
     Token(boolean primary) {
         this.primary = primary;
+        this.keyword = isKeyword(this);
+    }
+
+    // a static method (not a static field) so it is callable from the constructor
+    private static boolean isKeyword(Token token) {
+        switch (token) {
+            case NULL:
+            case TRUE:
+            case FALSE:
+            case FUNCTION:
+            case RETURN:
+            case TRY:
+            case CATCH:
+            case FINALLY:
+            case THROW:
+            case NEW:
+            case VAR:
+            case LET:
+            case CONST:
+            case IF:
+            case ELSE:
+            case TYPEOF:
+            case INSTANCEOF:
+            case DELETE:
+            case FOR:
+            case IN:
+            case OF:
+            case DO:
+            case WHILE:
+            case SWITCH:
+            case CASE:
+            case DEFAULT:
+            case BREAK:
+            case CONTINUE:
+            case THIS:
+            case VOID:
+            case CLASS:
+            case EXTENDS:
+            case SUPER:
+                return true;
+            default:
+                return false;
+        }
     }
 
 }
