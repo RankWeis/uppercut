@@ -81,10 +81,8 @@ per-module detection. See `Karate2UITest`.
 ## 7. Environment matrix
 
 - [ ] Linux run of the whole automated suite (first CI run covers this - watch it).
-- [x] macOS: one manual gutter-run smoke on any module. **Verified 2026-09-05.** `Karate2UITest`
-      also runs on macOS after the fixture-import fixes recorded in `docs/KARATE2-HANDOFF.md`
-      (6/7 at the time of writing; the v1 console-timing fix was the last change and had not been
-      re-run yet).
+- [x] macOS: one manual gutter-run smoke on any module. **Verified 2026-09-05**, and `Karate2UITest`
+      passes 7/7 on macOS after the fixture-import fixes recorded in `docs/KARATE2-HANDOFF.md`.
 - [ ] A JDK older than the toolchain on PATH (user machines rarely match ours): runIde project
       import still resolves and runs.
 
