@@ -47,8 +47,6 @@
       implementationClass="com.rankweis.uppercut.karate.structure.GherkinStructureViewFactory"/>
     <lang.formatter language="Karate"
       implementationClass="com.rankweis.uppercut.karate.format.KarateFormattingModelBuilder"/>
-    <lang.formatter language="KarateJs"
-      implementationClass="com.rankweis.uppercut.karate.format.KarateJsFormattingModelBuilder"/>
     <annotator language="Karate"
       implementationClass="com.rankweis.uppercut.karate.annotator.GherkinAnnotator"/>
     <lang.foldingBuilder language="Karate"
