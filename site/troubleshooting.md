@@ -44,6 +44,12 @@ If the IDE has the JavaScript plugin, that's JetBrains' JavaScript support repor
 
 Inline `{ ... }` on a step line is treated as JSON. Put JavaScript classes, and anything else that starts with a brace but isn't JSON, in a `"""` block.
 
+## Karate 2: `SLF4J(W): No SLF4J providers were found` and no console output
+
+Karate 2 depends on `slf4j-api` only - logback is bundled in Karate's fat jar, not in the `karate-core` library that `karate-junit6` brings. Without a logging provider on the classpath SLF4J falls back to its no-op logger, and Karate's console log - HTTP request/response lines, `print` - goes nowhere. Karate 1 didn't have this because `karate-core` 1.x pulled logback in transitively.
+
+Add a provider to the module, e.g. `testRuntimeOnly("ch.qos.logback:logback-classic:1.5.38")` in Gradle or the equivalent `test`-scope dependency in Maven, and the console comes back. The plugin's test tree is not affected: on Karate 2 it takes each step's output from Karate's own step result, so step logs show under the step nodes with or without logback. Running the tests through Gradle or Maven (IntelliJ's "Tests in '...'" configuration) instead of the Karate run configuration shows only what Karate logs, so that is where the silence is most visible.
+
 ## The test tree shows the run but no scenarios
 
 On Karate 2 the tree is built from Karate's live event stream. If the run prints results in the console but the tree stays empty, the plugin isn't seeing the events - most often because output is being redirected or wrapped by a custom logging setup. Please report it with the console output; the lines beginning `<<UPPERCUT-V2>>` are the ones the tree is built from.

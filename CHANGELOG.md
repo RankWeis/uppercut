@@ -11,6 +11,8 @@ Full details, architecture notes, and the complete change history: <https://gith
 - **Karate 2.x support — early access.** Run Karate 2 (karate-junit6) tests from the IDE. The Karate version is detected per module from the classpath, so a repository can migrate one module at a time; Settings > Tools > Karate pins it if you'd rather choose. The test tree shows each scenario with its steps and their output, nests called features under the calling scenario, and navigates to the source feature on double-click. Karate 1.x is unchanged and remains the default for existing projects.
 
   Early access means the run/report path is covered end to end but has less mileage than the Karate 1 support behind it. Debugging Karate 2 features is not wired up yet — breakpoints will not pause a v2 run. Please report anything that misbehaves.
+
+  Note for Karate 2 projects: `karate-junit6` brings `slf4j-api` but no logging provider, so without logback on the module's test classpath Karate's console output is silent (`SLF4J(W): No SLF4J providers were found`). The plugin's step output doesn't depend on it; see the troubleshooting page for the one-line fix.
 - Completion for `karate.*` members (`karate.get`, `karate.call`, `karate.match`, …) inside feature-file JavaScript, matched to the Karate version on the module's classpath
 - Support for IntelliJ IDEA 2026.2; minimum supported build is now 261. There is no longer an upper compatibility bound, so the plugin stays installable on newer IDE releases instead of waiting for a compatibility release.
 

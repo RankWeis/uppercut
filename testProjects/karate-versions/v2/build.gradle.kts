@@ -29,6 +29,10 @@ dependencies {
     // karate-junit6 declares junit-jupiter as provided; the migration guide asks for 5.10.1+
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    // Karate 2 depends on slf4j-api only (logback is bundled in its fat jar, not the library jar),
+    // so a project brings its own provider or gets SLF4J's NOP logger and a silent console. This is
+    // Karate 2.1.1's own logback pin; it also keeps the fixture representative of a real v2 project.
+    testRuntimeOnly("ch.qos.logback:logback-classic:1.5.38")
 }
 
 tasks.test {
