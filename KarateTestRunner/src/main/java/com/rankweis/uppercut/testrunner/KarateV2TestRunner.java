@@ -59,9 +59,9 @@ public class KarateV2TestRunner {
     Class<?> builderClass = builder.getClass();
 
     if (tags.length > 0) {
-      // Tag runs scan the working directory tree, mirroring the v1 behavior.
-      if (workingDirectories.length > 0) {
-        builderClass.getMethod("path", String[].class).invoke(builder, (Object) workingDirectories);
+      String[] scanRoots = KarateTestRunner.tagScanRoots(params, workingDirectories);
+      if (scanRoots.length > 0) {
+        builderClass.getMethod("path", String[].class).invoke(builder, (Object) scanRoots);
       }
       builderClass.getMethod("tags", String[].class).invoke(builder, (Object) tags);
     } else if (testNames.length > 0) {

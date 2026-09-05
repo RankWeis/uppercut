@@ -6,6 +6,7 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import java.util.List;
 
 /**
  * The run configuration offered on a folder, and whether it displaces the build tool's own
@@ -37,6 +38,17 @@ public class KarateRunConfigurationProducerTest extends BasePlatformTestCase {
     // the folder still gets a (recursive) Karate run, but it must not push the JUnit/Gradle one out
     assertNotNull(fromContext);
     assertFalse(new KarateRunConfigurationProducer().shouldReplace(fromContext, fromContext));
+  }
+
+  public void testTagRunsScanTheModuleSourceRootsNotTheModuleDirectory() {
+    // A tag run hands Karate directories to walk. Walking the module directory also walks the build
+    // output, where Maven/Gradle keep a copy of every feature - and each tagged scenario ran twice.
+    List<String> roots = KarateRunConfiguration.tagScanRoots(getModule());
+    assertFalse("the light fixture module has a source root", roots.isEmpty());
+    for (String root : roots) {
+      assertTrue(root, root.startsWith("/") || root.matches("^[A-Za-z]:/.*") || root.startsWith("temp:"));
+    }
+    assertTrue(KarateRunConfiguration.tagScanRoots(null).isEmpty());
   }
 
   private ConfigurationFromContext configurationFor(PsiDirectory directory) {

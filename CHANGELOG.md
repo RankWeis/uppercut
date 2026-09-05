@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- The docs site is one click away from where you'd need it: the **?** button and a link on Settings > Tools > Karate open the settings reference, and every message the plugin refuses a run with ends with the troubleshooting page's address
+
+### Fixed
+
+- Running by tag ran every feature twice in Maven and Gradle projects - once from `src/test/...` and once from the copy the build keeps under `target/test-classes` or `build/resources/test`. Tag runs now scan the module's source roots instead of the whole module directory
+
 ## [3.0.0] - 2026-09-05
 
 ### Added
@@ -13,7 +21,6 @@
   Early access means the run/report path is covered end to end but has less mileage than the Karate 1 support behind it. Debugging Karate 2 features is not wired up yet — breakpoints will not pause a v2 run. Please report anything that misbehaves.
 
   Note for Karate 2 projects: `karate-junit6` brings `slf4j-api` but no logging provider, so without logback on the module's test classpath Karate's console output is silent (`SLF4J(W): No SLF4J providers were found`). The plugin's step output doesn't depend on it; see the troubleshooting page for the one-line fix.
-- The docs site is one click away from where you'd need it: the **?** button and a link on Settings > Tools > Karate open the settings reference, and every message the plugin refuses a run with ends with the troubleshooting page's address
 - Completion for `karate.*` members (`karate.get`, `karate.call`, `karate.match`, …) inside feature-file JavaScript, matched to the Karate version on the module's classpath
 - Support for IntelliJ IDEA 2026.2; minimum supported build is now 261. There is no longer an upper compatibility bound, so the plugin stays installable on newer IDE releases instead of waiting for a compatibility release.
 

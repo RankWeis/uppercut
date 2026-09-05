@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -165,6 +166,9 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         }
         if (!StringUtils.isBlank(getTag())) {
           params.getProgramParametersList().add("--tag", getTag());
+          for (String root : tagScanRoots(module)) {
+            params.getProgramParametersList().add("--tag-root", root);
+          }
         }
         if (!StringUtils.isBlank(getWorkingDirectory())) {
           params.getProgramParametersList().add("--working-dir", getWorkingDirectory());
@@ -241,6 +245,23 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
       return moduleRoots;
     }
     return LibraryUtil.getLibraryRoots(getProject());
+  }
+
+  /**
+   * Where a tag run looks for features: the module's source and resource roots, not the module
+   * directory. A tag run has no file to name, so the runner hands Karate directories to walk;
+   * walking the module root also walks the build output ({@code target/test-classes},
+   * {@code build/resources/test}), where Maven and Gradle keep a copy of every feature - and each
+   * tagged scenario ran twice, once per copy. With no module (or a module with no roots) the runner
+   * falls back to the working directory as before.
+   */
+  static List<String> tagScanRoots(@Nullable Module module) {
+    if (module == null) {
+      return List.of();
+    }
+    return Arrays.stream(ModuleRootManager.getInstance(module).getSourceRoots(true))
+      .map(VirtualFile::getPath)
+      .toList();
   }
 
   /** The module scan decides only when the module actually has karate; otherwise widen to the project. */
