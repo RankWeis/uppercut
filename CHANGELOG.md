@@ -4,6 +4,17 @@
 
 ## [Unreleased]
 
+**Carried over from 3.0.0**, since the Marketplace only shows the newest version's notes:
+
+- **Karate 2.x (karate-junit6) — early access.** Run Karate 2 tests from the IDE. The version is detected per module from the classpath, so a repository can migrate one module at a time, and Karate 1.x projects are unchanged. Debugging a v2 run is not wired up yet.
+- **IntelliJ IDEA 2026.2 support**, minimum build 261, and no upper compatibility bound — the plugin stays installable on newer IDE releases.
+- **Completion for `karate.*` members** (`karate.get`, `karate.call`, `karate.match`, …) inside feature-file JavaScript, matched to the Karate version on the module's classpath.
+- **Modern JavaScript now parses in Community IDEs** — optional chaining, nullish coalescing and assignment, `class`/`extends`/`super`, and BigInt literals no longer show false syntax errors without the JavaScript plugin.
+- **Debugging works when a library path contains a space**, including the default JDK location on Windows.
+- **Run configuration fixes** for generated source roots, Karate's standard folder-plus-runner-class layout, and clearer messages when a feature is run before the project import finishes.
+
+What works, what's in progress, and what every setting means: <https://rankweis.github.io/uppercut/>
+
 ### Added
 
 - The docs site is one click away from where you'd need it: the **?** button and a link on Settings > Tools > Karate open the settings reference, and every message the plugin refuses a run with ends with the troubleshooting page's address
