@@ -4,6 +4,7 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import java.util.List;
@@ -51,9 +52,42 @@ public class KarateRunConfigurationProducerTest extends BasePlatformTestCase {
     assertTrue(KarateRunConfiguration.tagScanRoots(null).isEmpty());
   }
 
+  public void testSingleScenarioRunPointsAtTheScenarioKeywordLineNotTheTagLine() {
+    // Karate 1.x matches scenario runs by the `Scenario:` keyword line; passing the tag line skips
+    // the scenario and reports zero test events, which the IDE then surfaces as "Test framework quit
+    // unexpectedly". The producer used to hand Karate the holder's own text offset, which points at
+    // the first tag when a scenario has any.
+    PsiFile feature = myFixture.addFileToProject("tagged.feature",
+      "Feature: tagged\n"
+        + "\n"
+        + "  @smoke\n"
+        + "  Scenario: Place an order\n"
+        + "    * def x = 1\n");
+    // caret on the @smoke tag's line
+    PsiElement onTag = feature.findElementAt(feature.getText().indexOf("@smoke"));
+    // caret on any step of the scenario
+    PsiElement onStep = feature.findElementAt(feature.getText().indexOf("def"));
+
+    KarateRunConfiguration fromTag = (KarateRunConfiguration) configurationFor(onTag).getConfiguration();
+    KarateRunConfiguration fromStep = (KarateRunConfiguration) configurationFor(onStep).getConfiguration();
+
+    assertEquals(KarateRunConfiguration.PreferredTest.SINGLE_SCENARIO, fromStep.getPreferredTest());
+    assertEquals("Scenario keyword sits on line 4; the tag on line 3 is not what Karate matches on",
+      4, fromStep.getLineNumber());
+    // Right-clicking the tag itself is the ALL_TAGS path (@smoke run), so lineNumber is not asserted;
+    // this branch is only here to pin the SINGLE_SCENARIO path used by the gutter/step/keyword clicks.
+    assertEquals(KarateRunConfiguration.PreferredTest.ALL_TAGS, fromTag.getPreferredTest());
+  }
+
   private ConfigurationFromContext configurationFor(PsiDirectory directory) {
     ConfigurationContext context = ConfigurationContext.createEmptyContextForLocation(
       new PsiLocation<>(getProject(), getModule(), directory));
+    return new KarateRunConfigurationProducer().createConfigurationFromContext(context);
+  }
+
+  private ConfigurationFromContext configurationFor(PsiElement element) {
+    ConfigurationContext context = ConfigurationContext.createEmptyContextForLocation(
+      new PsiLocation<>(getProject(), getModule(), element));
     return new KarateRunConfigurationProducer().createConfigurationFromContext(context);
   }
 }

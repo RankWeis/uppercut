@@ -22,6 +22,7 @@
 - In IDEs without the JavaScript plugin, typing an opening backtick in feature-file JavaScript with no closing one made the editor's highlighting for that file spin at full CPU until the literal was closed
 - Debugging failed to start when any library path contained a space — including the default JDK location on Windows, `C:\Program Files\...` — with `URISyntaxException: Illegal character in opaque part`
 - Debug on a Karate 1 scenario died with "Test framework quit unexpectedly" and no stack trace on macOS/2026.2. The run configuration was suppressing the platform's debugger-connection setup, leaving the launch on a fragile fallback path; it now uses the same setup any Java Application Debug does
+- Running (or debugging) a tagged scenario from the gutter or right-click ran zero scenarios and reported "Test framework quit unexpectedly": the producer picked the tag's line number, which Karate 1.x filters against the `Scenario:` keyword line and rejects. The run now points at the keyword line
 - Feature path resolution with generated source roots, e.g. the protobuf Gradle plugin (#321)
 - Run configurations offered on non-`.feature` files
 - The `form`, `multipart`, and `soap` step actions never highlighted or completed
