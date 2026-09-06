@@ -193,13 +193,27 @@ jobs:
           # The IDE Starter downloads are cached separately below and are unaffected by this.
           cache-read-only: true
 
-      # The downloaded IDE and JDK dominate the runtime. The test boots the platformVersion from
-      # gradle.properties, so hashing that file gives a fresh cache on a platform bump.
+      # The downloaded IDE and JDK dominate the runtime, so this cache is the one that matters for
+      # this job. What it holds depends on a single value - integrationPlatformVersion, falling back
+      # to platformVersion, which is how build.gradle.kts decides the IDE the Starter boots - not on
+      # the whole of gradle.properties. Hashing the file threw the ~1.7 GB IDE away on any property
+      # bump: karateVersion 1.5.1 -> 1.5.2 missed this cache and re-downloaded an IDE that had not
+      # changed. ui-tests-latest.yml already keys on the version it boots; this now matches.
+      - name: IDE Starter platform version
+        id: starter-platform
+        run: |
+          v=$(grep -E '^[[:space:]]*integrationPlatformVersion[[:space:]]*=' gradle.properties \
+            | head -1 | cut -d= -f2- | tr -d ' ')
+          [ -n "$v" ] || v=$(grep -E '^[[:space:]]*platformVersion[[:space:]]*=' gradle.properties \
+            | head -1 | cut -d= -f2- | tr -d ' ')
+          if [ -z "$v" ]; then echo "no platform version in gradle.properties" >&2; exit 1; fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
       - name: Cache IDE Starter downloads
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: out/ide-tests/cache
-          key: ide-starter-${{ runner.os }}-${{ hashFiles('gradle.properties') }}
+          key: ide-starter-${{ runner.os }}-${{ steps.starter-platform.outputs.version }}
           restore-keys: ide-starter-${{ runner.os }}-
 
       # Run integration tests
