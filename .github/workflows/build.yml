@@ -268,9 +268,9 @@ jobs:
       #
       # Before trying this again, measure first: several runs each way, not one.
       - name: Run Plugin Verification tasks
-        # No scope flag: the default window is the newest release plus the newest EAP. The wider
-        # backward sweep is `-PpluginVerifierScope=last3` or `=all`, run by hand before a release.
-        # See pluginVerification in build.gradle.kts.
+        # No flags and no pluginVerification block: the verifier's own default covers every
+        # RELEASE, EAP and RC from the plugin's since-build upward. See the note where that block
+        # used to be, in build.gradle.kts.
         run: ./gradlew verifyPlugin
 
       # Collect Plugin Verifier Result
