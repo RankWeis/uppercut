@@ -1,0 +1,83 @@
+# Deletes superseded Actions cache entries, so the repository stays under its 10 GB budget without
+# GitHub having to LRU-evict for us.
+#
+# GitHub already expires entries unused for 7 days and evicts by least-recently-used once the
+# budget is exceeded, but LRU is blind: when this repository last went over, it evicted the 1.7 GB
+# IDE Starter archive and live dependency bundles indiscriminately and every job re-downloaded.
+# This prunes the entries that are actually dead instead.
+#
+# What counts as dead: an entry that is not the most recent of its family and has not been read for
+# two days. A "family" is the key with its trailing content hash - and any -YYYY-MM stamp - removed,
+# so `gradle-dependencies-v2-<hash>` entries form one family and `verifier-ides-<os>-<hash>-<month>`
+# another. The newest member of every family is never deleted, whatever its age, so a prune can
+# never cost a job its cache; superseded members drop out two days after the last run that read
+# them, rather than the seven GitHub allows.
+name: Prune caches
+
+on:
+  schedule:
+    # Daily, well clear of the usual push traffic.
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: List what would be deleted without deleting it
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  # Deleting a cache entry is a write against the Actions API.
+  actions: write
+
+jobs:
+  prune:
+    name: Prune caches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete superseded entries
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+          KEEP_UNREAD_SECONDS: '172800' # two days
+        run: |
+          set -euo pipefail
+
+          gh api "repos/$REPO/actions/caches?per_page=100" --paginate \
+            --jq '.actions_caches[] | {id, key, size: .size_in_bytes, used: .last_accessed_at}' \
+            | jq -s '.' > caches.json
+
+          echo "Total: $(jq 'length' caches.json) entries, \
+          $(jq '[.[].size] | add / 1000000 | round' caches.json) MB"
+
+          # Never drop the newest of a family, however old; drop the rest once they go unread.
+          jq -r --argjson cutoff "$(( $(date -u +%s) - KEEP_UNREAD_SECONDS ))" '
+            map(.family = (.key
+                  | sub("-[0-9]{4}-[0-9]{2}$"; "")
+                  | sub("-[0-9a-f]{8,}$"; "")))
+            | group_by(.family)
+            | map(sort_by(.used) | reverse | .[1:]
+                  | map(select((.used | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) < $cutoff)))
+            | flatten
+            | .[] | [.id, .size, .key] | @tsv
+          ' caches.json > prune.tsv
+
+          freed=0
+          while IFS=$'\t' read -r id size key; do
+            [ -n "${id:-}" ] || continue
+            freed=$(( freed + size ))
+            if [ "$DRY_RUN" = 'true' ]; then
+              echo "would delete $key ($(( size / 1000000 )) MB)"
+            else
+              echo "deleting $key ($(( size / 1000000 )) MB)"
+              gh cache delete "$id" --repo "$REPO"
+            fi
+          done < prune.tsv
+
+          count=$(wc -l < prune.tsv | tr -d ' ')
+          verb=$([ "$DRY_RUN" = 'true' ] && echo 'Would free' || echo 'Freed')
+          echo "$verb $(( freed / 1000000 )) MB across $count entries" >> "$GITHUB_STEP_SUMMARY"
