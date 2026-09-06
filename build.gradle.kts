@@ -161,21 +161,6 @@ java {
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 // Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 
-// Platform majors run YY1, YY2, YY3 then roll to the next year: 261 follows 253. Steps `n`
-// majors back from a build number like "262", used to build a rolling verification window.
-fun majorsBack(build: String, n: Int): String {
-    var year = build.dropLast(1).toInt()
-    var minor = build.takeLast(1).toInt()
-    repeat(n) {
-        minor -= 1
-        if (minor < 1) {
-            minor = 3
-            year -= 1
-        }
-    }
-    return "$year$minor"
-}
-
 intellijPlatform {
     pluginConfiguration {
         // The Marketplace display name. Without this the manifest keeps the <name> baked into
@@ -236,44 +221,18 @@ intellijPlatform {
         channels = providers.gradleProperty("pluginVersion")
             .map { listOf(it.substringAfter("-ch", "").substringBefore('.').ifEmpty { "default" }) }
     }
-    pluginVerification {
-        ides {
-            // Two scopes, picked by what is being verified. A pull request checks the newest
-            // release of the platform major the plugin is built on - one IDE, the cheapest check
-            // that still catches a break the compiler cannot see. A merge to main widens to the
-            // last three majors, so a break against an IDE people are still running is caught
-            // before the release draft is cut rather than after publishing.
-            //
-            // The verifier has no "last N releases" filter, so the window is a rolling sinceBuild:
-            // two majors back from platformVersion, floored at the plugin's own since-build
-            // because verifying against IDEs the plugin declares incompatible with proves nothing.
-            // The default window is the newest release plus the newest EAP - what a user is on
-            // now, and what they will be on next. The wider backward sweep is on demand:
-            //
-            //   ./gradlew verifyPlugin -PpluginVerifierScope=all
-            //
-            if (properties("pluginVerifierScope").orNull == "all") {
-                recommended()
-            } else {
-                val wide = properties("pluginVerifierScope").orNull == "last3"
-                select {
-                    types = listOf(IntelliJPlatformType.IntellijIdeaUltimate)
-                    // EAP is in because the plugin declares no until-build: it stays installable on
-                    // every future IDE, so a platform change that lands in the next major reaches
-                    // users whether or not anyone checked. That forward break is the one worth
-                    // catching early; verifying against past releases only confirms the since-build
-                    // claim, which has rarely been wrong.
-                    channels = listOf(ProductRelease.Channel.RELEASE, ProductRelease.Channel.EAP)
-                    // "2026.2" -> "262": the platform's own major build, so the list follows platformVersion
-                    sinceBuild = properties("platformVersion").map { v ->
-                        val current = v.split('.').let { (year, minor) -> year.takeLast(2) + minor }
-                        val start = if (wide) majorsBack(current, 2) else current
-                        maxOf(start, properties("pluginSinceBuild").get())
-                    }
-                }
-            }
-        }
-    }
+    // No pluginVerification block. The default is `recommended()`, which derives the window from
+    // what the plugin itself declares rather than from anything hand-computed here:
+    //
+    //   channels  = RELEASE, EAP, RC
+    //   types     = this plugin's own platform type
+    //   sinceBuild = ideaVersion.sinceBuild  (pluginSinceBuild)
+    //   untilBuild = ideaVersion.untilBuild  (null - see pluginConfiguration below)
+    //
+    // That is the newest release, the newest EAP and any RC, from the plugin's since-build upward,
+    // and it follows pluginSinceBuild automatically. The block that used to sit here computed a
+    // rolling window with majorsBack() and gated it behind -PpluginVerifierScope, and excluded EAP
+    // - the one channel that catches a break in the IDE users are about to upgrade to.
 }
 
 tasks.withType<Copy> {

@@ -34,11 +34,10 @@ Uppercut is an IntelliJ IDEA plugin providing comprehensive IDE support for the 
 # Launch IntelliJ with the plugin loaded for manual testing
 ./gradlew runIde
 
-# Verify plugin compatibility against the newest release + newest EAP (what CI runs)
+# Verify plugin compatibility. The verifier's own default: every RELEASE, EAP and RC from the
+# plugin's since-build upward, for this plugin's platform type. Push-only in CI, and nothing
+# waits on it - an EAP failure is a heads-up, not a gate.
 ./gradlew verifyPlugin
-
-# ... against every supported major, since-build up to the newest EAP (before a release)
-./gradlew verifyPlugin -PpluginVerifierScope=all
 
 ```
 
@@ -251,8 +250,8 @@ Triggers on push to `main`/`ij-2024.2` and pull requests. Jobs:
 1. **Build** - Compile and create plugin artifact
 2. **Test** - Run `check` (excluding integration tests) with Kover code coverage
 3. **Integration tests** - `Karate2UITest` under xvfb; only on push, not pull requests
-4. **Verify** - IntelliJ Plugin Verifier against the newest release and newest EAP of the platform major (`pluginVerification` in `build.gradle.kts`; `-PpluginVerifierScope=all` for the full since-build range)
-5. **Release Draft** - Auto-create GitHub release draft (push to main only); gated on all four jobs above, integration tests included
+4. **Verify** - IntelliJ Plugin Verifier on the verifier's default window (RELEASE, EAP and RC from `pluginSinceBuild` upward). Push-only, and **nothing depends on it**: an EAP break is information about a platform still in flux, not a reason to stop a release
+5. **Release Draft** - Auto-create GitHub release draft (push to main only); gated on build, test and integration tests - deliberately not on verify
 
 Caching: the IntelliJ platform and verifier IDEs are Gradle dependencies, cached by `setup-gradle`. The extracted copies (`caches/*/transforms`) are excluded everywhere and the verify job is read-only - the repository has a 10 GB cache budget, and caching the extracted IDEs per job blew past it and evicted everything.
 
