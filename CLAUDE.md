@@ -101,10 +101,14 @@ uppercut/
 ├── docs/                         # Contributor notes: Karate 2 design/handoff, manual checklist, risk register
 └── .github/workflows/
     ├── build.yml                 # CI: build, test, integration-test, verify, draft release
-    ├── docs.yml                  # Publish site/ to https://rankweis.github.io/uppercut/
-    ├── release.yml               # Publish to JetBrains Marketplace
+    ├── codeql.yml                # Code scanning (java-kotlin built manually, actions buildless)
     ├── contrib.yml               # Contributor attribution
-    └── run-ui-tests.yml          # Cross-platform UI tests
+    ├── dependency-submission.yml # Submits the runtimeClasspath graph for Dependabot (main only)
+    ├── docs.yml                  # Publish site/ to https://rankweis.github.io/uppercut/
+    ├── platform-freshness.yml    # Monthly check that platformVersion has not fallen behind
+    ├── prune-caches.yml          # Daily prune of superseded Actions cache entries
+    ├── release.yml               # Publish to JetBrains Marketplace
+    └── ui-tests-latest.yml       # Weekly integrationTest against the newest IDEA release
 ```
 
 ### Main Source Packages (`com.rankweis.uppercut.karate`)
@@ -210,7 +214,7 @@ Inline suppression is available via comments:
 | Unit tests | `src/test/` | JUnit 4 on the Vintage engine (both `BasePlatformTestCase` fixtures and plain `@Test` classes) | `./gradlew test` |
 | Platform tests | `src/platformTest/` (source set declared, currently empty) | JUnit Vintage | `./gradlew platformTest` |
 | Integration tests | `src/integrationTest/` | JUnit Jupiter + IDE Starter/Driver; `Karate2UITest` boots one IDE for its seven tests, `UppercutUITest` is `@Disabled` | `./gradlew integrationTest` |
-| UI tests | Via IDE Starter/Driver | Manual workflow | `.github/workflows/run-ui-tests.yml` |
+| UI tests, newest IDE | `src/integrationTest/` | JUnit Jupiter + IDE Starter/Driver | `.github/workflows/ui-tests-latest.yml`, weekly |
 
 ### Test Conventions
 

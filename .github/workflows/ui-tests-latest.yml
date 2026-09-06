@@ -43,8 +43,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
         with:
-          gradle-home-cache-excludes: |
-            caches/*/transforms
+          # Read-only. This job runs on a schedule against main, where setup-gradle writes by
+          # default, and it resolves the integrationTest classpath - so it was writing the ~2.1 GB
+          # bundle that build.yml's integration-test job was made read-only to stop writing. It
+          # reads what the build job leaves and adds nothing of its own; the IDE it actually cares
+          # about is cached separately below, keyed on the release it boots.
+          cache-read-only: true
 
       - name: Resolve newest IDEA release
         id: idea
