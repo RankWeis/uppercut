@@ -251,19 +251,52 @@ jobs:
           # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
           gradle-home-cache-excludes: |
             caches/*/transforms
-          # Read-only: the two verifier IDEs are ~2.4 GB of archives that change with every EAP
-          # build. Restoring another job's entry gives this one the platform and dependencies; the
-          # verifier IDEs are downloaded fresh each run rather than kept in the shared budget.
+          # Read-only: restoring another job's entry gives this one the platform and dependencies.
+          # The verifier IDEs are cached separately below rather than through this entry, which
+          # would also duplicate the ~2 GB dependency set the build and test jobs already keep.
           cache-read-only: true
 
-      # The IDEs the verifier runs against are Gradle dependencies, downloaded here (see the cache
-      # note above). Which IDEs: see pluginVerification in build.gradle.kts.
+      # The verifier IDEs are Gradle dependencies, resolved under the `idea:idea` coordinate - the
+      # platform the plugin builds against is `idea:ideaIU`, cached with the dependencies above, so
+      # this path holds the verifier's IDEs and nothing else.
+      #
+      # pluginVerification selects RELEASE channels only (EAP is deliberately absent - see
+      # build.gradle.kts), so the set turns over when JetBrains ships a patch release, not with
+      # every EAP build. The key therefore rotates monthly on top of gradle.properties, which is
+      # what decides the window: one live entry of ~2.4 GB most of the time, two briefly at a
+      # rollover, against a 10 GB repository budget.
+      - name: Verifier IDE cache key
+        id: verifier-ides-key
+        run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore verifier IDEs
+        id: verifier-ides
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.gradle/caches/modules-2/files-2.1/idea/idea
+          key: verifier-ides-${{ runner.os }}-${{ hashFiles('gradle.properties') }}-${{ steps.verifier-ides-key.outputs.month }}
+          restore-keys: verifier-ides-${{ runner.os }}-${{ hashFiles('gradle.properties') }}-
+
       - name: Run Plugin Verification tasks
         # Pull requests verify against the newest release only; a merge to main widens to the
         # last three majors. See pluginVerification in build.gradle.kts.
+        #
+        # The non-empty value has to sit in the `&&` slot: GitHub treats '' as falsy, so
+        # `event == 'pull_request' && '' || '-P...'` falls through to the '-P...' on both sides and
+        # every run got the wide scope, pull requests included.
         run: ./gradlew verifyPlugin $SCOPE
         env:
-          SCOPE: ${{ github.event_name == 'pull_request' && '' || '-PpluginVerifierScope=last3' }}
+          SCOPE: ${{ github.event_name != 'pull_request' && '-PpluginVerifierScope=last3' || '' }}
+
+      # Only a push to main writes the entry. A pull request's cache is scoped to its own branch,
+      # where nothing else can restore it, and a pull request verifies against a subset of what
+      # main already holds - so it reads main's entry and writes nothing.
+      - name: Save verifier IDEs
+        if: ${{ github.event_name != 'pull_request' && steps.verifier-ides.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.gradle/caches/modules-2/files-2.1/idea/idea
+          key: verifier-ides-${{ runner.os }}-${{ hashFiles('gradle.properties') }}-${{ steps.verifier-ides-key.outputs.month }}
 
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
