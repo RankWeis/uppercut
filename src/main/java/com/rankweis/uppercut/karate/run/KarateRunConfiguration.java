@@ -40,7 +40,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -155,7 +158,19 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
             log.warn("No junit5 in classpath");
             // The bundled fallback is v1-only; v2 users always have karate on their own classpath.
             params.getProgramParametersList().add("--karate-provided", "true");
-            params.getClassPath().add(PathUtil.getJarPathForClass(Karate.class));
+            String bundledJar = PathUtil.getJarPathForClass(Karate.class);
+            params.getClassPath().add(bundledJar);
+            // Both versions, so the warning the runner prints can name them. "Results may be
+            // inconsistent" is only actionable if the user can see which Karate ran against which.
+            String bundledVersion = karateJarVersion(new File(bundledJar).getName());
+            if (bundledVersion != null) {
+              params.getProgramParametersList().add("--karate-bundled-version", bundledVersion);
+            }
+            libraryNames.stream()
+              .map(KarateRunConfiguration::karateJarVersion)
+              .filter(Objects::nonNull)
+              .findFirst()
+              .ifPresent(v -> params.getProgramParametersList().add("--karate-module-version", v));
           }
         }
         params.setUseDynamicClasspath(true);
@@ -382,6 +397,19 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   static boolean isKarate2Jar(String name) {
     return name.matches("karate-(core|junit6)-2\\..*") || name.matches("karate-junit6(-.*)?\\.jar");
   }
+
+  /**
+   * The version in a Karate jar's file name, or null when the name carries none. Local or shaded
+   * jars are often unversioned ({@code karate-core.jar}), which is why the caller treats a null as
+   * "say nothing" rather than as a mismatch.
+   */
+  static @Nullable String karateJarVersion(String jarName) {
+    Matcher matcher = KARATE_JAR_VERSION.matcher(jarName);
+    return matcher.matches() ? matcher.group(1) : null;
+  }
+
+  private static final Pattern KARATE_JAR_VERSION =
+    Pattern.compile("karate-(?:core|junit5|junit6)-(\\d+\\.\\d+(?:\\.\\d+)?(?:[.-][A-Za-z0-9]+)*)\\.jar");
 
   /** karate-core/karate-junit5 1.x, or a karate-junit5 jar of any version - that artifact only exists in v1. */
   static boolean isKarate1Jar(String name) {

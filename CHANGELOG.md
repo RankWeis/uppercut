@@ -35,6 +35,10 @@
 - Running a feature that isn't inside any module - a project opened from its `pom.xml` rather than imported, or a symlinked project path - now says so up front, instead of launching a JVM with no classpath and failing with "Must have karate-core on the classpath"
 - Security vulnerabilities and library updates
 
+### Modified
+
+- The bundled Karate 1 fallback runner is now **1.5.2**, the last 1.x release. It is used only when a module has Karate on its classpath but no `karate-junit5`, and the console warning about it now names both versions - the bundled one and the Karate your module actually has - so a mismatch is something you can see rather than infer. Karate's own step keywords and match markers are unchanged between 1.5.1 and 1.5.2.
+
 ## [2.5.2] - 2026-03-23
 
 ### Fixed

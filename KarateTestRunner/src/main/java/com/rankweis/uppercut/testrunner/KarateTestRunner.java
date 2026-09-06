@@ -78,6 +78,31 @@ public class KarateTestRunner {
     mParallel.invoke(invoke, parallelism);
   }
 
+  /**
+   * Names the two Karate versions in play, when the plugin could work them out from the jar names.
+   * "May be inconsistent" is only actionable if the reader can see which Karate ran against which,
+   * and unversioned or shaded jars mean either half can be missing.
+   */
+  String providedKarateVersions() {
+    String bundled = firstParam("karate-bundled-version");
+    String module = firstParam("karate-module-version");
+    if (bundled == null && module == null) {
+      return "";
+    }
+    if (module == null) {
+      return " (karate-junit5 " + bundled + ")";
+    }
+    if (bundled == null) {
+      return " (against karate " + module + " on your classpath)";
+    }
+    return " (karate-junit5 " + bundled + " against karate " + module + " on your classpath)";
+  }
+
+  private String firstParam(String key) {
+    List<String> values = params.get(key);
+    return values == null || values.isEmpty() ? null : values.get(0);
+  }
+
   Object createRuntimeHook() {
     Logger myLogger = LoggerFactory.getLogger(KarateTestRunner.class);
     // Load the RuntimeHook class using reflection
@@ -86,9 +111,10 @@ public class KarateTestRunner {
         .stream().anyMatch(Boolean::parseBoolean);
     if (uppercutProvidedKarate) {
       myLogger.error(
-        "Uppercut could not find a version of karate-junit5 in the classpath. It is using a provided one - this can "
-          + "cause inconsistent results or errors. For the best experience, please include karate-junit5 in your "
-          + "project");
+        "Uppercut could not find a version of karate-junit5 in the classpath. It is using a provided one"
+          + providedKarateVersions()
+          + " - this can cause inconsistent results or errors. For the best experience, please include "
+          + "karate-junit5 in your project");
     }
     Class<?> runtimeHookClass;
     try {

@@ -13,7 +13,7 @@ Baseline for "before": `main` prior to the Karate 2 work. The v1 execution path 
 
 | # | Risk | Mechanism | Guard | Status |
 |---|------|-----------|-------|--------|
-| R1 | Bundled-karate fallback fires on working v1 setups | Detection moved from a project-wide library scan to the run module's classpath. Karate jars attached to a sibling module (root-module run configs, shared test-support modules) become invisible, `--karate-provided` injects bundled karate-junit5 1.5.1 over the user's real Karate version | Module scan is only authoritative when the module has a `karate-*` jar; otherwise detection widens back to the project-wide scan (`moduleScanIsAuthoritative`). Unit-tested | **Mitigated** |
+| R1 | Bundled-karate fallback fires on working v1 setups | Detection moved from a project-wide library scan to the run module's classpath. Karate jars attached to a sibling module (root-module run configs, shared test-support modules) become invisible, `--karate-provided` injects bundled karate-junit5 1.5.2 over the user's real Karate version | Module scan is only authoritative when the module has a `karate-*` jar; otherwise detection widens back to the project-wide scan (`moduleScanIsAuthoritative`). Unit-tested | **Mitigated** |
 | R2 | AUTO misclassifies a v1 module as v2 | Any jar matching `karate-(core|junit6)-2\..*` in the module's *recursive* dependencies flips the run to the v2 runner, which then dies on a v1 classpath (`ClassNotFoundException: io.karatelabs.core.Runner`). A stale transitive karate-core 2.x anywhere in the tree is enough | None beyond the regex being name-anchored. The settings override (V1) is the escape hatch: with both majors on the classpath the pin wins, and the mismatch guard only refuses a pin that cannot work (V1 with no Karate 1 jar at all). Unit-tested | **Accepted** — needs a real-world report to justify more machinery |
 | R3 | v1 console pipeline hangs off one reflective call | The `<<UPPERCUT>>` appender is now installed via `Class.forName("...UppercutLogbackAppender")` with a blanket `catch (Throwable)`. If that class ever fails to load for a packaging reason (jar split, shading), every v1 run silently degrades to an empty tree, because all three converter regexes only match prefixed lines | The v1 leg of `Karate2UITest` runs the real packaged plugin and asserts the tree — a packaging break fails CI. The catch prints one stderr line naming the cause | **Guarded by test** |
 | R4 | Version override contradicts the classpath | Pinning V1 with only Karate 2 jars (or V2 with none) used to die deep in the wrong runner with an unrelated-looking `NoSuchMethodException` after silently injecting the bundled v1 jar | `checkVersionOverrideMatchesClasspath` refuses the run up front, naming the setting. AUTO never hits it. Unit- and UI-tested | **Mitigated** |
@@ -32,7 +32,7 @@ Reasoning for things deliberately *not* done, so they don't get re-argued from s
 ### The bundled-Karate fallback stays v1-only (decided 2026-07-20)
 
 On the v1 path, a project with no `karate-junit5` gets the plugin's own bundled copy injected
-(`--karate-provided`, `karate-junit5` 1.5.1). Karate 2 has no equivalent and will not get one.
+(`--karate-provided`, `karate-junit5` 1.5.2). Karate 2 has no equivalent and will not get one.
 
 - **The gap it covers does not exist on v2.** It was built for Karate 1 users who had `karate-core`
   without the JUnit 5 artifact. `karate-junit6` brings `karate-core` with it, so there is no split
@@ -52,7 +52,7 @@ JUnit artifact.
 ## Standing invariants (break one of these and v1 users notice)
 
 - The v1 branch of `KarateTestRunner.main` and everything it calls (`doTest`, `createRuntimeHook`,
-  caller-chain reflection) must keep working against karate-core **1.5.1** — that exact jar ships
+  caller-chain reflection) must keep working against karate-core **1.5.2** — that exact jar ships
   inside the plugin as the bundled fallback.
 - The `<<UPPERCUT>>` prefix format written by `UppercutLogbackAppender` is load-bearing: the
   converter's `UPPERCUT_LOG_PATTERN`, `SCENARIO_NAME`, and `FEATURE_FILE_NAME` regexes parse it.
