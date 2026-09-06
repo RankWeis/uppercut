@@ -118,18 +118,15 @@ jobs:
           distribution: zulu
           java-version: 25
 
-      # Setup Gradle
+      # Setup Gradle. This job writes its own cache entry, ~1.9 GB against the build job's 1.7 GB,
+      # the difference being the test and integrationTest classpaths that `buildPlugin` never
+      # resolves. It was made read-only when the budget was 10 GB and 6 GB over; restoring the build
+      # job's entry instead meant fetching that difference from Maven Central on every run, and the
+      # first run that actually did so failed on a 403 from Central - the artifacts were fine, the
+      # repository just had a bad minute. Two GB is not worth a build that breaks when Central
+      # hiccups, now that the budget is 25 GB.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
-        with:
-          # Read-only: this job resolves the build's dependencies plus the test classpath, so its
-          # bundle hashes differently from the build job's and the enhanced cache provider stores it
-          # as a second whole entry - 1920 MB against the build job's 1743 MB, for maybe 180 MB of
-          # dependencies the build job does not have. `needs: [ build ]` means the build job has
-          # already written its entry, so this one restores that and re-resolves the difference.
-          # Worth keeping now that the budget is 25 GB: not saving also means not compressing and
-          # uploading ~1.9 GB at the end of every run.
-          cache-read-only: true
 
       # Run tests
       - name: Run Tests
@@ -183,15 +180,11 @@ jobs:
           distribution: zulu
           java-version: 25
 
-      # Setup Gradle
+      # Setup Gradle. Writes its own entry too, for the same reason as the test job: it resolves the
+      # integrationTest classpath, which nothing else does, and fetching that from Maven Central on
+      # every run is a network dependency the build does not need.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
-        with:
-          # Read-only, for the same reason as the test job: this job resolves the integrationTest
-          # classpath on top of everything else, so its bundle was stored as a third whole entry -
-          # 2101 MB, the largest of the three - for roughly 360 MB the build job does not have.
-          # The IDE Starter downloads are cached separately below and are unaffected by this.
-          cache-read-only: true
 
       # The downloaded IDE and JDK dominate the runtime, so this cache is the one that matters for
       # this job. What it holds depends on a single value - integrationPlatformVersion, falling back
