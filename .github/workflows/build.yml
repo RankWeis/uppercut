@@ -28,6 +28,11 @@ concurrency:
 
 permissions:
   contents: read
+# The four build jobs deliberately have no `needs` between them - they fan out from the start.
+# Nothing passes data: no job downloads another's artifact, and each restores its own Gradle User
+# Home lineage rather than the build job's, so waiting for build never warmed anything. The edges
+# only bought fail-fast, at 74s on every green run to save runner minutes on the rare red one.
+# Release draft still gates on all four, so nothing ships without them.
 jobs:
 
   # Prepare environment and build the plugin
@@ -154,7 +159,6 @@ jobs:
   integration-test:
     name: Integration tests
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    needs: [ build ]
     runs-on: ubuntu-latest
     # No free-disk-space step here either - see the note in the verify job. This one was costing
     # 36s for the same non-problem.
