@@ -1,0 +1,51 @@
+# Submits the Gradle dependency graph to GitHub so Dependabot can see the project's dependencies.
+#
+# This replaces the repository's "Automatic dependency submission" setting (Settings -> Code
+# security), which runs the same action through a workflow we cannot configure: it sets up its own
+# temurin JDK and writes its own Gradle cache entry, a second full copy of the dependency set
+# (~3.3 GB) scoped to whatever branch it ran on. Two open dependabot PRs were enough to push the
+# repository past its 10 GB cache budget and evict everything - the same failure the
+# gradle-home-cache-excludes in build.yml exists to avoid.
+#
+# Running it here, on main only and with the cache read-only, submits the same graph and writes
+# nothing to the cache.
+name: Dependency Submission
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  # Required to submit the dependency snapshot.
+  contents: write
+
+jobs:
+  dependency-submission:
+    name: Submit Dependency Graph
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Fetch Sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Setup Java
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+        with:
+          distribution: zulu
+          java-version: 25
+
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@9c971963bec38e04b3d30dcc455b5382be2fdbfb
+        with:
+          # Read the caches the build jobs already populated, write nothing back: this job resolves
+          # every configuration, so its Gradle home is the largest of any job in the repository.
+          cache-read-only: true
+          # Skip the artifact upload; the snapshot goes straight to the API.
+          dependency-graph: generate-and-submit
+          gradle-home-cache-excludes: |
+            caches/*/transforms
