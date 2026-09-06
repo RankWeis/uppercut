@@ -6,8 +6,19 @@
 # IDE Starter archive and live dependency bundles indiscriminately and every job re-downloaded.
 # This prunes the entries that are actually dead instead.
 #
+# The 10 GB budget is the default, not a hard ceiling: a repository admin can raise it (up to 10 TB
+# for a user-owned repository) for $0.07/GB/month on storage above 10 GB, billed on what is used
+# rather than on the ceiling. Raising it is the cheaper fix if this workflow ever stops keeping up.
+#
 # What counts as dead: an entry that is not the most recent of its family and has not been read for
-# two days. A "family" is the key with its trailing content hash - and any -YYYY-MM stamp - removed,
+# two days.
+#
+# The read rule has a blind spot worth knowing. It can only reclaim an entry that jobs have stopped
+# restoring, and a job goes on restoring its own job-id lineage even after it is made
+# cache-read-only - so `test`'s and `integration-test`'s bundles kept being read every run, stayed
+# fresh, and were never eligible here. They had to be deleted by hand once; from then on those jobs
+# fall back to the build job's entry. If usage creeps up with nothing selected for pruning, that is
+# the shape to look for: a large entry with a recent last-read that no longer needs to exist. A "family" is the key with its trailing content hash - and any -YYYY-MM stamp - removed,
 # so `gradle-dependencies-v2-<hash>` entries form one family and `verifier-ides-<os>-<hash>-<month>`
 # another. The newest member of every family is never deleted, whatever its age, so a prune can
 # never cost a job its cache; superseded members drop out two days after the last run that read
