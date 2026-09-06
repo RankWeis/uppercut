@@ -46,3 +46,16 @@ jobs:
           cache-read-only: true
           # Skip the artifact upload; the snapshot goes straight to the API.
           dependency-graph: generate-and-submit
+          # Submit only what ships. The action resolves every configuration in the build, and most
+          # of them describe things a user never receives: compileClasspath carries the IntelliJ
+          # platform, and KarateTestRunner declares karate-junit5 as compileOnly *without* the
+          # `isTransitive = false` the root project uses, so resolving it pulls karate-core and with
+          # it armeria, netty, thymeleaf, json-smart and httpclient. That tree alone was 85 open
+          # Dependabot alerts against libraries the plugin does not contain - the plugin ships the
+          # two karate jars and nothing beneath them.
+          #
+          # runtimeClasspath is what prepareSandbox bundles, so it keeps real exposure visible - a
+          # CVE in the bundled karate jars, or in logback - while dropping compile-only and test
+          # configurations. Anchored so it does not also match testRuntimeClasspath and
+          # integrationTestRuntimeClasspath.
+          dependency-graph-include-configurations: '^runtimeClasspath$'
