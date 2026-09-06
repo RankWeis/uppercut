@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-09-06
+
 ### Added
 
 - **Karate 2.x support — early access.** Run Karate 2 (karate-junit6) tests from the IDE. The Karate version is detected per module from the classpath, so a repository can migrate one module at a time; Settings > Tools > Karate pins it if you'd rather choose. The test tree shows each scenario with its steps and their output, nests called features under the calling scenario, and navigates to the source feature on double-click. Karate 1.x is unchanged and remains the default for existing projects.
@@ -456,7 +458,8 @@
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v2.5.2...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.0.1...HEAD
+[3.0.1]: https://github.com/rankweis/uppercut/compare/v2.5.2...v3.0.1
 [2.5.2]: https://github.com/rankweis/uppercut/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/rankweis/uppercut/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/rankweis/uppercut/compare/v2.4.16...v2.5.0
