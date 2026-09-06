@@ -51,9 +51,15 @@ jobs:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
 
+      # --no-build-cache is load-bearing. The Setup Gradle step above restores the build cache
+      # along with the dependencies, and CodeQL builds its database by tracing an actual javac
+      # run: with a warm build cache every compile task comes back FROM-CACHE, nothing is compiled,
+      # and `database finalize` fails with "CodeQL detected code written in Java/Kotlin but this
+      # run didn't build any of it" (exit 32). The cache is still worth restoring - it is what
+      # keeps this job from re-downloading the ~2 GB platform - but the compile has to be real.
       - name: Build
         if: matrix.build-mode == 'manual'
-        run: ./gradlew classes
+        run: ./gradlew classes --no-build-cache
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
