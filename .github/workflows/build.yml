@@ -227,6 +227,10 @@ jobs:
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
     name: Verify plugin
+    # Push only, and nothing waits on it. It checks the plugin against the newest release and the
+    # newest EAP; an EAP failure is information about a platform still in flux, not a reason to
+    # stop a release. Release draft deliberately does not list it in `needs`.
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     # No free-disk-space step here. It used to run because "the IDE (~4 GB) plus a JDK need more
     # room than a hosted runner has spare by default", which stopped being true: a hosted ubuntu
@@ -264,15 +268,10 @@ jobs:
       #
       # Before trying this again, measure first: several runs each way, not one.
       - name: Run Plugin Verification tasks
-        # Pull requests verify against the newest release only; a merge to main widens to the
-        # last three majors. See pluginVerification in build.gradle.kts.
-        #
-        # The non-empty value has to sit in the `&&` slot: GitHub treats '' as falsy, so
-        # `event == 'pull_request' && '' || '-P...'` falls through to the '-P...' on both sides and
-        # every run got the wide scope, pull requests included.
-        run: ./gradlew verifyPlugin $SCOPE
-        env:
-          SCOPE: ${{ github.event_name != 'pull_request' && '-PpluginVerifierScope=last3' || '' }}
+        # No scope flag: the default window is the newest release plus the newest EAP. The wider
+        # backward sweep is `-PpluginVerifierScope=last3` or `=all`, run by hand before a release.
+        # See pluginVerification in build.gradle.kts.
+        run: ./gradlew verifyPlugin
 
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
@@ -288,7 +287,7 @@ jobs:
     name: Release draft
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
-    needs: [ build, test, verify, integration-test ]
+    needs: [ build, test, integration-test ]
     permissions:
       contents: write
     steps:

@@ -247,8 +247,8 @@ intellijPlatform {
             // The verifier has no "last N releases" filter, so the window is a rolling sinceBuild:
             // two majors back from platformVersion, floored at the plugin's own since-build
             // because verifying against IDEs the plugin declares incompatible with proves nothing.
-            // EAP is deliberately absent - JetBrains runs the verifier against EAPs and emails the
-            // failures. recommended() stays available by hand for a pre-release sweep:
+            // The default window is the newest release plus the newest EAP - what a user is on
+            // now, and what they will be on next. The wider backward sweep is on demand:
             //
             //   ./gradlew verifyPlugin -PpluginVerifierScope=all
             //
@@ -258,7 +258,12 @@ intellijPlatform {
                 val wide = properties("pluginVerifierScope").orNull == "last3"
                 select {
                     types = listOf(IntelliJPlatformType.IntellijIdeaUltimate)
-                    channels = listOf(ProductRelease.Channel.RELEASE)
+                    // EAP is in because the plugin declares no until-build: it stays installable on
+                    // every future IDE, so a platform change that lands in the next major reaches
+                    // users whether or not anyone checked. That forward break is the one worth
+                    // catching early; verifying against past releases only confirms the since-build
+                    // claim, which has rarely been wrong.
+                    channels = listOf(ProductRelease.Channel.RELEASE, ProductRelease.Channel.EAP)
                     // "2026.2" -> "262": the platform's own major build, so the list follows platformVersion
                     sinceBuild = properties("platformVersion").map { v ->
                         val current = v.split('.').let { (year, minor) -> year.takeLast(2) + minor }
