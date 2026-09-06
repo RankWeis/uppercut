@@ -28,6 +28,11 @@ concurrency:
 
 permissions:
   contents: read
+# The four build jobs deliberately have no `needs` between them - they fan out from the start.
+# Nothing passes data: no job downloads another's artifact, and each restores its own Gradle User
+# Home lineage rather than the build job's, so waiting for build never warmed anything. The edges
+# only bought fail-fast, at 74s on every green run to save runner minutes on the rare red one.
+# Release draft still gates on all four, so nothing ships without them.
 jobs:
 
   # Prepare environment and build the plugin
@@ -103,7 +108,6 @@ jobs:
   # Run tests and upload a code coverage report
   test:
     name: Test
-    needs: [ build ]
     runs-on: ubuntu-latest
     steps:
 
@@ -155,19 +159,13 @@ jobs:
   integration-test:
     name: Integration tests
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    needs: [ build ]
     runs-on: ubuntu-latest
+    # No free-disk-space step here either - see the note in the verify job. This one was costing
+    # 36s for the same non-problem.
     # five IDE launches with multi-minute waits each; a hung IDE must not hold the release draft for
     # GitHub's six-hour default
     timeout-minutes: 60
     steps:
-
-      # The IDE (~4 GB) plus a JDK need more room than a hosted runner has spare by default
-      - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
-        with:
-          tool-cache: false
-          large-packages: false
 
       # Check out the current repository
       - name: Fetch Sources
@@ -229,16 +227,12 @@ jobs:
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
     name: Verify plugin
-    needs: [ build ]
     runs-on: ubuntu-latest
+    # No free-disk-space step here. It used to run because "the IDE (~4 GB) plus a JDK need more
+    # room than a hosted runner has spare by default", which stopped being true: a hosted ubuntu
+    # runner reports 87 GB free before any cleanup, and this job needs perhaps 12 GB. The step was
+    # spending 98s of a 333s job reclaiming 22 GB nobody wanted.
     steps:
-
-     #  Free GitHub Actions Environment Disk Space
-      - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
-        with:
-          tool-cache: false
-          large-packages: false
 
       # Check out the current repository
       - name: Fetch Sources
