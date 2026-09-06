@@ -128,6 +128,12 @@ jobs:
           # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
           gradle-home-cache-excludes: |
             caches/*/transforms
+          # Read-only: this job resolves the build's dependencies plus the test classpath, so its
+          # bundle hashes differently from the build job's and the enhanced cache provider stores it
+          # as a second whole entry - 1920 MB against the build job's 1743 MB, for maybe 180 MB of
+          # dependencies the build job does not have. `needs: [ build ]` means the build job has
+          # already written its entry, so this one restores that and re-resolves the difference.
+          cache-read-only: true
 
       # Run tests
       - name: Run Tests
@@ -190,6 +196,11 @@ jobs:
           # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
           gradle-home-cache-excludes: |
             caches/*/transforms
+          # Read-only, for the same reason as the test job: this job resolves the integrationTest
+          # classpath on top of everything else, so its bundle was stored as a third whole entry -
+          # 2101 MB, the largest of the three - for roughly 360 MB the build job does not have.
+          # The IDE Starter downloads are cached separately below and are unaffected by this.
+          cache-read-only: true
 
       # The downloaded IDE and JDK dominate the runtime. The test boots the platformVersion from
       # gradle.properties, so hashing that file gives a fresh cache on a platform bump.
