@@ -71,7 +71,7 @@ Either way, a `call read('classpath:...')` inside a feature fails for exactly th
 
 ## A step shows "Uppercut could not find a version of karate-junit5 in the classpath. It is using a provided one"
 
-Karate 1 only. The module has `karate-core` but not `karate-junit5`, so the plugin ran the tests with its own bundled copy of Karate 1.5.1. Results are usually right, but you're testing against a different Karate than your build declares - add `karate-junit5` to the module to run with yours. There is no bundled Karate 2; `karate-junit6` brings `karate-core` with it.
+Karate 1 only. The module has `karate-core` but not `karate-junit5`, so the plugin ran the tests with its own bundled copy of Karate 1.5.2 - the last 1.x release. Results are usually right, but you're testing against a different Karate than your build declares - add `karate-junit5` to the module to run with yours. There is no bundled Karate 2; `karate-junit6` brings `karate-core` with it.
 
 ## JavaScript in a feature is flagged as invalid, but Karate runs it
 

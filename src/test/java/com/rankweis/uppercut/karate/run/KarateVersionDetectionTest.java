@@ -1,5 +1,6 @@
 package com.rankweis.uppercut.karate.run;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
@@ -105,6 +106,24 @@ public class KarateVersionDetectionTest {
     assertTrue(noModule, noModule.contains("not inside any module"));
     String noKarate = KarateRunConfiguration.classpathProblem(List.of("junit-jupiter-5.11.4.jar"), "app.test");
     assertTrue(noKarate, noKarate.contains("'app.test'") && noKarate.contains("karate-junit6"));
+  }
+
+  @Test
+  public void karateJarVersionReadsTheVersionFromTheFileName() {
+    assertEquals("1.5.1", KarateRunConfiguration.karateJarVersion("karate-core-1.5.1.jar"));
+    assertEquals("1.5.1", KarateRunConfiguration.karateJarVersion("karate-junit5-1.5.1.jar"));
+    assertEquals("2.1.1", KarateRunConfiguration.karateJarVersion("karate-junit6-2.1.1.jar"));
+    assertEquals("1.4.0-RC2", KarateRunConfiguration.karateJarVersion("karate-core-1.4.0-RC2.jar"));
+  }
+
+  @Test
+  public void karateJarVersionIsNullWhenTheNameCarriesNone() {
+    // Unversioned and shaded jars are common enough that the caller says nothing rather than
+    // reporting a mismatch it cannot actually see.
+    assertNull(KarateRunConfiguration.karateJarVersion("karate-core.jar"));
+    assertNull(KarateRunConfiguration.karateJarVersion("karate-gatling-2-utils.jar"));
+    assertNull(KarateRunConfiguration.karateJarVersion("my-karate-junit6-2-helper.jar"));
+    assertNull(KarateRunConfiguration.karateJarVersion("junit-jupiter-5.11.4.jar"));
   }
 
   @Test

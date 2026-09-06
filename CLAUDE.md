@@ -58,7 +58,7 @@ Key version properties are in `gradle.properties`:
 - `pluginVersion` - Current plugin version (SemVer)
 - `platformVersion` - Target IntelliJ platform version
 - `pluginSinceBuild` - Minimum supported build. There is deliberately no `until-build` (see the `ideaVersion` block in `build.gradle.kts`)
-- `karateVersion` - Karate 1.x version bundled as the v1 fallback runner (1.5.1). Karate 2 is never bundled; the v2 path reflects on whatever `karate-core` 2.x the user's module has
+- `karateVersion` - Karate 1.x version bundled as the v1 fallback runner (1.5.2, the last 1.x release). Karate 2 is never bundled; the v2 path reflects on whatever `karate-core` 2.x the user's module has
 - `logbackVersion` - logback used by the plugin itself
 
 Dependency versions are managed in `gradle/libs.versions.toml`.
@@ -267,7 +267,7 @@ Key dependencies (see `gradle/libs.versions.toml` and `gradle.properties`):
 | Dependency | Version | Purpose |
 |-----------|---------|---------|
 | IntelliJ Platform | `platformVersion` in `gradle.properties` (Ultimate) | IDE platform APIs |
-| Karate Core / JUnit 5 | `karateVersion` (1.5.1) | Bundled v1 fallback runner |
+| Karate Core / JUnit 5 | `karateVersion` (1.5.2) | Bundled v1 fallback runner |
 | Logback | `logbackVersion` | Logging |
 | Kodein DI | `libs.versions.toml` | Dependency injection (integration tests) |
 | JUnit Jupiter / Platform, JUnit 4, Mockito, Kotlin, GrammarKit | `gradle/libs.versions.toml` | Testing, integration-test language, build |
