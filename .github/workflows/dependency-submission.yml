@@ -3,9 +3,8 @@
 # This replaces the repository's "Automatic dependency submission" setting (Settings -> Code
 # security), which runs the same action through a workflow we cannot configure: it sets up its own
 # temurin JDK and writes its own Gradle cache entry, a second full copy of the dependency set
-# (~3.3 GB) scoped to whatever branch it ran on. Two open dependabot PRs were enough to push the
-# repository past its 10 GB cache budget and evict everything - the same failure the
-# gradle-home-cache-excludes in build.yml exists to avoid.
+# (~3.3 GB) scoped to whatever branch it ran on, where nothing else could ever restore it. Two open
+# dependabot PRs were enough to push the repository past its cache budget and evict everything.
 #
 # Running it here, on main only and with the cache read-only, submits the same graph and writes
 # nothing to the cache.
@@ -47,5 +46,3 @@ jobs:
           cache-read-only: true
           # Skip the artifact upload; the snapshot goes straight to the API.
           dependency-graph: generate-and-submit
-          gradle-home-cache-excludes: |
-            caches/*/transforms

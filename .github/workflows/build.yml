@@ -54,15 +54,14 @@ jobs:
           distribution: zulu
           java-version: 25
 
-      # Setup Gradle
+      # Setup Gradle. Nothing is excluded from the Gradle User Home here, and this is the only job
+      # that writes to the cache. The extracted IntelliJ platform (caches/<gradle>/transforms,
+      # ~1.4 GB) used to be excluded: caching it as well overran the old 10 GB budget and everything
+      # got evicted, so every run re-downloaded regardless. With 25 GB and a single writer it is
+      # cached once, and the read-only jobs below restore it rather than each spending a minute
+      # re-extracting it from the archive.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
-        with:
-          # The extracted IntelliJ platform (caches/<gradle>/transforms) is ~1.4 GB per job and is
-          # re-created from the cached archive in under a minute; caching it as well blew the
-          # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
-          gradle-home-cache-excludes: |
-            caches/*/transforms
 
       # Set environment variables
       - name: Export Properties
@@ -123,16 +122,13 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
         with:
-          # The extracted IntelliJ platform (caches/<gradle>/transforms) is ~1.4 GB per job and is
-          # re-created from the cached archive in under a minute; caching it as well blew the
-          # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
-          gradle-home-cache-excludes: |
-            caches/*/transforms
           # Read-only: this job resolves the build's dependencies plus the test classpath, so its
           # bundle hashes differently from the build job's and the enhanced cache provider stores it
           # as a second whole entry - 1920 MB against the build job's 1743 MB, for maybe 180 MB of
           # dependencies the build job does not have. `needs: [ build ]` means the build job has
           # already written its entry, so this one restores that and re-resolves the difference.
+          # Worth keeping now that the budget is 25 GB: not saving also means not compressing and
+          # uploading ~1.9 GB at the end of every run.
           cache-read-only: true
 
       # Run tests
@@ -191,11 +187,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
         with:
-          # The extracted IntelliJ platform (caches/<gradle>/transforms) is ~1.4 GB per job and is
-          # re-created from the cached archive in under a minute; caching it as well blew the
-          # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
-          gradle-home-cache-excludes: |
-            caches/*/transforms
           # Read-only, for the same reason as the test job: this job resolves the integrationTest
           # classpath on top of everything else, so its bundle was stored as a third whole entry -
           # 2101 MB, the largest of the three - for roughly 360 MB the build job does not have.
@@ -257,11 +248,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
         with:
-          # The extracted IntelliJ platform (caches/<gradle>/transforms) is ~1.4 GB per job and is
-          # re-created from the cached archive in under a minute; caching it as well blew the
-          # repository's 10 GB cache budget and evicted everything, so every run downloaded anyway.
-          gradle-home-cache-excludes: |
-            caches/*/transforms
           # Read-only: restoring another job's entry gives this one the platform and dependencies.
           # The verifier IDEs are cached separately below rather than through this entry, which
           # would also duplicate the ~2 GB dependency set the build and test jobs already keep.
@@ -274,8 +260,8 @@ jobs:
       # pluginVerification selects RELEASE channels only (EAP is deliberately absent - see
       # build.gradle.kts), so the set turns over when JetBrains ships a patch release, not with
       # every EAP build. The key therefore rotates monthly on top of gradle.properties, which is
-      # what decides the window: one live entry of ~2.4 GB most of the time, two briefly at a
-      # rollover, against a 10 GB repository budget.
+      # what decides the window: one live entry - 3179 MB as measured, not the ~2.4 GB the old
+      # comment here guessed - and two briefly at a rollover.
       - name: Verifier IDE cache key
         id: verifier-ides-key
         run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"

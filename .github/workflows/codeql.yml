@@ -37,8 +37,8 @@ jobs:
 
       # The manual build below resolves the IntelliJ platform (~2 GB). Without this the CodeQL job
       # downloads it from scratch on every run, since it is the one workflow here that builds
-      # without setting Gradle up. Read-only: build.yml populates these entries, and this job must
-      # not add a third copy to the repository's 10 GB cache budget.
+      # without setting Gradle up. Read-only: build.yml populates these entries, and this job has no
+      # reason to write another copy of them.
       - name: Setup Gradle
         if: matrix.language == 'java-kotlin'
         uses: gradle/actions/setup-gradle@v6

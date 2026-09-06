@@ -1,17 +1,31 @@
-# Deletes superseded Actions cache entries, so the repository stays under its 10 GB budget without
-# GitHub having to LRU-evict for us.
+# Deletes superseded Actions cache entries, so storage tracks what the builds actually use.
 #
-# GitHub already expires entries unused for 7 days and evicts by least-recently-used once the
-# budget is exceeded, but LRU is blind: when this repository last went over, it evicted the 1.7 GB
-# IDE Starter archive and live dependency bundles indiscriminately and every job re-downloaded.
-# This prunes the entries that are actually dead instead.
+# Two settings shape this. The budget is 25 GB, raised from the default 10 GB - a repository admin
+# can go to 10 TB for a user-owned repository, at $0.07/GB/month on storage above 10 GB, billed on
+# what is used rather than on the ceiling, so the headroom itself is free. Retention is 30 days,
+# raised from the default 7.
+#
+# Longer retention is why this workflow earns its place. GitHub now holds a dead entry for a month
+# rather than a week, so nothing gets collected for us: every dependency bump leaves a ~1.7 GB
+# bundle behind, and the verifier IDE cache leaves a ~3.2 GB one at each monthly rollover. The
+# budget is large enough to absorb that, but there is no reason to pay for a month of entries no
+# build will read. The alternative - letting usage climb until GitHub evicts by
+# least-recently-used - is what this repository already tried: LRU is blind, and it took the 1.7 GB
+# IDE Starter archive and live dependency bundles with it while every job re-downloaded.
 #
 # What counts as dead: an entry that is not the most recent of its family and has not been read for
-# two days. A "family" is the key with its trailing content hash - and any -YYYY-MM stamp - removed,
+# seven days.
+#
+# The read rule has a blind spot worth knowing. It can only reclaim an entry that jobs have stopped
+# restoring, and a job goes on restoring its own job-id lineage even after it is made
+# cache-read-only - so `test`'s and `integration-test`'s bundles kept being read every run, stayed
+# fresh, and were never eligible here. They had to be deleted by hand once; from then on those jobs
+# fall back to the build job's entry. If usage creeps up with nothing selected for pruning, that is
+# the shape to look for: a large entry with a recent last-read that no longer needs to exist. A "family" is the key with its trailing content hash - and any -YYYY-MM stamp - removed,
 # so `gradle-dependencies-v2-<hash>` entries form one family and `verifier-ides-<os>-<hash>-<month>`
 # another. The newest member of every family is never deleted, whatever its age, so a prune can
-# never cost a job its cache; superseded members drop out two days after the last run that read
-# them, rather than the seven GitHub allows.
+# never cost a job its cache; superseded members drop out a week after the last run that read them,
+# rather than the thirty days this repository's retention setting allows.
 name: Prune caches
 
 on:
@@ -43,7 +57,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
-          KEEP_UNREAD_SECONDS: '172800' # two days
+          KEEP_UNREAD_SECONDS: '604800' # seven days
         run: |
           set -euo pipefail
 
