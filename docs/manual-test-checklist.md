@@ -76,9 +76,9 @@ per-module detection. See `Karate2UITest`.
       project. Then install this build over it: settings survive (version pref = AUTO),
       v1 project still runs identically.
 - [ ] plugin.xml compatibility range: verify the build installs on the oldest supported IDE
-      (261) - the UI test pins `platformVersion`, and CI's verifyPlugin only covers the newest
-      release and EAP. `./gradlew verifyPlugin -PpluginVerifierScope=all` covers every major from
-      since-build up; run it before a release.
+      (261) - the UI test pins `platformVersion`. CI's verifyPlugin now covers every RELEASE, EAP
+      and RC from since-build upward by default, so this is a spot-check of the install rather than
+      of the API surface.
 
 ## 7. Environment matrix
 
