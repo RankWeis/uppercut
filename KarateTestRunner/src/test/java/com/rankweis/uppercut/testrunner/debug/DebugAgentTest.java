@@ -13,6 +13,9 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -136,6 +139,81 @@ class DebugAgentTest {
       assertTrue(done.await(10, TimeUnit.SECONDS));
       assertEquals(DebugAgent.Decision.PROCEED, decision.get());
       assertTrue(ide.awaitEvent("RESUMED").contains("\"action\":\"PROCEED\""));
+    }
+  }
+
+  @Test
+  void servesVariablesAndEvaluationWhileParked() throws Exception {
+    try (FakeIde ide = new FakeIde(); DebugAgent agent = new DebugAgent()) {
+      CompletableFuture<Boolean> connected =
+        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000));
+      ide.attach();
+      ide.setBreakpoint(IDE_PATH, 9);
+      assertTrue(connected.get(10, TimeUnit.SECONDS));
+
+      Map<String, Object> variables = new LinkedHashMap<>();
+      variables.put("id", "abc");
+      variables.put("response", Map.of("name", "first"));
+      SuspendedFrame frame = new SuspendedFrame() {
+        @Override public Map<String, Object> variables() {
+          return variables;
+        }
+
+        @Override public Object evaluate(String expression) {
+          if ("boom".equals(expression)) {
+            throw new IllegalStateException("no such variable: boom");
+          }
+          return "evaluated " + expression;
+        }
+      };
+      CountDownLatch done = new CountDownLatch(1);
+      new Thread(() -> {
+        agent.pause(REPORTED_PATH, 9, "* def id = 1", "a scenario", frame);
+        done.countDown();
+      }, "scenario-vars").start();
+      assertNotNull(ide.awaitEvent("PAUSED"));
+
+      ide.send(DebugProtocol.variablesCommand("scenario-vars", 1, List.of()));
+      String top = ide.awaitEvent("VARIABLES");
+      assertTrue(top.contains("\"name\":\"id\""), top);
+      assertTrue(top.contains("\"value\":\"abc\""), top);
+      assertTrue(top.contains("\"hasChildren\":true"), top);
+
+      ide.send(DebugProtocol.variablesCommand("scenario-vars", 2, List.of("response")));
+      String nested = ide.awaitEvent("VARIABLES");
+      assertTrue(nested.contains("\"name\":\"name\""), nested);
+      assertTrue(nested.contains("\"value\":\"first\""), nested);
+
+      ide.send(DebugProtocol.evaluateCommand("scenario-vars", 3, "id"));
+      String evaluated = ide.awaitEvent("EVALUATED");
+      assertTrue(evaluated.contains("evaluated id"), evaluated);
+
+      ide.send(DebugProtocol.evaluateCommand("scenario-vars", 4, "boom"));
+      String failed = ide.awaitEvent("EVALUATED");
+      assertTrue(failed.contains("\"error\""), failed);
+      assertTrue(failed.contains("no such variable: boom"), failed);
+
+      ide.send(DebugProtocol.RESUME + " scenario-vars");
+      assertTrue(done.await(10, TimeUnit.SECONDS));
+    }
+  }
+
+  @Test
+  void answersRequestsAboutAThreadThatIsNoLongerPaused() throws Exception {
+    // The IDE can ask about a tree the user left open when the run has already moved on.
+    try (FakeIde ide = new FakeIde(); DebugAgent agent = new DebugAgent()) {
+      CompletableFuture<Boolean> connected =
+        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000));
+      ide.attach();
+      ide.setBreakpoint(IDE_PATH, 9);
+      assertTrue(connected.get(10, TimeUnit.SECONDS));
+
+      ide.send(DebugProtocol.variablesCommand("nobody", 7, List.of()));
+      String answer = ide.awaitEvent("VARIABLES");
+      assertTrue(answer.contains("\"values\":[]"), answer);
+
+      ide.send(DebugProtocol.evaluateCommand("nobody", 8, "id"));
+      assertTrue(ide.awaitEvent("EVALUATED").contains("\"error\""));
     }
   }
 

@@ -85,6 +85,18 @@ public class DebugHarness {
         pausedSeen.countDown();
         Matcher matcher = THREAD.matcher(message);
         String thread = matcher.find() ? matcher.group(1) : "";
+
+        // What phase 3 added: ask the parked scenario what it holds, and make it evaluate something.
+        log("→ VARIABLES " + thread);
+        out.println("VARIABLES " + thread + " 1");
+        log("← " + in.readLine());
+        log("→ EVALUATE " + thread + " id");
+        out.println("EVALUATE " + thread + " 2 " + base64("id"));
+        log("← " + in.readLine());
+        log("→ EVALUATE " + thread + " (a deliberate error)");
+        out.println("EVALUATE " + thread + " 3 " + base64("nosuchvariable.field"));
+        log("← " + in.readLine());
+
         log("holding " + thread + " for " + (holdMillis / 1000) + "s");
         Thread.sleep(holdMillis);
         log("→ RESUME " + thread);

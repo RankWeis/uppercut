@@ -1,8 +1,10 @@
 # Debugging — one debugger for both Karate versions
 
-Status: **phases 1-2 built, phases 3-5 designed.** A Karate 2 Debug run now opens a second Debug tab
-where a breakpoint on a `.feature` line pauses the run, highlights the line and resumes on command.
-Variables, evaluation and real stepping are next. Phase 0's API findings are below. Supersedes the "Karate 2 feature-file debugging is not planned"
+Status: **built and shippable: pause, variables, evaluate.** A Karate 2 Debug run opens a second
+Debug tab where a breakpoint on a `.feature` line pauses the run, highlights the line, shows the
+scenario's variables and evaluates Karate expressions against the parked scenario. Deliberately not
+built: breakpoint conditions, skip-step, break-on-step-failure and real stepping - all additive, none
+needed to call it a debugger. Phase 0's API findings are below. Supersedes the "Karate 2 feature-file debugging is not planned"
 decision in [`KARATE2-HANDOFF.md`](KARATE2-HANDOFF.md), which said to revisit "if a v2 API
 surfaces that gives us the v1 UX under the virtual-thread runtime". It has: v2's
 `Runner.Builder.debugSupport(...)` is public and on Maven Central. This doc also absorbs and
@@ -144,7 +146,14 @@ In `src/main/java/com/rankweis/uppercut/karate/debugging/agent/` (phase 2):
 | `KarateDebugChannel` | the IDE end: listens on a loopback port, speaks the same `DebugProtocol`, and is free of debugger UI so it can be tested against a plain socket |
 | `KarateBreakpointType` | `.feature` line breakpoints, offered only on a Karate 2 classpath |
 | `KarateDebugProcess` | the session: breakpoint handler, suspend context, one stack frame at the paused line, resume |
-| `KarateDebugEditorsProvider` | what expression fields are edited as; nothing evaluates them until phase 3 |
+| `KarateDebugEditorsProvider` | what expression fields are edited as |
+
+Variables and evaluation are served from the parked thread through `SuspendedFrame`, which the v2
+adapter implements over `ScenarioRuntime.getAllVariables()` and `eval` - so an expression typed into
+the IDE behaves exactly like one written in the feature, errors included
+(`ReferenceError: nosuchvariable is not defined` comes straight from karate-js). `DebugValues` renders
+one level at a time and the tree asks for children by path: a Karate scenario routinely holds a whole
+response body, and sending it eagerly would put megabytes on the wire for a panel nobody opened.
 
 `KarateRunConfiguration` opens the channel in `createJavaParameters` (so the port can be passed to the
 JVM) and starts the session in `startProcess` once there is a process to attach it to. Under Debug on
@@ -241,8 +250,12 @@ site: `site/status.md` and `site/troubleshooting.md` still say feature-file brea
 on v2, and should stay that way until phase 3 makes the session worth documenting - a debugger that
 stops but cannot show a variable is not yet the thing those pages would be promising.
 
-**Phase 3 — the easy wins.** Variables, evaluate, skip step, break on failure, conditions — in that
-order, each behind its own changelog entry.
+**Phase 3 — the easy wins. Variables and evaluate are done**; skip step, break on step failure and
+breakpoint conditions were cut from the first release as additive. The agent already has `SKIP`
+wired end to end, so skip-step is a toolbar action away; break-on-failure means blocking in the
+`STEP_EXIT` listener (or `afterExecute`, which is called with the `StepResult` but returns void, so it
+can park a thread but never skip); conditions mean a fourth token on the `BREAKPOINT` line and a
+`frame.evaluate` before pausing.
 
 **Phase 4 — v1 adapter.** Same agent, `RuntimeHook.beforeStep`. Run the manual checklist against v1
 until parity, then delete the JDI path and its `plugin.xml` registrations.

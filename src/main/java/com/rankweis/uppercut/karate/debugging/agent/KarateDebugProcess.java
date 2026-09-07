@@ -26,14 +26,21 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.XValuePlace;
 import com.rankweis.uppercut.karate.run.FeaturePathResolver;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +130,7 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
   public void paused(KarateDebugChannel.@NotNull Paused paused) {
     stateMessage = "Paused at " + paused.path() + ":" + paused.line();
     log("Paused at " + paused.path() + ":" + paused.line() + "  " + paused.step());
-    getSession().positionReached(new KarateSuspendContext(paused, sourcePosition(paused)));
+    getSession().positionReached(new KarateSuspendContext(paused, sourcePosition(paused), channel));
     showThisTab();
   }
 
@@ -259,9 +266,10 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
     private final KarateDebugChannel.Paused paused;
     private final XExecutionStack stack;
 
-    private KarateSuspendContext(KarateDebugChannel.Paused paused, @Nullable XSourcePosition position) {
+    private KarateSuspendContext(KarateDebugChannel.Paused paused, @Nullable XSourcePosition position,
+      KarateDebugChannel channel) {
       this.paused = paused;
-      this.stack = new KarateExecutionStack(paused, position);
+      this.stack = new KarateExecutionStack(paused, position, channel);
     }
 
     String thread() {
@@ -279,13 +287,94 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
     }
   }
 
+  /**
+   * Fills a tree node from the agent, one level at a time. Every failure - a resumed thread, a dead
+   * channel, a variable that throws on inspection - ends as a message in the node rather than an
+   * exception: the run is paused and the user is looking at it.
+   */
+  private static void requestChildren(KarateDebugChannel channel, String thread, List<String> path,
+    XCompositeNode node) {
+    channel.variables(thread, path).whenComplete((values, failure) -> {
+      if (failure != null) {
+        node.setErrorMessage("Could not read variables: " + failure.getMessage());
+        return;
+      }
+      XValueChildrenList children = new XValueChildrenList();
+      for (KarateDebugChannel.Value value : values) {
+        children.add(value.name(), new KarateValue(channel, thread, path, value));
+      }
+      // Karate's own order is meaningful (declaration order in the scenario); do not re-sort it.
+      node.setAlreadySorted(true);
+      node.addChildren(children, true);
+    });
+  }
+
+  /** One variable, or one node inside one. */
+  private static final class KarateValue extends XNamedValue {
+
+    private final KarateDebugChannel channel;
+    private final String thread;
+    private final List<String> path;
+    private final KarateDebugChannel.Value value;
+
+    private KarateValue(KarateDebugChannel channel, String thread, List<String> parentPath,
+      KarateDebugChannel.Value value) {
+      super(value.name());
+      this.channel = channel;
+      this.thread = thread;
+      this.path = Stream.concat(parentPath.stream(), Stream.of(value.name())).toList();
+      this.value = value;
+    }
+
+    @Override
+    public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+      node.setPresentation(null, value.type(), value.value(), value.hasChildren());
+    }
+
+    @Override
+    public void computeChildren(@NotNull XCompositeNode node) {
+      requestChildren(channel, thread, path, node);
+    }
+  }
+
+  /** Evaluate, and the expression fields, run through Karate's own {@code eval}. */
+  private static final class KarateEvaluator extends XDebuggerEvaluator {
+
+    private final KarateDebugChannel channel;
+    private final String thread;
+
+    private KarateEvaluator(KarateDebugChannel channel, String thread) {
+      this.channel = channel;
+      this.thread = thread;
+    }
+
+    @Override
+    public void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback,
+      @Nullable XSourcePosition expressionPosition) {
+      channel.evaluate(thread, expression).whenComplete((evaluated, failure) -> {
+        if (failure != null) {
+          callback.errorOccurred(failure.getMessage() == null ? "Evaluation failed" : failure.getMessage());
+          return;
+        }
+        if (evaluated.error() != null) {
+          callback.errorOccurred(evaluated.error());
+          return;
+        }
+        callback.evaluated(new KarateValue(channel, thread, List.of(),
+          new KarateDebugChannel.Value("", evaluated.type() == null ? "" : evaluated.type(),
+            evaluated.value() == null ? "null" : evaluated.value(), false)));
+      });
+    }
+  }
+
   private static final class KarateExecutionStack extends XExecutionStack {
 
     private final XStackFrame topFrame;
 
-    private KarateExecutionStack(KarateDebugChannel.Paused paused, @Nullable XSourcePosition position) {
+    private KarateExecutionStack(KarateDebugChannel.Paused paused, @Nullable XSourcePosition position,
+      KarateDebugChannel channel) {
       super(paused.scenario().isEmpty() ? paused.thread() : paused.scenario());
-      this.topFrame = new KarateStackFrame(paused, position);
+      this.topFrame = new KarateStackFrame(paused, position, channel);
     }
 
     @Override
@@ -305,10 +394,24 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
 
     private final KarateDebugChannel.Paused paused;
     private final XSourcePosition position;
+    private final KarateDebugChannel channel;
 
-    private KarateStackFrame(KarateDebugChannel.Paused paused, @Nullable XSourcePosition position) {
+    private KarateStackFrame(KarateDebugChannel.Paused paused, @Nullable XSourcePosition position,
+      KarateDebugChannel channel) {
       this.paused = paused;
       this.position = position;
+      this.channel = channel;
+    }
+
+    /** The scenario's variables, as Karate sees them - what {@code karate.get()} would return. */
+    @Override
+    public void computeChildren(@NotNull XCompositeNode node) {
+      requestChildren(channel, paused.thread(), List.of(), node);
+    }
+
+    @Override
+    public @NotNull XDebuggerEvaluator getEvaluator() {
+      return new KarateEvaluator(channel, paused.thread());
     }
 
     @Override

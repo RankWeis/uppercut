@@ -1,7 +1,9 @@
 package com.rankweis.uppercut.testrunner.debug;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Map;
 
 /**
  * Karate 2's half of the debugger: turns the engine's {@code RunInterceptor} callbacks into calls on
@@ -128,8 +130,44 @@ public final class KarateV2DebugAdapter {
       // A JS point we did not ask to pause, or a WAIT we did not issue. Never park on one of those.
       return proceed;
     }
-    return agent.pause(pending.path(), pending.line(), pending.step(), pending.scenario())
-      == DebugAgent.Decision.SKIP ? skip : proceed;
+    return agent.pause(pending.path(), pending.line(), pending.step(), pending.scenario(),
+      new ScenarioRuntimeFrame(CURRENT_RUNTIME.get())) == DebugAgent.Decision.SKIP ? skip : proceed;
+  }
+
+  /**
+   * Variables and evaluation for a parked scenario, read straight off its {@code ScenarioRuntime}:
+   * {@code getAllVariables()} is what Karate itself considers the scenario's state, and {@code eval}
+   * is the same entry point a step uses, so an expression typed in the IDE behaves like one written
+   * in the feature.
+   */
+  private record ScenarioRuntimeFrame(Object runtime) implements SuspendedFrame {
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> variables() {
+      if (runtime == null) {
+        return Map.of();
+      }
+      try {
+        return (Map<String, Object>) runtime.getClass().getMethod("getAllVariables").invoke(runtime);
+      } catch (ReflectiveOperationException | RuntimeException e) {
+        return Map.of();
+      }
+    }
+
+    @Override
+    public Object evaluate(String expression) throws Exception {
+      if (runtime == null) {
+        throw new IllegalStateException("No Karate scenario is available on this thread");
+      }
+      try {
+        return runtime.getClass().getMethod("eval", String.class).invoke(runtime, expression);
+      } catch (InvocationTargetException e) {
+        // Unwrap, so the IDE shows Karate's own message rather than "InvocationTargetException".
+        Throwable cause = e.getCause();
+        throw cause instanceof Exception checked ? checked : new IllegalStateException(cause);
+      }
+    }
   }
 
   private static String stepText(Object step) {

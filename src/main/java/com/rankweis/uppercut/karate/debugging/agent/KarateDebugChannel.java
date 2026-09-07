@@ -1,5 +1,6 @@
 package com.rankweis.uppercut.karate.debugging.agent;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
@@ -17,6 +18,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +43,15 @@ public final class KarateDebugChannel implements AutoCloseable {
   public record Breakpoint(@NotNull String path, int line) {
   }
 
+  /** One row of the variables tree, as the agent rendered it. */
+  public record Value(@NotNull String name, @NotNull String type, @NotNull String value,
+                      boolean hasChildren) {
+  }
+
+  /** The answer to an Evaluate: a rendered value, or the message Karate refused it with. */
+  public record Evaluated(@Nullable String value, @Nullable String type, @Nullable String error) {
+  }
+
   /** Where the agent stopped. Line is 1-based, as Karate reports it. */
   public record Paused(@NotNull String thread, @NotNull String path, int line,
                        @NotNull String step, @NotNull String scenario) {
@@ -57,6 +71,10 @@ public final class KarateDebugChannel implements AutoCloseable {
   private final Object writeLock = new Object();
   /** Events that arrived before the session existed, replayed when it does. */
   private final List<Runnable> pending = Collections.synchronizedList(new ArrayList<>());
+
+  /** Replies the agent owes us, by request id. */
+  private final Map<Integer, CompletableFuture<JsonObject>> requests = new ConcurrentHashMap<>();
+  private final AtomicInteger nextRequestId = new AtomicInteger(1);
 
   private volatile Listener listener;
   private volatile PrintWriter out;
@@ -106,6 +124,50 @@ public final class KarateDebugChannel implements AutoCloseable {
     sendBreakpoints();
   }
 
+  /**
+   * The scenario's variables, or the children of one of them.
+   *
+   * <p>One level at a time: a Karate scenario can hold a whole response body, and the tree is asked
+   * for children only when the user opens a node.</p>
+   */
+  public CompletableFuture<List<Value>> variables(@NotNull String thread, @NotNull List<String> path) {
+    return request(id -> DebugProtocol.variablesCommand(thread, id, path))
+      .thenApply(KarateDebugChannel::readValues);
+  }
+
+  public CompletableFuture<Evaluated> evaluate(@NotNull String thread, @NotNull String expression) {
+    return request(id -> DebugProtocol.evaluateCommand(thread, id, expression))
+      .thenApply(json -> new Evaluated(
+        json.has("value") ? string(json, "value") : null,
+        json.has("type") ? string(json, "type") : null,
+        json.has("error") ? string(json, "error") : null));
+  }
+
+  private CompletableFuture<JsonObject> request(@NotNull java.util.function.IntFunction<String> command) {
+    int id = nextRequestId.getAndIncrement();
+    CompletableFuture<JsonObject> answer = new CompletableFuture<>();
+    requests.put(id, answer);
+    if (out == null) {
+      requests.remove(id);
+      answer.completeExceptionally(new IOException("The test JVM is not connected"));
+      return answer;
+    }
+    send(command.apply(id));
+    return answer;
+  }
+
+  private static List<Value> readValues(JsonObject json) {
+    List<Value> values = new ArrayList<>();
+    if (json.has("values") && json.get("values").isJsonArray()) {
+      for (JsonElement element : json.getAsJsonArray("values")) {
+        JsonObject value = element.getAsJsonObject();
+        values.add(new Value(string(value, "name"), string(value, "type"), string(value, "value"),
+          value.has("hasChildren") && value.get("hasChildren").getAsBoolean()));
+      }
+    }
+    return values;
+  }
+
   public void resume(@NotNull String thread) {
     send(DebugProtocol.RESUME + " " + thread);
   }
@@ -141,6 +203,9 @@ public final class KarateDebugChannel implements AutoCloseable {
         LOG.info("Karate debug channel ended", e);
       }
     } finally {
+      // Nothing will answer these now; a variables tree waiting forever would just spin.
+      requests.values().forEach(answer -> answer.completeExceptionally(new IOException("The test JVM is gone")));
+      requests.clear();
       dispatch(Listener::agentDisconnected);
     }
   }
@@ -157,6 +222,14 @@ public final class KarateDebugChannel implements AutoCloseable {
     String name = line.substring("EVENT ".length(), space);
     JsonObject json = parse(line.substring(space + 1));
     if (json == null) {
+      return;
+    }
+    if ("VARIABLES".equals(name) || "EVALUATED".equals(name)) {
+      CompletableFuture<JsonObject> answer =
+        json.has("id") ? requests.remove(json.get("id").getAsInt()) : null;
+      if (answer != null) {
+        answer.complete(json);
+      }
       return;
     }
     if ("PAUSED".equals(name)) {

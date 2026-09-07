@@ -21,7 +21,12 @@ import java.util.List;
  *   SKIP &lt;threadKey&gt;             skip that step and continue (Karate's SKIP action)
  *   RESUME_ALL                   release every paused thread
  *   DETACH                       release everything and stop pausing for the rest of the run
+ *   VARIABLES &lt;thread&gt; &lt;id&gt; [&lt;base64 path&gt;]   children of a value, or the scenario's variables
+ *   EVALUATE &lt;thread&gt; &lt;id&gt; &lt;base64 expression&gt;
  * </pre>
+ *
+ * <p>{@code id} correlates a request with its reply; a value path is its child names joined by
+ * newlines, base64-encoded, because a JSON key can contain anything a separator might use.</p>
  *
  * <p><b>Agent → IDE</b> is {@code EVENT <NAME> <json>}, matching the {@code <<UPPERCUT-V2>>} event
  * stream the IDE already parses, so the IDE side reuses its JSON reader:</p>
@@ -30,6 +35,8 @@ import java.util.List;
  *   HELLO  {"protocol":1,"karateMajor":2}
  *   PAUSED {"thread":"...","path":"...","line":9,"step":"...","scenario":"..."}
  *   RESUMED{"thread":"...","action":"PROCEED|SKIP"}
+ *   VARIABLES {"id":1,"values":[{"name":"id","type":"string","value":"...","hasChildren":false}]}
+ *   EVALUATED {"id":2,"value":"...","type":"string"}          (or {"id":2,"error":"..."})
  * </pre>
  *
  * <p>The thread key is the same one {@code KarateV2TestRunner} stamps on every forwarded run event,
@@ -47,23 +54,33 @@ public final class DebugProtocol {
   public static final String SKIP = "SKIP";
   public static final String RESUME_ALL = "RESUME_ALL";
   public static final String DETACH = "DETACH";
+  public static final String VARIABLES = "VARIABLES";
+  public static final String EVALUATE = "EVALUATE";
 
   private DebugProtocol() {
   }
 
-  /** One parsed IDE → agent line. {@code path} and {@code line} are set only for BREAKPOINT. */
-  public record Command(String name, String argument, String path, int line) {
+  /**
+   * One parsed IDE → agent line. {@code path} and {@code line} carry the breakpoint for BREAKPOINT;
+   * {@code argument} is the thread for the rest, with {@code requestId} and {@code payload} set for
+   * the two that expect a reply.
+   */
+  public record Command(String name, String argument, String path, int line, int requestId, String payload) {
 
     static Command of(String name) {
-      return new Command(name, null, null, -1);
+      return new Command(name, null, null, -1, -1, null);
     }
 
     static Command of(String name, String argument) {
-      return new Command(name, argument, null, -1);
+      return new Command(name, argument, null, -1, -1, null);
     }
 
     static Command breakpoint(String path, int line) {
-      return new Command(BREAKPOINT, null, path, line);
+      return new Command(BREAKPOINT, null, path, line, -1, null);
+    }
+
+    static Command request(String name, String thread, int requestId, String payload) {
+      return new Command(name, thread, null, -1, requestId, payload);
     }
   }
 
@@ -96,6 +113,18 @@ public final class DebugProtocol {
         } catch (IllegalArgumentException e) {
           return null;
         }
+      case VARIABLES:
+      case EVALUATE:
+        // VARIABLES may omit the payload: no path means the scenario's own variables.
+        if (tokens.size() < 3 || (EVALUATE.equals(verb) && tokens.size() < 4)) {
+          return null;
+        }
+        try {
+          String payload = tokens.size() > 3 ? decode(tokens.get(3)) : "";
+          return Command.request(verb, tokens.get(1), Integer.parseInt(tokens.get(2)), payload);
+        } catch (IllegalArgumentException e) {
+          return null;
+        }
       default:
         return null;
     }
@@ -104,6 +133,25 @@ public final class DebugProtocol {
   /** Renders a BREAKPOINT line. Used by the IDE side and by the tests that stand in for it. */
   public static String breakpointCommand(String path, int line) {
     return BREAKPOINT + " " + encode(path) + " " + line;
+  }
+
+  /** Renders a VARIABLES request. An empty path asks for the scenario's own variables. */
+  public static String variablesCommand(String thread, int requestId, List<String> path) {
+    String command = VARIABLES + " " + thread + " " + requestId;
+    return path.isEmpty() ? command : command + " " + encode(joinPath(path));
+  }
+
+  public static String evaluateCommand(String thread, int requestId, String expression) {
+    return EVALUATE + " " + thread + " " + requestId + " " + encode(expression);
+  }
+
+  /** A value path is its child names joined by newlines: a JSON key can contain any other separator. */
+  public static String joinPath(List<String> path) {
+    return String.join("\n", path);
+  }
+
+  public static List<String> splitPath(String path) {
+    return path.isEmpty() ? List.of() : List.of(path.split("\n", -1));
   }
 
   public static String encode(String value) {

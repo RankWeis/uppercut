@@ -1,6 +1,9 @@
 package com.rankweis.uppercut.karate.debugging.agent;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import com.rankweis.uppercut.testrunner.debug.DebugProtocol;
@@ -14,7 +17,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Test;
@@ -155,6 +160,71 @@ public class KarateDebugChannelTest {
     BufferedReader fromChannel = connectAgent();
     assertEquals(DebugProtocol.CLEAR, fromChannel.readLine());
     assertEquals(DebugProtocol.BREAKPOINTS_END, fromChannel.readLine());
+  }
+
+  @Test
+  public void asksForVariablesAndMatchesTheAnswerToTheRequest() throws Exception {
+    RecordingListener listener = new RecordingListener();
+    channel = new KarateDebugChannel();
+    channel.setListener(listener);
+    channel.start();
+    final BufferedReader fromChannel = connectAgent();
+    assertTrue(listener.connected.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+    PrintWriter toChannel = new PrintWriter(agent.getOutputStream(), true);
+
+    final CompletableFuture<List<KarateDebugChannel.Value>> top = channel.variables("main", List.of());
+    String request = readPastBreakpointSet(fromChannel);
+    assertTrue(request, request.startsWith(DebugProtocol.VARIABLES + " main "));
+    String requestId = request.split(" ")[2];
+
+    // Answer out of order, with an unrelated reply first: replies are matched by id, not arrival.
+    toChannel.println("EVENT VARIABLES {\"id\":999,\"values\":[]}");
+    toChannel.println("EVENT VARIABLES {\"id\":" + requestId + ",\"values\":["
+      + "{\"name\":\"id\",\"type\":\"string\",\"value\":\"abc\",\"hasChildren\":false},"
+      + "{\"name\":\"response\",\"type\":\"map\",\"value\":\"1 entry\",\"hasChildren\":true}]}");
+
+    List<KarateDebugChannel.Value> values = top.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    assertEquals(2, values.size());
+    assertEquals("id", values.get(0).name());
+    assertEquals("abc", values.get(0).value());
+    assertFalse(values.get(0).hasChildren());
+    assertTrue(values.get(1).hasChildren());
+  }
+
+  @Test
+  public void reportsAnEvaluationErrorAsAnError() throws Exception {
+    RecordingListener listener = new RecordingListener();
+    channel = new KarateDebugChannel();
+    channel.setListener(listener);
+    channel.start();
+    final BufferedReader fromChannel = connectAgent();
+    assertTrue(listener.connected.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+    PrintWriter toChannel = new PrintWriter(agent.getOutputStream(), true);
+
+    CompletableFuture<KarateDebugChannel.Evaluated> answer = channel.evaluate("main", "id");
+    String request = readPastBreakpointSet(fromChannel);
+    assertTrue(request, request.startsWith(DebugProtocol.EVALUATE + " main "));
+    toChannel.println("EVENT EVALUATED {\"id\":" + request.split(" ")[2]
+      + ",\"error\":\"no such variable: id\"}");
+
+    KarateDebugChannel.Evaluated evaluated = answer.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    assertEquals("no such variable: id", evaluated.error());
+    assertNull(evaluated.value());
+  }
+
+  @Test
+  public void failsPendingRequestsWhenTheAgentGoesAway() throws Exception {
+    // Otherwise a variables tree spins forever on a run that has already ended.
+    RecordingListener listener = new RecordingListener();
+    channel = new KarateDebugChannel();
+    channel.setListener(listener);
+    channel.start();
+    connectAgent();
+    assertTrue(listener.connected.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+
+    CompletableFuture<List<KarateDebugChannel.Value>> pending = channel.variables("main", List.of());
+    agent.close();
+    assertThrows(ExecutionException.class, () -> pending.get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
   }
 
   @Test
