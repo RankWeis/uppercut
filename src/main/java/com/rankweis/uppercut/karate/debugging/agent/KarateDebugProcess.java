@@ -32,6 +32,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
 import com.rankweis.uppercut.karate.run.FeaturePathResolver;
+import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -102,6 +103,7 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
     if (channel == null) {
       return;
     }
+    channel.setPauseOnFailure(KarateSettingsState.getInstance().isPauseOnFailedStep());
     pushBreakpoints();
   }
 
@@ -119,7 +121,14 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
 
   @Override
   public void paused(KarateDebugChannel.@NotNull Paused paused) {
-    stateMessage = "Paused at " + paused.path() + ":" + paused.line();
+    stateMessage = paused.isFailure()
+      ? "Stopped on a failed step at " + paused.path() + ":" + paused.line()
+      : "Paused at " + paused.path() + ":" + paused.line();
+    if (paused.isFailure()) {
+      // Say why the run stopped somewhere the user did not ask it to.
+      getSession().reportMessage("Step failed: "
+        + (paused.error().isEmpty() ? paused.step() : paused.error()), MessageType.WARNING);
+    }
     getSession().positionReached(new KarateSuspendContext(paused, sourcePosition(paused), channel));
     showVariables();
   }
@@ -139,19 +148,27 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
     }
   }
 
+  /**
+   * All three step actions do the same thing: run to the next step.
+   *
+   * <p>Karate's steps are the only place the run can stop, so "next step" is what stepping means
+   * here. It does not yet distinguish over from into: a step that calls another feature stops on the
+   * called feature's first step rather than after the call. Telling them apart needs the call depth,
+   * which both majors expose - see {@code docs/DEBUGGER.md}.</p>
+   */
   @Override
   public void startStepOver(@Nullable XSuspendContext context) {
-    continueInsteadOfStepping(context);
+    step(context);
   }
 
   @Override
   public void startStepInto(@Nullable XSuspendContext context) {
-    continueInsteadOfStepping(context);
+    step(context);
   }
 
   @Override
   public void startStepOut(@Nullable XSuspendContext context) {
-    continueInsteadOfStepping(context);
+    step(context);
   }
 
   @Override
@@ -164,10 +181,11 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
     }
   }
 
-  private void continueInsteadOfStepping(@Nullable XSuspendContext context) {
-    getSession().reportMessage("Stepping through Karate steps is not supported yet - continuing to "
-      + "the next breakpoint.", MessageType.INFO);
-    resume(context);
+  private void step(@Nullable XSuspendContext context) {
+    String thread = threadOf(context);
+    if (thread != null && channel != null) {
+      channel.step(thread);
+    }
   }
 
   /**
@@ -401,7 +419,8 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
     @Override
     public void customizePresentation(@NotNull ColoredTextContainer component) {
       String step = paused.step().isEmpty() ? "step" : paused.step();
-      component.append(step, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      component.append(step, paused.isFailure()
+        ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       component.append("  " + shortName() + ":" + paused.line(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
 

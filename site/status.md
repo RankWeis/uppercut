@@ -60,8 +60,10 @@ These are the same for Karate 1 and Karate 2 - the language is the same.
 | Variables of the paused scenario | Early access | Early access |
 | Evaluate a Karate expression while paused | Early access | Early access |
 | Pin the debug port | Supported | Supported |
-| Breakpoint conditions, skip step, break on failed step | Not yet | Not yet |
-| Step over / into / out of feature steps | Not yet | Not yet. The step buttons continue to the next breakpoint |
+| Pause on a failed step | Early access, on by default | Early access, on by default |
+| Step to the next step | Early access | Early access |
+| Step over vs into a called feature | Not yet - stepping enters the called feature | Not yet - stepping enters the called feature |
+| Breakpoint conditions, skip step | Not yet | Not yet |
 | Java breakpoints during a Karate run | Not supported - see below | Not supported - see below |
 
 **One debugger, both majors.** Put a breakpoint on a step in a `.feature` file and press Debug: the

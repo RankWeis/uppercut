@@ -32,6 +32,29 @@ class DebugProtocolTest {
     assertEquals(DebugProtocol.DETACH, DebugProtocol.parse("DETACH").name());
     assertEquals("vt-21", DebugProtocol.parse("RESUME vt-21").argument());
     assertEquals("vt-21", DebugProtocol.parse("SKIP vt-21").argument());
+    assertEquals("vt-21", DebugProtocol.parse("STEP vt-21").argument());
+    assertEquals("true", DebugProtocol.parse("PAUSE_ON_FAILURE true").argument());
+  }
+
+  @Test
+  void everyVerbTheIdeCanSendIsParsed() {
+    // A verb the agent does not recognise is ignored by design - which for a command that releases a
+    // parked thread means the run hangs with no error anywhere. STEP arrived unparsed exactly once,
+    // and the run sat suspended until it was killed.
+    for (String verb : new String[]{DebugProtocol.CLEAR, DebugProtocol.BREAKPOINTS_END,
+      DebugProtocol.RESUME_ALL, DebugProtocol.DETACH}) {
+      assertEquals(verb, DebugProtocol.parse(verb).name());
+    }
+    for (String verb : new String[]{DebugProtocol.RESUME, DebugProtocol.SKIP, DebugProtocol.STEP,
+      DebugProtocol.PAUSE_ON_FAILURE}) {
+      assertEquals(verb, DebugProtocol.parse(verb + " argument").name());
+    }
+    assertEquals(DebugProtocol.BREAKPOINT, DebugProtocol.parse(
+      DebugProtocol.breakpointCommand("/a.feature", 3)).name());
+    assertEquals(DebugProtocol.VARIABLES, DebugProtocol.parse(
+      DebugProtocol.variablesCommand("main", 1, java.util.List.of())).name());
+    assertEquals(DebugProtocol.EVALUATE, DebugProtocol.parse(
+      DebugProtocol.evaluateCommand("main", 1, "id")).name());
   }
 
   @Test

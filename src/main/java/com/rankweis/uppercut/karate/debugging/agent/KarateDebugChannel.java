@@ -52,9 +52,15 @@ public final class KarateDebugChannel implements AutoCloseable {
   public record Evaluated(@Nullable String value, @Nullable String type, @Nullable String error) {
   }
 
-  /** Where the agent stopped. Line is 1-based, as Karate reports it. */
+  /** Where the agent stopped, and why. Line is 1-based, as Karate reports it. */
   public record Paused(@NotNull String thread, @NotNull String path, int line,
-                       @NotNull String step, @NotNull String scenario) {
+                       @NotNull String step, @NotNull String scenario,
+                       @NotNull String reason, @NotNull String error) {
+
+    /** True when the run stopped because this step failed, rather than at a breakpoint or a step. */
+    public boolean isFailure() {
+      return "failure".equals(reason);
+    }
   }
 
   public interface Listener {
@@ -188,6 +194,16 @@ public final class KarateDebugChannel implements AutoCloseable {
     send(DebugProtocol.RESUME + " " + thread);
   }
 
+  /** Resume, and stop again at this thread's next step. */
+  public void step(@NotNull String thread) {
+    send(DebugProtocol.STEP + " " + thread);
+  }
+
+  /** Whether a failed step should stop the run. Sent once, when the session starts. */
+  public void setPauseOnFailure(boolean pauseOnFailure) {
+    send(DebugProtocol.PAUSE_ON_FAILURE + " " + pauseOnFailure);
+  }
+
   public void skipStep(@NotNull String thread) {
     send(DebugProtocol.SKIP + " " + thread);
   }
@@ -252,7 +268,8 @@ public final class KarateDebugChannel implements AutoCloseable {
       Paused paused = new Paused(
         string(json, "thread"), string(json, "path"),
         json.has("line") ? json.get("line").getAsInt() : 1,
-        string(json, "step"), string(json, "scenario"));
+        string(json, "step"), string(json, "scenario"),
+        string(json, "reason"), string(json, "error"));
       dispatch(attached -> attached.paused(paused));
     }
     // HELLO and RESUMED need no action: the session already knows what it asked for, and a resume is

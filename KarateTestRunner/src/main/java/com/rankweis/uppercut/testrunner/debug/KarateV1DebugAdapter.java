@@ -40,8 +40,35 @@ public final class KarateV1DebugAdapter {
     if (path == null || line < 0) {
       return true;
     }
+    if (!agent.shouldPauseAtStep(path, line)) {
+      return true;
+    }
     return agent.pause(path, line, stepText(step), scenarioName(scenarioRuntime),
       new ScenarioEngineFrame(engineOf(scenarioRuntime))) != DebugAgent.Decision.SKIP;
+  }
+
+  /**
+   * Handles an {@code afterStep} call: stops on a step that has just failed, with the scenario still
+   * standing and its variables as the failure left them.
+   */
+  public void afterStep(Object stepResult, Object scenarioRuntime) {
+    if (!agent.isPauseOnFailure()) {
+      return;
+    }
+    try {
+      Object result = stepResult.getClass().getMethod("getResult").invoke(stepResult);
+      if (result == null
+        || !Boolean.TRUE.equals(result.getClass().getMethod("isFailed").invoke(result))) {
+        return;
+      }
+      Object step = stepResult.getClass().getMethod("getStep").invoke(stepResult);
+      Object error = result.getClass().getMethod("getError").invoke(result);
+      agent.pauseAfterFailure(featurePath(step), intOf(step, "getLine"), stepText(step),
+        scenarioName(scenarioRuntime), new ScenarioEngineFrame(engineOf(scenarioRuntime)),
+        KarateV2DebugAdapter.message(error));
+    } catch (ReflectiveOperationException | RuntimeException e) {
+      // A failure we cannot describe is not worth failing the run over.
+    }
   }
 
   private static String featurePath(Object step) {

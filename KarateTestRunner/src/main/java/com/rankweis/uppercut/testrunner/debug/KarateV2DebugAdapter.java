@@ -79,13 +79,65 @@ public final class KarateV2DebugAdapter {
    */
   public void observe(Object runEvent) {
     try {
-      if (!"STEP_ENTER".equals(String.valueOf(runEvent.getClass().getMethod("getType").invoke(runEvent)))) {
-        return;
+      String type = String.valueOf(runEvent.getClass().getMethod("getType").invoke(runEvent));
+      if ("STEP_ENTER".equals(type)) {
+        CURRENT_RUNTIME.set(runEvent.getClass().getMethod("scenarioRuntime").invoke(runEvent));
+      } else if ("STEP_EXIT".equals(type) && agent.isPauseOnFailure()) {
+        pauseIfFailed(runEvent);
       }
-      CURRENT_RUNTIME.set(runEvent.getClass().getMethod("scenarioRuntime").invoke(runEvent));
     } catch (ReflectiveOperationException | RuntimeException e) {
       // Best effort: without the runtime a pause still works, it just has less to say about itself.
     }
+  }
+
+  /**
+   * Stops on a step that has just failed. STEP_EXIT is fired on the thread that ran the step, before
+   * it moves on, so blocking here parks the scenario with its variables exactly as the failure left
+   * them.
+   */
+  private void pauseIfFailed(Object runEvent) throws ReflectiveOperationException {
+    Object result = runEvent.getClass().getMethod("result").invoke(runEvent);
+    if (result == null) {
+      return;
+    }
+    Object status = result.getClass().getMethod("getStatus").invoke(result);
+    if (!"FAILED".equals(String.valueOf(status))) {
+      return;
+    }
+    Object step = result.getClass().getMethod("getStep").invoke(result);
+    Object error = result.getClass().getMethod("getError").invoke(result);
+    agent.pauseAfterFailure(sourcePath(step), lineOf(step), stepText(step), scenarioName(),
+      new ScenarioRuntimeFrame(CURRENT_RUNTIME.get()), message(error));
+  }
+
+  private static String sourcePath(Object step) {
+    try {
+      Object feature = step.getClass().getMethod("getFeature").invoke(step);
+      Object resource = feature.getClass().getMethod("getResource").invoke(feature);
+      return String.valueOf(resource.getClass().getMethod("getRelativePath").invoke(resource));
+    } catch (ReflectiveOperationException | RuntimeException e) {
+      return "";
+    }
+  }
+
+  private static int lineOf(Object step) {
+    try {
+      return (Integer) step.getClass().getMethod("getLine").invoke(step);
+    } catch (ReflectiveOperationException | RuntimeException e) {
+      return -1;
+    }
+  }
+
+  /** Karate wraps the real problem several layers deep; the innermost message is the useful one. */
+  static String message(Object error) {
+    if (!(error instanceof Throwable throwable)) {
+      return error == null ? "" : String.valueOf(error);
+    }
+    Throwable cause = throwable;
+    while (cause.getCause() != null && cause.getCause() != cause) {
+      cause = cause.getCause();
+    }
+    return cause.getMessage() == null ? cause.toString() : cause.getMessage();
   }
 
   private Object factoryProxy(Class<?> factoryClass) {
@@ -116,7 +168,7 @@ public final class KarateV2DebugAdapter {
     if (agent.isDetached() || !(point instanceof Point p) || p.kind() != gherkinStepKind) {
       return proceed;
     }
-    if (!agent.isBreakpoint(p.source(), p.line())) {
+    if (!agent.shouldPauseAtStep(p.source(), p.line())) {
       return proceed;
     }
     PENDING.set(new Pending(p.source(), p.line(), stepText(p.node()), scenarioName()));

@@ -48,6 +48,7 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
   private JTextField defaultEnvironmentField;
   private JFormattedTextField defaultParallelismField;
   private JCheckBox useKarateJsCheckbox;
+  private JCheckBox pauseOnFailedStepCheckbox;
   private JComboBox<KarateVersionPreference> karateVersionCombo;
   private JPanel myMainPanel;
 
@@ -78,6 +79,7 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
     return !defaultEnvironmentField.getText().equals(settingsState.getDefaultEnvironment())
       || useKarateJsCheckbox.isSelected() != settingsState.isUseKarateJavaScriptEngine()
       || !defaultParallelism.equals(settingsState.getDefaultParallelism())
+      || pauseOnFailedStepCheckbox.isSelected() != settingsState.isPauseOnFailedStep()
       || karateVersionCombo.getSelectedItem() != settingsState.getKarateVersionPreference();
   }
 
@@ -92,6 +94,7 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
         karateVersionCombo = new ComboBox<>(KarateVersionPreference.values()), true)
       .addComponent(new JBSplitter())
       .addComponent(useKarateJsCheckbox = new JBCheckBox("Use Karate JavaScript engine (restart required)"))
+      .addComponent(pauseOnFailedStepCheckbox = new JBCheckBox("Debug: pause when a step fails"))
       .addVerticalGap(8)
       .addComponent(new BrowserLink("What each setting means", UppercutWebHelpProvider.SITE + "settings"))
       .getPanel();
@@ -104,6 +107,7 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
     defaultEnvironmentField = null;
     defaultParallelismField = null;
     useKarateJsCheckbox = null;
+    pauseOnFailedStepCheckbox = null;
     karateVersionCombo = null;
   }
 
@@ -113,6 +117,7 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
     defaultEnvironmentField.setText(settingsState.getDefaultEnvironment());
     defaultParallelismField.setText(String.valueOf(settingsState.getDefaultParallelism()));
     useKarateJsCheckbox.setSelected(settingsState.isUseKarateJavaScriptEngine());
+    pauseOnFailedStepCheckbox.setSelected(settingsState.isPauseOnFailedStep());
     karateVersionCombo.setSelectedItem(settingsState.getKarateVersionPreference());
   }
 
@@ -127,6 +132,7 @@ public class UppercutSettingsConfigurable implements SearchableConfigurable, Con
     settingsState.setDefaultEnvironment(defaultEnvironmentField.getText());
     settingsState.setDefaultParallelism(defaultParallelism);
     settingsState.setUseKarateJavaScriptEngine(useKarateJsCheckbox.isSelected());
+    settingsState.setPauseOnFailedStep(pauseOnFailedStepCheckbox.isSelected());
     settingsState.setKarateVersionPreference(
       (KarateVersionPreference) karateVersionCombo.getSelectedItem());
   }

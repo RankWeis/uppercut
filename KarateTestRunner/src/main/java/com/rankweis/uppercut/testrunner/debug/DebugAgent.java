@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +38,11 @@ public final class DebugAgent implements AutoCloseable {
     PROCEED, SKIP
   }
 
+  /** Why the run stopped, so the IDE can say so rather than leaving the user to work it out. */
+  public enum Reason {
+    BREAKPOINT, STEP, FAILURE
+  }
+
   private static final class Suspension {
     private final CountDownLatch latch = new CountDownLatch(1);
     private final SuspendedFrame frame;
@@ -49,11 +55,14 @@ public final class DebugAgent implements AutoCloseable {
 
   private final BreakpointTable breakpoints = new BreakpointTable();
   private final Map<String, Suspension> suspended = new ConcurrentHashMap<>();
+  /** Threads the IDE asked to stop again at their very next step. */
+  private final Set<String> stepping = ConcurrentHashMap.newKeySet();
   private final CountDownLatch handshake = new CountDownLatch(1);
 
   private volatile Socket socket;
   private volatile PrintWriter out;
   private volatile boolean detached;
+  private volatile boolean pauseOnFailure;
 
   /**
    * Connects to the IDE and waits for the first breakpoint set, so no step can run past a breakpoint
@@ -108,9 +117,18 @@ public final class DebugAgent implements AutoCloseable {
    */
   public Decision pause(String path, int line, String stepText, String scenarioName,
     SuspendedFrame frame) {
-    if (detached || !breakpoints.matches(path, line)) {
+    if (!shouldPauseAtStep(path, line)) {
       return Decision.PROCEED;
     }
+    // A step reached because the user pressed Step is reported as such: "stopped where you asked" and
+    // "stopped at your breakpoint" are different answers to "why am I here".
+    Reason reason = stepping.remove(DebugProtocol.threadKey(Thread.currentThread()))
+      ? Reason.STEP : Reason.BREAKPOINT;
+    return park(path, line, stepText, scenarioName, frame, reason, null);
+  }
+
+  private Decision park(String path, int line, String stepText, String scenarioName,
+    SuspendedFrame frame, Reason reason, String error) {
     String thread = DebugProtocol.threadKey(Thread.currentThread());
     Suspension suspension = new Suspension(frame);
     suspended.put(thread, suspension);
@@ -120,6 +138,10 @@ public final class DebugAgent implements AutoCloseable {
     payload.put("line", line);
     payload.put("step", stepText);
     payload.put("scenario", scenarioName);
+    payload.put("reason", reason.name().toLowerCase(java.util.Locale.ROOT));
+    if (error != null) {
+      payload.put("error", error);
+    }
     send("PAUSED", payload);
     try {
       suspension.latch.await();
@@ -133,11 +155,34 @@ public final class DebugAgent implements AutoCloseable {
   }
 
   /**
-   * Whether this line carries a breakpoint. Asked in {@code beforeExecute}, which only decides; the
-   * parking itself happens in {@link #pause} from the single {@code waitForResume} call that follows.
+   * Whether this step should stop the run - it carries a breakpoint, or the IDE asked this thread to
+   * step. Asked in {@code beforeExecute}, which only decides; the parking itself happens in
+   * {@link #pause} from the single {@code waitForResume} call that follows.
    */
-  public boolean isBreakpoint(String path, int line) {
-    return !detached && breakpoints.matches(path, line);
+  public boolean shouldPauseAtStep(String path, int line) {
+    return !detached
+      && (stepping.contains(DebugProtocol.threadKey(Thread.currentThread()))
+      || breakpoints.matches(path, line));
+  }
+
+  /** Whether a failed step should stop the run, so an adapter can skip the work when it should not. */
+  public boolean isPauseOnFailure() {
+    return pauseOnFailure && !detached;
+  }
+
+  /**
+   * Stops on a step that has just failed, with the scenario still standing and its variables intact.
+   *
+   * <p>This is the question a debugger is usually opened for - the step failed, what was in
+   * {@code response}? - and it is the one case where guessing where to put a breakpoint first, then
+   * running again, is pure waste.</p>
+   */
+  public void pauseAfterFailure(String path, int line, String stepText, String scenarioName,
+    SuspendedFrame frame, String error) {
+    if (!isPauseOnFailure()) {
+      return;
+    }
+    park(path, line, stepText, scenarioName, frame, Reason.FAILURE, error);
   }
 
   /** True once the channel is gone or the IDE detached; the interceptor can stop asking. */
@@ -176,6 +221,12 @@ public final class DebugAgent implements AutoCloseable {
       }
       case DebugProtocol.VARIABLES -> sendVariables(command);
       case DebugProtocol.EVALUATE -> sendEvaluation(command);
+      case DebugProtocol.STEP -> {
+        // Arm before releasing, or the thread can reach its next step first and run straight past it.
+        stepping.add(command.argument());
+        release(command.argument(), Decision.PROCEED);
+      }
+      case DebugProtocol.PAUSE_ON_FAILURE -> pauseOnFailure = Boolean.parseBoolean(command.argument());
       case DebugProtocol.RESUME -> release(command.argument(), Decision.PROCEED);
       case DebugProtocol.SKIP -> release(command.argument(), Decision.SKIP);
       case DebugProtocol.RESUME_ALL -> releaseAll();
@@ -268,6 +319,7 @@ public final class DebugAgent implements AutoCloseable {
   /** Stops pausing and lets every parked thread go. Safe to call repeatedly. */
   public void detach() {
     detached = true;
+    stepping.clear();
     handshake.countDown();
     releaseAll();
   }

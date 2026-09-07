@@ -17,8 +17,13 @@ that works on feature files themselves**.
   moved while the run is suspended. Scenarios run one at a time while debugging, so a suspended run
   is followable.
 
-  Not built yet: stepping through steps, breakpoint conditions, and pausing on a failed step. The
-  step buttons continue to the next breakpoint and say so.
+- **A failed step stops the run.** Rather than guessing where to put a breakpoint and running again,
+  Debug stops on the step that failed, with the scenario still standing: the error is shown and the
+  variables are as the failure left them. On by default; turn it off under Settings > Tools > Karate.
+
+- **Stepping.** The step buttons run to the next step. A step that calls another feature stops on the
+  called feature's first step rather than after the call - telling step over from step into is not
+  built yet, and neither are breakpoint conditions.
 
 - **Karate 2 (`karate-junit6`) runs from the IDE**, first shipped in 3.0 and now with debugging to
   match. The Karate version is detected per module from the classpath, so a repository can migrate

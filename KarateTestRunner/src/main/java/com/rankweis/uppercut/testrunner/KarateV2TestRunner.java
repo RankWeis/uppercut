@@ -155,10 +155,13 @@ public class KarateV2TestRunner {
    * thread with its ScenarioRuntime, and the IDE's test tree.
    */
   private boolean onEvent(Object runEvent) {
+    // Emit first: the debug adapter parks the thread on a failed step, and the IDE should have the
+    // step in its test tree before the run stops on it rather than after it is resumed.
+    boolean proceed = emitEvent(runEvent);
     if (debugAdapter != null) {
       debugAdapter.observe(runEvent);
     }
-    return emitEvent(runEvent);
+    return proceed;
   }
 
   /**

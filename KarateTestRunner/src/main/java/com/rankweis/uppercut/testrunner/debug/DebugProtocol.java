@@ -23,6 +23,8 @@ import java.util.List;
  *   DETACH                       release everything and stop pausing for the rest of the run
  *   VARIABLES &lt;thread&gt; &lt;id&gt; [&lt;base64 path&gt;]   children of a value, or the scenario's variables
  *   EVALUATE &lt;thread&gt; &lt;id&gt; &lt;base64 expression&gt;
+ *   STEP &lt;thread&gt;               resume, and pause again at that thread's next step
+ *   PAUSE_ON_FAILURE &lt;true|false&gt;
  * </pre>
  *
  * <p>{@code id} correlates a request with its reply; a value path is its child names joined by
@@ -33,7 +35,8 @@ import java.util.List;
  *
  * <pre>
  *   HELLO  {"protocol":1,"karateMajor":2}
- *   PAUSED {"thread":"...","path":"...","line":9,"step":"...","scenario":"..."}
+ *   PAUSED {"thread":"...","path":"...","line":9,"step":"...","scenario":"...",
+ *           "reason":"breakpoint|step|failure","error":"..."}   (error only on a failure)
  *   RESUMED{"thread":"...","action":"PROCEED|SKIP"}
  *   VARIABLES {"id":1,"values":[{"name":"id","type":"string","value":"...","hasChildren":false}]}
  *   EVALUATED {"id":2,"value":"...","type":"string"}          (or {"id":2,"error":"..."})
@@ -56,6 +59,8 @@ public final class DebugProtocol {
   public static final String DETACH = "DETACH";
   public static final String VARIABLES = "VARIABLES";
   public static final String EVALUATE = "EVALUATE";
+  public static final String STEP = "STEP";
+  public static final String PAUSE_ON_FAILURE = "PAUSE_ON_FAILURE";
 
   private DebugProtocol() {
   }
@@ -102,7 +107,7 @@ public final class DebugProtocol {
     switch (verb) {
       case CLEAR, BREAKPOINTS_END, RESUME_ALL, DETACH:
         return Command.of(verb);
-      case RESUME, SKIP:
+      case RESUME, SKIP, STEP, PAUSE_ON_FAILURE:
         return tokens.size() < 2 ? null : Command.of(verb, tokens.get(1));
       case BREAKPOINT:
         if (tokens.size() < 3) {

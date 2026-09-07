@@ -51,7 +51,7 @@ tasks.test {
 tasks.register<JavaExec>("debugHarness") {
     classpath = sourceSets.test.get().runtimeClasspath
     mainClass = "sample.DebugHarness"
-    for (name in listOf("pauseLine", "pauseSeconds", "moveTo")) {
+    for (name in listOf("pauseLine", "pauseSeconds", "moveTo", "stepAfterPause", "pauseOnFailure", "feature")) {
         if (project.hasProperty(name)) {
             systemProperty(name, project.property(name).toString())
         }

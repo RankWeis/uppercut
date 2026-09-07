@@ -36,7 +36,8 @@ public class DebugHarness {
   private static final Pattern THREAD = Pattern.compile("\"thread\":\"([^\"]*)\"");
 
   public static void main(String[] args) throws Exception {
-    Path feature = Path.of("src/test/java/sample/users.feature").toAbsolutePath();
+    Path feature = Path.of("src/test/java/"
+      + System.getProperty("feature", "sample/users.feature")).toAbsolutePath();
     int line = Integer.getInteger("pauseLine", 9);
     long holdMillis = Long.getLong("pauseSeconds", 5L) * 1000L;
 
@@ -75,6 +76,7 @@ public class DebugHarness {
         new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
       PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
       log("agent connected");
+      out.println("PAUSE_ON_FAILURE " + Boolean.getBoolean("pauseOnFailure"));
       out.println("CLEAR");
       out.println("BREAKPOINT " + base64(feature.toString()) + " " + line);
       out.println("BREAKPOINTS_END");
@@ -112,8 +114,13 @@ public class DebugHarness {
           out.println("BREAKPOINTS_END");
         }
 
-        log("→ RESUME " + thread);
-        out.println("RESUME " + thread);
+        if (Boolean.getBoolean("stepAfterPause")) {
+          log("→ STEP " + thread);
+          out.println("STEP " + thread);
+        } else {
+          log("→ RESUME " + thread);
+          out.println("RESUME " + thread);
+        }
       }
     } catch (IOException | InterruptedException e) {
       log("ide ended: " + e);

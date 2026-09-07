@@ -58,6 +58,9 @@ Environment
 Parallelism
 : Threads for this run. Empty means the Tools > Karate default.
 
+Debug: pause when a step fails
+: On by default. A Debug run stops on a step that fails, with the scenario still standing - the error is shown and the variables are as the failure left them, so you can see what `response` actually held. Turn it off when you are debugging a suite with many expected failures and would rather stop only at your own breakpoints.
+
 Debug port
 : Only used when you start the configuration with **Debug** rather than Run. The IDE listens on this port for the test JVM's debug connection; leave it blank and a free port is picked for you. Set it when a firewall or a container only allows certain ports through. See the [status page](status#debugging) for what the debugger does.
 

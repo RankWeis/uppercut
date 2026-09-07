@@ -175,6 +175,9 @@ public class KarateTestRunner {
           // the user asked to skip the step.
           return debugAdapter == null || debugAdapter.beforeStep(args[0], args[1]);
         }
+        if ("afterStep".equals(method.getName()) && args.length == 2 && debugAdapter != null) {
+          debugAdapter.afterStep(args[0], args[1]);
+        }
         if ("beforeScenario".equals(method.getName())
           || "afterScenario".equals(method.getName()) && args.length == 1) {
           Class<?> scenarioRuntimeClass = Class.forName("com.intuit.karate.core.ScenarioRuntime");
