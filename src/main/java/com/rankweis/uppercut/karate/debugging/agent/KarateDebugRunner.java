@@ -28,6 +28,10 @@ import org.jetbrains.annotations.NotNull;
  *
  * <p>Registered ahead of the platform's own debug runner, which would otherwise claim this
  * configuration and attach JDWP.</p>
+
+ * <p>A run <i>can</i> ask for the JVM debugger as well - see {@link KarateJvmDebuggerAttach} - in
+ * which case it arrives as a second tab, from an ordinary Remote JVM Debug configuration, and this
+ * runner still owns the first one.</p>
  */
 public class KarateDebugRunner extends GenericProgramRunner<RunnerSettings> {
 
@@ -57,8 +61,15 @@ public class KarateDebugRunner extends GenericProgramRunner<RunnerSettings> {
           // Launching here, inside the starter, is what puts the test tree and the debugger in one
           // tab: the session adopts the run's own console and process rather than opening its own.
           ExecutionResult result = state.execute(environment.getExecutor(), KarateDebugRunner.this);
-          KarateDebugChannel channel = state instanceof KarateRunConfiguration.DebugChannelHolder holder
-            ? holder.debugChannel() : null;
+          KarateRunConfiguration.DebugChannelHolder holder =
+            state instanceof KarateRunConfiguration.DebugChannelHolder h ? h : null;
+          KarateDebugChannel channel = holder == null ? null : holder.debugChannel();
+          // Before the process is returned, so the session's breakpoints - and with them the agent's
+          // handshake - come after the attach has been asked for rather than racing it.
+          if (holder != null && holder.jvmDebugPort() > 0) {
+            KarateJvmDebuggerAttach.attach(environment.getProject(), holder.jvmDebugPort(), channel,
+              result.getProcessHandler());
+          }
           KarateDebugProcess process = new KarateDebugProcess(session, channel, result);
           if (channel != null) {
             channel.setListener(process);

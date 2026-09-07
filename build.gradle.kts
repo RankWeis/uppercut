@@ -191,19 +191,35 @@ intellijPlatform {
             }
 
         val changelog = project.changelog // local variable for configuration cache compatibility
-        // Get the latest available change notes from the changelog file. The docs link goes first in
-        // every version's notes here, rather than as a line in CHANGELOG.md that someone has to
-        // remember to keep.
+        // Locals, not script-level constants: the configuration cache cannot serialize a reference
+        // back into the script object, which is why `changelog` above is a local too.
+        //
+        // The one CHANGELOG.md section that reaches the Marketplace and the IDE's update
+        // notification. Three bullets at most: it is read in a popup, by someone who did not ask to
+        // read it.
+        val highlightsSection = "Highlights"
+        // What the IDE shows in its update notification, which is a popup rather than a record: the
+        // release's `### Highlights` section alone, and nothing else. CHANGELOG.md keeps every
+        // Added/Modified/Fixed line - the repo needs those, and nobody reads them in an update
+        // dialog. A release with no Highlights falls back to the whole entry, so the notes are never
+        // empty; that is also what every release before this convention gets.
+        //
+        // Highlights are read off Item.sections rather than through withFilter, which filters item
+        // text and not section names. The docs link goes first in every version's notes here, rather
+        // than as a line in CHANGELOG.md that someone has to remember to keep.
         changeNotes = properties("pluginVersion").map { pluginVersion ->
             val docsLink = "<p>What works, what's in progress, and what every setting means: " +
                 "<a href=\"https://rankweis.github.io/uppercut/\">rankweis.github.io/uppercut</a></p>\n"
-            docsLink + with(changelog) {
-                renderItem(
-                    (getOrNull(pluginVersion) ?: getUnreleased())
-                        .withHeader(false)
-                        .withEmptySections(false),
-                    Changelog.OutputType.HTML,
-                )
+            val item = with(changelog) { getOrNull(pluginVersion) ?: getUnreleased() }
+            val highlights = item.sections[highlightsSection].orEmpty()
+            docsLink + when {
+                highlights.isNotEmpty() -> markdownToHTML(highlights.joinToString("\n") { "- $it" })
+                else -> with(changelog) {
+                    renderItem(
+                        item.withHeader(false).withEmptySections(false),
+                        Changelog.OutputType.HTML,
+                    )
+                }
             }
         }
     }

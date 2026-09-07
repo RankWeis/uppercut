@@ -285,6 +285,8 @@ Versions are pinned in those two files and bumped by dependabot; the table names
 
 Update `CHANGELOG.md` for every major change. Add entries under the `## [Unreleased]` section using [Keep a Changelog](https://keepachangelog.com) format (`### Added`, `### Fixed`, `### Modified`, etc.). The CI deploy action handles version bumping and release — do not manually create version entries.
 
+**`### Highlights` is the only section users see.** `build.gradle.kts` renders that section alone into the Marketplace change notes and the IDE's update notification; everything else stays in the file for the repo. Three bullets at most, each one or two sentences, written for someone reading a popup they did not ask for — a release where nothing is worth interrupting anyone about can have no Highlights at all, though then the whole entry is broadcast as a fallback, so prefer writing one. Detail still belongs under `Added`/`Fixed`/`Modified`; a highlight is allowed to repeat a bullet's subject in shorter words.
+
 ## Common Tasks
 
 ### Adding a New Inspection

@@ -31,6 +31,7 @@ sourceSets {
             // not - and a fixture that will not compile there fails the whole suite.
             if (!runnerAvailable) {
                 exclude("**/DebugHarness.java")
+                exclude("**/JdwpClashProbe.java")
             }
         }
         resources {
@@ -95,6 +96,27 @@ tasks.register<JavaExec>("debugHarness") {
     classpath = sourceSets.test.get().runtimeClasspath
     mainClass = "sample.DebugHarness"
     for (name in listOf("pauseLine", "pauseSeconds", "moveTo", "stepAfterPause", "pauseOnFailure", "feature", "condition")) {
+        if (project.hasProperty(name)) {
+            systemProperty(name, project.property(name).toString())
+        }
+    }
+    doFirst {
+        require(runnerClasses.isDirectory) {
+            "Run ./gradlew :KarateTestRunner:classes in the root project first - $runnerClasses is missing"
+        }
+    }
+    isIgnoreExitValue = true
+}
+
+// Phase 6 spike for docs/DEBUGGER.md: an opt-in JVM debugger alongside the Karate debug agent, and
+// what the two do to each other in one JVM.
+//   ./gradlew :KarateTestRunner:classes
+//   ../../gradlew -p testProjects/karate-versions :v2:jdwpClash
+//   ../../gradlew -p testProjects/karate-versions :v2:jdwpClash -Pparallelism=2
+tasks.register<JavaExec>("jdwpClash") {
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass = "sample.JdwpClashProbe"
+    for (name in listOf("parallelism")) {
         if (project.hasProperty(name)) {
             systemProperty(name, project.property(name).toString())
         }

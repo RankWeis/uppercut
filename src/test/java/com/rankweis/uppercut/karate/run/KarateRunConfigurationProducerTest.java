@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import java.util.List;
+import org.jdom.Element;
 
 /**
  * The run configuration offered on a folder, and whether it displaces the build tool's own
@@ -39,6 +40,23 @@ public class KarateRunConfigurationProducerTest extends BasePlatformTestCase {
     // the folder still gets a (recursive) Karate run, but it must not push the JUnit/Gradle one out
     assertNotNull(fromContext);
     assertFalse(new KarateRunConfigurationProducer().shouldReplace(fromContext, fromContext));
+  }
+
+  public void testTheJvmDebuggerOptInSurvivesSaveAndReload() {
+    // A run configuration setting that does not round-trip is silently forgotten the next time the
+    // project opens, and the user is left with a checkbox that does nothing every second session.
+    KarateRunConfiguration saved = new KarateRunConfiguration(getProject(),
+        new KarateConfigurationType().getConfigurationFactories()[0], "karate");
+    assertFalse("the JVM debugger is opt-in, so it must be off out of the box",
+      saved.isAttachJvmDebugger());
+    saved.setAttachJvmDebugger(true);
+    Element element = new Element("configuration");
+    saved.writeExternal(element);
+
+    KarateRunConfiguration reloaded = new KarateRunConfiguration(getProject(),
+        new KarateConfigurationType().getConfigurationFactories()[0], "karate");
+    reloaded.readExternal(element);
+    assertTrue(reloaded.isAttachJvmDebugger());
   }
 
   public void testTagRunsScanTheModuleSourceRootsNotTheModuleDirectory() {

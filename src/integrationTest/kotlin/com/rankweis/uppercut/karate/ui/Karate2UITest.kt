@@ -29,7 +29,11 @@ import com.intellij.tools.ide.performanceTesting.commands.openFile
 import com.intellij.tools.ide.performanceTesting.commands.waitForCodeAnalysisFinished
 import com.intellij.tools.ide.performanceTesting.commands.waitForSmartMode
 import com.intellij.tools.ide.starter.product.idea.ultimate.IdeaUltimate
+import com.intellij.driver.sdk.Project
+import com.rankweis.uppercut.karate.ui.util.XDebugSessionRef
+import com.rankweis.uppercut.karate.ui.util.debugConfiguration
 import com.rankweis.uppercut.karate.ui.util.debuggerManager
+import com.rankweis.uppercut.karate.ui.util.runManager
 import com.rankweis.uppercut.karate.ui.util.OutputListenerRef
 import com.rankweis.uppercut.karate.ui.util.ConsoleViewImplRef
 import com.rankweis.uppercut.karate.ui.util.RunContentDescriptor
@@ -76,6 +80,16 @@ class Karate2UITest {
     companion object {
 
         private const val SCREENSHOT_DIR = "build/reports/integrationTest/screenshots/karate2/"
+
+        /** The fixture pair that exists so a JVM debugger has user Java to stop in. */
+        private const val JAVACALL_FEATURE = "v2/src/test/java/sample/javacall.feature"
+        private const val HELPER_JAVA = "v2/src/test/java/sample/Helper.java"
+        /** `* def answer = Helper.compute(seed)` - Karate pauses before it, Java runs inside it. */
+        private const val JAVA_CALL_STEP_LINE = 6
+        /** `int doubled = seed * 2;`, the first statement of Helper.compute. */
+        private const val HELPER_BODY_LINE = 11
+        /** What KarateJvmDebuggerAttach names the second tab. */
+        private const val JVM_DEBUGGER_TAB = "Karate JVM debugger"
 
         private lateinit var run: BackgroundRun
         private lateinit var ideaLog: Path
@@ -373,11 +387,143 @@ class Karate2UITest {
         verifySettingsOverrideBeatsDetection(run.driver)
     }
 
-    /** Runs last while the IDE is still up; idea.log is written through continuously. */
+    /**
+     * The opt-in JVM debugger, in one run without it and one with.
+     *
+     * <p>Both cases in a single test on purpose: each is a real JVM launch and a real Karate suite,
+     * and the interesting assertions are about how the two runs differ - a second test class, or even
+     * a second method, would pay that cost twice to say less.</p>
+     *
+     * <p>This is also the first test in the suite to set a breakpoint. It does it the way the gutter
+     * does, through the ToggleLineBreakpoint action with the caret already placed, so it exercises
+     * breakpoint registration rather than reaching past it into the breakpoint manager.</p>
+     */
     @Test
     @Order(8)
+    fun theJvmDebuggerIsOptInAndRunsBesideTheKarateOne() {
+        val driver = run.driver
+        val project = driver.singleProject()
+        try {
+            toggleBreakpoint(driver, JAVACALL_FEATURE, JAVA_CALL_STEP_LINE)
+            toggleBreakpoint(driver, HELPER_JAVA, HELPER_BODY_LINE)
+
+            // --- Off by default: one tab, and the java breakpoint does not stop the run.
+            openFeature(driver, JAVACALL_FEATURE)
+            launchDebugFromGutterContext(driver)
+            val karateOnly = awaitSuspended(driver, project, "javacall.feature")
+            assertEquals(
+                JAVA_CALL_STEP_LINE - 1, karateOnly.getCurrentPosition()?.getLine(),
+                "the Karate tab should stop before the step that calls Java"
+            )
+            assertEquals(
+                emptyList<String>(), debugTabNames(driver).filter { it.contains(JVM_DEBUGGER_TAB) },
+                "no JVM debugger should attach unless the run asked for one"
+            )
+            karateOnly.resume()
+            awaitRunFinished(driver, project, "javacall.feature")
+
+            // --- Opted in: the same configuration, ticked, launched again.
+            val settings = driver.runManager(project).getSelectedConfiguration()
+            assertNotNull(settings, "the context run should leave its configuration selected")
+            assertTrue(
+                settings.getName().contains("javacall"),
+                "expected the Karate run to be selected, found '${settings.getName()}'"
+            )
+            settings.getConfiguration().setAttachJvmDebugger(true)
+            driver.debugConfiguration(settings)
+
+            // The Karate tab stops first: Karate pauses before the step, Java runs inside it.
+            val karateSession = awaitSuspended(driver, project, "javacall.feature")
+            assertEquals(
+                JAVA_CALL_STEP_LINE - 1, karateSession.getCurrentPosition()?.getLine(),
+                "the Karate tab should still own its own breakpoints with both debuggers on"
+            )
+            waitFor(
+                timeout = 1.minutes,
+                interval = 200.milliseconds,
+                errorMessage = { "No JVM debugger tab appeared; tabs: ${debugTabNames(driver)}" }
+            ) { debugTabNames(driver).any { it.contains(JVM_DEBUGGER_TAB) } }
+
+            karateSession.resume()
+
+            // The class is loaded a step earlier, so this only binds because the handshake held the
+            // run until the JVM debugger attached. It is the whole point of holdForJvmDebugger.
+            val javaSession = awaitSuspended(driver, project, JVM_DEBUGGER_TAB)
+            assertEquals(
+                HELPER_BODY_LINE - 1, javaSession.getCurrentPosition()?.getLine(),
+                "the JVM debugger should stop in Helper.compute"
+            )
+            driver.takeScreenshot(screenshotDir + "08-both-debuggers")
+
+            // Stopping the java tab detaches it and leaves the karate run to finish.
+            javaSession.stop()
+            awaitRunFinished(driver, project, "javacall.feature")
+        } catch (failure: Throwable) {
+            driver.takeScreenshot(screenshotDir + "08-debug-failure")
+            throw failure
+        } finally {
+            sessionsOf(driver, project).filter { !it.isStopped() }.forEach { it.stop() }
+            // Toggling again removes them. A karate breakpoint left in a feature file would make every
+            // later debug run in this IDE stop somewhere the next test does not expect.
+            toggleBreakpoint(driver, JAVACALL_FEATURE, JAVA_CALL_STEP_LINE)
+            toggleBreakpoint(driver, HELPER_JAVA, HELPER_BODY_LINE)
+        }
+    }
+
+    /** Runs last while the IDE is still up; idea.log is written through continuously. */
+    @Test
+    @Order(9)
     fun pluginLoggedNoErrors() {
         assertNoPluginErrorsLogged(ideaLog)
+    }
+
+
+    /** Puts the caret on a line and toggles whatever breakpoint type claims it - the gutter's own action. */
+    private fun toggleBreakpoint(driver: Driver, relativePath: String, line: Int) {
+        driver.execute(
+            CommandChain().openFile(relativePath)
+                .waitForCodeAnalysisFinished()
+                .goto(line, 5)
+        )
+        driver.invokeAction("ToggleLineBreakpoint")
+    }
+
+    /** Every open Debug tab, by the name the user reads on it. */
+    private fun debugTabNames(driver: Driver): List<String> =
+        driver.getRunContentManagerRef(driver.singleProject()).getAllDescriptors()
+            .map { it.getDisplayName() }
+
+    private fun sessionsOf(driver: Driver, project: Project): List<XDebugSessionRef> =
+        driver.getRunContentManagerRef(project).getAllDescriptors().mapNotNull { descriptor ->
+            descriptor.getExecutionConsole()?.let { driver.debuggerManager(project).getDebugSession(it) }
+        }
+
+    private fun sessionNamed(driver: Driver, project: Project, tab: String): XDebugSessionRef? =
+        driver.getRunContentManagerRef(project).getAllDescriptors()
+            .filter { it.getDisplayName().contains(tab) }
+            .mapNotNull { descriptor ->
+                descriptor.getExecutionConsole()?.let { driver.debuggerManager(project).getDebugSession(it) }
+            }
+            .firstOrNull()
+
+    private fun awaitSuspended(driver: Driver, project: Project, tab: String): XDebugSessionRef {
+        waitFor(
+            timeout = 3.minutes,
+            interval = 200.milliseconds,
+            errorMessage = { "The '$tab' debugger never suspended; tabs: ${debugTabNames(driver)}" }
+        ) { sessionNamed(driver, project, tab)?.isSuspended() == true }
+        return sessionNamed(driver, project, tab)!!
+    }
+
+    private fun awaitRunFinished(driver: Driver, project: Project, tab: String) {
+        waitFor(
+            timeout = 3.minutes,
+            interval = 500.milliseconds,
+            errorMessage = { "The debugged run never finished after resuming" }
+        ) {
+            val session = sessionNamed(driver, project, tab)
+            session == null || session.isStopped()
+        }
     }
 
     private fun currentFileName(driver: Driver): String? =

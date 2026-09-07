@@ -160,6 +160,41 @@ public class KarateDebugChannelTest {
   }
 
   @Test
+  public void holdsTheHandshakeUntilTheJvmDebuggerAttaches() throws Exception {
+    // A java breakpoint only binds once the debugger is attached, so a run that opted into the JVM
+    // debugger must not let its first step go by before then.
+    channel = new KarateDebugChannel();
+    channel.start();
+    channel.holdForJvmDebugger(60_000);
+    BufferedReader fromChannel = connectAgent();
+    channel.setBreakpoints(List.of(new KarateDebugChannel.Breakpoint("/repo/a.feature", 4)));
+
+    agent.setSoTimeout(500);
+    assertThrows(SocketTimeoutException.class, fromChannel::readLine);
+
+    agent.setSoTimeout(TIMEOUT_SECONDS * 1000);
+    channel.jvmDebuggerAttached();
+    assertEquals(DebugProtocol.CLEAR, fromChannel.readLine());
+    assertEquals(DebugProtocol.breakpointCommand("/repo/a.feature", 4), fromChannel.readLine());
+    assertEquals(DebugProtocol.BREAKPOINTS_END, fromChannel.readLine());
+  }
+
+  @Test
+  public void startsTheRunAnywayWhenTheJvmDebuggerNeverAttaches() throws Exception {
+    // Failing open matters more here than anywhere: holding past the agent's own handshake timeout
+    // would start the suite with no breakpoint set at all, losing the karate breakpoints as well.
+    channel = new KarateDebugChannel();
+    channel.start();
+    channel.holdForJvmDebugger(200);
+    BufferedReader fromChannel = connectAgent();
+    channel.setBreakpoints(List.of(new KarateDebugChannel.Breakpoint("/repo/a.feature", 4)));
+
+    assertEquals(DebugProtocol.CLEAR, fromChannel.readLine());
+    assertEquals(DebugProtocol.breakpointCommand("/repo/a.feature", 4), fromChannel.readLine());
+    assertEquals(DebugProtocol.BREAKPOINTS_END, fromChannel.readLine());
+  }
+
+  @Test
   public void completesTheHandshakeOnceTheSessionHasSaidThereAreNoBreakpoints() throws Exception {
     // BREAKPOINTS_END is also the agent's handshake, so an empty set still has to be sent - the run
     // would otherwise wait out the agent's whole timeout before starting.

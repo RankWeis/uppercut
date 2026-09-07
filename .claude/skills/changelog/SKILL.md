@@ -11,13 +11,29 @@ Entries go under `## [Unreleased]` in [Keep a Changelog](https://keepachangelog.
 ## Sections
 
 Use the existing section under `[Unreleased]`, creating it only if absent. Order as they appear
-in the file: `### Added`, `### Modified`, `### Fixed`.
+in the file: `### Highlights`, `### Added`, `### Modified`, `### Fixed`.
 
 | Section | Use for |
 |---|---|
+| `Highlights` | The few changes worth interrupting a user about. **This is the only section they see** |
 | `Added` | New capability that did not exist before |
 | `Modified` | Existing behavior that now works differently (including intentional behavior changes) |
 | `Fixed` | Something that was broken and now is not |
+
+## Highlights, and why the other sections are not it
+
+`build.gradle.kts` renders `### Highlights` alone into the Marketplace change notes and the IDE's
+update notification. Everything else stays in the file, for the repo.
+
+- **Three bullets at most**, one or two sentences each. It is a popup, read by someone who did not
+  ask to read it.
+- Write the highlight *and* the full entry. A highlight repeating a bullet's subject in shorter
+  words is the intent, not duplication to avoid.
+- Most changes do not earn one. A fix nobody reported, an internal change, a doc tweak: `Fixed` or
+  `Modified` only. Ask whether a user would want the IDE to tell them.
+- A release with no `Highlights` broadcasts its **whole** entry as a fallback, so that notes are
+  never empty. That is the pre-convention behaviour, not a way to opt out - if a release has
+  anything worth saying, say it in three bullets rather than letting all of it through.
 
 ## Writing the entry
 

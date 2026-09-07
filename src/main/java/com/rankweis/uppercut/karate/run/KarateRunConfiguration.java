@@ -46,6 +46,8 @@ import com.rankweis.uppercut.settings.KarateSettingsState;
 import com.rankweis.uppercut.testrunner.KarateTestRunner;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -87,6 +89,13 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   @Getter @Setter private String featureName;
   @Getter @Setter private String scenarioName;
   @Getter @Setter private String debugPort;
+  /**
+   * Opt-in: attach the JVM debugger to the test JVM as well, in its own tab. Karate has no
+   * user-written step definitions, so this is for the two things the Karate debugger cannot reach -
+   * Java a feature calls through {@code Java.type}, and karate-core itself. Off by default, because
+   * a Java breakpoint suspends every thread in the JVM, including the one serving the Karate tab.
+   */
+  @Getter @Setter private boolean attachJvmDebugger = false;
   @Getter @Setter private String tag;
   @Getter @Setter private String path;
   @Getter @Setter private PreferredTest preferredTest = PreferredTest.WHOLE_FILE;
@@ -128,6 +137,13 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
   public interface DebugChannelHolder {
 
     @Nullable KarateDebugChannel debugChannel();
+
+    /**
+     * The JDWP port this launch opened for the opt-in JVM debugger, or 0 when it was not asked for.
+     * Like the channel's port it is chosen while the command line is built, because that is when it
+     * has to be written into the test JVM's arguments.
+     */
+    int jvmDebugPort();
   }
 
   @Override
@@ -140,10 +156,17 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
        * read back by {@code KarateDebugRunner} once there is a process to attach a session to.
        */
       private KarateDebugChannel debugChannel;
+      /** The JDWP port for the opt-in JVM debugger, or 0 when this run did not ask for one. */
+      private int jvmDebugPort;
 
       @Override
       public @Nullable KarateDebugChannel debugChannel() {
         return debugChannel;
+      }
+
+      @Override
+      public int jvmDebugPort() {
+        return jvmDebugPort;
       }
 
       @Override
@@ -276,6 +299,9 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
             log.warn("Could not open the Karate debug channel; feature-file breakpoints are off", e);
             debugChannel = null;
           }
+          if (isAttachJvmDebugger()) {
+            jvmDebugPort = openJvmDebugPort(params, debugChannel);
+          }
         }
 
         return params;
@@ -305,6 +331,39 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     };
   }
 
+
+  /**
+   * How long the run's first step waits for the opt-in JVM debugger to attach. Well under the agent's
+   * own 15s handshake timeout, past which it starts with no breakpoint set at all - a JVM debugger
+   * that never arrives must not cost the user their Karate breakpoints as well.
+   */
+  private static final long JVM_DEBUGGER_ATTACH_TIMEOUT_MILLIS = 8_000L;
+
+  /**
+   * Opens a JDWP port on the test JVM for the opt-in JVM debugger, and holds the Karate handshake
+   * until it attaches. Returns the port, or 0 if none could be opened - in which case the run goes
+   * ahead with the Karate debugger alone.
+   */
+  private static int openJvmDebugPort(@NotNull JavaParameters params,
+    @Nullable KarateDebugChannel channel) {
+    int port;
+    try (ServerSocket free = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
+      port = free.getLocalPort();
+    } catch (IOException e) {
+      log.warn("Could not find a free port for the JVM debugger; running without it", e);
+      return 0;
+    }
+    // server=y,suspend=n. suspend=y would guarantee nothing runs before the attach, at the price of
+    // a test JVM parked forever if the attach never happens - the one outcome this debugger goes out
+    // of its way to avoid. The Karate handshake gives the same guarantee with a timeout that ends in
+    // a run rather than a hang, so the JVM itself never has to wait.
+    params.getVMParametersList().add(
+      "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=127.0.0.1:" + port);
+    if (channel != null) {
+      channel.holdForJvmDebugger(JVM_DEBUGGER_ATTACH_TIMEOUT_MILLIS);
+    }
+    return port;
+  }
 
   /** Whether this configuration asked for more than one scenario at a time; blank or junk means no. */
   private boolean parallelismAboveOne() {
@@ -494,6 +553,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     element.setAttribute("featureName", Optional.ofNullable(featureName).orElse(""));
     element.setAttribute("scenarioName", Optional.ofNullable(scenarioName).orElse(""));
     element.setAttribute("debugPort", Optional.ofNullable(debugPort).orElse(""));
+    element.setAttribute("attachJvmDebugger", String.valueOf(attachJvmDebugger));
     element.setAttribute("tag", Optional.ofNullable(tag).orElse(""));
     element.setAttribute("path", Optional.ofNullable(path).orElse(""));
     element.setAttribute("preferredTest", preferredTest.name);
@@ -513,6 +573,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     featureName = element.getAttributeValue("featureName");
     scenarioName = element.getAttributeValue("scenarioName");
     debugPort = element.getAttributeValue("debugPort");
+    attachJvmDebugger = Boolean.parseBoolean(element.getAttributeValue("attachJvmDebugger"));
     tag = element.getAttributeValue("tag");
     path = element.getAttributeValue("path");
     preferredTest =
