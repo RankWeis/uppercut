@@ -42,11 +42,6 @@ public class KarateBreakpointType extends XLineBreakpointType<XBreakpointPropert
     return null;
   }
 
-  @Override
-  public String getDisplayText(XLineBreakpoint<XBreakpointProperties<?>> breakpoint) {
-    return getDisplayTextDefaultWithPathAndLine(breakpoint);
-  }
-
   /**
    * What makes the platform offer a <b>Condition</b> field on the breakpoint - right-click on the
    * gutter icon, or the Breakpoints dialog. Without a provider here the field is simply absent, and a

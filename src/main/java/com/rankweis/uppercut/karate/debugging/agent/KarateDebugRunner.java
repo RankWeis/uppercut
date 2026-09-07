@@ -41,6 +41,12 @@ public class KarateDebugRunner extends GenericProgramRunner<RunnerSettings> {
     return DefaultDebugExecutor.EXECUTOR_ID.equals(executorId) && profile instanceof KarateRunConfiguration;
   }
 
+  /**
+   * Uses {@code XDebuggerManager.newSessionBuilder}, which the verifier reports as experimental API on
+   * 261 and no longer flags on 262 and up. The alternative is
+   * {@code XDebugSession.getRunContentDescriptor()}, which is deprecated and logs a throwable in split
+   * mode - so this is deliberately the forward-facing half of that choice rather than the quiet one.
+   */
   @Override
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state,
     @NotNull ExecutionEnvironment environment) throws ExecutionException {

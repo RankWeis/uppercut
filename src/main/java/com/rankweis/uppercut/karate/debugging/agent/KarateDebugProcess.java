@@ -12,9 +12,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
@@ -293,7 +293,8 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
   }
 
   private @Nullable XSourcePosition sourcePosition(KarateDebugChannel.Paused paused) {
-    VirtualFile file = ReadAction.compute(() -> FeaturePathResolver.findFeatureFile(project, paused.path()));
+    VirtualFile file = ApplicationManager.getApplication().runReadAction(
+      (Computable<VirtualFile>) () -> FeaturePathResolver.findFeatureFile(project, paused.path()));
     if (file == null) {
       report("Could not find " + paused.path() + " in this project, so the paused line cannot be shown.");
       return null;

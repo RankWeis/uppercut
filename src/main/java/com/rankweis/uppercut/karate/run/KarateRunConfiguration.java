@@ -20,13 +20,13 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -397,7 +397,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
 
   /** Feature files that still carry a Java line breakpoint, newest platform state each time. */
   private static List<String> staleJavaBreakpointFiles(Project project) {
-    return ReadAction.compute(() -> Arrays.stream(
+    return ApplicationManager.getApplication().runReadAction((Computable<List<String>>) () -> Arrays.stream(
         XDebuggerManager.getInstance(project).getBreakpointManager().getAllBreakpoints())
       .filter(breakpoint -> JAVA_LINE_BREAKPOINT_TYPE.equals(breakpoint.getType().getId()))
       // A disabled leftover confuses nobody, and refusing a run over one would be its own annoyance.
