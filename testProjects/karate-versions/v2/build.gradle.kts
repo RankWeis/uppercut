@@ -53,3 +53,17 @@ tasks.register<JavaExec>("eventProbe") {
     }
     isIgnoreExitValue = true
 }
+
+// Phase 0 spike for docs/DEBUGGER.md: pauses a real run inside Karate 2's debug interceptor.
+//   ../../gradlew -p testProjects/karate-versions :v2:debugProbe
+//   ../../gradlew -p testProjects/karate-versions :v2:debugProbe -PpauseSeconds=45 -PpauseLine=4
+tasks.register<JavaExec>("debugProbe") {
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass = "sample.DebugProbe"
+    for (name in listOf("probePath", "pauseLine", "pauseSeconds", "parallelism")) {
+        if (project.hasProperty(name)) {
+            systemProperty(name, project.property(name).toString())
+        }
+    }
+    isIgnoreExitValue = true
+}
