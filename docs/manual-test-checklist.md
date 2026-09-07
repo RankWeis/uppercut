@@ -90,8 +90,10 @@ have unit tests, the IDE half has only this list. Run these in `testProjects/kar
       `:v1` module the gutter still offers the Java breakpoint it always has.
 - [ ] **Debug** on a v2 run opens two tabs: the usual run tab, and a "Karate" tab. The run tab's first
       line says where each kind of breakpoint stops.
-- [ ] The run pauses before the breakpointed step, the editor highlights that line, and the frame in
-      the Karate tab names the step and the scenario.
+- [ ] The run pauses before the breakpointed step, the Karate tab comes to the front by itself, the
+      editor highlights that line, and the frame names the step and the scenario. (Only the selected
+      session draws an execution line, so if the tab does not come forward there is no highlight
+      anywhere.)
 - [ ] Resume continues to the end (or to the next breakpoint). The test tree in the run tab finishes
       normally.
 - [ ] The step buttons continue to the next breakpoint and say so in the Karate tab's console -

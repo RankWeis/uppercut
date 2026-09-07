@@ -1,10 +1,15 @@
 package com.rankweis.uppercut.karate.debugging.agent;
 
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -115,6 +120,7 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
     stateMessage = "Paused at " + paused.path() + ":" + paused.line();
     log("Paused at " + paused.path() + ":" + paused.line() + "  " + paused.step());
     getSession().positionReached(new KarateSuspendContext(paused, sourcePosition(paused)));
+    showThisTab();
   }
 
   @Override
@@ -159,6 +165,23 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
   private void continueInsteadOfStepping(@Nullable XSuspendContext context) {
     log("Stepping is not supported yet - continuing to the next breakpoint.");
     resume(context);
+  }
+
+  /**
+   * Brings the Karate tab forward on a pause.
+   *
+   * <p>Two sessions share the Debug tool window, and only the selected one draws its execution line.
+   * Without this, hitting a feature-file breakpoint stops the run under a Java tab that has nothing to
+   * show and no highlight anywhere - the user has to know to switch tabs to see where they are.</p>
+   */
+  private void showThisTab() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      RunContentDescriptor descriptor = getSession().getRunContentDescriptor();
+      if (descriptor != null) {
+        RunContentManager.getInstance(project)
+          .toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
+      }
+    }, ModalityState.any());
   }
 
   private @Nullable String threadOf(@Nullable XSuspendContext context) {
