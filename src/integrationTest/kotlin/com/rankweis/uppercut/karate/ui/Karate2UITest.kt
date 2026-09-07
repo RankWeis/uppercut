@@ -438,6 +438,21 @@ class Karate2UITest {
                 JAVA_CALL_STEP_LINE - 1, karateSession.getCurrentPosition()?.getLine(),
                 "the Karate tab should still own its own breakpoints with both debuggers on"
             )
+            // And it has to come forward too. The JVM debugger's tab opens after this one, so it can
+            // be the selected tab when a Karate breakpoint hits - and then the run stops behind a tab
+            // nobody is looking at and the editor never moves to the step. Found by hand, after the
+            // symmetric fix for the Java tab created it.
+            waitFor(
+                timeout = 30.seconds,
+                interval = 200.milliseconds,
+                errorMessage = {
+                    "The Karate tab did not come forward when it paused; showing: " +
+                        driver.getRunContentManagerRef(project).getSelectedContent()?.getDisplayName()
+                }
+            ) {
+                driver.getRunContentManagerRef(project).getSelectedContent()
+                    ?.getDisplayName()?.contains("javacall.feature") == true
+            }
             waitFor(
                 timeout = 1.minutes,
                 interval = 200.milliseconds,
