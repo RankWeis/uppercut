@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-09-07
+
 ### Highlights
 
 - **Debug the Java a feature calls.** Tick **Attach the JVM debugger too** on a Karate run
@@ -531,7 +533,8 @@ that works on feature files themselves**.
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.2.0...HEAD
+[3.2.0]: https://github.com/rankweis/uppercut/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/rankweis/uppercut/compare/v3.0.1...v3.1.0
 [3.0.1]: https://github.com/rankweis/uppercut/compare/v2.5.2...v3.0.1
 [2.5.2]: https://github.com/rankweis/uppercut/compare/v2.5.1...v2.5.2
