@@ -19,6 +19,14 @@ is `@Disabled` - it clicks. The IDE it boots is the `platformVersion` the plugin
 ./gradlew integrationTest --tests com.rankweis.uppercut.karate.ui.Karate2UITest
 ```
 
+**Use `--rerun` when you have just reverted something.** The task goes UP-TO-DATE when the sources
+match a previously-run state, and Gradle then skips it entirely - exit 0, stale results XML, no IDE.
+A "verification run" can silently do nothing. Confirm it actually ran before believing a result:
+
+```bash
+grep -c "Starting IDE for karate2Gutter" run.log   # 2 = setupSdk + the real session; 0 = it skipped
+```
+
 **Use the fully-qualified class name.** PowerShell expands `--tests "*Karate2*"` against the
 filesystem, so it silently becomes a directory name and Gradle reports "No tests found".
 
@@ -89,8 +97,46 @@ hold a `BackgroundRun` in a companion, start it in `@BeforeAll`, and `run.closeI
 `@TestMethodOrder(MethodOrderer.OrderAnnotation::class)` when later ones depend on earlier state,
 and reach the driver through `run.driver`. A failure then names the behavior that broke.
 
+## Setting breakpoints from a test
+
+It works, and for a long time this suite assumed it did not. Put the caret where you want it and
+invoke the same action the gutter does - no clicking, no reaching into the breakpoint manager:
+
+```kotlin
+driver.execute(CommandChain().openFile(path).waitForCodeAnalysisFinished().goto(line, 5))
+driver.invokeAction("ToggleLineBreakpoint")   // toggling again removes it
+```
+
+It picks whatever breakpoint type claims the line - `KarateBreakpointType` on a feature step, the
+Java one on a `.java` line. **Remove them in a `finally`**: a Karate breakpoint left in a feature
+file stops every later debug run in the shared IDE somewhere the next test does not expect.
+
+## Asserting on debug sessions
+
+- `getCurrentSession()` is ambiguous once a run has two tabs (the opt-in JVM debugger adds one). Look
+  sessions up per tab instead: `RunContentManager.getAllDescriptors()` by display name, then
+  `XDebuggerManager.getDebugSession(descriptor.getExecutionConsole())`.
+- `RunContentManager.getSelectedContent()` is how you assert *which tab the user is looking at*. When
+  two sessions can each bring their own tab forward, assert **both** directions - asserting one lets
+  a fix for that one silently re-break the other, which is exactly what happened.
+- Assert the stopped position's **file path**, not only its line. Both fixture modules declare
+  `sample.Helper` at the same line on purpose, so a line-only assertion cannot fail whichever module
+  the run lands in.
+
 ## Driver API traps
 
+- **An action can be rejected as "disabled (early check)".** A run marker in *some* gutter does not
+  mean this editor's context is runnable - an open run console contributes markers of its own - so
+  `invokeAction` can fire too early. Retry until accepted, treating only *"is disabled"* as
+  retryable; anything else means the action ran and failed, and running it twice launches twice.
+  `launchRunFromGutterContext` and `toggleBreakpoint` both do this. Do not simplify it back to a bare
+  `invokeAction`: the screenshot calls used to hide this race by accident, and it resurfaced twice
+  the moment they were touched.
+- **`./gradlew runIde` returns while the IDE keeps running.** On macOS the task finishes in ~2s and
+  Gradle reports success; the sandbox IDE is still up. A "task completed" notification means nothing
+  about the IDE. Check `ps aux | grep idea.plugin.in.sandbox.mode` instead. Also remember the running
+  sandbox has whatever build it launched with - after fixing anything, restart it before asking
+  anyone to re-test.
 - **Never click.** Driver clicks are physical screen coordinates, so any window over the IDE
   swallows them - `idea.log` says `Click was unsuccessful`, and the test is unrunnable on a
   machine someone is using. Assert the UI element exists via the API, then trigger behavior with
