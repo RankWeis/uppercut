@@ -2,8 +2,10 @@ package com.rankweis.uppercut.karate.debugging.agent;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -231,10 +233,22 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
   }
 
   /**
-   * Shows frames and variables when the run stops. The tab's other pane is the test tree, which is
-   * where the user was looking a moment ago and tells them nothing about where they now are.
+   * Brings this tab forward and shows frames and variables when the run stops.
+   *
+   * <p>Two levels of selecting. The tab itself, because a run that opted into the JVM debugger has a
+   * second tab in the same tool window - opened after this one, so possibly the selected one - and
+   * the platform's "show the debugger on a breakpoint" leaves the selection alone once the window is
+   * showing. Without this, a Karate breakpoint stops the run behind a tab the user is not looking at
+   * and the editor never moves to the step. Then the frames pane within the tab, because the other
+   * pane is the test tree, which is where the user was looking a moment ago and tells them nothing
+   * about where they now are.</p>
    */
   private void showVariables() {
+    // By process handler, not descriptor: XDebugSession's descriptor getter is deprecated and logs a
+    // throwable in split mode.
+    ApplicationManager.getApplication().invokeLater(() ->
+      RunContentManager.getInstance(getSession().getProject()).toFrontRunContent(
+        DefaultDebugExecutor.getDebugExecutorInstance(), getProcessHandler()), ModalityState.any());
     getSession().runWhenUiReady(ui -> ApplicationManager.getApplication().invokeLater(() -> {
       Content frames = ui.findContent(DebuggerContentInfo.FRAME_CONTENT);
       if (frames != null) {

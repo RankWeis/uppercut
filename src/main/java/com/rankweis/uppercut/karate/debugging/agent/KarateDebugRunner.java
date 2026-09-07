@@ -9,6 +9,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.GenericProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -67,8 +68,10 @@ public class KarateDebugRunner extends GenericProgramRunner<RunnerSettings> {
           // Before the process is returned, so the session's breakpoints - and with them the agent's
           // handshake - come after the attach has been asked for rather than racing it.
           if (holder != null && holder.jvmDebugPort() > 0) {
-            KarateJvmDebuggerAttach.attach(environment.getProject(), holder.jvmDebugPort(), channel,
-              result.getProcessHandler());
+            Module module = environment.getRunProfile() instanceof KarateRunConfiguration karate
+              ? karate.getConfigurationModule().getModule() : null;
+            KarateJvmDebuggerAttach.attach(environment.getProject(), holder.jvmDebugPort(), module,
+              channel, result.getProcessHandler());
           }
           KarateDebugProcess process = new KarateDebugProcess(session, channel, result);
           if (channel != null) {

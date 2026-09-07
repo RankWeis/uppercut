@@ -127,21 +127,38 @@ Automated - listed so a failure is read against what it was meant to prove, not 
 - [x] A breakpoint on the first Java the run touches binds - `Helper` is loaded a step before the
       Karate breakpoint, so this only passes because the handshake held the run for the attach.
 - [x] Stop the Java tab alone: it detaches and the Karate run finishes.
+- [x] **Each tab comes forward when its own session stops** - the JVM debugger's, and the Karate tab
+      when a feature-line breakpoint hits. Both directions, because asserting only one let the fix
+      for that one re-break the other. A tab that does not come forward also means the editor never
+      moves to the stopped line, which is how it was noticed. Confirmed by hand as well, 2026-09-07.
+- [x] A v2 run stops in the **v2** module's helper. Both modules declare `sample.Helper` at the same
+      line on purpose: asserted on the file and not only the line, because a line-only check could
+      not have failed either way. What makes it resolve is the run's module on the remote
+      configuration - remove that and this is the test that goes red.
 
-Still by hand. **Walked 2026-09-07** for the two marked below; the rest are unwalked.
+Still by hand. **Walked end to end on 2026-09-07**, which is what found five bugs no assertion had:
+the JVM tab not coming forward, the Karate tab then not coming forward either, a v2 run resolving to
+v1's source, the attach racing JVM startup, and a latent enablement flake in the suite itself. Each
+is asserted now.
 
 - [x] Ticked: the Java tab stops in `Helper.compute` *and* the Karate tab stops on the step - both,
       in one run.
-- [ ] **Attach the JVM debugger too** appears in the run configuration's Test Options and survives a
+- [x] **Attach the JVM debugger too** appears in the run configuration's Test Options and survives a
       close and reopen of the dialog. *(The setting's round-trip is unit-tested; this is the widget.)*
-- [ ] The Java tab shows real frames and locals - `seed`, `doubled` - not just a suspended session.
-- [ ] While the Java tab is stopped, the Karate tab's variables, Evaluate and Resume do nothing, and
-      catch up when the Java tab resumes. **This is the expected behaviour**, documented on the
-      troubleshooting page; the point of the check is that it catches up rather than staying dead.
+      **Walked 2026-09-07.** Note for anyone repeating it: the option is per run configuration, and
+      the gutter creates one per feature and per scenario, so **Edit configuration templates > Karate**
+      is where to set it once for everything created afterwards.
+- [x] The Java tab shows real frames and locals - `seed`, and `doubled` after one Step Over - not
+      just a suspended session.
+- [x] While the Java tab is stopped, the Karate tab's variables, Evaluate and Resume do nothing, and
+      it comes back when the Java tab resumes. **This is the expected behaviour**, documented on the
+      troubleshooting page; the point of the check is that it recovers rather than staying dead.
       Automating it would mean asserting on a timeout, which is the flakiest thing this suite could
-      own - and `JdwpClashProbe` already pins the mechanism.
-- [ ] Stop the Karate tab: the test JVM dies and the Java tab ends with it; no java process left
-      behind (`jps`).
+      own - and `JdwpClashProbe` already pins the mechanism. *Not exercised by hand: issuing a Karate
+      Resume during the freeze and finding it acted on afterwards. The probe covers that half.*
+- [x] Resuming the Karate breakpoint carries the run on into the Java one, in the same run.
+- [x] Stop the Karate tab: the run ends and the Java tab ends with it. No `KarateTestRunner` left in
+      `jps` afterwards.
 
 ## 7. Environment matrix
 
