@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.rankweis.uppercut.karate.psi.GherkinFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,8 @@ public class KarateBreakpointType extends XLineBreakpointType<XBreakpointPropert
 
   public static final String ID = "karate-feature-line";
 
+  private static final XDebuggerEditorsProvider EDITORS_PROVIDER = new KarateDebugEditorsProvider();
+
   public KarateBreakpointType() {
     super(ID, "Karate feature line");
   }
@@ -42,5 +45,19 @@ public class KarateBreakpointType extends XLineBreakpointType<XBreakpointPropert
   @Override
   public String getDisplayText(XLineBreakpoint<XBreakpointProperties<?>> breakpoint) {
     return getDisplayTextDefaultWithPathAndLine(breakpoint);
+  }
+
+  /**
+   * What makes the platform offer a <b>Condition</b> field on the breakpoint - right-click on the
+   * gutter icon, or the Breakpoints dialog. Without a provider here the field is simply absent, and a
+   * debugger that honours conditions it gives you no way to type is no use at all.
+   *
+   * <p>Conditions are Karate expressions, evaluated in the paused scenario, so they are edited as
+   * feature-file content like every other expression field in this debugger.</p>
+   */
+  @Override
+  public @NotNull XDebuggerEditorsProvider getEditorsProvider(
+    @NotNull XLineBreakpoint<XBreakpointProperties<?>> breakpoint, @NotNull Project project) {
+    return EDITORS_PROVIDER;
   }
 }
