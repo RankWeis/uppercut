@@ -3,6 +3,8 @@ package com.rankweis.uppercut.karate.debugging.agent;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -131,8 +133,10 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
       : "Paused at " + paused.path() + ":" + paused.line();
     if (paused.isFailure()) {
       // Say why the run stopped somewhere the user did not ask it to.
-      getSession().reportMessage("Step failed: "
-        + (paused.error().isEmpty() ? paused.step() : paused.error()), MessageType.WARNING);
+      report("Step failed: " + (paused.error().isEmpty() ? paused.step() : paused.error()));
+    } else if (!paused.error().isEmpty()) {
+      // A breakpoint whose condition would not evaluate: it stopped anyway, and this says why.
+      report(paused.error());
     }
     getSession().positionReached(new KarateSuspendContext(paused, sourcePosition(paused), channel));
     showVariables();
@@ -243,11 +247,24 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
     return context instanceof KarateSuspendContext karate ? karate.thread() : null;
   }
 
+  /**
+   * Says something the user needs to know about why the run stopped.
+   *
+   * <p>Both places: a balloon, which is where the platform puts session messages, and the console,
+   * because a balloon is gone by the time you look up from the editor and a failure message is worth
+   * being able to scroll back to.</p>
+   */
+  private void report(String message) {
+    getSession().reportMessage(message, MessageType.WARNING);
+    if (console instanceof ConsoleView consoleView) {
+      consoleView.print("[Karate debugger] " + message + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+    }
+  }
+
   private @Nullable XSourcePosition sourcePosition(KarateDebugChannel.Paused paused) {
     VirtualFile file = ReadAction.compute(() -> FeaturePathResolver.findFeatureFile(project, paused.path()));
     if (file == null) {
-      getSession().reportMessage("Could not find " + paused.path() + " in this project, so the "
-        + "paused line cannot be shown.", MessageType.WARNING);
+      report("Could not find " + paused.path() + " in this project, so the paused line cannot be shown.");
       return null;
     }
     // Karate reports 1-based lines; XSourcePosition counts from 0.

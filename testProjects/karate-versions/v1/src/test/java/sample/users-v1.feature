@@ -6,7 +6,7 @@ Feature: karate v1 sample - mirrors the v2 fixture so both runner paths are comp
     * def num = 5
     * match num == '#number'
     * def result = call read('called.feature') { name: 'sample' }
-    * match result.greeting == 'hello sample'
+    * match result.greeting == 'hello sampe'
 
   Scenario: second scenario for tree ordering
     * def env = karate.env
