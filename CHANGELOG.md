@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Debugging Karate 2 feature files — early access.** Put a breakpoint on a step in a `.feature` file and press Debug: the run stops before that step, the line is highlighted, and the **Karate** tab shows the paused scenario's variables as Karate holds them. Evaluate and the watches panel run *Karate* expressions against the paused scenario, so `response.items[0]` means there what it means in the feature, and a bad expression comes back with Karate's own message. Resume continues to the next breakpoint or to the end.
+
+  A Karate 2 Debug run now has two tabs, because it is two debuggers: the **Karate** tab for feature-file breakpoints, and the JVM's own debugger for Java breakpoints in step-definition code. Scenarios run one at a time while debugging so a suspended run is followable. Karate 1 debugging is unchanged, in a single tab, exactly as before.
+
+  This replaces the previous "not planned" position: Karate 2 turned out to ship a public in-process debug API (`Runner.debugSupport`), which needs no per-step Java method and works with the virtual-thread runtime. Stepping through steps, breakpoint conditions and pausing on a failed step are not built yet — the step buttons continue to the next breakpoint and say so.
+
 ## [3.0.1] - 2026-09-06
 
 ### Added

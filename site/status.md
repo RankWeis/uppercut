@@ -56,16 +56,32 @@ These are the same for Karate 1 and Karate 2 - the language is the same.
 
 | Feature | Karate 1 | Karate 2 |
 |:--|:--|:--|
-| Breakpoints on a step in a `.feature` file | Supported | **Not planned** |
+| Breakpoints on a step in a `.feature` file | Supported | Early access |
+| Variables of the paused scenario | Through the Java debugger's frames | Early access. The scenario's own variables, as Karate holds them |
+| Evaluate a Karate expression while paused | Through the Java debugger (Java expressions) | Early access. Karate expressions, evaluated in the paused scenario |
 | Java breakpoints in step definitions | Supported | Supported (through the JVM's own debugger) |
 | Fixed debug port for the test JVM | Supported | Supported |
-| Step over, variables view for feature steps | Not planned | **Not planned** |
+| Breakpoint conditions, skip step, break on failed step | Not supported | Not yet |
+| Step over / into / out of feature steps | Not supported | Not yet. The step buttons continue to the next breakpoint |
 
-**Karate 2 has no feature-file breakpoint support in the plugin, and none is planned.** Karate 1's path relies on mapping a Gherkin step to a discrete Java method and setting a JDI breakpoint on it (via `KaratePositionManager` + `StepRuntime.findMethodsMatching`). Karate 2 runs steps through the karate-js interpreter on virtual threads; there are no per-step Java methods and no stable bytecode locations to bind JDI to, and `StepRuntime.findMethodsMatching` was removed. Karate Labs' own DAP server (`io.karatelabs.debug.Main`) needs a jar (`io/karatelabs/karate-ide`) that isn't on Maven Central, so it isn't a route for a free plugin either.
+**Karate 2 debugging, in short.** Put a breakpoint on a step in a `.feature` file and press Debug: the
+run stops before that step, the line is highlighted, and the **Karate** tab shows the scenario's
+variables. Evaluate (and the watches panel) run Karate expressions against the paused scenario, so
+`response.items[0]` means there what it would mean in the feature. Resume continues to the next
+breakpoint or to the end.
 
-**What still works when you hit Debug on a Karate 2 run:** the JVM launches with JDWP, IntelliJ attaches, and Java breakpoints in any Java step-definition code (`@When`, custom step methods, called Java) stop the debugger as normal. Only breakpoints placed on lines inside a `.feature` file are silently skipped. The console prints a one-line notice at the start of a v2 debug run to make this explicit.
+**A Karate 2 Debug run has two tabs**, because it is two debuggers at once. The **Karate** tab stops
+on feature-file lines. The other tab is the JVM's own debugger, which stops on Java breakpoints in
+step-definition code and any Java a feature calls; that is the same debugger Karate 1 uses. Stopping
+either ends the run. While debugging, scenarios run one at a time whatever the parallelism setting
+says, so a suspended run is followable.
 
-If Karate ever ships its `karate-ide` jar to a public Maven repo, or if a supported in-process pause API surfaces that also handles the virtual-thread model without per-step Java hooks, this may be revisited. As of Karate 2.1.1, neither exists.
+**Karate 1 is unchanged**: its feature-file breakpoints still go through the JVM's debugger, in a
+single tab, exactly as before.
+
+**Early access** here means the mechanism is proven and covered by tests end to end, but it has far
+less mileage than Karate 1's debugger. Stepping through steps, breakpoint conditions and pausing on a
+failed step are not built yet; the step buttons continue to the next breakpoint and say so.
 
 ## Known limitations
 

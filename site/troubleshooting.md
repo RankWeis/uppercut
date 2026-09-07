@@ -93,6 +93,22 @@ On Karate 2 the tree is built from Karate's live event stream. If the run prints
 
 ## A breakpoint on a step in a Karate 2 `.feature` file never pauses
 
-By design, and not planned to change - see the [debugging table](status#debugging) for why. Karate 1 maps a Gherkin step to a discrete Java method and sets a JDI breakpoint on it; Karate 2 runs steps through the karate-js interpreter on virtual threads, so there is no Java bytecode location to bind to, and Karate Labs' own DAP server isn't available on Maven Central. A v2 debug run prints a one-line notice about this at the top of the console.
+Check which tab you are looking at. A Karate 2 Debug run opens **two** tabs in the Debug tool window:
+the **Karate** tab stops on feature-file lines, and the other one is the JVM's own debugger for Java
+breakpoints in step-definition code. The Karate tab comes to the front by itself when a feature
+breakpoint is hit; only the tab you are looking at draws the highlighted line.
 
-Java breakpoints in step-definition code (`@When`, custom Java methods, anything the JVM debugger can reach) do still stop under Karate 2 Debug - the JVM launches with JDWP and IntelliJ attaches to it as normal. Only breakpoints placed on lines inside the `.feature` file itself are skipped.
+If the run finishes without stopping at all:
+
+- The breakpoint must be on a **step** line - a line starting with `*`, `Given`, `When`, `Then`,
+  `And` or `But`. A breakpoint on `Feature:`, a comment or a blank line is never reached.
+- The feature must actually be part of the run. A breakpoint in a feature the run does not execute
+  is not an error and does not hold the run up.
+- Feature-file breakpoints need the **Karate** run configuration. Running the same feature through
+  Gradle or Maven ("Tests in '...'") launches Karate without the plugin's debug channel.
+- On a module the plugin has detected as Karate 1, feature files take Java breakpoints instead, which
+  is how Karate 1 debugging has always worked. Settings > Tools > Karate shows and pins the version.
+
+Stepping through steps, breakpoint conditions and pausing on a failed step are not built yet - the
+step buttons continue to the next breakpoint and say so in the Karate tab. See the
+[debugging table](status#debugging) for what is and is not there.
