@@ -129,9 +129,10 @@ Automated - listed so a failure is read against what it was meant to prove, not 
 - [x] Stop the Java tab alone: it detaches and the Karate run finishes.
 - [x] The JVM debugger's tab is brought forward when it stops, rather than leaving the run suspended
       behind the Karate tab.
-- [x] A v2 run stops in the **v2** module's helper - asserted on the file, not only the line, since
-      both modules once declared `sample.Helper` at the same line and a line-only check could not
-      have failed.
+- [x] A v2 run stops in the **v2** module's helper. Both modules declare `sample.Helper` at the same
+      line on purpose: asserted on the file and not only the line, because a line-only check could
+      not have failed either way. What makes it resolve is the run's module on the remote
+      configuration - remove that and this is the test that goes red.
 
 Still by hand. **Walked 2026-09-07** for the two marked below; the rest are unwalked.
 

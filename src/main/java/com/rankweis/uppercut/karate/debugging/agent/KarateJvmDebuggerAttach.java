@@ -12,13 +12,18 @@ import com.intellij.execution.remote.RemoteConfigurationType;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +52,11 @@ public final class KarateJvmDebuggerAttach {
 
   private static final Logger LOG = Logger.getInstance(KarateJvmDebuggerAttach.class);
 
+  /** What the JDWP agent prints once its port is bound - with {@code suspend=n} as well as {@code y}. */
+  private static final String AGENT_LISTENING = "Listening for transport dt_socket at address:";
+  /** How long to wait for that line before connecting regardless. Inside the channel's 8s hold. */
+  private static final long AGENT_WAIT_MILLIS = 5_000L;
+
   private KarateJvmDebuggerAttach() {
   }
 
@@ -54,10 +64,11 @@ public final class KarateJvmDebuggerAttach {
    * Starts a Remote JVM Debug session against {@code port} and tells {@code channel} when it is
    * attached, so the run's first step waits for it.
    *
+   * @param module the run's module, which scopes the source lookup for a stopped location
    * @param process the test JVM, so the attach is abandoned if the run dies before it starts
    */
-  public static void attach(@NotNull Project project, int port, @Nullable KarateDebugChannel channel,
-    @Nullable ProcessHandler process) {
+  public static void attach(@NotNull Project project, int port, @Nullable Module module,
+    @Nullable KarateDebugChannel channel, @Nullable ProcessHandler process) {
     RunnerAndConfigurationSettings settings = RunManager.getInstance(project)
       .createConfiguration("Karate JVM debugger",
         RemoteConfigurationType.getInstance().getConfigurationFactories()[0]);
@@ -68,31 +79,65 @@ public final class KarateJvmDebuggerAttach {
     remote.HOST = "localhost";
     remote.PORT = String.valueOf(port);
     settings.setTemporary(true);
-
-    whenAttached(project, remote.PORT, channel);
-    if (channel != null) {
-      if (process != null) {
-        // A run that dies before the debugger attaches would otherwise hold the handshake for its
-        // full timeout, for a JVM that is already gone.
-        process.addProcessListener(new ProcessListener() {
-          @Override public void processTerminated(@NotNull ProcessEvent event) {
-            channel.jvmDebuggerAttached();
-          }
-        });
-      }
+    // The run's own module, so the debugger resolves a stopped location to a source file inside it.
+    // The test JVM's classpath is already module-scoped and loads the right class - but mapping the
+    // JDI location back to a file is a search over the debug session's scope, and a configuration
+    // with no module gets the whole project. Two modules declaring the same class then leave the IDE
+    // to pick, and a v2 run can stop showing v1's source.
+    if (module != null) {
+      remote.setModule(module);
     }
 
-    // executeConfiguration is an EDT call, and this runs on whichever thread started the process.
-    ApplicationManager.getApplication().invokeLater(() -> {
-      try {
-        ProgramRunnerUtil.executeConfiguration(settings, DefaultDebugExecutor.getDebugExecutorInstance());
-      } catch (RuntimeException e) {
-        LOG.warn("Could not start the JVM debugger on port " + port, e);
+    whenAttached(project, remote.PORT, channel);
+
+    AtomicBoolean launched = new AtomicBoolean();
+    Runnable connect = () -> {
+      if (!launched.compareAndSet(false, true)) {
+        return;
+      }
+      // executeConfiguration is an EDT call, and this runs on whichever thread saw the agent.
+      ApplicationManager.getApplication().invokeLater(() -> {
+        try {
+          ProgramRunnerUtil.executeConfiguration(settings, DefaultDebugExecutor.getDebugExecutorInstance());
+        } catch (RuntimeException e) {
+          LOG.warn("Could not start the JVM debugger on port " + port, e);
+          if (channel != null) {
+            channel.jvmDebuggerAttached();
+          }
+        }
+      });
+    };
+
+    if (process == null) {
+      connect.run();
+      return;
+    }
+    // Wait for the agent to say it is listening. A started process is not a bound JDWP port: the
+    // agent binds during JVM startup, and connecting before that is refused - "Unable to open
+    // debugger port ... Connection refused", intermittently, depending on how fast the JVM came up.
+    // The agent announces itself on stdout even with suspend=n, so the line is the signal.
+    process.addProcessListener(new ProcessListener() {
+      @SuppressWarnings("rawtypes")
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        if (event.getText().contains(AGENT_LISTENING)) {
+          connect.run();
+        }
+      }
+
+      @Override public void processTerminated(@NotNull ProcessEvent event) {
+        // A run that dies before the debugger attaches would otherwise hold the handshake for its
+        // full timeout, for a JVM that is already gone.
         if (channel != null) {
           channel.jvmDebuggerAttached();
         }
       }
     });
+    // Fail open, as everything on this path does: if the announcement never arrives - a JVM that
+    // does not print it, output routed somewhere unexpected - connect anyway rather than silently
+    // never opening the tab. Comfortably inside the handshake hold, so the run still waits for it.
+    AppExecutorUtil.getAppScheduledExecutorService()
+      .schedule(connect, AGENT_WAIT_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   /**

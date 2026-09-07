@@ -510,7 +510,21 @@ class Karate2UITest {
                 .waitForCodeAnalysisFinished()
                 .goto(line, 5)
         )
-        driver.invokeAction("ToggleLineBreakpoint")
+        // Same enablement race as the run actions above: the caret has moved but the file may still
+        // be under analysis, and ToggleLineBreakpoint is disabled until it is not.
+        waitFor(
+            timeout = 30.seconds,
+            interval = 200.milliseconds,
+            errorMessage = { "ToggleLineBreakpoint stayed disabled on $relativePath:$line" }
+        ) {
+            try {
+                driver.invokeAction("ToggleLineBreakpoint")
+                true
+            } catch (notReady: IllegalStateException) {
+                if (notReady.message?.contains("is disabled") != true) throw notReady
+                false
+            }
+        }
     }
 
     /** Every open Debug tab, by the name the user reads on it. */
@@ -604,7 +618,27 @@ class Karate2UITest {
                     gutter.icons.any { it.getIconPath().contains("run", ignoreCase = true) }
                 }
         }
-        driver.invokeAction(action)
+        // A marker being present is not the same as this editor's context being runnable: once a run
+        // console is open its gutter carries run markers of its own, so the wait above can be
+        // satisfied by the previous run's console while the new file is still being analyzed, and
+        // invoking then fails with "action is disabled (early check)". Seen twice, both times from
+        // the second test onward. Retry until the action is accepted rather than lean on something
+        // slow happening in between.
+        waitFor(
+            timeout = 30.seconds,
+            interval = 200.milliseconds,
+            errorMessage = { "$action stayed disabled; the editor context never became runnable" }
+        ) {
+            try {
+                driver.invokeAction(action)
+                true
+            } catch (notReady: IllegalStateException) {
+                // Only the enablement check is safe to retry: anything else means the action ran and
+                // failed, and running it twice would launch the configuration twice.
+                if (notReady.message?.contains("is disabled") != true) throw notReady
+                false
+            }
+        }
     }
 
     /**

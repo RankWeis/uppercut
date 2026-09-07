@@ -65,7 +65,7 @@ import java.util.regex.Pattern;
 public class JdwpClashProbe {
 
   private static final Pattern THREAD = Pattern.compile("\"thread\":\"([^\"]*)\"");
-  /** The step that calls into sample.HelperV1; Karate pauses before it, so Java has not run yet. */
+  /** The step that calls into sample.Helper; Karate pauses before it, so Java has not run yet. */
   private static final int JAVA_CALL_LINE = 6;
 
   private final LinkedBlockingQueue<String> fromAgent = new LinkedBlockingQueue<>();
@@ -175,8 +175,8 @@ public class JdwpClashProbe {
       hits.release();
       log("released the java breakpoint");
     } else {
-      log("FAIL - the java breakpoint in sample.HelperV1 never hit"
-        + (hits.armed ? "" : " (it was never armed - HelperV1 was not prepared)"));
+      log("FAIL - the java breakpoint in sample.Helper never hit"
+        + (hits.armed ? "" : " (it was never armed - Helper was not prepared)"));
     }
   }
 
@@ -259,7 +259,7 @@ public class JdwpClashProbe {
     throw last;
   }
 
-  /** What the JDI event thread records about the breakpoint in sample.HelperV1. */
+  /** What the JDI event thread records about the breakpoint in sample.Helper. */
   private static final class BreakpointHits {
     private final CountDownLatch latch = new CountDownLatch(1);
     private volatile boolean armed;
@@ -276,12 +276,12 @@ public class JdwpClashProbe {
   }
 
   /**
-   * Arms a breakpoint on {@code HelperV1.compute} with the default suspend-all policy - the point of
+   * Arms a breakpoint on {@code Helper.compute} with the default suspend-all policy - the point of
    * the probe is what the IDE's default does, not what a careful user could choose instead.
    */
   private void armHelperBreakpoint(VirtualMachine vm, BreakpointHits hits) {
     ClassPrepareRequest prepare = vm.eventRequestManager().createClassPrepareRequest();
-    prepare.addClassFilter("sample.HelperV1");
+    prepare.addClassFilter("sample.Helper");
     prepare.setSuspendPolicy(EventRequest.SUSPEND_ALL);
     prepare.enable();
 
@@ -298,7 +298,7 @@ public class JdwpClashProbe {
               breakpoint.setSuspendPolicy(EventRequest.SUSPEND_ALL);
               breakpoint.enable();
               hits.armed = true;
-              log("armed a java breakpoint on sample.HelperV1.compute, suspend policy ALL");
+              log("armed a java breakpoint on sample.Helper.compute, suspend policy ALL");
             } else if (event instanceof BreakpointEvent stopped) {
               ThreadReference thread = stopped.thread();
               hits.threadName = thread.name() + " #" + thread.uniqueID();

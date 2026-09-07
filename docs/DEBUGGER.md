@@ -384,11 +384,18 @@ follow from the spike:
   `XDebugSession.getRunContentDescriptor()` is deprecated and logs a throwable in split mode. Found
   by hand on 2026-09-07; `Karate2UITest` now asserts `getSelectedContent()` names that tab.
 
-**One trap the fixture set for itself.** A java breakpoint binds by class name and line - the JVM
-reports `sample.Helper:11` and nothing about which module the source is in - so while both fixture
-modules declared `sample.Helper` at the same line, a v2 run stopped showing *v1's* file. The v1 copy
-is `sample.HelperV1` now, and the UI test asserts the stopped position's path and not only its line,
-because a line-only assertion could not have failed either way. Keep the two names distinct.
+**The remote configuration needs the run's module.** A java breakpoint binds by class name and line
+- the JVM reports `sample.Helper:11` and nothing about which module the source came from - so mapping
+a stopped location back to a file is a PSI search over the debug session's scope, and a
+`RemoteConfiguration` created without a module gets the whole project. With both fixture modules
+declaring `sample.Helper`, a v2 run stopped showing *v1's* file. `remote.setModule(...)` fixes it:
+the test JVM's classpath was always module-scoped and loaded the right class, only the lookup was
+not.
+
+Both fixture modules still declare `sample.Helper` at the same line, on purpose - that pair is the
+regression guard, and `Karate2UITest` asserts the stopped position's **path** and not only its line,
+because a line-only assertion could not have failed either way. Renaming one of them would make the
+fixture pass by removing the case it exists to cover.
 
 Still open: what a Stop in one tab should do to the other. Today they are independent - stopping the
 Java tab detaches it and leaves the run going, which is the useful direction and is asserted by the
