@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -204,6 +205,7 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
   @Override
   public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar,
     @NotNull DefaultActionGroup topToolbar, @NotNull DefaultActionGroup settings) {
+    leftToolbar.add(new PauseOnFailedStepToggle());
     topToolbar.add(new AnAction("Skip Step", "Continue without running the step the run is stopped on",
       AllIcons.Actions.Play_forward) {
 
@@ -243,6 +245,40 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
 
   private @Nullable String threadOf(@Nullable XSuspendContext context) {
     return context instanceof KarateSuspendContext karate ? karate.thread() : null;
+  }
+
+  /**
+   * Turns stopping on failed steps on and off without leaving the debugger.
+   *
+   * <p>It lives on the toolbar rather than only in Settings because the moment you want it off is the
+   * moment it is stopping you every few seconds - halfway through a suite that fails in twenty
+   * places. Toggling it also writes the setting, so the next run starts the way you left it.</p>
+   */
+  private final class PauseOnFailedStepToggle extends ToggleAction {
+
+    private PauseOnFailedStepToggle() {
+      super("Pause on Failed Step", "Stop the run on a step that fails, with the scenario's variables "
+        + "as the failure left them", AllIcons.Debugger.Db_exception_breakpoint);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent event) {
+      return KarateSettingsState.getInstance().isPauseOnFailedStep();
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent event, boolean pause) {
+      KarateSettingsState.getInstance().setPauseOnFailedStep(pause);
+      if (channel != null) {
+        // Takes effect on the next step, not the next run.
+        channel.setPauseOnFailure(pause);
+      }
+    }
   }
 
   /**

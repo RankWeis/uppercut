@@ -19,7 +19,9 @@ that works on feature files themselves**.
 
 - **A failed step stops the run.** Rather than guessing where to put a breakpoint and running again,
   Debug stops on the step that failed, with the scenario still standing: the error is shown and the
-  variables are as the failure left them. On by default; turn it off under Settings > Tools > Karate.
+  variables are as the failure left them. On by default, with a **Pause on Failed Step** toggle on the
+  Debug toolbar for the moment a suite is failing in twenty places and stopping at each one is not
+  what you came for.
 
 - **Stepping.** The step buttons run to the next step. A step that calls another feature stops on the
   called feature's first step rather than after the call — telling step over from step into is not

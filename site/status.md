@@ -87,10 +87,27 @@ step-definition method found by matching the step's text, which stopped inside k
 locals in view and silently failed to bind for steps no method matched. They now stop on the step
 itself, with the scenario's variables.
 
+**A failed step stops the run**, so the scenario is still standing when you look at it: the step is
+marked in red, the error is shown, and the variables are as the failure left them - usually the
+question the debugger was opened for. Turn it off with the **Pause on Failed Step** toggle on the
+Debug toolbar, which takes effect on the next step rather than the next run, or under Settings >
+Tools > Karate.
+
+**Stepping runs to the next step.** All three step buttons do that. A step that calls another feature
+stops on the called feature's first step rather than after the call: telling step over from step into
+needs call-depth tracking that is not built yet.
+
+**Breakpoints can be conditional.** Put a Karate expression in the breakpoint's Condition field and
+the run stops there only when it holds - `id == 'x'`, or just `response.error` for "when there is
+one". Anything that is not `false`, `null` or an empty string counts as true. A condition that cannot
+be evaluated stops the run and shows why, rather than quietly never stopping.
+
+**Skip Step**, on the debugger toolbar, continues without running the step the run is stopped on -
+for when a step is failing for an uninteresting reason and the part you are debugging is further
+down. It uses Karate's own skip, so the run continues exactly as if that step had been left out.
+
 **Early access** means the mechanism is proven and covered by tests end to end, but has far less
-mileage than the years behind Karate 1's run support. Stepping through steps, breakpoint conditions
-and pausing on a failed step are not built yet; the step buttons continue to the next breakpoint and
-say so.
+mileage than the years behind Karate 1's run support.
 
 ## Known limitations
 

@@ -291,12 +291,11 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
             SMTestRunnerConnectionUtil.createConsole(consoleProperties);
           console.initUI();
           console.addMessageFilter(new UppercutConsoleFilter(getProject()));
-          // The one thing about a Debug run that is not visible from the UI: it ignores the
-          // parallelism setting. What the debugger can do belongs on the docs site, not in front of
-          // the user on every run.
-          if (DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId())) {
-            console.print("Karate debugger: scenarios run one at a time while debugging.\n",
-              ConsoleViewContentType.SYSTEM_OUTPUT);
+          // Debug ignores the parallelism setting - worth saying, but only to someone who asked for
+          // more than one: telling a serial run that it is serial is noise on every single launch.
+          if (DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId()) && parallelismAboveOne()) {
+            console.print("Karate debugger: scenarios run one at a time while debugging, "
+              + "not " + getParallelism() + " at a time.\n", ConsoleViewContentType.SYSTEM_OUTPUT);
           }
           consoles.add(console);
         }, ModalityState.any());
@@ -306,6 +305,18 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     };
   }
 
+
+  /** Whether this configuration asked for more than one scenario at a time; blank or junk means no. */
+  private boolean parallelismAboveOne() {
+    if (StringUtils.isBlank(getParallelism())) {
+      return false;
+    }
+    try {
+      return Integer.parseInt(getParallelism().trim()) > 1;
+    } catch (NumberFormatException e) {
+      return false;
+    }
+  }
 
   /**
    * Libraries to detect the Karate version from, scoped to the run's module when there is one.
