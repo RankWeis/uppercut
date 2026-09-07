@@ -15,8 +15,22 @@ java {
 
 // Standard Karate-Gradle setup: feature files and karate-config.js live next to the tests
 // under src/test/java and must be copied to the test classpath.
+// The plugin's runner classes, so the debug harness can drive the real agent and adapter. See the
+// v2 module's build for why this is a classes directory rather than a project dependency.
+val runnerClasses = file("../../../KarateTestRunner/build/classes/java/main")
+
+val runnerAvailable = runnerClasses.isDirectory
+
 sourceSets {
     test {
+        java {
+            // DebugHarness drives the plugin's own runner classes, which exist only in a checkout of
+            // the plugin repo. The IDE UI tests copy this project to a temp directory, where they do
+            // not - and a fixture that will not compile there fails the whole suite.
+            if (!runnerAvailable) {
+                exclude("**/DebugHarness.java")
+            }
+        }
         resources {
             srcDir(file("src/test/java"))
             exclude("**/*.java")
@@ -24,13 +38,11 @@ sourceSets {
     }
 }
 
-// The plugin's runner classes, so the debug harness can drive the real agent and adapter. See the
-// v2 module's build for why this is a classes directory rather than a project dependency.
-val runnerClasses = file("../../../KarateTestRunner/build/classes/java/main")
-
 dependencies {
-    testCompileOnly(files(runnerClasses))
-    testRuntimeOnly(files(runnerClasses))
+    if (runnerAvailable) {
+        testCompileOnly(files(runnerClasses))
+        testRuntimeOnly(files(runnerClasses))
+    }
     // karate-junit5 is the v1 artifact; it was renamed to karate-junit6 in 2.x, which is what
     // Uppercut's classpath detection keys on.
     testImplementation("io.karatelabs:karate-junit5:1.5.1")
