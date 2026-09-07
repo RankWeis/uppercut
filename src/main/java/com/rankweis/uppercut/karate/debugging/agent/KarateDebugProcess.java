@@ -1,21 +1,23 @@
 package com.rankweis.uppercut.karate.debugging.agent;
 
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -32,6 +34,8 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,15 +177,28 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
    * <p>Two sessions share the Debug tool window, and only the selected one draws its execution line.
    * Without this, hitting a feature-file breakpoint stops the run under a Java tab that has nothing to
    * show and no highlight anywhere - the user has to know to switch tabs to see where they are.</p>
+   *
+   * <p>Finds this session's tab by looking for the content its own UI sits inside, rather than through
+   * {@code XDebugSession.getRunContentDescriptor()}: that getter is deprecated and, in split mode,
+   * logs a "RunContentDescriptor should not be used in split mode" throwable. Matching on the
+   * component works the same locally and split, and does not depend on the tab's title.</p>
    */
   private void showThisTab() {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      RunContentDescriptor descriptor = getSession().getRunContentDescriptor();
-      if (descriptor != null) {
-        RunContentManager.getInstance(project)
-          .toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
+    getSession().runWhenUiReady(ui -> ApplicationManager.getApplication().invokeLater(() -> {
+      ToolWindow debugWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG);
+      if (debugWindow == null) {
+        return;
       }
-    }, ModalityState.any());
+      JComponent ours = ui.getComponent();
+      ContentManager contents = debugWindow.getContentManager();
+      for (Content content : contents.getContents()) {
+        JComponent candidate = content.getComponent();
+        if (candidate != null && (candidate == ours || SwingUtilities.isDescendingFrom(ours, candidate))) {
+          contents.setSelectedContent(content, true);
+          return;
+        }
+      }
+    }, ModalityState.any()));
   }
 
   private @Nullable String threadOf(@Nullable XSuspendContext context) {
