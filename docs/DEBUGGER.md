@@ -174,7 +174,10 @@ name, a 5 s hold, `RESUME`, suite passes.
 
 **What no test covers: the session itself.** Breakpoint registration, the suspend context, the
 highlighted line and the two-tab launch are exercised only by running the IDE. That is the same gap
-v1 debugging has always had, and it is why `docs/manual-test-checklist.md` has a debugger section.
+v1 debugging has always had, and it is why `docs/manual-test-checklist.md` has a debugger section -
+walked end to end on 2026-09-06, which is what found the three phase-2 bugs: two breakpoint types
+claiming one line, `XDebuggerEditorsProvider.createDocument` throwing `AbstractMethodError` before
+the first pause, and no execution-line highlight until the Karate tab was selected by hand.
 
 Two things that run counter to intuition and are worth keeping in mind:
 
