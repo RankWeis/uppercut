@@ -97,6 +97,9 @@ On Karate 2 the tree is built from Karate's live event stream. If the run prints
   or `But`. A breakpoint on `Feature:`, a comment or a blank line is never reached.
 - The feature must actually be part of the run. A breakpoint in a feature this run does not execute
   is not an error and does not hold the run up.
+- **A run started from a single scenario only runs that scenario.** A breakpoint in a different
+  scenario of the same file will not be reached - the gutter looks identical either way. Run the
+  feature (the icon beside `Feature:`) to reach all of them.
 - It must be a **Karate** run configuration. Running the same feature through Gradle or Maven
   ("Tests in '...'") launches Karate without the plugin's debugger.
 - Use **Debug**, not Run.
