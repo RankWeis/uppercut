@@ -37,18 +37,87 @@ public final class DebugValues {
       return new Value(name, value instanceof Boolean ? "boolean" : "number", value.toString(), false);
     }
     if (value instanceof Map<?, ?> map) {
-      return new Value(name, "map", map.size() + (map.size() == 1 ? " entry" : " entries"), !map.isEmpty());
+      return new Value(name, "map", preview(map), !map.isEmpty());
     }
     if (value instanceof Collection<?> collection) {
-      return new Value(name, "list", collection.size() + (collection.size() == 1 ? " item" : " items"),
-        !collection.isEmpty());
+      return new Value(name, "list", preview(collection), !collection.isEmpty());
     }
     if (value.getClass().isArray()) {
-      int length = Array.getLength(value);
-      return new Value(name, "list", length + (length == 1 ? " item" : " items"), length > 0);
+      return new Value(name, "list", preview(children(value).values()), Array.getLength(value) > 0);
     }
     // A Java object a feature put in a variable, or one of Karate's own function types.
     return new Value(name, value.getClass().getSimpleName(), truncate(String.valueOf(value)), false);
+  }
+
+  /**
+   * A one-line look inside a container: {@code {greeting: "hello spike", id: 3}} rather than
+   * "2 entries". The count is what the tree cell already implies once it can be opened; what the
+   * reader wants at a glance is which keys are in there and what they hold.
+   *
+   * <p>Built with a budget rather than built-then-truncated: a Karate variable is routinely a whole
+   * response body, and rendering megabytes to show 200 characters is the kind of thing that makes a
+   * debugger feel slow at exactly the wrong moment.</p>
+   */
+  private static String preview(Map<?, ?> map) {
+    if (map.isEmpty()) {
+      return "{}";
+    }
+    StringBuilder preview = new StringBuilder("{");
+    for (Map.Entry<?, ?> entry : map.entrySet()) {
+      if (preview.length() > 1) {
+        preview.append(", ");
+      }
+      if (preview.length() > PREVIEW_LIMIT) {
+        return preview.append("...}").toString();
+      }
+      preview.append(entry.getKey()).append(": ").append(shallow(entry.getValue()));
+    }
+    return truncateContainer(preview.append('}').toString(), '}');
+  }
+
+  private static String preview(Collection<?> items) {
+    if (items.isEmpty()) {
+      return "[]";
+    }
+    StringBuilder preview = new StringBuilder("[");
+    for (Object item : items) {
+      if (preview.length() > 1) {
+        preview.append(", ");
+      }
+      if (preview.length() > PREVIEW_LIMIT) {
+        return preview.append("...]").toString();
+      }
+      preview.append(shallow(item));
+    }
+    return truncateContainer(preview.append(']').toString(), ']');
+  }
+
+  /** One level only: a nested container is a shape, not its contents. */
+  private static String shallow(Object value) {
+    if (value == null) {
+      return "null";
+    }
+    if (value instanceof CharSequence text) {
+      return '"' + truncate(text.toString()) + '"';
+    }
+    if (value instanceof Number || value instanceof Boolean) {
+      return value.toString();
+    }
+    if (value instanceof Map<?, ?> map) {
+      return map.isEmpty() ? "{}" : "{...}";
+    }
+    if (value instanceof Collection<?> collection) {
+      return collection.isEmpty() ? "[]" : "[...]";
+    }
+    if (value.getClass().isArray()) {
+      return Array.getLength(value) == 0 ? "[]" : "[...]";
+    }
+    return value.getClass().getSimpleName();
+  }
+
+  private static String truncateContainer(String preview, char closer) {
+    return preview.length() <= PREVIEW_LIMIT ? preview
+      : preview.substring(0, PREVIEW_LIMIT) + "..." + closer;
   }
 
   /** The children of a container, keyed the way {@link #resolve} expects to find them again. */

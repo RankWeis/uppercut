@@ -23,22 +23,53 @@ class DebugValuesTest {
   }
 
   @Test
-  void describesContainersBySizeAndOpensThem() {
-    DebugValues.Value map = DebugValues.render("response", Map.of("a", 1));
+  void showsWhatIsInsideAContainerRatherThanACount() {
+    DebugValues.Value map = DebugValues.render("result", Map.of("greeting", "hello spike"));
     assertEquals("map", map.type());
-    assertEquals("1 entry", map.preview());
+    assertEquals("{greeting: \"hello spike\"}", map.preview());
     assertTrue(map.hasChildren());
 
     DebugValues.Value list = DebugValues.render("items", List.of(1, 2));
     assertEquals("list", list.type());
-    assertEquals("2 items", list.preview());
+    assertEquals("[1, 2]", list.preview());
     assertTrue(list.hasChildren());
+  }
+
+  @Test
+  void nestedContainersArePreviewedAsShapes() {
+    Map<String, Object> response = new LinkedHashMap<>();
+    response.put("items", List.of(1, 2));
+    response.put("meta", Map.of("page", 1));
+    response.put("next", null);
+    assertEquals("{items: [...], meta: {...}, next: null}", DebugValues.render("r", response).preview());
+  }
+
+  @Test
+  void anEmptyContainerPreviewsAsItsBrackets() {
+    assertEquals("{}", DebugValues.render("x", Map.of()).preview());
+    assertEquals("[]", DebugValues.render("x", List.of()).preview());
+  }
+
+  @Test
+  void aHugeContainerIsNotRenderedInFullToShowAPreview() {
+    Map<String, Object> body = new LinkedHashMap<>();
+    for (int i = 0; i < 10_000; i++) {
+      body.put("key" + i, "value" + i);
+    }
+    String preview = DebugValues.render("response", body).preview();
+    assertTrue(preview.length() < DebugValues.PREVIEW_LIMIT + 20);
+    assertTrue(preview.endsWith("...}"));
   }
 
   @Test
   void anEmptyContainerCannotBeOpened() {
     assertFalse(DebugValues.render("x", Map.of()).hasChildren());
     assertFalse(DebugValues.render("x", List.of()).hasChildren());
+  }
+
+  @Test
+  void arraysPreviewLikeLists() {
+    assertEquals("[7, 8]", DebugValues.render("x", new int[]{7, 8}).preview());
   }
 
   @Test
