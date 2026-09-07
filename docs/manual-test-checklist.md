@@ -127,8 +127,10 @@ Automated - listed so a failure is read against what it was meant to prove, not 
 - [x] A breakpoint on the first Java the run touches binds - `Helper` is loaded a step before the
       Karate breakpoint, so this only passes because the handshake held the run for the attach.
 - [x] Stop the Java tab alone: it detaches and the Karate run finishes.
-- [x] The JVM debugger's tab is brought forward when it stops, rather than leaving the run suspended
-      behind the Karate tab.
+- [x] **Each tab comes forward when its own session stops** - the JVM debugger's, and the Karate tab
+      when a feature-line breakpoint hits. Both directions, because asserting only one let the fix
+      for that one re-break the other. A tab that does not come forward also means the editor never
+      moves to the stopped line, which is how it was noticed. Confirmed by hand as well, 2026-09-07.
 - [x] A v2 run stops in the **v2** module's helper. Both modules declare `sample.Helper` at the same
       line on purpose: asserted on the file and not only the line, because a line-only check could
       not have failed either way. What makes it resolve is the run's module on the remote
