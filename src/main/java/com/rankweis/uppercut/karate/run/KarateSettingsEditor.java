@@ -8,6 +8,7 @@ import com.intellij.execution.ui.SettingsEditorFragment;
 import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorLabeledComponent;
 import com.intellij.openapi.project.Project;
 import java.util.List;
+import javax.swing.JCheckBox;
 import javax.swing.JTextField;
 
 public class KarateSettingsEditor extends JavaSettingsEditorBase<KarateRunConfiguration> {
@@ -24,6 +25,7 @@ public class KarateSettingsEditor extends JavaSettingsEditorBase<KarateRunConfig
     fragments.add(getParallelism());
     fragments.add(getEnv());
     fragments.add(getDebugPort());
+    fragments.add(getAttachJvmDebugger());
   }
 
   private SettingsEditorFragment<KarateRunConfiguration,
@@ -70,9 +72,24 @@ public class KarateSettingsEditor extends JavaSettingsEditorBase<KarateRunConfig
   private SettingsEditorFragment<KarateRunConfiguration, SettingsEditorLabeledComponent<JTextField>> getDebugPort() {
     JTextField textField = new JTextField();
     return new SettingsEditorFragment<>("karate.test.debugPort", "Debug port", "Tests",
-      new SettingsEditorLabeledComponent<>("Debug port (will suspend if set)", textField),
+      new SettingsEditorLabeledComponent<>("Debug port", textField),
       6, (settings, component) -> component.getComponent().setText(settings.getDebugPort()),
       (settings, component) -> settings.setDebugPort(component.getComponent().getText()),
+      x -> true
+    );
+  }
+
+  /**
+   * Off by default. A Java breakpoint suspends every thread in the test JVM, including the one
+   * serving the Karate tab, so the second debugger is worth having only when there is Java to stop
+   * in - see the troubleshooting page.
+   */
+  private SettingsEditorFragment<KarateRunConfiguration, JCheckBox> getAttachJvmDebugger() {
+    JCheckBox checkBox = new JCheckBox("Attach the JVM debugger too (separate tab)");
+    return new SettingsEditorFragment<>("karate.test.attachJvmDebugger", "JVM debugger", "Test Options",
+      checkBox,
+      8, (settings, component) -> component.setSelected(settings.isAttachJvmDebugger()),
+      (settings, component) -> settings.setAttachJvmDebugger(component.isSelected()),
       x -> true
     );
   }

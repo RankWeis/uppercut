@@ -61,6 +61,9 @@ Parallelism
 Debug: pause when a step fails
 : On by default. A Debug run stops on a step that fails, with the scenario still standing - the error is shown and the variables are as the failure left them, so you can see what `response` actually held. The Debug toolbar has a **Pause on Failed Step** toggle for the same thing, which takes effect on the next step rather than the next run - reach for that when a suite is failing in twenty places and stopping at each one is not what you came for. Toggling it there changes this setting too.
 
+Attach the JVM debugger too
+: Off by default. Opens a second Debug tab - an ordinary Remote JVM Debug session on the same test JVM - so Java breakpoints stop during the run. Worth it for Java a feature calls through `Java.type(...)`, or for stepping into karate-core; the Karate tab keeps its own breakpoints on the feature either way. Expect the Karate tab to stop answering while the Java tab is stopped, since a Java breakpoint suspends the whole JVM - see the [troubleshooting page](troubleshooting).
+
 Debug port
 : Only used when you start the configuration with **Debug** rather than Run. The IDE listens on this port for the test JVM's debug connection; leave it blank and a free port is picked for you. Set it when a firewall or a container only allows certain ports through. See the [status page](status#debugging) for what the debugger does.
 

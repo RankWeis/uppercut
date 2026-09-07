@@ -65,7 +65,7 @@ These are the same for Karate 1 and Karate 2 - the language is the same.
 | Step over vs into a called feature | Not yet - stepping enters the called feature | Not yet - stepping enters the called feature |
 | Breakpoint conditions | Early access | Early access |
 | Skip the step the run is stopped on | Early access | Early access |
-| Java breakpoints during a Karate run | Not supported - see below | Not supported - see below |
+| Java breakpoints during a Karate run | Opt-in, second tab | Opt-in, second tab |
 
 **One debugger, both majors.** Put a breakpoint on a step in a `.feature` file and press Debug: the
 run stops before that step, the line is highlighted, and the debugger shows the scenario's variables -
@@ -74,13 +74,22 @@ run stops before that step, the line is highlighted, and the debugger shows the 
 feature. Resume continues to the next breakpoint or to the end. Scenarios run one at a time while
 debugging, whatever the parallelism setting says, so a suspended run is followable.
 
-**Java breakpoints no longer stop during a Karate run.** Karate has no user-written step definitions -
-the DSL lives inside karate-core - so the JVM debugger was only ever reachable for Java a feature
-calls through `Java.type(...)`, and for stepping into Karate itself. Karate runs are now debugged by
-the plugin directly, without JDWP, which is what makes both majors stop on the step and show Karate's
-own variables. To debug Java called from a feature, run the `@Karate.Test` JUnit class through
-IntelliJ's ordinary Java or Gradle test configuration, where the JVM debugger works as usual; that
-run has no feature-file breakpoints.
+**Java breakpoints are off unless you ask for them.** Karate has no user-written step definitions -
+the DSL lives inside karate-core - so the JVM debugger is not how you stop on a step; the plugin does
+that itself on both majors, without JDWP, which is what lets it show Karate's own variables. The JVM
+debugger is still the only way to reach Java a feature calls through `Java.type(...)`, or to step
+into karate-core, so a run configuration can ask for it: tick **Attach the JVM debugger too** and
+Debug opens a second tab, an ordinary Remote JVM Debug session on the same test JVM. Java breakpoints
+in your `.java` files then stop the run as they always did, and the Karate tab keeps its own
+breakpoints on the feature.
+
+One thing to expect when both are on: **while the Java tab is stopped, the Karate tab does not
+answer.** A Java breakpoint suspends every thread in the JVM, including the one the Karate debugger
+talks over, so its variables, Evaluate and Resume do nothing until you resume the Java tab. Nothing
+is lost - whatever you clicked is acted on as soon as the JVM is running again - but it is why the
+second debugger is off by default. If you only want Java breakpoints, running the `@Karate.Test`
+JUnit class through IntelliJ's ordinary Java or Gradle test configuration is still the simpler
+answer; that run has no feature-file breakpoints.
 
 **Karate 1 changed here.** Its breakpoints used to be Java breakpoints bound to the bytecode of a
 step-definition method found by matching the step's text, which stopped inside karate-core with Java

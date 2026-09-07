@@ -106,11 +106,34 @@ then the whole list again on v1 after phase 4 moved it onto the same debugger.
       not be reached - that is not a fault.)*
 - [x] The step buttons continue to the next breakpoint and say so.
 - [x] Stop while paused ends the run with no java process left behind (`jps`).
-- [x] Karate 1 and Karate 2 both open a single Debug tab; no JVM debugger attaches.
+- [x] Karate 1 and Karate 2 both open a single Debug tab; no JVM debugger attaches. *(Unless the run
+      configuration asks for one - see 6c.)*
 
-Not covered, for want of a fixture: a breakpoint in Java a feature calls through `Java.type(...)`.
 A breakpoint in the `@Karate.Test` JUnit class proves nothing here - a Karate run configuration
 launches the plugin's runner, not that class.
+
+## 6c. The opt-in JVM debugger
+
+Off by default, so none of 6b changes when it is not ticked. `JdwpClashProbe` covers the mechanism
+headlessly on both majors (`:v1:jdwpClash`, `:v2:jdwpClash`) - what only the IDE can show is the two
+tabs. Use `sample/javacall.feature` and `sample/Helper.java`, which exist for this, on either module.
+**Not yet walked.**
+
+- [ ] **Attach the JVM debugger too** appears in the run configuration's Test Options and survives a
+      close and reopen of the dialog.
+- [ ] Unticked: Debug opens one tab, as in 6b, and a Java breakpoint in `Helper.compute` does not stop.
+- [ ] Ticked: Debug opens a second tab, "Karate JVM debugger", and the Java breakpoint in
+      `Helper.compute` stops the run there with Java frames and locals - `seed`, `doubled`.
+- [ ] The Karate tab still stops on a feature-line breakpoint in the same run, with Karate's variables.
+- [ ] While the Java tab is stopped, the Karate tab's variables, Evaluate and Resume do nothing, and
+      catch up when the Java tab resumes. **This is the expected behaviour**, documented on the
+      troubleshooting page; the point of the check is that it catches up rather than staying dead.
+- [ ] A breakpoint on the *first* Java the run touches still binds - the handshake hold is what makes
+      that work, so this is the check that the hold is doing its job.
+- [ ] Resume both, and the suite finishes normally with nothing failed.
+- [ ] Stop the Java tab alone: it detaches and the Karate run keeps going.
+- [ ] Stop the Karate tab: the test JVM dies and the Java tab ends with it; no java process left
+      behind (`jps`).
 
 ## 7. Environment matrix
 

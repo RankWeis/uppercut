@@ -4,6 +4,22 @@
 
 ## [Unreleased]
 
+### Added
+
+- **An opt-in JVM debugger, in its own tab.** Karate runs are debugged by the plugin itself, with no
+  JDWP, which is what lets both Karate majors stop on the step and show the scenario's own variables -
+  but it leaves no way to stop in Java a feature calls through `Java.type(...)`, or to step into
+  karate-core. Tick **Attach the JVM debugger too** in the run configuration and Debug opens a second
+  tab, an ordinary Remote JVM Debug session on the same test JVM, where Java breakpoints stop as
+  usual. The Karate tab keeps its own breakpoints on the feature. Off by default: a Java breakpoint
+  suspends every thread in the JVM, so while the Java tab is stopped the Karate tab answers nothing
+  until you resume it - nothing is lost, but it is a surprise nobody should get without asking.
+
+### Fixed
+
+- The run configuration's **Debug port** field said "will suspend if set". It has not suspended
+  anything since 3.1.0, where it became the port the Karate debugger listens on.
+
 ## [3.1.0] - 2026-09-07
 
 Since 3.0, Uppercut has gained two things worth knowing about: **Karate 2 support**, and **debugging

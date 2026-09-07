@@ -1,7 +1,7 @@
 # Debugging — one debugger for both Karate versions
 
-Status: **shipping in 3.1.0: one debugger, both majors, one tab.** An opt-in JVM
-debugger in a second tab is spiked but not built - see "Phase 6 spike" below. A breakpoint on a `.feature` step pauses the
+Status: **shipping in 3.1.0: one debugger, both majors, one tab.** A JVM
+debugger in a second tab is opt-in per run configuration - see "Phase 6" below. A breakpoint on a `.feature` step pauses the
 run, highlights the line, shows the scenario's variables and evaluates Karate expressions in it - on
 Karate 1 through `RuntimeHook.beforeStep`, on Karate 2 through `Runner.debugSupport`. The JDI path
 and JDWP are gone; so are Java breakpoints during a Karate run. Deliberately not built: breakpoint
@@ -286,7 +286,7 @@ Docs move with phases 2 and 4, not at the end: `site/status.md`'s debugging tabl
 `site/troubleshooting.md:96`, the settings text for the debug port, and the v2 console notice in
 `KarateRunConfiguration:263-270` that tells users feature breakpoints will not fire.
 
-## Phase 6 spike - an opt-in JVM debugger (2026-09-07)
+## Phase 6 - an opt-in JVM debugger (2026-09-07)
 
 Phase 4 deleted JDWP outright. The question this spike answers is whether it can come back as an
 **opt-in second tab** - not for feature lines, which the agent owns on both majors now, but for the
@@ -348,7 +348,7 @@ it is the ordinary behaviour of a Java breakpoint, the Karate tab recovers by it
 opted into a second debugger has some reason to expect a second debugger's semantics. Two things
 follow from the spike:
 
-- **Route it through a stock Remote JVM Debug session** (`RemoteConfigurationType` +
+- **Routed through a stock Remote JVM Debug session** (`RemoteConfigurationType` +
   `ProgramRunnerUtil.executeConfiguration`) rather than attaching one ourselves.
   `KarateDebugRunner.canRun` already claims the Debug executor ahead of `GenericDebuggerRunner`, so
   the alternative is `DebuggerManagerEx.attachVirtualMachine` and `RemoteConnectionBuilder` - the
@@ -357,9 +357,27 @@ follow from the spike:
 - **`--parallelism 1` is load-bearing** once JDWP is on, for the virtual-thread reason above, not
   only for the "a suspended run is easier to follow" reason it was chosen for.
 
-Not answered by this spike, and worth knowing before shipping: which port the opt-in uses (the
-existing **Debug port** field is the Karate channel's now), and what a Stop in one tab does to the
-other.
+### What was built
+
+`KarateJvmDebuggerAttach` runs a stock `RemoteConfigurationType` configuration against a JDWP port
+`KarateRunConfiguration.openJvmDebugPort` opens for the launch, gated on the run configuration's
+`attachJvmDebugger` flag. Three things are worth knowing about it:
+
+- **`server=y,suspend=n`.** `suspend=y` would guarantee that nothing runs before the attach, at the
+  price of a test JVM parked forever if the attach never happens - the one outcome this debugger goes
+  out of its way to avoid. The guarantee comes from the Karate handshake instead:
+  `KarateDebugChannel.holdForJvmDebugger` withholds `BREAKPOINTS_END`, which the agent waits for
+  before its first step, until the remote session starts. So the JVM itself never waits.
+- **The hold has its own backstop, and it is short.** Eight seconds, against the agent's fifteen.
+  Holding past the agent's own timeout would start the suite with no breakpoint set at all - a JVM
+  debugger that never arrives has to cost the user its own breakpoints, never Karate's. The process
+  handler releases it early if the run dies first.
+- **A port per launch, not a field.** The **Debug port** field is the Karate channel's, and pinning
+  both through one setting would be a worse answer than a free port for the one that needs no pinning.
+
+Still open: what a Stop in one tab should do to the other. Today they are independent - stopping the
+Java tab detaches it and leaves the run going, which is the useful direction; stopping the Karate tab
+kills the JVM under the Java tab, which is honest but abrupt.
 
 ## Decisions still open
 
@@ -367,7 +385,7 @@ other.
   twice and answered twice. Phase 4 settled the default - a Karate run attaches no JVM debugger, so
   there is one tab - and the phase 6 spike above settles the follow-up: a JVM debugger can come back
   as an opt-in second tab, off unless asked for, because its only real cost is a Karate tab that goes
-  unresponsive while the Java tab holds the VM, and that recovers by itself. Not yet built.
+  unresponsive while the Java tab holds the VM, and that recovers by itself. Built; see phase 6.
 - **Breakpoints mid-run.** The launch-time snapshot is much simpler. Adding and removing while
   paused needs the IDE→runner direction of the protocol, which Phase 1 should leave room for.
 - **Protocol.** Own JSON lines, not DAP - already built. Worth recording that 2026.2 does ship an

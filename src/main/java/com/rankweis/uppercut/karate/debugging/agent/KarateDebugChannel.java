@@ -101,6 +101,13 @@ public final class KarateDebugChannel implements AutoCloseable {
    */
   private volatile boolean breakpointsKnown;
   /**
+   * Whether the handshake is also waiting for the opt-in JVM debugger to attach. A Java breakpoint
+   * only binds once the debugger is attached, so releasing the run first would let the steps that
+   * load the user's classes go by unwatched. {@link #holdForJvmDebugger} takes its own backstop:
+   * something that never attaches must cost the user their Java breakpoints, never the run.
+   */
+  private volatile boolean waitingForJvmDebugger;
+  /**
    * Settings the session asked for before the agent existed. Anything sent while there is no socket
    * is dropped, and the session starts while the test JVM is still booting, so what the session wants
    * is held here and sent the moment it connects - the same reason the breakpoint set is.
@@ -157,6 +164,45 @@ public final class KarateDebugChannel implements AutoCloseable {
     breakpoints = List.copyOf(updated);
     breakpointsKnown = true;
     sendBreakpoints();
+  }
+
+  /**
+   * Holds the handshake until {@link #jvmDebuggerAttached()}, for a run that opted into the JVM
+   * debugger as well. The agent does not run a step until it has the breakpoint set, so this is what
+   * keeps the first step from running before the Java side is watching.
+   *
+   * @param timeoutMillis how long to hold before giving up and releasing the run anyway. Must be
+   *     comfortably under the agent's own handshake timeout: past that the agent starts without a
+   *     breakpoint set at all, so a JVM debugger that never arrives would cost the user their
+   *     <i>Karate</i> breakpoints too.
+   */
+  public void holdForJvmDebugger(long timeoutMillis) {
+    waitingForJvmDebugger = true;
+    // A plain thread rather than the application's scheduler, for the same reason the reader is one:
+    // this class stays runnable outside an IDE so it can be tested against a socket.
+    Thread backstop = new Thread(() -> {
+      try {
+        Thread.sleep(timeoutMillis);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return;
+      }
+      if (waitingForJvmDebugger) {
+        LOG.warn("The JVM debugger did not attach within " + timeoutMillis
+          + "ms; starting the run without it");
+        jvmDebuggerAttached();
+      }
+    }, "uppercut-jvm-debugger-wait");
+    backstop.setDaemon(true);
+    backstop.start();
+  }
+
+  /** The JVM debugger is attached (or never will be): let the agent have the breakpoint set. */
+  public void jvmDebuggerAttached() {
+    if (waitingForJvmDebugger) {
+      waitingForJvmDebugger = false;
+      sendBreakpoints();
+    }
   }
 
   /**
@@ -324,7 +370,7 @@ public final class KarateDebugChannel implements AutoCloseable {
   }
 
   private void sendBreakpoints() {
-    if (out == null || !breakpointsKnown) {
+    if (out == null || !breakpointsKnown || waitingForJvmDebugger) {
       return;
     }
     List<String> commands = new ArrayList<>();

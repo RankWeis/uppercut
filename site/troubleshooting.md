@@ -124,13 +124,25 @@ disabling them instead of deleting them also clears the refusal.
 
 ## A Java breakpoint doesn't stop during a Karate run
 
-By design, since the debugger stopped using JDWP. Karate runs are debugged by the plugin itself,
-which is what lets both Karate majors stop on the step and show the scenario's own variables; there
-is no JVM debugger attached to a Karate run any more.
+No JVM debugger is attached to a Karate run unless the run configuration asks for one. Karate runs
+are debugged by the plugin itself, which is what lets both Karate majors stop on the step and show
+the scenario's own variables.
 
-To debug Java that a feature calls through `Java.type(...)`, run the `@Karate.Test` JUnit class with
-IntelliJ's ordinary Java or Gradle test configuration and debug that - the JVM debugger behaves as
-usual there. That run has no feature-file breakpoints, so the two are used for different questions.
+Tick **Attach the JVM debugger too** in the run configuration and Debug opens a second tab - an
+ordinary Remote JVM Debug session on the same test JVM - where Java breakpoints stop as usual. Use it
+for Java a feature calls through `Java.type(...)`, or to step into karate-core.
+
+The alternative, if feature-file breakpoints are not what you are there for, is to run the
+`@Karate.Test` JUnit class with IntelliJ's ordinary Java or Gradle test configuration and debug that.
+
+## The Karate debugger stops responding while I am stopped in Java
+
+Expected, when a run has both debuggers on. A Java breakpoint suspends every thread in the test JVM,
+and one of those threads is how the Karate tab talks to the run - so its variables tree, Evaluate and
+Resume all do nothing while the Java tab is stopped. Resume the Java tab and the Karate tab catches
+up: whatever you clicked meanwhile is acted on then, not lost.
+
+If that trips you up more than the Java breakpoints help, untick **Attach the JVM debugger too**.
 
 Note that a breakpoint in the `@Karate.Test` class itself never pauses under a **Karate** run
 configuration, and never did: the plugin launches its own runner rather than your JUnit class. Debug
