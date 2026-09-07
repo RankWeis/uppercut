@@ -80,6 +80,26 @@ per-module detection. See `Karate2UITest`.
       and RC from since-build upward by default, so this is a spot-check of the install rather than
       of the API surface.
 
+## 6b. Karate 2 feature-file debugging
+
+Nothing automated covers the debug session itself (see `docs/DEBUGGER.md`); the agent and the channel
+have unit tests, the IDE half has only this list. Run these in `testProjects/karate-versions` on the
+`:v2` module.
+
+- [ ] Gutter breakpoint on a step line in `sample/users.feature` shows the ordinary red dot. On the
+      `:v1` module the gutter still offers the Java breakpoint it always has.
+- [ ] **Debug** on a v2 run opens two tabs: the usual run tab, and a "Karate" tab. The run tab's first
+      line says where each kind of breakpoint stops.
+- [ ] The run pauses before the breakpointed step, the editor highlights that line, and the frame in
+      the Karate tab names the step and the scenario.
+- [ ] Resume continues to the end (or to the next breakpoint). The test tree in the run tab finishes
+      normally.
+- [ ] The step buttons continue to the next breakpoint and say so in the Karate tab's console -
+      stepping proper is phase 5.
+- [ ] Stop while paused ends the run without leaving a java process behind (check with `jps`).
+- [ ] Java breakpoints in step-definition code still stop in the *other* tab, on both majors.
+- [ ] A breakpoint on a feature that is not in the project (or a stale one) does not stall the run.
+
 ## 7. Environment matrix
 
 - [ ] Linux run of the whole automated suite (first CI run covers this - watch it).

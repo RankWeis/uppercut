@@ -1,0 +1,193 @@
+package com.rankweis.uppercut.karate.debugging.agent;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import com.rankweis.uppercut.testrunner.debug.DebugProtocol;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import org.junit.After;
+import org.junit.Test;
+
+/**
+ * The IDE end of the debug channel, driven by a stand-in for the agent. No project or IDE fixture:
+ * the channel is deliberately UI-free so this can be a plain socket test.
+ */
+public class KarateDebugChannelTest {
+
+  private static final int TIMEOUT_SECONDS = 10;
+
+  private KarateDebugChannel channel;
+  private Socket agent;
+
+  @After
+  public void tearDown() throws IOException {
+    if (agent != null) {
+      agent.close();
+    }
+    if (channel != null) {
+      channel.close();
+    }
+  }
+
+  /** Records what the channel reports, so a test can wait for it. */
+  private static final class RecordingListener implements KarateDebugChannel.Listener {
+
+    private final CountDownLatch connected = new CountDownLatch(1);
+    private final BlockingQueue<KarateDebugChannel.Paused> paused = new ArrayBlockingQueue<>(8);
+    private final CountDownLatch disconnected = new CountDownLatch(1);
+
+    @Override public void agentConnected() {
+      connected.countDown();
+    }
+
+    @Override public void paused(KarateDebugChannel.Paused event) {
+      paused.add(event);
+    }
+
+    @Override public void agentDisconnected() {
+      disconnected.countDown();
+    }
+  }
+
+  /**
+   * Reads past the breakpoint set the channel sends the moment the agent connects. It sends one even
+   * when there are no breakpoints: BREAKPOINTS_END is also the handshake, and without it the agent
+   * waits out its full timeout before starting the suite.
+   */
+  private static String readPastBreakpointSet(BufferedReader from) throws IOException {
+    String line;
+    while ((line = from.readLine()) != null) {
+      if (!DebugProtocol.CLEAR.equals(line) && !DebugProtocol.BREAKPOINTS_END.equals(line)
+        && !line.startsWith(DebugProtocol.BREAKPOINT + " ")) {
+        return line;
+      }
+    }
+    return null;
+  }
+
+  private BufferedReader connectAgent() throws IOException {
+    agent = new Socket(InetAddress.getLoopbackAddress(), channel.port());
+    return new BufferedReader(new InputStreamReader(agent.getInputStream(), StandardCharsets.UTF_8));
+  }
+
+  @Test
+  public void sendsTheBreakpointSetAsSoonAsTheAgentConnects() throws Exception {
+    RecordingListener listener = new RecordingListener();
+    channel = new KarateDebugChannel();
+    channel.setListener(listener);
+    channel.start();
+    // Breakpoints exist long before the test JVM does; the channel has to hold them until it can send.
+    channel.setBreakpoints(List.of(
+      new KarateDebugChannel.Breakpoint("/repo/src/test/java/sample/users.feature", 9),
+      new KarateDebugChannel.Breakpoint("/repo/src/test/java/sample/users.feature", 12)));
+
+    BufferedReader fromChannel = connectAgent();
+    assertTrue(listener.connected.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+    assertEquals(DebugProtocol.CLEAR, fromChannel.readLine());
+    assertEquals(DebugProtocol.breakpointCommand("/repo/src/test/java/sample/users.feature", 9),
+      fromChannel.readLine());
+    assertEquals(DebugProtocol.breakpointCommand("/repo/src/test/java/sample/users.feature", 12),
+      fromChannel.readLine());
+    assertEquals(DebugProtocol.BREAKPOINTS_END, fromChannel.readLine());
+  }
+
+  @Test
+  public void reportsPauseThenSendsResume() throws Exception {
+    RecordingListener listener = new RecordingListener();
+    channel = new KarateDebugChannel();
+    channel.setListener(listener);
+    channel.start();
+    final BufferedReader fromChannel = connectAgent();
+    assertTrue(listener.connected.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+
+    PrintWriter toChannel = new PrintWriter(agent.getOutputStream(), true);
+    toChannel.println("EVENT PAUSED {\"thread\":\"main\",\"path\":\"build/resources/test/sample/users"
+      + ".feature\",\"line\":9,\"step\":\"* def id = 1\",\"scenario\":\"a scenario\"}");
+
+    KarateDebugChannel.Paused paused = listener.paused.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    assertEquals("main", paused.thread());
+    assertEquals("build/resources/test/sample/users.feature", paused.path());
+    assertEquals(9, paused.line());
+    assertEquals("* def id = 1", paused.step());
+    assertEquals("a scenario", paused.scenario());
+
+    channel.resume("main");
+    assertEquals(DebugProtocol.RESUME + " main", readPastBreakpointSet(fromChannel));
+  }
+
+  @Test
+  public void replaysWhatTheAgentSaidBeforeTheSessionExisted() throws Exception {
+    // The session cannot be created until the process is, so the agent can connect - and in principle
+    // pause - before anyone is listening. A dropped pause would be a test JVM parked with no UI.
+    channel = new KarateDebugChannel();
+    channel.start();
+    connectAgent();
+    PrintWriter toChannel = new PrintWriter(agent.getOutputStream(), true);
+    toChannel.println("EVENT PAUSED {\"thread\":\"main\",\"path\":\"a.feature\",\"line\":3,"
+      + "\"step\":\"* def id = 1\",\"scenario\":\"s\"}");
+    Thread.sleep(200);
+
+    RecordingListener listener = new RecordingListener();
+    channel.setListener(listener);
+    assertTrue(listener.connected.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+    KarateDebugChannel.Paused paused = listener.paused.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    assertEquals(3, paused.line());
+  }
+
+  @Test
+  public void completesTheHandshakeEvenWithNoBreakpoints() throws Exception {
+    // Without a BREAKPOINTS_END the agent waits out its whole handshake timeout before running.
+    RecordingListener listener = new RecordingListener();
+    channel = new KarateDebugChannel();
+    channel.setListener(listener);
+    channel.start();
+    BufferedReader fromChannel = connectAgent();
+    assertEquals(DebugProtocol.CLEAR, fromChannel.readLine());
+    assertEquals(DebugProtocol.BREAKPOINTS_END, fromChannel.readLine());
+  }
+
+  @Test
+  public void reportsTheAgentGoingAway() throws Exception {
+    RecordingListener listener = new RecordingListener();
+    channel = new KarateDebugChannel();
+    channel.setListener(listener);
+    channel.start();
+    connectAgent();
+    assertTrue(listener.connected.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+
+    agent.close();
+    assertTrue(listener.disconnected.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+  }
+
+  @Test
+  public void ignoresNoiseOnTheWire() throws Exception {
+    RecordingListener listener = new RecordingListener();
+    channel = new KarateDebugChannel();
+    channel.setListener(listener);
+    channel.start();
+    connectAgent();
+    assertTrue(listener.connected.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+
+    PrintWriter toChannel = new PrintWriter(agent.getOutputStream(), true);
+    toChannel.println("");
+    toChannel.println("not an event at all");
+    toChannel.println("EVENT PAUSED not-json");
+    toChannel.println("EVENT HELLO {\"protocol\":1}");
+    toChannel.println("EVENT PAUSED {\"thread\":\"main\",\"path\":\"a.feature\",\"line\":4,"
+      + "\"step\":\"* def id = 1\",\"scenario\":\"s\"}");
+
+    KarateDebugChannel.Paused paused = listener.paused.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    assertEquals("the only well-formed pause must still arrive", 4, paused.line());
+  }
+}

@@ -178,6 +178,11 @@
       implementation="com.rankweis.uppercut.karate.debugging.KarateDebugAware"/>
     <debugger.positionManagerFactory id="karatePositionManager"
       implementation="com.rankweis.uppercut.karate.debugging.KaratePositionManagerFactory" />
+    <!-- Feature-file breakpoints for the Karate 2 debugger. Offered only on a Karate 2 classpath;
+         Karate 1 feature files keep taking Java line breakpoints through debugger.javaDebugAware
+         above, until phase 4 of docs/DEBUGGER.md moves v1 onto the same agent. -->
+    <xdebugger.breakpointType
+      implementation="com.rankweis.uppercut.karate.debugging.agent.KarateBreakpointType"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.rankweis.uppercut">

@@ -1,8 +1,8 @@
 # Debugging — one debugger for both Karate versions
 
-Status: **phase 1 built, phases 2-5 designed.** The debug agent, its wire protocol and the Karate 2
-adapter live in the `KarateTestRunner` subproject with unit tests and an end-to-end harness; nothing
-in the IDE talks to them yet. Phase 0's API findings are below. Supersedes the "Karate 2 feature-file debugging is not planned"
+Status: **phases 1-2 built, phases 3-5 designed.** A Karate 2 Debug run now opens a second Debug tab
+where a breakpoint on a `.feature` line pauses the run, highlights the line and resumes on command.
+Variables, evaluation and real stepping are next. Phase 0's API findings are below. Supersedes the "Karate 2 feature-file debugging is not planned"
 decision in [`KARATE2-HANDOFF.md`](KARATE2-HANDOFF.md), which said to revisit "if a v2 API
 surfaces that gives us the v1 UX under the virtual-thread runtime". It has: v2's
 `Runner.Builder.debugSupport(...)` is public and on Maven Central. This doc also absorbs and
@@ -137,6 +137,27 @@ In `KarateTestRunner/src/main/java/com/rankweis/uppercut/testrunner/debug/`:
 `KarateV2TestRunner` opens the channel when the IDE passes `--debug-port` and closes it in a `finally`
 around the terminal `parallel(...)` call, so no thread can be left parked by a suite that ended early.
 
+In `src/main/java/com/rankweis/uppercut/karate/debugging/agent/` (phase 2):
+
+| | |
+|---|---|
+| `KarateDebugChannel` | the IDE end: listens on a loopback port, speaks the same `DebugProtocol`, and is free of debugger UI so it can be tested against a plain socket |
+| `KarateBreakpointType` | `.feature` line breakpoints, offered only on a Karate 2 classpath |
+| `KarateDebugProcess` | the session: breakpoint handler, suspend context, one stack frame at the paused line, resume |
+| `KarateDebugEditorsProvider` | what expression fields are edited as; nothing evaluates them until phase 3 |
+
+`KarateRunConfiguration` opens the channel in `createJavaParameters` (so the port can be passed to the
+JVM) and starts the session in `startProcess` once there is a process to attach it to. Under Debug on
+Karate 2 it also forces `--parallelism 1`.
+
+**The session cannot exist before the process**, so the agent can connect - and in principle pause -
+before anything is listening. The channel buffers those events and replays them when the session
+attaches; a dropped pause would be a parked test JVM with no UI to resume it.
+
+**The empty breakpoint set matters.** The channel sends `CLEAR`/`BREAKPOINTS_END` the moment the agent
+connects even when there are no breakpoints, because `BREAKPOINTS_END` is also the handshake: without
+it every debug run would stall for the agent's full 15-second timeout before starting.
+
 **The IDE listens and the agent connects**, the same way round as JDWP: the IDE picks a free port
 before launching and nothing has to be scraped out of stdout.
 
@@ -145,10 +166,15 @@ a malformed line or an interrupt all end with the run proceeding. Losing breakpo
 session; a test JVM parked forever with nobody to release it is a bad test run, and it is the only
 outcome worth going out of the way to prevent. `DebugAgentTest` pins each of those paths.
 
-Covered by `./gradlew :KarateTestRunner:test` (19 tests; root `check` now depends on it) and, for the
-half only a real run can prove, `./gradlew -p testProjects/karate-versions :v2:debugHarness` — a fake
-IDE driving the real agent and adapter against a real suite: breakpoint on the source path, `PAUSED`
-with the step text and scenario name, a 5 s hold, `RESUME`, suite passes.
+Covered by `./gradlew :KarateTestRunner:test` (19 tests; root `check` now depends on it),
+`KarateDebugChannelTest` on the IDE side, and, for the half only a real run can prove,
+`./gradlew -p testProjects/karate-versions :v2:debugHarness` — a fake IDE driving the real agent and
+adapter against a real suite: breakpoint on the source path, `PAUSED` with the step text and scenario
+name, a 5 s hold, `RESUME`, suite passes.
+
+**What no test covers: the session itself.** Breakpoint registration, the suspend context, the
+highlighted line and the two-tab launch are exercised only by running the IDE. That is the same gap
+v1 debugging has always had, and it is why `docs/manual-test-checklist.md` has a debugger section.
 
 Two things that run counter to intuition and are worth keeping in mind:
 
@@ -207,9 +233,10 @@ reproduction and as the harness phase 1 grows into.
 
 **Phase 1 — the agent, no IDE. Done**, see "What exists" above.
 
-**Phase 2 — walking skeleton in the IDE.** `XLineBreakpointType` for `.feature` + minimal
-`XDebugProcess`: breakpoint set sent at launch, paused line highlighted, Resume and Stop. Forced
-`parallel(1)`. This is the first shippable thing.
+**Phase 2 — walking skeleton in the IDE. Done**, see "What exists" above. Not yet reflected on the
+site: `site/status.md` and `site/troubleshooting.md` still say feature-file breakpoints do not pause
+on v2, and should stay that way until phase 3 makes the session worth documenting - a debugger that
+stops but cannot show a variable is not yet the thing those pages would be promising.
 
 **Phase 3 — the easy wins.** Variables, evaluate, skip step, break on failure, conditions — in that
 order, each behind its own changelog entry.
@@ -231,7 +258,9 @@ Docs move with phases 2 and 4, not at the end: `site/status.md`'s debugging tabl
   IDE-side session plumbing only — no agent, protocol or adapter work is thrown away.
 - **Breakpoints mid-run.** The launch-time snapshot is much simpler. Adding and removing while
   paused needs the IDE→runner direction of the protocol, which Phase 1 should leave room for.
-- **Protocol.** Own JSON lines, not DAP. DAP costs several times the wire work and buys other IDEs,
-  which is not our problem; there is also no public IntelliJ DAP client to rely on.
+- **Protocol.** Own JSON lines, not DAP - already built. Worth recording that 2026.2 does ship an
+  `intellij.platform.dap.jar`, so the "no DAP client in the platform" half of the original argument is
+  wrong; whether any of it is public API for plugins is unverified. The rest of the argument stands:
+  DAP is several times the wire work and buys other IDEs, which is not our problem.
 - **JS-level stepping.** `JS_STATEMENT`/`JS_EXPRESSION` make it possible. Out of scope until steps
   work end to end.
