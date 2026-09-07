@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-09-07
+
 Since 3.0, Uppercut has gained two things worth knowing about: **Karate 2 support**, and **debugging
 that works on feature files themselves**.
 
@@ -16,22 +18,18 @@ that works on feature files themselves**.
   `response.items[0]` means there exactly what it means in the feature. Breakpoints can be added and
   moved while the run is suspended. Scenarios run one at a time while debugging, so a suspended run
   is followable.
-
 - **A failed step stops the run.** Rather than guessing where to put a breakpoint and running again,
   Debug stops on the step that failed, with the scenario still standing: the error is shown and the
   variables are as the failure left them. On by default, with a **Pause on Failed Step** toggle on the
   Debug toolbar for the moment a suite is failing in twenty places and stopping at each one is not
   what you came for.
-
 - **Stepping.** The step buttons run to the next step. A step that calls another feature stops on the
   called feature's first step rather than after the call — telling step over from step into is not
   built yet.
-
 - **Conditional breakpoints and Skip Step.** Put a Karate expression in a breakpoint's Condition field
   and the run stops there only when it holds; a condition that cannot be evaluated stops the run and
   says why rather than quietly never stopping. **Skip Step** on the debugger toolbar continues without
   running the step the run is stopped on, using Karate's own skip.
-
 - **Karate 2 (`karate-junit6`) runs from the IDE**, first shipped in 3.0 and now with debugging to
   match. The Karate version is detected per module from the classpath, so a repository can migrate
   one module at a time; Settings > Tools > Karate pins it if you would rather choose. Karate 1
@@ -511,7 +509,8 @@ that works on feature files themselves**.
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.0.1...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/rankweis/uppercut/compare/v3.0.1...v3.1.0
 [3.0.1]: https://github.com/rankweis/uppercut/compare/v2.5.2...v3.0.1
 [2.5.2]: https://github.com/rankweis/uppercut/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/rankweis/uppercut/compare/v2.5.0...v2.5.1
