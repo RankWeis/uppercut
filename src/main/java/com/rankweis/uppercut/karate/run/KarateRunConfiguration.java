@@ -20,6 +20,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -34,10 +35,13 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intuit.karate.junit5.Karate;
 import com.rankweis.uppercut.help.UppercutWebHelpProvider;
 import com.rankweis.uppercut.karate.debugging.agent.KarateDebugChannel;
 import com.rankweis.uppercut.karate.debugging.agent.KarateDebugProcess;
+import com.rankweis.uppercut.karate.psi.GherkinFileType;
 import com.rankweis.uppercut.settings.KarateSettingsState;
 import com.rankweis.uppercut.testrunner.KarateTestRunner;
 import java.io.File;
@@ -49,6 +53,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -255,6 +260,10 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         }
 
         if (debugging) {
+          String staleBreakpoints = staleJavaBreakpointsProblem(staleJavaBreakpointFiles(getProject()));
+          if (staleBreakpoints != null) {
+            throw new ExecutionException(staleBreakpoints);
+          }
           try {
             // The debug-port field pins the channel's port for containers and firewalls that only
             // let certain ports through; blank takes a free one.
@@ -349,6 +358,45 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     return "Module '" + moduleName + "' has no Karate on its classpath, so the run would fail with \"Must "
       + "have karate-core on the classpath\". Add karate-junit5 (Karate 1) or karate-junit6 (Karate 2) to "
       + "the module, or run the feature from a module that has it. " + TROUBLESHOOTING;
+  }
+
+  /**
+   * Why a Debug run cannot do what the user is about to expect of it, or null.
+   *
+   * <p>Breakpoints set in feature files by 3.0.1 and earlier were saved as <b>Java</b> line
+   * breakpoints, because that is how feature-file debugging used to work. Nothing removes them on
+   * upgrade: they sit in the gutter looking live and never pause, and a Karate breakpoint on the same
+   * line appears beside them. Starting the run anyway means watching it go by with the breakpoints
+   * apparently ignored - so say what is wrong before launching a JVM, the way the other refusals do.
+   *
+   * @param staleFeatureFiles the {@code .feature} files that still hold a Java line breakpoint
+   */
+  static @Nullable String staleJavaBreakpointsProblem(List<String> staleFeatureFiles) {
+    if (staleFeatureFiles.isEmpty()) {
+      return null;
+    }
+    String files = staleFeatureFiles.stream().distinct().sorted().collect(Collectors.joining(", "));
+    return "This project still has Java line breakpoints in feature files, left by an earlier version "
+      + "of Uppercut: " + files + ". They cannot pause a Karate run any more. Delete them under \"Java "
+      + "Line Breakpoints\" in the Breakpoints dialog (Ctrl/Cmd+Shift+F8) and set them again - new "
+      + "breakpoints in feature files are Karate breakpoints and work on both Karate versions. "
+      + TROUBLESHOOTING;
+  }
+
+  /** The breakpoint type the platform saved feature-file breakpoints under before 3.0.2. */
+  private static final String JAVA_LINE_BREAKPOINT_TYPE = "java-line";
+
+  /** Feature files that still carry a Java line breakpoint, newest platform state each time. */
+  private static List<String> staleJavaBreakpointFiles(Project project) {
+    return ReadAction.compute(() -> Arrays.stream(
+        XDebuggerManager.getInstance(project).getBreakpointManager().getAllBreakpoints())
+      .filter(breakpoint -> JAVA_LINE_BREAKPOINT_TYPE.equals(breakpoint.getType().getId()))
+      // A disabled leftover confuses nobody, and refusing a run over one would be its own annoyance.
+      .filter(XBreakpoint::isEnabled)
+      .filter(XLineBreakpoint.class::isInstance)
+      .map(breakpoint -> ((XLineBreakpoint<?>) breakpoint).getPresentableFilePath())
+      .filter(path -> path.endsWith("." + GherkinFileType.INSTANCE.getDefaultExtension()))
+      .toList());
   }
 
   /** Every message the plugin refuses a run with is explained on this page. */

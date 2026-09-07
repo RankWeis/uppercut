@@ -15,6 +15,25 @@ import org.junit.Test;
 public class KarateVersionDetectionTest {
 
   @Test
+  public void staleJavaBreakpointsInFeatureFilesRefuseTheRun() {
+    // Breakpoints saved by 3.0.1 and earlier are java-line; they never pause now, so say so before
+    // launching a JVM rather than letting the run go by with them apparently ignored.
+    assertNull(KarateRunConfiguration.staleJavaBreakpointsProblem(List.of()));
+
+    String one = KarateRunConfiguration.staleJavaBreakpointsProblem(List.of("sample/users.feature"));
+    assertTrue(one.contains("sample/users.feature"));
+    assertTrue(one.contains("Breakpoints dialog"));
+    assertTrue(one.endsWith(KarateRunConfiguration.TROUBLESHOOTING));
+  }
+
+  @Test
+  public void staleBreakpointMessageListsEachFileOnce() {
+    String many = KarateRunConfiguration.staleJavaBreakpointsProblem(
+      List.of("b.feature", "a.feature", "b.feature"));
+    assertTrue(many.contains("a.feature, b.feature"));
+  }
+
+  @Test
   public void autoDetectsV2FromJunit6Jar() {
     assertTrue(KarateRunConfiguration.isKarateV2(KarateVersionPreference.AUTO,
       Stream.of("junit-jupiter-5.11.4.jar", "karate-junit6-2.1.1.jar")));

@@ -105,16 +105,19 @@ Stepping through steps, breakpoint conditions and pausing on a failed step are n
 step buttons continue to the next breakpoint and say so. See the
 [debugging table](status#debugging) for what is and is not there.
 
-## After upgrading, a breakpoint in a feature file shows two markers, or never pauses
+## "This project still has Java line breakpoints in feature files"
 
 Breakpoints set by earlier versions of the plugin were saved as **Java** line breakpoints, because
 that is how feature-file debugging used to work. Upgrading does not remove them: they stay in the
-gutter, they never pause, and a new Karate breakpoint on the same line appears beside them - so the
-line shows two markers and the first click removes the dead one rather than adding a live one.
+gutter, they can no longer pause anything, and a new Karate breakpoint on the same line appears
+beside them - so the line shows two markers and the first click removes the dead one rather than
+adding a live one.
 
-Open the Breakpoints dialog (Ctrl/Cmd+Shift+F8), delete the entries under **Java Line Breakpoints**
-that point at `.feature` files, and set them again. New ones are created as **Karate feature line**
-breakpoints and work on both Karate majors. This is a one-time cleanup.
+Rather than let a Debug run go by with your breakpoints apparently ignored, the plugin refuses to
+start and names the files. Open the Breakpoints dialog (Ctrl/Cmd+Shift+F8), delete the entries under
+**Java Line Breakpoints** that point at `.feature` files, and set them again. New ones are created as
+**Karate feature line** breakpoints and work on both Karate majors. This is a one-time cleanup;
+disabling them instead of deleting them also clears the refusal.
 
 ## A Java breakpoint doesn't stop during a Karate run
 

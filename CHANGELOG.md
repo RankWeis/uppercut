@@ -16,7 +16,7 @@
 
 - **Karate 1 breakpoints now stop on the step itself.** They used to be Java breakpoints bound to the bytecode of a step-definition method found by matching the step's text, which stopped inside karate-core with Java locals in view, and silently failed to bind for steps no method matched. The variables panel now shows the scenario's own variables instead.
 
-  **Breakpoints you already had in feature files need re-adding once.** They were saved as *Java* line breakpoints, and nothing removes them on upgrade: they still appear in the gutter but never pause, and a new Karate breakpoint on the same line shows up beside them. Remove the old ones under **Java Line Breakpoints** in the Breakpoints dialog (Ctrl/Cmd+Shift+F8) and set them again.
+  **Breakpoints you already had in feature files need re-adding once.** They were saved as *Java* line breakpoints, and nothing removes them on upgrade: they still appear in the gutter but never pause, and a new Karate breakpoint on the same line shows up beside them. Rather than let a Debug run go by with your breakpoints apparently ignored, the plugin now refuses to start and names the files; remove the old ones under **Java Line Breakpoints** in the Breakpoints dialog (Ctrl/Cmd+Shift+F8) and set them again.
 - **The run configuration's debug port is the debugger's port**, not a JDWP port, and the test JVM no longer starts suspended waiting for an attach. Leave it blank and a free port is used, as before; set it when a firewall or container only allows certain ports.
 
 ### Removed
