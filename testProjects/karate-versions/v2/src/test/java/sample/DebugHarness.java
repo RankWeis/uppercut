@@ -66,6 +66,8 @@ public class DebugHarness {
   }
 
   /** The IDE end: set one breakpoint, wait for PAUSED, hold, then resume that thread. */
+  private static boolean movedBreakpoint;
+
   private static void fakeIde(ServerSocket server, Path feature, int line, long holdMillis,
     CountDownLatch pausedSeen) {
     try (Socket socket = server.accept();
@@ -99,6 +101,17 @@ public class DebugHarness {
 
         log("holding " + thread + " for " + (holdMillis / 1000) + "s");
         Thread.sleep(holdMillis);
+
+        // Add a breakpoint while the run is suspended: the IDE does this whenever the user clicks the
+        // gutter mid-session, and the agent must pick it up for steps it has not reached yet.
+        if (!movedBreakpoint) {
+          movedBreakpoint = true;
+          log("→ moving the breakpoint to line " + (line + 1) + " mid-run");
+          out.println("CLEAR");
+          out.println("BREAKPOINT " + base64(feature.toString()) + " " + (line + 1));
+          out.println("BREAKPOINTS_END");
+        }
+
         log("→ RESUME " + thread);
         out.println("RESUME " + thread);
       }
