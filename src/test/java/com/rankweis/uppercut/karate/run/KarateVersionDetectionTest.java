@@ -87,12 +87,12 @@ public class KarateVersionDetectionTest {
   public void moduleScanOnlyDecidesWhenTheModuleHasKarate() {
     // Karate jars on a sibling module worked under the old project-wide scan; a module with no
     // karate at all must widen back to the project instead of triggering the bundled fallback.
-    assertTrue(KarateRunConfiguration.moduleScanIsAuthoritative(
+    assertTrue(KarateLibraries.moduleScanIsAuthoritative(
       Stream.of("junit-jupiter-5.11.4.jar", "karate-junit5-1.5.1.jar")));
-    assertTrue(KarateRunConfiguration.moduleScanIsAuthoritative(Stream.of("karate-core-2.1.1.jar")));
-    assertFalse(KarateRunConfiguration.moduleScanIsAuthoritative(
+    assertTrue(KarateLibraries.moduleScanIsAuthoritative(Stream.of("karate-core-2.1.1.jar")));
+    assertFalse(KarateLibraries.moduleScanIsAuthoritative(
       Stream.of("junit-jupiter-5.11.4.jar", "logback-classic-1.5.28.jar")));
-    assertFalse(KarateRunConfiguration.moduleScanIsAuthoritative(Stream.of()));
+    assertFalse(KarateLibraries.moduleScanIsAuthoritative(Stream.of()));
   }
 
   @Test

@@ -354,16 +354,7 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
    * karate on it.
    */
   private VirtualFile[] karateLibraryRoots() {
-    Module module = getConfigurationModule().getModule();
-    if (module == null) {
-      return LibraryUtil.getLibraryRoots(getProject());
-    }
-    VirtualFile[] moduleRoots =
-      OrderEnumerator.orderEntries(module).recursively().librariesOnly().classes().getRoots();
-    if (moduleScanIsAuthoritative(Arrays.stream(moduleRoots).map(VirtualFile::getName))) {
-      return moduleRoots;
-    }
-    return LibraryUtil.getLibraryRoots(getProject());
+    return KarateLibraries.rootsFor(getProject(), getConfigurationModule().getModule());
   }
 
   /**
@@ -383,10 +374,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
       .toList();
   }
 
-  /** The module scan decides only when the module actually has karate; otherwise widen to the project. */
-  static boolean moduleScanIsAuthoritative(java.util.stream.Stream<String> libraryNames) {
-    return libraryNames.anyMatch(n -> n.startsWith("karate-"));
-  }
 
   /**
    * Why the classpath the JVM would be launched with cannot run Karate, or null if it can. Checked
