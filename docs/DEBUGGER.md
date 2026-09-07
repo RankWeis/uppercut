@@ -1,10 +1,10 @@
 # Debugging — one debugger for both Karate versions
 
-Status: **built and shippable: pause, variables, evaluate.** A Karate 2 Debug run opens a second
-Debug tab where a breakpoint on a `.feature` line pauses the run, highlights the line, shows the
-scenario's variables and evaluates Karate expressions against the parked scenario. Deliberately not
-built: breakpoint conditions, skip-step, break-on-step-failure and real stepping - all additive, none
-needed to call it a debugger. Phase 0's API findings are below. Supersedes the "Karate 2 feature-file debugging is not planned"
+Status: **built: one debugger, both majors, one tab.** A breakpoint on a `.feature` step pauses the
+run, highlights the line, shows the scenario's variables and evaluates Karate expressions in it - on
+Karate 1 through `RuntimeHook.beforeStep`, on Karate 2 through `Runner.debugSupport`. The JDI path
+and JDWP are gone; so are Java breakpoints during a Karate run. Deliberately not built: breakpoint
+conditions, skip-step, break-on-step-failure and real stepping. Phase 0's API findings are below. Supersedes the "Karate 2 feature-file debugging is not planned"
 decision in [`KARATE2-HANDOFF.md`](KARATE2-HANDOFF.md), which said to revisit "if a v2 API
 surfaces that gives us the v1 UX under the virtual-thread runtime". It has: v2's
 `Runner.Builder.debugSupport(...)` is public and on Maven Central. This doc also absorbs and
@@ -257,8 +257,16 @@ wired end to end, so skip-step is a toolbar action away; break-on-failure means 
 can park a thread but never skip); conditions mean a fourth token on the `BREAKPOINT` line and a
 `frame.evaluate` before pausing.
 
-**Phase 4 — v1 adapter.** Same agent, `RuntimeHook.beforeStep`. Run the manual checklist against v1
-until parity, then delete the JDI path and its `plugin.xml` registrations.
+**Phase 4 — v1 adapter. Done.** `KarateV1DebugAdapter` pauses in `RuntimeHook.beforeStep` and reads
+`ScenarioEngine.vars`; `KarateDebugRunner` owns the Debug executor so no JVM debugger attaches;
+`KaratePositionManager`, `KaratePositionManagerFactory`, `UppercutClassLoader`, `KarateDebugAware`
+and the JDWP wiring are deleted. The v1 parity harness lives at `:v1:debugHarness`.
+
+**One thing v1 needed that v2 did not:** `ScenarioEngine.evalKarateExpression` records a failure on
+the engine as well as throwing it, so a mistyped expression in the Evaluate window failed the
+scenario - the run reported "passed: 1 | failed: 1" for a typo made while looking around. The adapter
+captures and restores the engine's failed reason around every evaluation. `KarateV1DebugAdapterTest`
+pins it against a stand-in engine.
 
 **Phase 5 — stepping**, if the appetite is still there.
 

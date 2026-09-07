@@ -139,7 +139,7 @@ public class KarateV2TestRunner {
       return null;
     }
     DebugAgent agent = new DebugAgent();
-    if (!agent.connect(Integer.parseInt(port), HANDSHAKE_TIMEOUT_MILLIS)) {
+    if (!agent.connect(Integer.parseInt(port), HANDSHAKE_TIMEOUT_MILLIS, 2)) {
       return null;
     }
     debugAdapter = KarateV2DebugAdapter.install(builder, builderClass, agent);

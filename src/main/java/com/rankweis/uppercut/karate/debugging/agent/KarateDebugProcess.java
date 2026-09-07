@@ -1,24 +1,19 @@
 package com.rankweis.uppercut.karate.debugging.agent;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -42,29 +37,23 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The Karate side of a Debug run: a second debug session, alongside the Java one that JDWP drives.
+ * The debugger for a Karate run, on both majors: breakpoints on lines of a {@code .feature} file,
+ * the scenario's variables, and evaluation against the paused scenario.
  *
- * <p><b>Why two tabs.</b> A Karate 2 Debug run is two debuggers at once: the JVM's, which stops on
- * Java breakpoints in step-definition code, and this one, which stops on lines of a {@code .feature}
- * file. They are separate sessions because the platform has one {@code XDebugProcess} per session,
- * and dropping the JDWP half to get a single tab would take Java breakpoints away from people who
- * have them today. Both attach to the same process, so stopping either stops the run.</p>
- *
- * <p>Phase 2 of {@code docs/DEBUGGER.md}: pause, highlight, resume. Variables, evaluation and real
- * stepping come next; until then the step actions continue to the next breakpoint and say so.</p>
+ * <p>One session, one tab: it adopts the run's own console - the test tree - so the run and the
+ * debugger are the same thing, which is what {@link KarateDebugRunner} launches it for. Stepping is
+ * not built; the step actions continue to the next breakpoint and say so.</p>
  */
 public class KarateDebugProcess extends XDebugProcess implements KarateDebugChannel.Listener {
 
   private final Project project;
-  private final KarateDebugChannel channel;
+  private final @Nullable KarateDebugChannel channel;
   private final ProcessHandler processHandler;
-  private final ConsoleView console;
+  private final ExecutionConsole console;
   private final XDebuggerEditorsProvider editorsProvider = new KarateDebugEditorsProvider();
   private final Set<XLineBreakpoint<XBreakpointProperties<?>>> breakpoints =
     Collections.synchronizedSet(new LinkedHashSet<>());
@@ -73,13 +62,13 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
 
   private volatile String stateMessage = "Waiting for the test JVM to connect";
 
-  public KarateDebugProcess(@NotNull XDebugSession session, @NotNull KarateDebugChannel channel,
-    @NotNull ProcessHandler processHandler) {
+  public KarateDebugProcess(@NotNull XDebugSession session, @Nullable KarateDebugChannel channel,
+    @NotNull ExecutionResult executionResult) {
     super(session);
     this.project = session.getProject();
     this.channel = channel;
-    this.processHandler = processHandler;
-    this.console = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    this.processHandler = executionResult.getProcessHandler();
+    this.console = executionResult.getExecutionConsole();
   }
 
   @Override
@@ -97,21 +86,23 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
     return processHandler;
   }
 
-  /**
-   * A console of this session's own, deliberately not attached to the process: the test output
-   * already has a home in the run tab, and attaching a second console to the same handler would print
-   * every line twice. What lands here is the debug channel's own story - connected, paused, resumed -
-   * which is otherwise invisible.
-   */
+  /** The run's own console - the Karate test tree - so a debug run is one tab, not two. */
   @Override
   public @NotNull ExecutionConsole createConsole() {
     return console;
   }
 
+  /**
+   * Sends the breakpoint set exactly once the handlers have registered what exists, whether or not
+   * there is anything to send: that message doubles as the agent's handshake, and until it arrives
+   * the test JVM waits rather than running past a breakpoint.
+   */
   @Override
   public void sessionInitialized() {
-    log("Karate debugger: listening on port " + channel.port() + " for the test JVM.");
-    log("Test output and Java breakpoints are in the other Debug tab.");
+    if (channel == null) {
+      return;
+    }
+    pushBreakpoints();
   }
 
   @Override
@@ -124,21 +115,18 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
   @Override
   public void agentConnected() {
     stateMessage = "Connected to the test JVM";
-    log("Test JVM connected; " + breakpoints.size() + " feature-file breakpoint(s) set.");
   }
 
   @Override
   public void paused(KarateDebugChannel.@NotNull Paused paused) {
     stateMessage = "Paused at " + paused.path() + ":" + paused.line();
-    log("Paused at " + paused.path() + ":" + paused.line() + "  " + paused.step());
     getSession().positionReached(new KarateSuspendContext(paused, sourcePosition(paused), channel));
-    showThisTab();
+    showVariables();
   }
 
   @Override
   public void agentDisconnected() {
     stateMessage = "Test JVM disconnected";
-    log("Test JVM disconnected.");
   }
 
   // ---- session commands ----
@@ -146,7 +134,7 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
   @Override
   public void resume(@Nullable XSuspendContext context) {
     String thread = threadOf(context);
-    if (thread != null) {
+    if (thread != null && channel != null) {
       channel.resume(thread);
     }
   }
@@ -170,47 +158,27 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
   public void stop() {
     // Detach first so any thread parked on a breakpoint is released, then drop the channel. Killing
     // the process while a thread is parked would leave the run's output truncated mid-step.
-    channel.detach();
-    channel.close();
+    if (channel != null) {
+      channel.detach();
+      channel.close();
+    }
   }
 
   private void continueInsteadOfStepping(@Nullable XSuspendContext context) {
-    log("Stepping is not supported yet - continuing to the next breakpoint.");
+    getSession().reportMessage("Stepping through Karate steps is not supported yet - continuing to "
+      + "the next breakpoint.", MessageType.INFO);
     resume(context);
   }
 
   /**
-   * Brings the Karate tab forward on a pause.
-   *
-   * <p>Two sessions share the Debug tool window, and only the selected one draws its execution line.
-   * Without this, hitting a feature-file breakpoint stops the run under a Java tab that has nothing to
-   * show and no highlight anywhere - the user has to know to switch tabs to see where they are.</p>
-   *
-   * <p>Finds this session's tab by looking for the content its own UI sits inside, rather than through
-   * {@code XDebugSession.getRunContentDescriptor()}: that getter is deprecated and, in split mode,
-   * logs a "RunContentDescriptor should not be used in split mode" throwable. Matching on the
-   * component works the same locally and split, and does not depend on the tab's title.</p>
+   * Shows frames and variables when the run stops. The tab's other pane is the test tree, which is
+   * where the user was looking a moment ago and tells them nothing about where they now are.
    */
-  private void showThisTab() {
+  private void showVariables() {
     getSession().runWhenUiReady(ui -> ApplicationManager.getApplication().invokeLater(() -> {
-      // Frames and variables, not this session's console: the console only carries the channel's own
-      // log, and what the user came to see when a breakpoint hit is the scenario's variables.
       Content frames = ui.findContent(DebuggerContentInfo.FRAME_CONTENT);
       if (frames != null) {
-        ui.selectAndFocus(frames, true, true);
-      }
-      ToolWindow debugWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG);
-      if (debugWindow == null) {
-        return;
-      }
-      JComponent ours = ui.getComponent();
-      ContentManager contents = debugWindow.getContentManager();
-      for (Content content : contents.getContents()) {
-        JComponent candidate = content.getComponent();
-        if (candidate != null && (candidate == ours || SwingUtilities.isDescendingFrom(ours, candidate))) {
-          contents.setSelectedContent(content, true);
-          return;
-        }
+        ui.selectAndFocus(frames, true, false);
       }
     }, ModalityState.any()));
   }
@@ -222,15 +190,28 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
   private @Nullable XSourcePosition sourcePosition(KarateDebugChannel.Paused paused) {
     VirtualFile file = ReadAction.compute(() -> FeaturePathResolver.findFeatureFile(project, paused.path()));
     if (file == null) {
-      log("Could not find " + paused.path() + " in this project, so the paused line cannot be shown.");
+      getSession().reportMessage("Could not find " + paused.path() + " in this project, so the "
+        + "paused line cannot be shown.", MessageType.WARNING);
       return null;
     }
     // Karate reports 1-based lines; XSourcePosition counts from 0.
     return XDebuggerUtil.getInstance().createPosition(file, paused.line() - 1);
   }
 
-  private void log(String message) {
-    console.print(message + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+  private void pushBreakpoints() {
+    if (channel == null) {
+      return;
+    }
+    List<KarateDebugChannel.Breakpoint> wire;
+    synchronized (breakpoints) {
+      wire = breakpoints.stream()
+        .map(breakpoint -> new KarateDebugChannel.Breakpoint(
+          VfsUtilCore.urlToPath(breakpoint.getFileUrl()),
+          // XLineBreakpoint counts lines from 0, Karate from 1.
+          breakpoint.getLine() + 1))
+        .toList();
+    }
+    channel.setBreakpoints(wire);
   }
 
   /** Sends the whole breakpoint set on every change; the agent commits it atomically. */
@@ -254,16 +235,7 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
     }
 
     private void push() {
-      List<KarateDebugChannel.Breakpoint> wire;
-      synchronized (breakpoints) {
-        wire = breakpoints.stream()
-          .map(breakpoint -> new KarateDebugChannel.Breakpoint(
-            VfsUtilCore.urlToPath(breakpoint.getFileUrl()),
-            // XLineBreakpoint counts lines from 0, Karate from 1.
-            breakpoint.getLine() + 1))
-          .toList();
-      }
-      channel.setBreakpoints(wire);
+      pushBreakpoints();
     }
   }
 

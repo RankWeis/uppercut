@@ -59,8 +59,11 @@ public final class DebugAgent implements AutoCloseable {
    * Connects to the IDE and waits for the first breakpoint set, so no step can run past a breakpoint
    * before the IDE has had a chance to send it. Returns false when there is no usable channel, in
    * which case the caller runs undebugged.
+   *
+   * @param karateMajor which Karate this run drives, announced in the greeting so a mismatch between
+   *     what the IDE detected and what actually loaded is visible on the wire rather than silent
    */
-  public boolean connect(int port, long handshakeTimeoutMillis) {
+  public boolean connect(int port, long handshakeTimeoutMillis, int karateMajor) {
     try {
       Socket connected = new Socket(InetAddress.getLoopbackAddress(), port);
       connected.setTcpNoDelay(true);
@@ -70,7 +73,7 @@ public final class DebugAgent implements AutoCloseable {
       Thread reader = new Thread(this::readLoop, "uppercut-debug-reader");
       reader.setDaemon(true);
       reader.start();
-      send("HELLO", ordered("protocol", DebugProtocol.VERSION, "karateMajor", 2));
+      send("HELLO", ordered("protocol", DebugProtocol.VERSION, "karateMajor", karateMajor));
       if (!handshake.await(handshakeTimeoutMillis, TimeUnit.MILLISECONDS)) {
         // The IDE is there but never sent a breakpoint set. Run rather than hang; if it sends one
         // later the table picks it up, it just may have missed the steps that already ran.

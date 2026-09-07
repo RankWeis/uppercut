@@ -57,31 +57,37 @@ These are the same for Karate 1 and Karate 2 - the language is the same.
 | Feature | Karate 1 | Karate 2 |
 |:--|:--|:--|
 | Breakpoints on a step in a `.feature` file | Supported | Early access |
-| Variables of the paused scenario | Through the Java debugger's frames | Early access. The scenario's own variables, as Karate holds them |
-| Evaluate a Karate expression while paused | Through the Java debugger (Java expressions) | Early access. Karate expressions, evaluated in the paused scenario |
-| Java breakpoints in step definitions | Supported | Supported (through the JVM's own debugger) |
-| Fixed debug port for the test JVM | Supported | Supported |
-| Breakpoint conditions, skip step, break on failed step | Not supported | Not yet |
-| Step over / into / out of feature steps | Not supported | Not yet. The step buttons continue to the next breakpoint |
+| Variables of the paused scenario | Early access | Early access |
+| Evaluate a Karate expression while paused | Early access | Early access |
+| Pin the debug port | Supported | Supported |
+| Breakpoint conditions, skip step, break on failed step | Not yet | Not yet |
+| Step over / into / out of feature steps | Not yet | Not yet. The step buttons continue to the next breakpoint |
+| Java breakpoints during a Karate run | Not supported - see below | Not supported - see below |
 
-**Karate 2 debugging, in short.** Put a breakpoint on a step in a `.feature` file and press Debug: the
-run stops before that step, the line is highlighted, and the **Karate** tab shows the scenario's
-variables. Evaluate (and the watches panel) run Karate expressions against the paused scenario, so
-`response.items[0]` means there what it would mean in the feature. Resume continues to the next
-breakpoint or to the end.
+**One debugger, both majors.** Put a breakpoint on a step in a `.feature` file and press Debug: the
+run stops before that step, the line is highlighted, and the debugger shows the scenario's variables -
+`response`, and anything a `def` has set - as Karate holds them. Evaluate and the watches panel run
+*Karate* expressions in the paused scenario, so `response.items[0]` means there what it means in the
+feature. Resume continues to the next breakpoint or to the end. Scenarios run one at a time while
+debugging, whatever the parallelism setting says, so a suspended run is followable.
 
-**A Karate 2 Debug run has two tabs**, because it is two debuggers at once. The **Karate** tab stops
-on feature-file lines. The other tab is the JVM's own debugger, which stops on Java breakpoints in
-step-definition code and any Java a feature calls; that is the same debugger Karate 1 uses. Stopping
-either ends the run. While debugging, scenarios run one at a time whatever the parallelism setting
-says, so a suspended run is followable.
+**Java breakpoints no longer stop during a Karate run.** Karate has no user-written step definitions -
+the DSL lives inside karate-core - so the JVM debugger was only ever reachable for Java a feature
+calls through `Java.type(...)`, and for stepping into Karate itself. Karate runs are now debugged by
+the plugin directly, without JDWP, which is what makes both majors stop on the step and show Karate's
+own variables. To debug Java called from a feature, run the `@Karate.Test` JUnit class through
+IntelliJ's ordinary Java or Gradle test configuration, where the JVM debugger works as usual; that
+run has no feature-file breakpoints.
 
-**Karate 1 is unchanged**: its feature-file breakpoints still go through the JVM's debugger, in a
-single tab, exactly as before.
+**Karate 1 changed here.** Its breakpoints used to be Java breakpoints bound to the bytecode of a
+step-definition method found by matching the step's text, which stopped inside karate-core with Java
+locals in view and silently failed to bind for steps no method matched. They now stop on the step
+itself, with the scenario's variables.
 
-**Early access** here means the mechanism is proven and covered by tests end to end, but it has far
-less mileage than Karate 1's debugger. Stepping through steps, breakpoint conditions and pausing on a
-failed step are not built yet; the step buttons continue to the next breakpoint and say so.
+**Early access** means the mechanism is proven and covered by tests end to end, but has far less
+mileage than the years behind Karate 1's run support. Stepping through steps, breakpoint conditions
+and pausing on a failed step are not built yet; the step buttons continue to the next breakpoint and
+say so.
 
 ## Known limitations
 

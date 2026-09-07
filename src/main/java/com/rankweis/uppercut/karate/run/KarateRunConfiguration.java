@@ -1,14 +1,11 @@
 package com.rankweis.uppercut.karate.run;
 
-import com.intellij.debugger.impl.RemoteConnectionBuilder;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ModuleRunProfile;
-import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -105,30 +102,44 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
     return new KarateSettingsEditor(getProject(), getFactory(), getName());
   }
 
+  /**
+   * The launch state for a Karate run. Named rather than anonymous so it can carry
+   * {@link DebugChannelHolder}, which is how the debug runner reaches this launch's channel.
+   */
+  abstract static class KarateCommandLineState
+    extends JavaApplicationCommandLineState<KarateRunConfiguration> implements DebugChannelHolder {
+
+    KarateCommandLineState(@NotNull KarateRunConfiguration configuration,
+      @NotNull ExecutionEnvironment environment) {
+      super(configuration, environment);
+    }
+  }
+
+  /**
+   * How {@code KarateDebugRunner} gets at the channel this launch opened. The channel has to be
+   * created while the command line is being built - that is when its port is written into the test
+   * JVM's arguments - but the debug session cannot exist until there is a process to attach it to.
+   */
+  public interface DebugChannelHolder {
+
+    @Nullable KarateDebugChannel debugChannel();
+  }
+
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
 
-    return new JavaApplicationCommandLineState<>(this, env) {
+    return new KarateCommandLineState(this, env) {
       /**
-       * The RemoteConnection to hand to the debugger when the user pinned a debug port. Built and
-       * cached in {@link #createJavaParameters()} so the JVM args and the debugger's attach target
-       * agree on the same port; returned from {@link #createRemoteConnection} so the platform's
-       * port-0 auto-allocation fallback in {@code GenericDebuggerRunner.createContentDescriptor} is
-       * skipped in favour of ours. Null on Run, and on Debug when no port is pinned.
-       */
-      private RemoteConnection myFixedPortConnection;
-      /**
-       * True when the launch is going down the Karate 2 path; set in {@link #createJavaParameters()}
-       * (which resolves the Karate version from the module's classpath). Used by {@link #createConsole}
-       * to print the "feature-file breakpoints won't pause on v2" notice at the top of a Debug run.
-       */
-      private boolean karateV2Detected;
-      /**
-       * The Karate debug channel for this launch, or null when this is not a Karate 2 Debug run.
-       * Opened in {@link #createJavaParameters()} so the port can be passed to the test JVM, and
-       * handed a session in {@link #startProcess()} once there is a process to attach one to.
+       * The debug channel this launch opened, or null on a Run. Created in
+       * {@link #createJavaParameters()}, where its port is written into the test JVM's arguments, and
+       * read back by {@code KarateDebugRunner} once there is a process to attach a session to.
        */
       private KarateDebugChannel debugChannel;
+
+      @Override
+      public @Nullable KarateDebugChannel debugChannel() {
+        return debugChannel;
+      }
 
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
@@ -161,7 +172,6 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
           KarateSettingsState.getInstance().getKarateVersionPreference();
         checkVersionOverrideMatchesClasspath(preference, libraryNames);
         boolean karateV2 = isKarateV2(preference, libraryNames.stream());
-        karateV2Detected = karateV2;
         if (karateV2) {
           params.getProgramParametersList().add("--karate-major-version", "2");
         } else {
@@ -231,8 +241,8 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
         if (!StringUtils.isBlank(getPath())) {
           params.getProgramParametersList().add("--relpath", getPath());
         }
-        boolean karateV2Debug = karateV2 && DefaultDebugExecutor.EXECUTOR_ID.equals(env.getExecutor().getId());
-        if (karateV2Debug) {
+        boolean debugging = DefaultDebugExecutor.EXECUTOR_ID.equals(env.getExecutor().getId());
+        if (debugging) {
           // One scenario at a time while debugging. The agent can park several threads at once, but
           // a suspended run is far easier to follow when only one thing is moving - and it matches
           // what a JDWP suspend=y run already does to the whole VM.
@@ -244,71 +254,22 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
           params.getProgramParametersList().add("--environment", getEnv());
         }
 
-        if (karateV2Debug) {
+        if (debugging) {
           try {
-            debugChannel = new KarateDebugChannel();
+            // The debug-port field pins the channel's port for containers and firewalls that only
+            // let certain ports through; blank takes a free one.
+            debugChannel = new KarateDebugChannel(
+              StringUtils.isBlank(getDebugPort()) ? 0 : Integer.parseInt(getDebugPort().trim()));
             debugChannel.start();
             params.getProgramParametersList().add("--debug-port", String.valueOf(debugChannel.port()));
-          } catch (IOException e) {
-            // No feature-file breakpoints, but the run - and the Java debugger - still work.
+          } catch (IOException | NumberFormatException e) {
+            // No feature-file breakpoints, but the run itself still works.
             log.warn("Could not open the Karate debug channel; feature-file breakpoints are off", e);
             debugChannel = null;
           }
         }
 
-        // If the user pinned a debug port in the run-config UI, wire it in the normal way: patch
-        // -agentlib:jdwp on the params with server=y,suspend=y at that port, and cache the
-        // RemoteConnection so createRemoteConnection() can hand it back to IntelliJ's own debugger.
-        // Without this, GenericDebuggerRunner.createContentDescriptor's fallback allocates a random
-        // port; the field was previously wired in startProcess() with a server=y override that
-        // fought the platform's server=n setup - IntelliJ never attached, and only external tools
-        // (jdb, other IDEs) could use the port. Non-Debug runs and blank ports leave params alone.
-        if (DefaultDebugExecutor.EXECUTOR_ID.equals(env.getExecutor().getId())
-          && !StringUtils.isBlank(getDebugPort())) {
-          myFixedPortConnection = new RemoteConnectionBuilder(
-            false, DebuggerSettings.getInstance().getTransport(), getDebugPort())
-            .suspend(true)
-            .asyncAgent(true)
-            .project(env.getProject())
-            .create(params);
-        }
-
         return params;
-      }
-
-      /**
-       * Starts the Karate debug session next to the Java one. Two tabs is the deliberate answer: the
-       * platform allows one XDebugProcess per session, and giving up the JDWP session to have a
-       * single tab would take Java breakpoints in step-definition code away from people who use them.
-       */
-      @Override
-      protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
-        OSProcessHandler handler = super.startProcess();
-        KarateDebugChannel channel = debugChannel;
-        if (channel == null) {
-          return handler;
-        }
-        ApplicationManager.getApplication().invokeLater(() -> {
-          try {
-            XDebuggerManager.getInstance(getProject()).startSessionAndShowTab(
-              "Karate", null, new XDebugProcessStarter() {
-                @Override public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
-                  KarateDebugProcess process = new KarateDebugProcess(session, channel, handler);
-                  channel.setListener(process);
-                  return process;
-                }
-              });
-          } catch (ExecutionException e) {
-            log.warn("Could not start the Karate debug session; feature-file breakpoints are off", e);
-            channel.close();
-          }
-        }, ModalityState.any());
-        return handler;
-      }
-
-      @Override
-      public @Nullable RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
-        return myFixedPortConnection != null ? myFixedPortConnection : super.createRemoteConnection(environment);
       }
 
       @Override protected @Nullable ConsoleView createConsole(@NotNull Executor executor) {
@@ -321,16 +282,13 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
             SMTestRunnerConnectionUtil.createConsole(consoleProperties);
           console.initUI();
           console.addMessageFilter(new UppercutConsoleFilter(getProject()));
-          // Say where each half of a Karate 2 Debug run lives, at the top of the console: this tab
-          // is the Java debugger (step-definition breakpoints), the Karate tab is feature-file
-          // breakpoints. startProcess writes to this console right after, so this line lands first.
-          // karateV2Detected is populated by createJavaParameters, which runs before createConsole
-          // (both are called during CommandLineState.execute, in that order).
-          if (karateV2Detected && DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId())) {
+          // One line at the top of a Debug run saying what this debugger does and does not do.
+          // startProcess writes to this console right after, so this line lands first.
+          if (DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId())) {
             console.print(
-              "Karate 2 Debug: feature-file breakpoints pause the run in the \"Karate\" tab; Java "
-                + "breakpoints in step-definition code stop here. Scenarios run one at a time while "
-                + "debugging.\n",
+              "Karate debugger: breakpoints on feature-file steps pause the run and show the "
+                + "scenario's variables; stepping is not supported yet. Scenarios run one at a time "
+                + "while debugging.\n",
               ConsoleViewContentType.SYSTEM_OUTPUT);
           }
           consoles.add(console);

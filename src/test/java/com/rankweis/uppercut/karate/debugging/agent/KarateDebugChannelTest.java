@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -22,7 +23,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 /**
  * The IDE end of the debug channel, driven by a stand-in for the agent. No project or IDE fixture:
@@ -31,6 +34,12 @@ import org.junit.Test;
 public class KarateDebugChannelTest {
 
   private static final int TIMEOUT_SECONDS = 10;
+
+  /**
+   * Every test here reads from a socket, and a read that never returns hangs the whole suite rather
+   * than failing - which is exactly what a change to when the channel speaks did once.
+   */
+  @Rule public Timeout timeout = Timeout.seconds(60);
 
   private KarateDebugChannel channel;
   private Socket agent;
@@ -151,15 +160,33 @@ public class KarateDebugChannelTest {
   }
 
   @Test
-  public void completesTheHandshakeEvenWithNoBreakpoints() throws Exception {
-    // Without a BREAKPOINTS_END the agent waits out its whole handshake timeout before running.
+  public void completesTheHandshakeOnceTheSessionHasSaidThereAreNoBreakpoints() throws Exception {
+    // BREAKPOINTS_END is also the agent's handshake, so an empty set still has to be sent - the run
+    // would otherwise wait out the agent's whole timeout before starting.
     RecordingListener listener = new RecordingListener();
     channel = new KarateDebugChannel();
     channel.setListener(listener);
     channel.start();
     BufferedReader fromChannel = connectAgent();
+    channel.setBreakpoints(List.of());
     assertEquals(DebugProtocol.CLEAR, fromChannel.readLine());
     assertEquals(DebugProtocol.BREAKPOINTS_END, fromChannel.readLine());
+  }
+
+  @Test
+  public void saysNothingUntilTheSessionHasAttached() throws Exception {
+    // The agent must not be told "no breakpoints" before the session has had its say: that message
+    // releases it to run, and it would run straight past a breakpoint the user did set.
+    RecordingListener listener = new RecordingListener();
+    channel = new KarateDebugChannel();
+    channel.setListener(listener);
+    channel.start();
+    agent = new Socket(InetAddress.getLoopbackAddress(), channel.port());
+    assertTrue(listener.connected.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+    agent.setSoTimeout(500);
+    BufferedReader fromChannel =
+      new BufferedReader(new InputStreamReader(agent.getInputStream(), StandardCharsets.UTF_8));
+    assertThrows(SocketTimeoutException.class, fromChannel::readLine);
   }
 
   @Test

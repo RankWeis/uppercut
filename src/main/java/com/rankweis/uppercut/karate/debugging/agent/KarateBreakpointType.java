@@ -6,7 +6,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.rankweis.uppercut.karate.psi.GherkinFileType;
-import com.rankweis.uppercut.karate.run.KarateLibraries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +30,7 @@ public class KarateBreakpointType extends XLineBreakpointType<XBreakpointPropert
 
   @Override
   public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
-    return GherkinFileType.INSTANCE.equals(file.getFileType())
-      && KarateLibraries.isKarateV2(project, file);
+    return GherkinFileType.INSTANCE.equals(file.getFileType());
   }
 
   @Override

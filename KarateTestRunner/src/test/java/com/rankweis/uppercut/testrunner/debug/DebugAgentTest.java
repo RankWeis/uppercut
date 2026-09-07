@@ -115,7 +115,7 @@ class DebugAgentTest {
   void pausesOnABreakpointAndResumesWhenTheIdeSaysSo() throws Exception {
     try (FakeIde ide = new FakeIde(); DebugAgent agent = new DebugAgent()) {
       CompletableFuture<Boolean> connected =
-        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000));
+        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000, 2));
       ide.attach();
       String hello = ide.readLine();
       assertTrue(hello.startsWith("EVENT HELLO "), hello);
@@ -146,7 +146,7 @@ class DebugAgentTest {
   void servesVariablesAndEvaluationWhileParked() throws Exception {
     try (FakeIde ide = new FakeIde(); DebugAgent agent = new DebugAgent()) {
       CompletableFuture<Boolean> connected =
-        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000));
+        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000, 2));
       ide.attach();
       ide.setBreakpoint(IDE_PATH, 9);
       assertTrue(connected.get(10, TimeUnit.SECONDS));
@@ -203,7 +203,7 @@ class DebugAgentTest {
     // The IDE can ask about a tree the user left open when the run has already moved on.
     try (FakeIde ide = new FakeIde(); DebugAgent agent = new DebugAgent()) {
       CompletableFuture<Boolean> connected =
-        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000));
+        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000, 2));
       ide.attach();
       ide.setBreakpoint(IDE_PATH, 9);
       assertTrue(connected.get(10, TimeUnit.SECONDS));
@@ -221,7 +221,7 @@ class DebugAgentTest {
   void skipReturnsTheSkipDecision() throws Exception {
     try (FakeIde ide = new FakeIde(); DebugAgent agent = new DebugAgent()) {
       CompletableFuture<Boolean> connected =
-        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000));
+        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000, 2));
       ide.attach();
       ide.setBreakpoint(IDE_PATH, 9);
       assertTrue(connected.get(10, TimeUnit.SECONDS));
@@ -241,7 +241,7 @@ class DebugAgentTest {
   void aLineWithNoBreakpointNeverPauses() throws Exception {
     try (FakeIde ide = new FakeIde(); DebugAgent agent = new DebugAgent()) {
       CompletableFuture<Boolean> connected =
-        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000));
+        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000, 2));
       ide.attach();
       ide.setBreakpoint(IDE_PATH, 9);
       assertTrue(connected.get(10, TimeUnit.SECONDS));
@@ -257,7 +257,7 @@ class DebugAgentTest {
     FakeIde ide = new FakeIde();
     try (DebugAgent agent = new DebugAgent()) {
       CompletableFuture<Boolean> connected =
-        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000));
+        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000, 2));
       ide.attach();
       ide.setBreakpoint(IDE_PATH, 9);
       assertTrue(connected.get(10, TimeUnit.SECONDS));
@@ -280,7 +280,7 @@ class DebugAgentTest {
   void detachReleasesEveryParkedThread() throws Exception {
     try (FakeIde ide = new FakeIde(); DebugAgent agent = new DebugAgent()) {
       CompletableFuture<Boolean> connected =
-        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000));
+        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 5000, 2));
       ide.attach();
       ide.setBreakpoint(IDE_PATH, 9);
       assertTrue(connected.get(10, TimeUnit.SECONDS));
@@ -303,7 +303,7 @@ class DebugAgentTest {
       deadPort = probe.getLocalPort();
     }
     try (DebugAgent agent = new DebugAgent()) {
-      assertFalse(agent.connect(deadPort, 1000));
+      assertFalse(agent.connect(deadPort, 1000, 2));
       assertTrue(agent.isDetached());
       assertEquals(DebugAgent.Decision.PROCEED,
         agent.pause(REPORTED_PATH, 9, "* def id = 1", "a scenario"));
@@ -315,7 +315,7 @@ class DebugAgentTest {
     try (FakeIde ide = new FakeIde(); DebugAgent agent = new DebugAgent()) {
       long start = System.currentTimeMillis();
       CompletableFuture<Boolean> connected =
-        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 300));
+        CompletableFuture.supplyAsync(() -> agent.connect(ide.port(), 300, 2));
       ide.attach();
       assertTrue(connected.get(10, TimeUnit.SECONDS));
       assertTrue(System.currentTimeMillis() - start >= 300, "it should wait for the handshake");

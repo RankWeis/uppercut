@@ -91,24 +91,26 @@ Add a provider to the module, e.g. `testRuntimeOnly("ch.qos.logback:logback-clas
 
 On Karate 2 the tree is built from Karate's live event stream. If the run prints results in the console but the tree stays empty, the plugin isn't seeing the events - most often because output is being redirected or wrapped by a custom logging setup. Please report it with the console output; the lines beginning `<<UPPERCUT-V2>>` are the ones the tree is built from.
 
-## A breakpoint on a step in a Karate 2 `.feature` file never pauses
+## A breakpoint on a step in a `.feature` file never pauses
 
-Check which tab you are looking at. A Karate 2 Debug run opens **two** tabs in the Debug tool window:
-the **Karate** tab stops on feature-file lines, and the other one is the JVM's own debugger for Java
-breakpoints in step-definition code. The Karate tab comes to the front by itself when a feature
-breakpoint is hit; only the tab you are looking at draws the highlighted line.
-
-If the run finishes without stopping at all:
-
-- The breakpoint must be on a **step** line - a line starting with `*`, `Given`, `When`, `Then`,
-  `And` or `But`. A breakpoint on `Feature:`, a comment or a blank line is never reached.
-- The feature must actually be part of the run. A breakpoint in a feature the run does not execute
+- The breakpoint must be on a **step** line - one starting with `*`, `Given`, `When`, `Then`, `And`
+  or `But`. A breakpoint on `Feature:`, a comment or a blank line is never reached.
+- The feature must actually be part of the run. A breakpoint in a feature this run does not execute
   is not an error and does not hold the run up.
-- Feature-file breakpoints need the **Karate** run configuration. Running the same feature through
-  Gradle or Maven ("Tests in '...'") launches Karate without the plugin's debug channel.
-- On a module the plugin has detected as Karate 1, feature files take Java breakpoints instead, which
-  is how Karate 1 debugging has always worked. Settings > Tools > Karate shows and pins the version.
+- It must be a **Karate** run configuration. Running the same feature through Gradle or Maven
+  ("Tests in '...'") launches Karate without the plugin's debugger.
+- Use **Debug**, not Run.
 
 Stepping through steps, breakpoint conditions and pausing on a failed step are not built yet - the
-step buttons continue to the next breakpoint and say so in the Karate tab. See the
+step buttons continue to the next breakpoint and say so. See the
 [debugging table](status#debugging) for what is and is not there.
+
+## A Java breakpoint doesn't stop during a Karate run
+
+By design, since the debugger stopped using JDWP. Karate runs are debugged by the plugin itself,
+which is what lets both Karate majors stop on the step and show the scenario's own variables; there
+is no JVM debugger attached to a Karate run any more.
+
+To debug Java that a feature calls through `Java.type(...)`, run the `@Karate.Test` JUnit class with
+IntelliJ's ordinary Java or Gradle test configuration and debug that - the JVM debugger behaves as
+usual there. That run has no feature-file breakpoints, so the two are used for different questions.

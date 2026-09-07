@@ -81,10 +81,25 @@ public final class KarateDebugChannel implements AutoCloseable {
   private volatile Socket agent;
   private volatile boolean closed;
   private volatile List<Breakpoint> breakpoints = List.of();
+  /**
+   * Whether the session has told us its breakpoints yet. The set doubles as the agent's handshake, so
+   * sending an empty one before the session has attached would let the run past a breakpoint the user
+   * did set. The agent's own timeout is the backstop if the session never gets that far.
+   */
+  private volatile boolean breakpointsKnown;
 
   public KarateDebugChannel() throws IOException {
+    this(0);
+  }
+
+  /**
+   * @param port the port to listen on, or 0 to take a free one. A pinned port is for the case the
+   *     run configuration's debug-port field exists for: a container or firewall that only allows
+   *     certain ports through to the test JVM.
+   */
+  public KarateDebugChannel(int port) throws IOException {
     // Backlog of 1 and loopback only: exactly one agent, from this machine, ever connects.
-    this.server = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
+    this.server = new ServerSocket(port, 1, InetAddress.getLoopbackAddress());
   }
 
   /**
@@ -121,6 +136,7 @@ public final class KarateDebugChannel implements AutoCloseable {
    */
   public void setBreakpoints(@NotNull Collection<Breakpoint> updated) {
     breakpoints = List.copyOf(updated);
+    breakpointsKnown = true;
     sendBreakpoints();
   }
 
@@ -271,7 +287,7 @@ public final class KarateDebugChannel implements AutoCloseable {
   }
 
   private void sendBreakpoints() {
-    if (out == null) {
+    if (out == null || !breakpointsKnown) {
       return;
     }
     List<String> commands = new ArrayList<>();

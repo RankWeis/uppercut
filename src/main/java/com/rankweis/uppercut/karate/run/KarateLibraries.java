@@ -1,12 +1,10 @@
 package com.rankweis.uppercut.karate.run;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.util.Arrays;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * module configurations, shared test-support modules), so the module scan only decides when the
  * module actually has karate on it.
  *
- * <p>Used by the run configuration to pick a runner, and by the debugger to decide which breakpoint
- * type a feature file takes.
+ * <p>Used by the run configuration to pick which Karate the launch drives.
  */
 public final class KarateLibraries {
 
@@ -46,11 +43,4 @@ public final class KarateLibraries {
     return libraryNames.anyMatch(n -> n.startsWith("karate-"));
   }
 
-  /** Whether this file's module runs Karate 2, honouring the version override in settings. */
-  public static boolean isKarateV2(@NotNull Project project, @Nullable VirtualFile file) {
-    Module module = file == null ? null : ModuleUtilCore.findModuleForFile(file, project);
-    return KarateRunConfiguration.isKarateV2(
-      KarateSettingsState.getInstance().getKarateVersionPreference(),
-      Arrays.stream(rootsFor(project, module)).map(VirtualFile::getName));
-  }
 }

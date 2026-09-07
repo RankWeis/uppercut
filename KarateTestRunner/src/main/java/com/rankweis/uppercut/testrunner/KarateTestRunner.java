@@ -2,6 +2,8 @@ package com.rankweis.uppercut.testrunner;
 
 import com.intuit.karate.core.FeatureRuntime;
 import com.intuit.karate.core.ScenarioCall;
+import com.rankweis.uppercut.testrunner.debug.DebugAgent;
+import com.rankweis.uppercut.testrunner.debug.KarateV1DebugAdapter;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -18,10 +20,17 @@ import org.slf4j.LoggerFactory;
 
 public class KarateTestRunner {
 
+  /** How long to wait for the IDE's first breakpoint set before running anyway. */
+  private static final long HANDSHAKE_TIMEOUT_MILLIS = 15_000L;
+
   final Map<String, List<String>> params = new HashMap<>();
   final Map<Object, Integer> scenarioIdMap = new ConcurrentHashMap<>();
 
   private final Random random = new Random();
+
+  /** Non-null only under Debug, and only once the IDE has answered on the debug port. */
+  private DebugAgent debugAgent;
+  private KarateV1DebugAdapter debugAdapter;
 
   void doTest() throws Exception {
     String[] testNames =
@@ -66,6 +75,7 @@ public class KarateTestRunner {
     if (env.isPresent()) {
       mKarateEnv.invoke(invoke, env.get());
     }
+    connectDebugAgent();
     Object hook = createRuntimeHook();
     Method mSetHook = clazz.getMethod("hook", Class.forName("com.intuit.karate.RuntimeHook"));
     invoke = mSetHook.invoke(invoke, hook);
@@ -75,7 +85,37 @@ public class KarateTestRunner {
         .map(Integer::parseInt)
         .orElse(1);
     Method mParallel = clazz.getMethod("parallel", int.class);
-    mParallel.invoke(invoke, parallelism);
+    try {
+      mParallel.invoke(invoke, parallelism);
+    } finally {
+      if (debugAgent != null) {
+        // No thread may be left parked on a breakpoint by a suite that has stopped running.
+        debugAgent.close();
+      }
+    }
+  }
+
+  /**
+   * Opens the debug channel when the IDE launched this run under Debug ({@code --debug-port}).
+   *
+   * <p>Karate 1 needs no interceptor to be installed: {@code RuntimeHook.beforeStep} is already
+   * proxied for the test tree, so debugging is one more branch in that proxy.</p>
+   *
+   * <p>Fails open, like the v2 path: no port, or an IDE that does not answer, means the run proceeds
+   * with no debugger rather than not at all.</p>
+   */
+  private void connectDebugAgent() {
+    String port = Optional.ofNullable(params.get("debug-port")).orElse(List.of())
+      .stream().findFirst().orElse(null);
+    if (port == null || port.isBlank()) {
+      return;
+    }
+    DebugAgent agent = new DebugAgent();
+    if (!agent.connect(Integer.parseInt(port), HANDSHAKE_TIMEOUT_MILLIS, 1)) {
+      return;
+    }
+    debugAgent = agent;
+    debugAdapter = new KarateV1DebugAdapter(agent);
   }
 
   /**
@@ -130,6 +170,11 @@ public class KarateTestRunner {
       Thread.currentThread().getContextClassLoader(),
       new Class<?>[]{runtimeHookClass},
       (proxy, method, args) -> {
+        if ("beforeStep".equals(method.getName()) && args.length == 2) {
+          // The breakpoint: blocks here while the IDE has the run paused, and returns false only if
+          // the user asked to skip the step.
+          return debugAdapter == null || debugAdapter.beforeStep(args[0], args[1]);
+        }
         if ("beforeScenario".equals(method.getName())
           || "afterScenario".equals(method.getName()) && args.length == 1) {
           Class<?> scenarioRuntimeClass = Class.forName("com.intuit.karate.core.ScenarioRuntime");

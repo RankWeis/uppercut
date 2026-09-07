@@ -174,15 +174,14 @@
 <!--    <multiHostInjector-->
 <!--      implementation="com.rankweis.uppercut.karate.injector.GherkinLanguageInjectorNoJS"/>-->
 <!--    <formatting.injectedOptions implementation="com.rankweis.uppercut.karate.injector.KarateInjectedFormattingOptionsProvider"/>-->
-    <debugger.javaDebugAware
-      implementation="com.rankweis.uppercut.karate.debugging.KarateDebugAware"/>
-    <debugger.positionManagerFactory id="karatePositionManager"
-      implementation="com.rankweis.uppercut.karate.debugging.KaratePositionManagerFactory" />
-    <!-- Feature-file breakpoints for the Karate 2 debugger. Offered only on a Karate 2 classpath;
-         Karate 1 feature files keep taking Java line breakpoints through debugger.javaDebugAware
-         above, until phase 4 of docs/DEBUGGER.md moves v1 onto the same agent. -->
+    <!-- Feature-file breakpoints, on both Karate majors. -->
     <xdebugger.breakpointType
       implementation="com.rankweis.uppercut.karate.debugging.agent.KarateBreakpointType"/>
+    <!-- Ahead of the platform's own debug runner, which would otherwise claim a Karate configuration
+         and attach JDWP. Karate runs are debugged by the plugin's agent instead; see
+         docs/DEBUGGER.md. -->
+    <programRunner order="first"
+      implementation="com.rankweis.uppercut.karate.debugging.agent.KarateDebugRunner"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.rankweis.uppercut">
