@@ -114,24 +114,32 @@ launches the plugin's runner, not that class.
 
 ## 6c. The opt-in JVM debugger
 
-Off by default, so none of 6b changes when it is not ticked. `JdwpClashProbe` covers the mechanism
-headlessly on both majors (`:v1:jdwpClash`, `:v2:jdwpClash`) - what only the IDE can show is the two
-tabs. Use `sample/javacall.feature` and `sample/Helper.java`, which exist for this, on either module.
-**Not yet walked.**
+Off by default, so none of 6b changes when it is not ticked. Most of this is now automated:
+`Karate2UITest.theJvmDebuggerIsOptInAndRunsBesideTheKarateOne` runs `sample/javacall.feature` twice
+in a real IDE, unticked and ticked, and `JdwpClashProbe` covers the mechanism headlessly on both
+majors (`:v1:jdwpClash`, `:v2:jdwpClash`). What is left by hand is what an assertion cannot see.
 
+Automated - listed so a failure is read against what it was meant to prove, not re-walked:
+
+- [x] Unticked: Debug opens one tab and no "Karate JVM debugger" tab exists.
+- [x] Ticked: a second tab appears and the Java breakpoint in `Helper.compute` suspends the run there.
+- [x] The Karate tab still stops on its own feature-line breakpoint in the same run.
+- [x] A breakpoint on the first Java the run touches binds - `Helper` is loaded a step before the
+      Karate breakpoint, so this only passes because the handshake held the run for the attach.
+- [x] Stop the Java tab alone: it detaches and the Karate run finishes.
+
+Still by hand. **Walked 2026-09-07** for the two marked below; the rest are unwalked.
+
+- [x] Ticked: the Java tab stops in `Helper.compute` *and* the Karate tab stops on the step - both,
+      in one run.
 - [ ] **Attach the JVM debugger too** appears in the run configuration's Test Options and survives a
-      close and reopen of the dialog.
-- [ ] Unticked: Debug opens one tab, as in 6b, and a Java breakpoint in `Helper.compute` does not stop.
-- [ ] Ticked: Debug opens a second tab, "Karate JVM debugger", and the Java breakpoint in
-      `Helper.compute` stops the run there with Java frames and locals - `seed`, `doubled`.
-- [ ] The Karate tab still stops on a feature-line breakpoint in the same run, with Karate's variables.
+      close and reopen of the dialog. *(The setting's round-trip is unit-tested; this is the widget.)*
+- [ ] The Java tab shows real frames and locals - `seed`, `doubled` - not just a suspended session.
 - [ ] While the Java tab is stopped, the Karate tab's variables, Evaluate and Resume do nothing, and
       catch up when the Java tab resumes. **This is the expected behaviour**, documented on the
       troubleshooting page; the point of the check is that it catches up rather than staying dead.
-- [ ] A breakpoint on the *first* Java the run touches still binds - the handshake hold is what makes
-      that work, so this is the check that the hold is doing its job.
-- [ ] Resume both, and the suite finishes normally with nothing failed.
-- [ ] Stop the Java tab alone: it detaches and the Karate run keeps going.
+      Automating it would mean asserting on a timeout, which is the flakiest thing this suite could
+      own - and `JdwpClashProbe` already pins the mechanism.
 - [ ] Stop the Karate tab: the test JVM dies and the Java tab ends with it; no java process left
       behind (`jps`).
 

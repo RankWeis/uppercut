@@ -184,9 +184,11 @@ name, a 5 s hold, `RESUME`, suite passes.
 
 **What automated tests now cover, and what they do not.** `Karate2UITest.debuggerPausesOnAFailedStep`
 debugs the fixture's broken feature in a real IDE and asserts the session suspends on the failing
-step, steps, and resumes - possible only because pausing on a failure needs no breakpoint UI.
-Breakpoint registration through the gutter, the variables tree and the conditions field are still
-only exercised by hand. That is the same gap
+step, steps, and resumes - it needs no breakpoint UI, which is why it was the first one written.
+`theJvmDebuggerIsOptInAndRunsBesideTheKarateOne` (phase 6) does set breakpoints, through the
+`ToggleLineBreakpoint` action with the caret placed - the same path the gutter takes - so breakpoint
+registration is covered on both a feature step and a Java line. The variables tree and the conditions
+field are still only exercised by hand. That is the same gap
 v1 debugging has always had, and it is why `docs/manual-test-checklist.md` has a debugger section -
 walked end to end on 2026-09-06, which is what found the three phase-2 bugs: two breakpoint types
 claiming one line, `XDebuggerEditorsProvider.createDocument` throwing `AbstractMethodError` before
@@ -376,8 +378,8 @@ follow from the spike:
   both through one setting would be a worse answer than a free port for the one that needs no pinning.
 
 Still open: what a Stop in one tab should do to the other. Today they are independent - stopping the
-Java tab detaches it and leaves the run going, which is the useful direction; stopping the Karate tab
-kills the JVM under the Java tab, which is honest but abrupt.
+Java tab detaches it and leaves the run going, which is the useful direction and is asserted by the
+UI test; stopping the Karate tab kills the JVM under the Java tab, which is honest but abrupt.
 
 ## Decisions still open
 

@@ -12,10 +12,17 @@ import com.intellij.driver.sdk.Project
 @Remote("com.intellij.xdebugger.XDebuggerManager")
 interface XDebuggerManagerRef {
     fun getCurrentSession(): XDebugSessionRef?
+
+    /**
+     * The session behind one Debug tab. Once a run can open two, {@code getCurrentSession} names
+     * whichever the IDE last focused - so a test that means "the Java one" has to ask by tab.
+     */
+    fun getDebugSession(console: ExecutionConsoleRef): XDebugSessionRef?
 }
 
 @Remote("com.intellij.xdebugger.XDebugSession")
 interface XDebugSessionRef {
+    fun getSessionName(): String
     fun isSuspended(): Boolean
     fun isStopped(): Boolean
     fun getCurrentPosition(): XSourcePositionRef?
