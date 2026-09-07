@@ -131,3 +131,7 @@ is no JVM debugger attached to a Karate run any more.
 To debug Java that a feature calls through `Java.type(...)`, run the `@Karate.Test` JUnit class with
 IntelliJ's ordinary Java or Gradle test configuration and debug that - the JVM debugger behaves as
 usual there. That run has no feature-file breakpoints, so the two are used for different questions.
+
+Note that a breakpoint in the `@Karate.Test` class itself never pauses under a **Karate** run
+configuration, and never did: the plugin launches its own runner rather than your JUnit class. Debug
+that class through the Java or Gradle configuration instead.
