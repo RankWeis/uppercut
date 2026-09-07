@@ -1,6 +1,6 @@
 # Debugging — one debugger for both Karate versions
 
-Status: **built: one debugger, both majors, one tab.** A breakpoint on a `.feature` step pauses the
+Status: **shipping in 3.1.0: one debugger, both majors, one tab.** A breakpoint on a `.feature` step pauses the
 run, highlights the line, shows the scenario's variables and evaluates Karate expressions in it - on
 Karate 1 through `RuntimeHook.beforeStep`, on Karate 2 through `Runner.debugSupport`. The JDI path
 and JDWP are gone; so are Java breakpoints during a Karate run. Deliberately not built: breakpoint
@@ -250,12 +250,16 @@ site: `site/status.md` and `site/troubleshooting.md` still say feature-file brea
 on v2, and should stay that way until phase 3 makes the session worth documenting - a debugger that
 stops but cannot show a variable is not yet the thing those pages would be promising.
 
-**Phase 3 — the easy wins. Variables and evaluate are done**; skip step, break on step failure and
-breakpoint conditions were cut from the first release as additive. The agent already has `SKIP`
-wired end to end, so skip-step is a toolbar action away; break-on-failure means blocking in the
-`STEP_EXIT` listener (or `afterExecute`, which is called with the `StepResult` but returns void, so it
-can park a thread but never skip); conditions mean a fourth token on the `BREAKPOINT` line and a
-`frame.evaluate` before pausing.
+**Phase 3 — the easy wins. Done.** Variables, evaluate, pause on a failed step (v2 in the `STEP_EXIT`
+listener, v1 in `afterStep`; both fire on the thread that ran the step, before it moves on), a
+`Pause on Failed Step` toolbar toggle, breakpoint conditions (a fourth token on the `BREAKPOINT` line,
+evaluated through the same frame that serves the variables view) and `Skip Step`.
+
+Two things worth keeping in mind here. On Karate 1 a condition runs on **every** hit of its line
+through `evalKarateExpression`, so without phase 4's failed-reason restore a false condition would
+fail the scenario it was watching. And anything the session sends before the agent connects is
+dropped: the breakpoint set and the pause-on-failure flag are both held and replayed on connect, and
+both were shipped broken once for want of that.
 
 **Phase 4 — v1 adapter. Done.** `KarateV1DebugAdapter` pauses in `RuntimeHook.beforeStep` and reads
 `ScenarioEngine.vars`; `KarateDebugRunner` owns the Debug executor so no JVM debugger attaches;
@@ -268,7 +272,11 @@ scenario - the run reported "passed: 1 | failed: 1" for a typo made while lookin
 captures and restores the engine's failed reason around every evaluation. `KarateV1DebugAdapterTest`
 pins it against a stand-in engine.
 
-**Phase 5 — stepping**, if the appetite is still there.
+**Phase 5 — stepping. Partly done.** All three step buttons run to the next step, which is the only
+place a Karate run can stop. What is left is telling step *over* from step *into*: a step that calls
+another feature stops on the called feature's first step rather than after the call. Both majors
+expose what is needed - v2's `callDepth`, v1's `ScenarioCall.caller` chain the runner already walks -
+so it is a follow-up, not a rewrite.
 
 Docs move with phases 2 and 4, not at the end: `site/status.md`'s debugging table,
 `site/troubleshooting.md:96`, the settings text for the debug port, and the v2 console notice in
