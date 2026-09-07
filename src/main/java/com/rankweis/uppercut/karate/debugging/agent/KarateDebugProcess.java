@@ -3,8 +3,6 @@ package com.rankweis.uppercut.karate.debugging.agent;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -250,15 +248,12 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
   /**
    * Says something the user needs to know about why the run stopped.
    *
-   * <p>Both places: a balloon, which is where the platform puts session messages, and the console,
-   * because a balloon is gone by the time you look up from the editor and a failure message is worth
-   * being able to scroll back to.</p>
+   * <p>A balloon only. The console this session adopts is the test tree's, and printing into that
+   * attaches the text to the root node's output rather than to any visible pane - a log line nobody
+   * would ever see is worse than none, because it reads like one that exists.</p>
    */
   private void report(String message) {
     getSession().reportMessage(message, MessageType.WARNING);
-    if (console instanceof ConsoleView consoleView) {
-      consoleView.print("[Karate debugger] " + message + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-    }
   }
 
   private @Nullable XSourcePosition sourcePosition(KarateDebugChannel.Paused paused) {
