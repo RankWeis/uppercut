@@ -1,7 +1,8 @@
 # Debugging — one debugger for both Karate versions
 
-Status: **design; phase 0 verified 2026-09-06 against karate-core/karate-js 2.1.1** (see "Phase 0
-results" below). Supersedes the "Karate 2 feature-file debugging is not planned"
+Status: **phase 1 built, phases 2-5 designed.** The debug agent, its wire protocol and the Karate 2
+adapter live in the `KarateTestRunner` subproject with unit tests and an end-to-end harness; nothing
+in the IDE talks to them yet. Phase 0's API findings are below. Supersedes the "Karate 2 feature-file debugging is not planned"
 decision in [`KARATE2-HANDOFF.md`](KARATE2-HANDOFF.md), which said to revisit "if a v2 API
 surfaces that gives us the v1 UX under the virtual-thread runtime". It has: v2's
 `Runner.Builder.debugSupport(...)` is public and on Maven Central. This doc also absorbs and
@@ -122,6 +123,42 @@ the reflective runner in the same spirit as `EventProbe`:
   not the editor's file. Feed it through the same source-root resolver the test tree uses for
   `locationHint` (the #321 fix) before handing a position to the IDE.
 
+## What exists (phase 1)
+
+In `KarateTestRunner/src/main/java/com/rankweis/uppercut/testrunner/debug/`:
+
+| | |
+|---|---|
+| `DebugProtocol` | the wire format, both directions, and the thread key shared with the event stream |
+| `BreakpointTable` | the breakpoints, and the path matching that makes a source-path breakpoint match the path Karate reports |
+| `DebugAgent` | connects to the IDE, parks the thread that hits a breakpoint, releases it on command |
+| `KarateV2DebugAdapter` | the reflective `RunInterceptor`/`DebugPointFactory` proxies, and the `STEP_ENTER` → `ScenarioRuntime` pairing |
+
+`KarateV2TestRunner` opens the channel when the IDE passes `--debug-port` and closes it in a `finally`
+around the terminal `parallel(...)` call, so no thread can be left parked by a suite that ended early.
+
+**The IDE listens and the agent connects**, the same way round as JDWP: the IDE picks a free port
+before launching and nothing has to be scraped out of stdout.
+
+**Everything fails open.** A refused connection, a silent IDE, a dropped socket, an unknown command,
+a malformed line or an interrupt all end with the run proceeding. Losing breakpoints is a bad debug
+session; a test JVM parked forever with nobody to release it is a bad test run, and it is the only
+outcome worth going out of the way to prevent. `DebugAgentTest` pins each of those paths.
+
+Covered by `./gradlew :KarateTestRunner:test` (19 tests; root `check` now depends on it) and, for the
+half only a real run can prove, `./gradlew -p testProjects/karate-versions :v2:debugHarness` — a fake
+IDE driving the real agent and adapter against a real suite: breakpoint on the source path, `PAUSED`
+with the step text and scenario name, a 5 s hold, `RESUME`, suite passes.
+
+Two things that run counter to intuition and are worth keeping in mind:
+
+- **Karate reports whichever path the run resolved**, source-relative
+  (`src/test/java/sample/users.feature`) when the run targets the file, the classpath copy
+  (`build/resources/test/sample/users.feature`) when it targets a classpath entry. Neither is a
+  prefix of the IDE's absolute path, which is why breakpoints match on shared trailing segments.
+- **`Map.of` randomises iteration order per JVM.** Payloads are built in a `LinkedHashMap` so the
+  wire output does not change shape between runs.
+
 ## Easy wins
 
 Cheap, and each is worth shipping on its own:
@@ -168,9 +205,7 @@ Cheap, and each is worth shipping on its own:
 **Phase 0 — spike. Done**, see results above. `DebugProbe` stays in the v2 fixture as the
 reproduction and as the harness phase 1 grows into.
 
-**Phase 1 — the agent, no IDE.** Breakpoint table, socket protocol, latches, the v2 adapter, driven
-by a test harness rather than the IDE. Unit-tested. Ends with a command-line script that can pause
-and resume a real feature run.
+**Phase 1 — the agent, no IDE. Done**, see "What exists" above.
 
 **Phase 2 — walking skeleton in the IDE.** `XLineBreakpointType` for `.feature` + minimal
 `XDebugProcess`: breakpoint set sent at launch, paused line highlighted, Resume and Stop. Forced
