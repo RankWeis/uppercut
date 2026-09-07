@@ -181,8 +181,11 @@ Covered by `./gradlew :KarateTestRunner:test` (19 tests; root `check` now depend
 adapter against a real suite: breakpoint on the source path, `PAUSED` with the step text and scenario
 name, a 5 s hold, `RESUME`, suite passes.
 
-**What no test covers: the session itself.** Breakpoint registration, the suspend context, the
-highlighted line and the two-tab launch are exercised only by running the IDE. That is the same gap
+**What automated tests now cover, and what they do not.** `Karate2UITest.debuggerPausesOnAFailedStep`
+debugs the fixture's broken feature in a real IDE and asserts the session suspends on the failing
+step, steps, and resumes - possible only because pausing on a failure needs no breakpoint UI.
+Breakpoint registration through the gutter, the variables tree and the conditions field are still
+only exercised by hand. That is the same gap
 v1 debugging has always had, and it is why `docs/manual-test-checklist.md` has a debugger section -
 walked end to end on 2026-09-06, which is what found the three phase-2 bugs: two breakpoint types
 claiming one line, `XDebuggerEditorsProvider.createDocument` throwing `AbstractMethodError` before
