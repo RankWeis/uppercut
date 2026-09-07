@@ -1,5 +1,6 @@
 package com.rankweis.uppercut.karate.debugging.agent;
 
+import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
@@ -192,6 +193,12 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
    */
   private void showThisTab() {
     getSession().runWhenUiReady(ui -> ApplicationManager.getApplication().invokeLater(() -> {
+      // Frames and variables, not this session's console: the console only carries the channel's own
+      // log, and what the user came to see when a breakpoint hit is the scenario's variables.
+      Content frames = ui.findContent(DebuggerContentInfo.FRAME_CONTENT);
+      if (frames != null) {
+        ui.selectAndFocus(frames, true, true);
+      }
       ToolWindow debugWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG);
       if (debugWindow == null) {
         return;
