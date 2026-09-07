@@ -1,6 +1,8 @@
 package com.rankweis.uppercut.testrunner.debug;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -62,6 +64,17 @@ class BreakpointTableTest {
     set("/repo/sample/users.feature", 12);
     assertFalse(table.matches("build/resources/test/sample/users.feature", 9));
     assertTrue(table.matches("build/resources/test/sample/users.feature", 12));
+  }
+
+  @Test
+  void carriesTheConditionOfTheBreakpointItMatched() {
+    table.clear();
+    table.add("/repo/sample/users.feature", 9, "id == 'x'");
+    table.add("/repo/sample/users.feature", 12, null);
+    table.commit();
+    assertEquals("id == 'x'", table.conditionAt("build/resources/test/sample/users.feature", 9));
+    assertNull(table.conditionAt("build/resources/test/sample/users.feature", 12));
+    assertNull(table.conditionAt("build/resources/test/sample/users.feature", 99));
   }
 
   @Test

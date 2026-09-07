@@ -4,6 +4,11 @@ import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -189,6 +194,39 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
   }
 
   /**
+   * Adds "Skip Step" beside the stepping actions: continue the run without executing the step it is
+   * stopped on. Karate's own {@code SKIP} makes this exact, and it is the one thing a Karate debugger
+   * can offer that a JVM one cannot - a step that is failing for an uninteresting reason (an
+   * environment call, a fixture that is down) can be stepped past to reach the part being debugged.
+   */
+  @Override
+  public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar,
+    @NotNull DefaultActionGroup topToolbar, @NotNull DefaultActionGroup settings) {
+    topToolbar.add(new AnAction("Skip Step", "Continue without running the step the run is stopped on",
+      AllIcons.Actions.Play_forward) {
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent event) {
+        event.getPresentation().setEnabled(
+          channel != null && threadOf(getSession().getSuspendContext()) != null);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent event) {
+        String thread = threadOf(getSession().getSuspendContext());
+        if (thread != null && channel != null) {
+          channel.skipStep(thread);
+        }
+      }
+    });
+  }
+
+  /**
    * Shows frames and variables when the run stops. The tab's other pane is the test tree, which is
    * where the user was looking a moment ago and tells them nothing about where they now are.
    */
@@ -226,7 +264,9 @@ public class KarateDebugProcess extends XDebugProcess implements KarateDebugChan
         .map(breakpoint -> new KarateDebugChannel.Breakpoint(
           VfsUtilCore.urlToPath(breakpoint.getFileUrl()),
           // XLineBreakpoint counts lines from 0, Karate from 1.
-          breakpoint.getLine() + 1))
+          breakpoint.getLine() + 1,
+          breakpoint.getConditionExpression() == null ? null
+            : breakpoint.getConditionExpression().getExpression()))
         .toList();
     }
     channel.setBreakpoints(wire);

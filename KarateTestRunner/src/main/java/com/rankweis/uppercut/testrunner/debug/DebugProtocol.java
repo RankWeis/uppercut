@@ -15,7 +15,7 @@ import java.util.List;
  *
  * <pre>
  *   CLEAR                        begin a new breakpoint set
- *   BREAKPOINT &lt;base64 path&gt; &lt;line&gt;
+ *   BREAKPOINT &lt;base64 path&gt; &lt;line&gt; [&lt;base64 condition&gt;]
  *   BREAKPOINTS_END              commit the set; also the "you may start" signal at startup
  *   RESUME &lt;threadKey&gt;           continue the step that thread is paused on
  *   SKIP &lt;threadKey&gt;             skip that step and continue (Karate's SKIP action)
@@ -80,8 +80,8 @@ public final class DebugProtocol {
       return new Command(name, argument, null, -1, -1, null);
     }
 
-    static Command breakpoint(String path, int line) {
-      return new Command(BREAKPOINT, null, path, line, -1, null);
+    static Command breakpoint(String path, int line, String condition) {
+      return new Command(BREAKPOINT, null, path, line, -1, condition);
     }
 
     static Command request(String name, String thread, int requestId, String payload) {
@@ -114,7 +114,8 @@ public final class DebugProtocol {
           return null;
         }
         try {
-          return Command.breakpoint(decode(tokens.get(1)), Integer.parseInt(tokens.get(2)));
+          String condition = tokens.size() > 3 ? decode(tokens.get(3)) : null;
+          return Command.breakpoint(decode(tokens.get(1)), Integer.parseInt(tokens.get(2)), condition);
         } catch (IllegalArgumentException e) {
           return null;
         }
@@ -137,7 +138,13 @@ public final class DebugProtocol {
 
   /** Renders a BREAKPOINT line. Used by the IDE side and by the tests that stand in for it. */
   public static String breakpointCommand(String path, int line) {
-    return BREAKPOINT + " " + encode(path) + " " + line;
+    return breakpointCommand(path, line, null);
+  }
+
+  /** A conditional breakpoint: the run stops there only when the expression is true in the scenario. */
+  public static String breakpointCommand(String path, int line, String condition) {
+    String command = BREAKPOINT + " " + encode(path) + " " + line;
+    return condition == null || condition.isBlank() ? command : command + " " + encode(condition);
   }
 
   /** Renders a VARIABLES request. An empty path asks for the scenario's own variables. */

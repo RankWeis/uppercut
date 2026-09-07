@@ -24,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 final class BreakpointTable {
 
-  private record Breakpoint(List<String> segments, int line) {
+  private record Breakpoint(List<String> segments, int line, String condition) {
   }
 
   /** Swapped wholesale on BREAKPOINTS_END; read on every step by every scenario thread. */
@@ -36,7 +36,11 @@ final class BreakpointTable {
   }
 
   void add(String path, int line) {
-    pending.add(new Breakpoint(segments(path), line));
+    add(path, line, null);
+  }
+
+  void add(String path, int line, String condition) {
+    pending.add(new Breakpoint(segments(path), line, condition));
   }
 
   void commit() {
@@ -53,16 +57,29 @@ final class BreakpointTable {
   }
 
   boolean matches(String reportedPath, int line) {
+    return find(reportedPath, line) != null;
+  }
+
+  /**
+   * The condition on the breakpoint at this line, or null when there is none (or no breakpoint).
+   * Unconditional breakpoints are much the commoner case, so this is asked only after {@link #matches}.
+   */
+  String conditionAt(String reportedPath, int line) {
+    Breakpoint breakpoint = find(reportedPath, line);
+    return breakpoint == null ? null : breakpoint.condition();
+  }
+
+  private Breakpoint find(String reportedPath, int line) {
     if (reportedPath == null) {
-      return false;
+      return null;
     }
     List<String> reported = segments(reportedPath);
     for (Breakpoint breakpoint : committed) {
       if (breakpoint.line() == line && sharesTail(breakpoint.segments(), reported)) {
-        return true;
+        return breakpoint;
       }
     }
-    return false;
+    return null;
   }
 
   /** True when the two paths share enough trailing segments to be the same file. */

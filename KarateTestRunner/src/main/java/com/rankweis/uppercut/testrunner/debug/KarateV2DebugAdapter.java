@@ -168,7 +168,7 @@ public final class KarateV2DebugAdapter {
     if (agent.isDetached() || !(point instanceof Point p) || p.kind() != gherkinStepKind) {
       return proceed;
     }
-    if (!agent.shouldPauseAtStep(p.source(), p.line())) {
+    if (!agent.shouldPauseAtStep(p.source(), p.line(), new ScenarioRuntimeFrame(CURRENT_RUNTIME.get()))) {
       return proceed;
     }
     PENDING.set(new Pending(p.source(), p.line(), stepText(p.node()), scenarioName()));

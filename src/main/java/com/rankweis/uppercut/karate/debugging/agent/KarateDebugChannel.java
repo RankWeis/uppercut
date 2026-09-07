@@ -39,8 +39,15 @@ public final class KarateDebugChannel implements AutoCloseable {
 
   private static final Logger LOG = Logger.getInstance(KarateDebugChannel.class);
 
-  /** A breakpoint as the IDE knows it: an absolute file path and a 1-based line. */
-  public record Breakpoint(@NotNull String path, int line) {
+  /**
+   * A breakpoint as the IDE knows it: an absolute file path, a 1-based line, and the Karate
+   * expression it is conditional on, if any.
+   */
+  public record Breakpoint(@NotNull String path, int line, @Nullable String condition) {
+
+    public Breakpoint(@NotNull String path, int line) {
+      this(path, line, null);
+    }
   }
 
   /** One row of the variables tree, as the agent rendered it. */
@@ -310,7 +317,8 @@ public final class KarateDebugChannel implements AutoCloseable {
     List<String> commands = new ArrayList<>();
     commands.add(DebugProtocol.CLEAR);
     for (Breakpoint breakpoint : breakpoints) {
-      commands.add(DebugProtocol.breakpointCommand(breakpoint.path(), breakpoint.line()));
+      commands.add(DebugProtocol.breakpointCommand(
+        breakpoint.path(), breakpoint.line(), breakpoint.condition()));
     }
     commands.add(DebugProtocol.BREAKPOINTS_END);
     // One lock for the whole set: BREAKPOINTS_END commits it in the agent, so a set must not be

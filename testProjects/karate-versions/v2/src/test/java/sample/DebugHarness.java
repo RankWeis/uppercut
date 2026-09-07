@@ -78,7 +78,9 @@ public class DebugHarness {
       log("agent connected");
       out.println("PAUSE_ON_FAILURE " + Boolean.getBoolean("pauseOnFailure"));
       out.println("CLEAR");
-      out.println("BREAKPOINT " + base64(feature.toString()) + " " + line);
+      String condition = System.getProperty("condition", "");
+      out.println("BREAKPOINT " + base64(feature.toString()) + " " + line
+        + (condition.isEmpty() ? "" : " " + base64(condition)));
       out.println("BREAKPOINTS_END");
       String message;
       while ((message = in.readLine()) != null) {

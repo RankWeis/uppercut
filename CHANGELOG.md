@@ -22,8 +22,13 @@ that works on feature files themselves**.
   variables are as the failure left them. On by default; turn it off under Settings > Tools > Karate.
 
 - **Stepping.** The step buttons run to the next step. A step that calls another feature stops on the
-  called feature's first step rather than after the call - telling step over from step into is not
-  built yet, and neither are breakpoint conditions.
+  called feature's first step rather than after the call — telling step over from step into is not
+  built yet.
+
+- **Conditional breakpoints and Skip Step.** Put a Karate expression in a breakpoint's Condition field
+  and the run stops there only when it holds; a condition that cannot be evaluated stops the run and
+  says why rather than quietly never stopping. **Skip Step** on the debugger toolbar continues without
+  running the step the run is stopped on, using Karate's own skip.
 
 - **Karate 2 (`karate-junit6`) runs from the IDE**, first shipped in 3.0 and now with debugging to
   match. The Karate version is detected per module from the classpath, so a repository can migrate

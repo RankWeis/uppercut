@@ -57,6 +57,8 @@ public final class DebugAgent implements AutoCloseable {
   private final Map<String, Suspension> suspended = new ConcurrentHashMap<>();
   /** Threads the IDE asked to stop again at their very next step. */
   private final Set<String> stepping = ConcurrentHashMap.newKeySet();
+  /** A condition that would not evaluate, carried from the decision to the pause that follows it. */
+  private final ThreadLocal<String> conditionError = new ThreadLocal<>();
   private final CountDownLatch handshake = new CountDownLatch(1);
 
   private volatile Socket socket;
@@ -124,7 +126,10 @@ public final class DebugAgent implements AutoCloseable {
     // "stopped at your breakpoint" are different answers to "why am I here".
     Reason reason = stepping.remove(DebugProtocol.threadKey(Thread.currentThread()))
       ? Reason.STEP : Reason.BREAKPOINT;
-    return park(path, line, stepText, scenarioName, frame, reason, null);
+    String failedCondition = conditionError.get();
+    conditionError.remove();
+    return park(path, line, stepText, scenarioName, frame, reason,
+      failedCondition == null ? null : "Breakpoint condition failed: " + failedCondition);
   }
 
   private Decision park(String path, int line, String stepText, String scenarioName,
@@ -160,9 +165,59 @@ public final class DebugAgent implements AutoCloseable {
    * {@link #pause} from the single {@code waitForResume} call that follows.
    */
   public boolean shouldPauseAtStep(String path, int line) {
-    return !detached
-      && (stepping.contains(DebugProtocol.threadKey(Thread.currentThread()))
-      || breakpoints.matches(path, line));
+    return shouldPauseAtStep(path, line, null);
+  }
+
+  /**
+   * Whether this step should stop the run, evaluating a breakpoint's condition against the scenario
+   * when it has one.
+   *
+   * <p>A condition that throws stops the run and the error is shown: a debugger that silently never
+   * stops because of a typo is worse than one that stops too often.</p>
+   */
+  public boolean shouldPauseAtStep(String path, int line, SuspendedFrame frame) {
+    if (detached) {
+      return false;
+    }
+    if (stepping.contains(DebugProtocol.threadKey(Thread.currentThread()))) {
+      return true;
+    }
+    if (!breakpoints.matches(path, line)) {
+      return false;
+    }
+    String condition = breakpoints.conditionAt(path, line);
+    if (condition == null || condition.isBlank() || frame == null) {
+      return true;
+    }
+    try {
+      conditionError.remove();
+      return isTrue(frame.evaluate(condition));
+    } catch (Exception e) {
+      conditionError.set(condition + " -> " + rootMessage(e));
+      return true;
+    }
+  }
+
+  /**
+   * Karate expressions return whatever the scenario holds, so anything that is not a boolean or null
+   * counts as true - a condition of {@code response.id} means "when there is one".
+   */
+  static boolean isTrue(Object value) {
+    if (value == null) {
+      return false;
+    }
+    if (value instanceof Boolean bool) {
+      return bool;
+    }
+    return !(value instanceof CharSequence text) || !text.isEmpty();
+  }
+
+  static String rootMessage(Throwable error) {
+    Throwable cause = error;
+    while (cause.getCause() != null && cause.getCause() != cause) {
+      cause = cause.getCause();
+    }
+    return cause.getMessage() == null ? String.valueOf(cause) : cause.getMessage();
   }
 
   /** Whether a failed step should stop the run, so an adapter can skip the work when it should not. */
@@ -214,7 +269,7 @@ public final class DebugAgent implements AutoCloseable {
     }
     switch (command.name()) {
       case DebugProtocol.CLEAR -> breakpoints.clear();
-      case DebugProtocol.BREAKPOINT -> breakpoints.add(command.path(), command.line());
+      case DebugProtocol.BREAKPOINT -> breakpoints.add(command.path(), command.line(), command.payload());
       case DebugProtocol.BREAKPOINTS_END -> {
         breakpoints.commit();
         handshake.countDown();

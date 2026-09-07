@@ -40,7 +40,7 @@ public final class KarateV1DebugAdapter {
     if (path == null || line < 0) {
       return true;
     }
-    if (!agent.shouldPauseAtStep(path, line)) {
+    if (!agent.shouldPauseAtStep(path, line, new ScenarioEngineFrame(engineOf(scenarioRuntime)))) {
       return true;
     }
     return agent.pause(path, line, stepText(step), scenarioName(scenarioRuntime),
