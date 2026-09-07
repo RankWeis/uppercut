@@ -29,6 +29,7 @@ import com.intellij.tools.ide.performanceTesting.commands.openFile
 import com.intellij.tools.ide.performanceTesting.commands.waitForCodeAnalysisFinished
 import com.intellij.tools.ide.performanceTesting.commands.waitForSmartMode
 import com.intellij.tools.ide.starter.product.idea.ultimate.IdeaUltimate
+import com.rankweis.uppercut.karate.ui.util.debuggerManager
 import com.rankweis.uppercut.karate.ui.util.OutputListenerRef
 import com.rankweis.uppercut.karate.ui.util.ConsoleViewImplRef
 import com.rankweis.uppercut.karate.ui.util.RunContentDescriptor
@@ -253,9 +254,74 @@ class Karate2UITest {
         driver.takeScreenshot(screenshotDir + "05-v1-results")
     }
 
-    /** OUTLINE_ENTER is deliberately unmapped; examples must still surface as individual results. */
+    /**
+     * The debugger, in the only place it can be seen working: a real IDE.
+     *
+     * <p>No breakpoint is set. Pausing on a failed step needs none - which is what makes this the
+     * cheapest possible test of the debug path - and the fixture's broken feature fails on purpose,
+     * so Debug should suspend the run on that step. Stepping then has to leave it suspended
+     * somewhere else, and Resume has to let the suite finish.</p>
+     *
+     * <p>Everything is released in a finally: a debug session left suspended would hold the test JVM
+     * and poison every test after this one.</p>
+     */
     @Test
     @Order(4)
+    fun debuggerPausesOnAFailedStep() {
+        val driver = run.driver
+        val project = driver.singleProject()
+        openFeature(driver, "v2/src/test/java/broken/broken.feature")
+        launchDebugFromGutterContext(driver)
+
+        val session = try {
+            waitFor(
+                timeout = 2.minutes,
+                interval = 200.milliseconds,
+                errorMessage = { "The debugger never suspended the run on the failing step" }
+            ) {
+                driver.debuggerManager(project).getCurrentSession()?.isSuspended() == true
+            }
+            driver.debuggerManager(project).getCurrentSession()!!
+        } catch (failure: Throwable) {
+            driver.takeScreenshot(screenshotDir + "06-debug-no-pause")
+            throw failure
+        }
+
+        try {
+            // broken.feature fails on `* match actual == { a: 2 }`, editor line 7 (0-based 6).
+            val pausedLine = session.getCurrentPosition()?.getLine()
+            assertEquals(6, pausedLine, "the run should be suspended on the step that failed")
+            driver.takeScreenshot(screenshotDir + "06-debug-paused")
+
+            session.stepOver(false)
+            waitFor(
+                timeout = 1.minutes,
+                interval = 200.milliseconds,
+                errorMessage = { "Step did not stop the run again" }
+            ) {
+                val current = driver.debuggerManager(project).getCurrentSession()
+                current == null || current.isStopped() || current.isSuspended()
+            }
+        } finally {
+            val current = driver.debuggerManager(project).getCurrentSession()
+            if (current != null && !current.isStopped()) {
+                current.resume()
+            }
+        }
+
+        waitFor(
+            timeout = 2.minutes,
+            interval = 500.milliseconds,
+            errorMessage = { "The debugged run never finished after resuming" }
+        ) {
+            val current = driver.debuggerManager(project).getCurrentSession()
+            current == null || current.isStopped()
+        }
+    }
+
+    /** OUTLINE_ENTER is deliberately unmapped; examples must still surface as individual results. */
+    @Test
+    @Order(5)
     fun scenarioOutlineExamplesAppearIndividually() {
         val driver = run.driver
         openFeature(driver, "v2/src/test/java/sample/outline.feature")
@@ -277,7 +343,7 @@ class Karate2UITest {
      * them with LightPlatformTestCase, but not with the JavaScript plugin actually present.
      */
     @Test
-    @Order(5)
+    @Order(6)
     fun goToDefinitionOpensCalledFeature() {
         val driver = run.driver
         // Caret inside 'called.feature' on the call step of users.feature (line 9).
@@ -302,14 +368,14 @@ class Karate2UITest {
     }
 
     @Test
-    @Order(6)
+    @Order(7)
     fun versionOverrideDisplacesDetection() {
         verifySettingsOverrideBeatsDetection(run.driver)
     }
 
     /** Runs last while the IDE is still up; idea.log is written through continuously. */
     @Test
-    @Order(7)
+    @Order(8)
     fun pluginLoggedNoErrors() {
         assertNoPluginErrorsLogged(ideaLog)
     }
@@ -335,7 +401,16 @@ class Karate2UITest {
      * the context-run action the gutter icon itself delegates to, so this exercises the same path:
      * KarateRunConfigurationProducer -> KarateV2TestRunner -> event converter -> test tree.
      */
-    private fun launchRunFromGutterContext(driver: Driver, settle: Boolean = false) {
+    /** Same gutter wait as a Run, then the Debug action - so the debugger drives a real launch. */
+    private fun launchDebugFromGutterContext(driver: Driver) {
+        launchRunFromGutterContext(driver, settle = false, action = "DebugClass")
+    }
+
+    private fun launchRunFromGutterContext(
+        driver: Driver,
+        settle: Boolean = false,
+        action: String = "RunClass"
+    ) {
         // Waiting on indicators also waits out the Gradle import that the run config's classpath needs.
         // waitSmartLongEnough demands 10 quiet-and-smart seconds before returning - worth it right after
         // the import (indicators flap as indexing follows), pure dead time on every later launch.
@@ -358,7 +433,7 @@ class Karate2UITest {
                     gutter.icons.any { it.getIconPath().contains("run", ignoreCase = true) }
                 }
         }
-        driver.invokeAction("RunClass")
+        driver.invokeAction(action)
     }
 
     /**
