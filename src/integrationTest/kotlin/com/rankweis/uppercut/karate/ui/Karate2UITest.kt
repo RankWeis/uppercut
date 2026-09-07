@@ -449,10 +449,35 @@ class Karate2UITest {
             // The class is loaded a step earlier, so this only binds because the handshake held the
             // run until the JVM debugger attached. It is the whole point of holdForJvmDebugger.
             val javaSession = awaitSuspended(driver, project, JVM_DEBUGGER_TAB)
+            val stoppedAt = javaSession.getCurrentPosition()
             assertEquals(
-                HELPER_BODY_LINE - 1, javaSession.getCurrentPosition()?.getLine(),
+                HELPER_BODY_LINE - 1, stoppedAt?.getLine(),
                 "the JVM debugger should stop in Helper.compute"
             )
+            // The module, not just the line. A java breakpoint binds by class name and line - the JVM
+            // reports `sample.Helper:11` and nothing about where the source lives - so two modules
+            // declaring that class at the same line would let a v2 run stop in v1's file with this
+            // assertion none the wiser. That happened, by hand, before the v1 copy was renamed.
+            val stoppedIn = stoppedAt?.getFile()?.getPath()
+            assertTrue(
+                stoppedIn?.contains("/v2/") == true,
+                "the v2 run should stop in the v2 module's Helper, not another module's: $stoppedIn"
+            )
+            // Suspending is not enough: the Debug tool window is already open on the Karate tab, so
+            // without the session bringing its own tab forward the run stops somewhere nobody is
+            // looking, in front of a tab that has nothing suspended in it - which reads as a
+            // breakpoint that was ignored. Found by hand; this is what keeps it fixed.
+            waitFor(
+                timeout = 30.seconds,
+                interval = 200.milliseconds,
+                errorMessage = {
+                    "The JVM debugger stopped but its tab was not brought forward; showing: " +
+                        driver.getRunContentManagerRef(project).getSelectedContent()?.getDisplayName()
+                }
+            ) {
+                driver.getRunContentManagerRef(project).getSelectedContent()
+                    ?.getDisplayName()?.contains(JVM_DEBUGGER_TAB) == true
+            }
             driver.takeScreenshot(screenshotDir + "08-both-debuggers")
 
             // Stopping the java tab detaches it and leaves the karate run to finish.

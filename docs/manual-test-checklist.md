@@ -127,13 +127,21 @@ Automated - listed so a failure is read against what it was meant to prove, not 
 - [x] A breakpoint on the first Java the run touches binds - `Helper` is loaded a step before the
       Karate breakpoint, so this only passes because the handshake held the run for the attach.
 - [x] Stop the Java tab alone: it detaches and the Karate run finishes.
+- [x] The JVM debugger's tab is brought forward when it stops, rather than leaving the run suspended
+      behind the Karate tab.
+- [x] A v2 run stops in the **v2** module's helper - asserted on the file, not only the line, since
+      both modules once declared `sample.Helper` at the same line and a line-only check could not
+      have failed.
 
 Still by hand. **Walked 2026-09-07** for the two marked below; the rest are unwalked.
 
 - [x] Ticked: the Java tab stops in `Helper.compute` *and* the Karate tab stops on the step - both,
       in one run.
-- [ ] **Attach the JVM debugger too** appears in the run configuration's Test Options and survives a
+- [x] **Attach the JVM debugger too** appears in the run configuration's Test Options and survives a
       close and reopen of the dialog. *(The setting's round-trip is unit-tested; this is the widget.)*
+      **Walked 2026-09-07.** Note for anyone repeating it: the option is per run configuration, and
+      the gutter creates one per feature and per scenario, so **Edit configuration templates > Karate**
+      is where to set it once for everything created afterwards.
 - [ ] The Java tab shows real frames and locals - `seed`, `doubled` - not just a suspended session.
 - [ ] While the Java tab is stopped, the Karate tab's variables, Evaluate and Resume do nothing, and
       catch up when the Java tab resumes. **This is the expected behaviour**, documented on the

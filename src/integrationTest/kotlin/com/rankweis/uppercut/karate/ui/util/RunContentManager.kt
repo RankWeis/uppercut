@@ -30,6 +30,9 @@ object StateHolder {
 @Remote("com.intellij.execution.ui.RunContentManager")
 interface RunContentManagerRef {
     fun getAllDescriptors(): List<RunContentDescriptor>
+
+    /** The Debug/Run tab the user is actually looking at. */
+    fun getSelectedContent(): RunContentDescriptor?
 }
 
 @Remote("com.intellij.execution.ui.RunContentDescriptor")

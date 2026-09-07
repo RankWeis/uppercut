@@ -9,12 +9,14 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.execution.remote.RemoteConfigurationType;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +69,8 @@ public final class KarateJvmDebuggerAttach {
     remote.PORT = String.valueOf(port);
     settings.setTemporary(true);
 
+    whenAttached(project, remote.PORT, channel);
     if (channel != null) {
-      releaseChannelWhenAttached(project, remote.PORT, channel);
       if (process != null) {
         // A run that dies before the debugger attaches would otherwise hold the handshake for its
         // full timeout, for a JVM that is already gone.
@@ -94,25 +96,54 @@ public final class KarateJvmDebuggerAttach {
   }
 
   /**
-   * Releases the Karate handshake once the remote session is up. {@code processStarted} fires after
-   * the platform has the connection, which is the closest thing to "the JVM debugger is watching"
-   * the platform offers a listener.
+   * Picks our remote session out of the ones the project starts, to release the Karate handshake and
+   * to make the tab come forward when it stops. {@code processStarted} fires after the platform has
+   * the connection, which is the closest thing to "the JVM debugger is watching" the platform offers
+   * a listener.
    *
    * <p>Matched on the port rather than on the configuration instance: the platform is free to run a
    * copy of the settings it was handed, and identity that quietly stops matching would leave every
    * such run waiting out the hold's full timeout before its first step. The port is this launch's
    * alone - nothing else is listening on it.</p>
    */
-  private static void releaseChannelWhenAttached(@NotNull Project project, @NotNull String port,
-    @NotNull KarateDebugChannel channel) {
+  private static void whenAttached(@NotNull Project project, @NotNull String port,
+    @Nullable KarateDebugChannel channel) {
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(XDebuggerManager.TOPIC, new XDebuggerManagerListener() {
       @Override public void processStarted(@NotNull XDebugProcess started) {
-        if (started.getSession().getRunProfile() instanceof RemoteConfiguration attached
-          && port.equals(attached.PORT)) {
-          channel.jvmDebuggerAttached();
-          Disposer.dispose(connection);
+        if (!(started.getSession().getRunProfile() instanceof RemoteConfiguration attached)
+          || !port.equals(attached.PORT)) {
+          return;
         }
+        if (channel != null) {
+          channel.jvmDebuggerAttached();
+        }
+        selectThisTabWhenItStops(project, started);
+        Disposer.dispose(connection);
+      }
+    });
+  }
+
+  /**
+   * Brings the JVM debugger's own tab forward when it stops.
+   *
+   * <p>Without this a Java breakpoint does not look like it fired: the Debug tool window is already
+   * open on the Karate tab, so the platform's "show the debugger on a breakpoint" finds the window
+   * showing and leaves the selected tab alone. The run is suspended in a tab nobody is looking at,
+   * and the tab that <i>is</i> showing has nothing suspended in it - which reads as a breakpoint
+   * that was ignored.</p>
+   *
+   * <p>The Karate session does the same thing for itself when it pauses, one level in: it selects
+   * frames and variables over its own console.</p>
+   */
+  private static void selectThisTabWhenItStops(@NotNull Project project, @NotNull XDebugProcess started) {
+    started.getSession().addSessionListener(new XDebugSessionListener() {
+      @Override public void sessionPaused() {
+        // toFrontRunContent by process handler, not by descriptor: XDebugSession's descriptor getter
+        // is deprecated and logs a throwable in split mode.
+        ApplicationManager.getApplication().invokeLater(() ->
+          RunContentManager.getInstance(project).toFrontRunContent(
+            DefaultDebugExecutor.getDebugExecutorInstance(), started.getProcessHandler()));
       }
     });
   }
