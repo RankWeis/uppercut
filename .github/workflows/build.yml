@@ -28,16 +28,54 @@ concurrency:
 
 permissions:
   contents: read
-# The four build jobs deliberately have no `needs` between them - they fan out from the start.
+# The four build jobs deliberately have no `needs` between *each other* - they fan out together, all
+# four gated on `changes` and nothing else.
 # Nothing passes data: no job downloads another's artifact, and each restores its own Gradle User
 # Home lineage rather than the build job's, so waiting for build never warmed anything. The edges
 # only bought fail-fast, at 74s on every green run to save runner minutes on the rare red one.
-# Release draft still gates on all four, so nothing ships without them.
+# Release draft still gates on three of them, so nothing ships without them - and is skipped along
+# with them on a prose-only push, which is right: a changelog commit lands after a release, not
+# before one.
 jobs:
+
+  # Whether anything that can change what gets built or tested was touched. A separate job rather
+  # than a `paths-ignore` on the triggers: a workflow skipped by a path filter never creates its
+  # check runs, so under branch protection a docs-only pull request waits on checks that will never
+  # report and can only be merged by an admin override. A job skipped by `if:` still reports, as
+  # skipped, which protection accepts.
+  #
+  # Costs one short job on every run. That is the price of the heavy four not running at all on a
+  # changelog or docs commit.
+  changes:
+    name: Detect source changes
+    runs-on: ubuntu-latest
+    outputs:
+      source: ${{ steps.filter.outputs.source }}
+    steps:
+      - name: Fetch sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d
+        with:
+          # Everything counts as source except these. README.md is deliberately absent - build.gradle
+          # .kts reads it into the plugin description - and so is gradle.properties, which carries
+          # pluginVersion and drives the release draft.
+          filters: |
+            source:
+              - '**'
+              - '!CHANGELOG.md'
+              - '!LICENSE'
+              - '!docs/**'
+              - '!site/**'
+              - '!.claude/**'
 
   # Prepare environment and build the plugin
   build:
     name: Build
+    needs: changes
+    if: needs.changes.outputs.source == 'true'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.properties.outputs.version }}
@@ -108,6 +146,8 @@ jobs:
   # Run tests and upload a code coverage report
   test:
     name: Test
+    needs: changes
+    if: needs.changes.outputs.source == 'true'
     runs-on: ubuntu-latest
     steps:
 
@@ -158,7 +198,8 @@ jobs:
   # change lands on a release branch.
   integration-test:
     name: Integration tests
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    needs: changes
+    if: ${{ needs.changes.outputs.source == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
     # No free-disk-space step here either - see the note in the verify job. This one was costing
     # 36s for the same non-problem.
@@ -227,10 +268,11 @@ jobs:
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
     name: Verify plugin
+    needs: changes
     # Push only, and nothing waits on it. It checks the plugin against the newest release and the
     # newest EAP; an EAP failure is information about a platform still in flux, not a reason to
     # stop a release. Release draft deliberately does not list it in `needs`.
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ needs.changes.outputs.source == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
     # No free-disk-space step here. It used to run because "the IDE (~4 GB) plus a JDK need more
     # room than a hosted runner has spare by default", which stopped being true: a hosted ubuntu
