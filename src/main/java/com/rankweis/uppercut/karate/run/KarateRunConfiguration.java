@@ -291,13 +291,11 @@ public class KarateRunConfiguration extends ApplicationConfiguration implements 
             SMTestRunnerConnectionUtil.createConsole(consoleProperties);
           console.initUI();
           console.addMessageFilter(new UppercutConsoleFilter(getProject()));
-          // One line at the top of a Debug run saying what this debugger does and does not do.
-          // startProcess writes to this console right after, so this line lands first.
+          // The one thing about a Debug run that is not visible from the UI: it ignores the
+          // parallelism setting. What the debugger can do belongs on the docs site, not in front of
+          // the user on every run.
           if (DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId())) {
-            console.print(
-              "Karate debugger: breakpoints on feature-file steps pause the run and show the "
-                + "scenario's variables; stepping is not supported yet. Scenarios run one at a time "
-                + "while debugging.\n",
+            console.print("Karate debugger: scenarios run one at a time while debugging.\n",
               ConsoleViewContentType.SYSTEM_OUTPUT);
           }
           consoles.add(console);

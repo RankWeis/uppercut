@@ -100,6 +100,12 @@ public final class KarateDebugChannel implements AutoCloseable {
    * did set. The agent's own timeout is the backstop if the session never gets that far.
    */
   private volatile boolean breakpointsKnown;
+  /**
+   * Settings the session asked for before the agent existed. Anything sent while there is no socket
+   * is dropped, and the session starts while the test JVM is still booting, so what the session wants
+   * is held here and sent the moment it connects - the same reason the breakpoint set is.
+   */
+  private volatile Boolean pauseOnFailure;
 
   public KarateDebugChannel() throws IOException {
     this(0);
@@ -206,9 +212,10 @@ public final class KarateDebugChannel implements AutoCloseable {
     send(DebugProtocol.STEP + " " + thread);
   }
 
-  /** Whether a failed step should stop the run. Sent once, when the session starts. */
-  public void setPauseOnFailure(boolean pauseOnFailure) {
-    send(DebugProtocol.PAUSE_ON_FAILURE + " " + pauseOnFailure);
+  /** Whether a failed step should stop the run. Held until the agent connects if it has not yet. */
+  public void setPauseOnFailure(boolean pause) {
+    pauseOnFailure = pause;
+    send(DebugProtocol.PAUSE_ON_FAILURE + " " + pause);
   }
 
   public void skipStep(@NotNull String thread) {
@@ -229,6 +236,12 @@ public final class KarateDebugChannel implements AutoCloseable {
           StandardCharsets.UTF_8), true);
       }
       dispatch(Listener::agentConnected);
+      Boolean pause = pauseOnFailure;
+      if (pause != null) {
+        // Before the breakpoint set: BREAKPOINTS_END releases the agent to run, and by then it must
+        // already know whether a failed step should stop it.
+        send(DebugProtocol.PAUSE_ON_FAILURE + " " + pause);
+      }
       sendBreakpoints();
       try (BufferedReader in = new BufferedReader(
         new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8))) {

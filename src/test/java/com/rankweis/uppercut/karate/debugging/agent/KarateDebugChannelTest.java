@@ -255,6 +255,23 @@ public class KarateDebugChannelTest {
   }
 
   @Test
+  public void settingsAskedForBeforeTheAgentConnectedStillReachIt() throws Exception {
+    // The session starts while the test JVM is still booting, so anything it asks for then is sent to
+    // a socket that does not exist yet. It has to be held and replayed, or a failed step never stops.
+    RecordingListener listener = new RecordingListener();
+    channel = new KarateDebugChannel();
+    channel.setListener(listener);
+    channel.start();
+    channel.setPauseOnFailure(true);
+    channel.setBreakpoints(List.of());
+
+    BufferedReader fromChannel = connectAgent();
+    assertEquals(DebugProtocol.PAUSE_ON_FAILURE + " true", fromChannel.readLine());
+    assertEquals(DebugProtocol.CLEAR, fromChannel.readLine());
+    assertEquals(DebugProtocol.BREAKPOINTS_END, fromChannel.readLine());
+  }
+
+  @Test
   public void reportsTheAgentGoingAway() throws Exception {
     RecordingListener listener = new RecordingListener();
     channel = new KarateDebugChannel();
