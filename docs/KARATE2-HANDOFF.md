@@ -25,20 +25,16 @@ that work that don't live anywhere more discoverable. For anything else:
 - **The Karate version override (Settings > Tools > Karate) is application-level, not
   per-project.** Awkward when working across projects on different majors; less pressing since
   detection is per-module. Revisit only on a real user report.
-- **Karate 2 feature-file debugging is not planned.** Karate 1's debugger works because each
-  step is a discrete Java method (`StepRuntime.findMethodsMatching`) that JDI can bind to.
-  Karate 2 runs steps through the karate-js interpreter on virtual threads — no per-step
-  bytecode, and `findMethodsMatching` was removed. Karate Labs' own DAP backend
-  (`io.karatelabs.debug.Main`) needs a jar (`io/karatelabs/karate-ide`) that isn't on Maven
-  Central, so the plugin can never match the v1 UX for v2. A pause-only walking-skeleton design
-  (commit [`0b99a31`](../../commit/0b99a31), `docs/karate2-pause-debugging.md` on that commit)
-  exists as archive; the delivered scope — pause + resume only — is too thin to ship without
-  users expecting it to grow. See [`site/status.md`](../site/status.md#debugging) and the
-  linked GitHub issue for the full reasoning. A v2 Debug run prints a one-line console notice
-  at startup so users don't wait for a breakpoint that will never fire; Java breakpoints in
-  step-definition code still work because the JVM is a plain Java debug target. Revisit only
-  if the `karate-ide` jar reaches a public Maven repo, or if a v2 API surfaces that gives us
-  the v1 UX under the virtual-thread runtime.
+- **Karate 2 feature-file debugging: decision reversed, see
+  [`DEBUGGER.md`](DEBUGGER.md).** It was ruled out because Karate 1's debugger binds JDI to a
+  discrete Java method per step (`StepRuntime.findMethodsMatching`), v2 has no such method, and
+  Karate Labs' DAP backend (`io/karatelabs/karate-ide`) is not on Maven Central — with the caveat
+  "revisit if a v2 API surfaces that gives us the v1 UX". It did: `Runner.Builder.debugSupport(
+  RunInterceptor, DebugPointFactory)` is public in karate-core 2.x and its `karate-js` types are on
+  Maven Central. `DEBUGGER.md` designs one debugger over that hook for both majors, with v1 rebased
+  off JDI onto it. Until it ships, the shipped behaviour stands: a v2 Debug run prints a console
+  notice that feature-file breakpoints will not fire, and Java breakpoints in step-definition code
+  still work because the JVM is a plain Java debug target.
 
 ## Known cosmetic issue, deliberately unfixed
 

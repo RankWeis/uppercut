@@ -246,7 +246,8 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     // relative to the run's working directory, so the standard src/test/java layout reports
     // "java/sample/x.feature" - a leading segment no source root can resolve. Stripping is what the
     // v2 path already does, and without it the feature node loses its double-click navigation.
-    Optional.ofNullable(findFeatureFile(featureName))
+    Optional.ofNullable(FeaturePathResolver.findFeatureFile(
+      testConsoleProperties.getProject(), featureName))
       .ifPresent(file -> testStarted.addAttribute("locationHint", "file://" + file.getPath() + ":1"));
 
     if (!idToItem.containsKey(id)) {
@@ -280,7 +281,8 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     if (startOrFinish.equals("START")) {
       ServiceMessageBuilder scenarioStarted = ServiceMessageBuilder.testStarted(scenarioName);
       String finalScenarioName = scenarioName;
-      Optional.ofNullable(findFeatureFile(featureName))
+      Optional.ofNullable(FeaturePathResolver.findFeatureFile(
+        testConsoleProperties.getProject(), featureName))
         .ifPresent(file -> {
           int lineNumber = ApplicationManager.getApplication()
             .runReadAction((Computable<Integer>) () -> {
@@ -369,7 +371,8 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
         }
 
         @Override public String resolveLocation(@NotNull String featurePath, int line) {
-          VirtualFile file = findFeatureFile(featurePath);
+          VirtualFile file = FeaturePathResolver.findFeatureFile(
+            testConsoleProperties.getProject(), featurePath);
           return file == null ? null : "file://" + file.getPath() + ":" + line;
         }
       });
@@ -377,54 +380,4 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     return v2EventProcessor;
   }
 
-  /**
-   * Karate 2.x event paths are relative to the working directory and point at the compiled test
-   * classpath (e.g. {@code build/resources/test/sample/x.feature} for Gradle, {@code target/test-classes/...}
-   * for Maven). Strip leading segments until a suffix resolves against a source root; only when the
-   * whole stripping pass finds nothing, fall back to the project dir.
-   *
-   * <p>The two passes must not be interleaved: the runtime path resolves against the project dir
-   * as-is (the compiled copy under {@code build/} really exists), so a combined root list would
-   * short-circuit on the generated file before stripping ever produced the source-relative suffix.
-   * Navigation would then open the build copy, where edits and breakpoints are silently discarded
-   * on the next build.
-   */
-  private VirtualFile findFeatureFile(String featurePath) {
-    List<VirtualFile> sourceRoots =
-      Arrays.stream(ModuleManager.getInstance(testConsoleProperties.getProject()).getModules())
-        .flatMap(m -> Arrays.stream(ModuleRootManager.getInstance(m).getSourceRoots()))
-        .toList();
-    VirtualFile inSourceRoot = resolveByStripping(featurePath, sourceRoots);
-    if (inSourceRoot != null) {
-      return inSourceRoot;
-    }
-    LOG.info("Karate feature path did not resolve against any source root, falling back to project dir. "
-      + "path=" + featurePath + " sourceRoots=" + sourceRoots);
-    VirtualFile projectDir = ProjectUtil.guessProjectDir(testConsoleProperties.getProject());
-    return projectDir == null ? null : resolveByStripping(featurePath, List.of(projectDir));
-  }
-
-  private static @Nullable VirtualFile resolveByStripping(String featurePath, List<VirtualFile> roots) {
-    // findFileByRelativePath, not VfsUtil.findRelativeFile: the latter treats an absolute path
-    // (e.g. C:/... - what Karate 2 emits when the working dir is not the module root) as absolute and
-    // ignores the base root entirely, resolving the build-output copy on the first iteration no
-    // matter which roots are tried first.
-    String candidate = featurePath.replace('\\', '/');
-    while (!candidate.isEmpty()) {
-      String finalCandidate = candidate;
-      VirtualFile found = roots.stream().filter(Objects::nonNull)
-        .map(root -> root.findFileByRelativePath(finalCandidate))
-        .filter(Objects::nonNull)
-        .findFirst().orElse(null);
-      if (found != null) {
-        return found;
-      }
-      int slash = candidate.indexOf('/');
-      if (slash < 0) {
-        return null;
-      }
-      candidate = candidate.substring(slash + 1);
-    }
-    return null;
-  }
 }

@@ -27,6 +27,12 @@ public final class KarateSettingsState implements PersistentStateComponent<Karat
   private String defaultEnvironment = "";
   private Integer defaultParallelism = 1;
   private boolean useKarateJavaScriptEngine = false;
+  /**
+   * Whether a Debug run stops on a step that fails. On by default: it is the question a debugger is
+   * usually opened for, and the alternative is guessing where to breakpoint and running again. Turn
+   * it off when debugging a suite with many expected failures.
+   */
+  private boolean pauseOnFailedStep = true;
   private KarateVersionPreference karateVersionPreference = KarateVersionPreference.AUTO;
 
   public static KarateSettingsState getInstance() {
@@ -42,6 +48,7 @@ public final class KarateSettingsState implements PersistentStateComponent<Karat
 
   @Override
   public void loadState(KarateSettingsState state) {
+    this.pauseOnFailedStep = state.pauseOnFailedStep;
     this.defaultEnvironment = state.defaultEnvironment;
     this.useKarateJavaScriptEngine = state.useKarateJavaScriptEngine;
     this.defaultParallelism = state.defaultParallelism == null ? 1 : state.defaultParallelism;

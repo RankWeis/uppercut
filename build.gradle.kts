@@ -253,6 +253,9 @@ tasks.jacocoTestReport {
 
 tasks.check {
     dependsOn(tasks.jacocoTestReport)
+    // The runner subproject has its own unit tests (the debug agent and its wire protocol). Root
+    // `check` is what CI runs, so without this edge they would never run anywhere.
+    dependsOn(":KarateTestRunner:test")
 }
 
 idea {

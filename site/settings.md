@@ -58,7 +58,10 @@ Environment
 Parallelism
 : Threads for this run. Empty means the Tools > Karate default.
 
-Debug port (will suspend if set)
-: Only used when you start the configuration with **Debug** rather than Run. Normally the IDE picks a free port for the test JVM; set this to use a fixed one - useful when a firewall or a container only allows certain ports. The JVM starts suspended on it and waits for the IDE's debugger to attach, which happens automatically. On Karate 1, breakpoints in feature files are then hit. On Karate 2 the run still starts under the debugger, but feature-file breakpoints don't pause it yet - see the [status page](status#debugging).
+Debug: pause when a step fails
+: On by default. A Debug run stops on a step that fails, with the scenario still standing - the error is shown and the variables are as the failure left them, so you can see what `response` actually held. The Debug toolbar has a **Pause on Failed Step** toggle for the same thing, which takes effect on the next step rather than the next run - reach for that when a suite is failing in twenty places and stopping at each one is not what you came for. Toggling it there changes this setting too.
+
+Debug port
+: Only used when you start the configuration with **Debug** rather than Run. The IDE listens on this port for the test JVM's debug connection; leave it blank and a free port is picked for you. Set it when a firewall or a container only allows certain ports through. See the [status page](status#debugging) for what the debugger does.
 
 There is no working-directory field: the plugin sets it to the content root that contains the feature (the module directory in a Gradle or Maven project), which is where Karate looks for `karate-config.js` and resolves `classpath:` paths from.

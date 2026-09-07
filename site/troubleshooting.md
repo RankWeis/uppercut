@@ -91,8 +91,47 @@ Add a provider to the module, e.g. `testRuntimeOnly("ch.qos.logback:logback-clas
 
 On Karate 2 the tree is built from Karate's live event stream. If the run prints results in the console but the tree stays empty, the plugin isn't seeing the events - most often because output is being redirected or wrapped by a custom logging setup. Please report it with the console output; the lines beginning `<<UPPERCUT-V2>>` are the ones the tree is built from.
 
-## A breakpoint on a step in a Karate 2 `.feature` file never pauses
+## A breakpoint on a step in a `.feature` file never pauses
 
-By design, and not planned to change - see the [debugging table](status#debugging) for why. Karate 1 maps a Gherkin step to a discrete Java method and sets a JDI breakpoint on it; Karate 2 runs steps through the karate-js interpreter on virtual threads, so there is no Java bytecode location to bind to, and Karate Labs' own DAP server isn't available on Maven Central. A v2 debug run prints a one-line notice about this at the top of the console.
+- The breakpoint must be on a **step** line - one starting with `*`, `Given`, `When`, `Then`, `And`
+  or `But`. A breakpoint on `Feature:`, a comment or a blank line is never reached.
+- The feature must actually be part of the run. A breakpoint in a feature this run does not execute
+  is not an error and does not hold the run up.
+- **A run started from a single scenario only runs that scenario.** A breakpoint in a different
+  scenario of the same file will not be reached - the gutter looks identical either way. Run the
+  feature (the icon beside `Feature:`) to reach all of them.
+- It must be a **Karate** run configuration. Running the same feature through Gradle or Maven
+  ("Tests in '...'") launches Karate without the plugin's debugger.
+- Use **Debug**, not Run.
 
-Java breakpoints in step-definition code (`@When`, custom Java methods, anything the JVM debugger can reach) do still stop under Karate 2 Debug - the JVM launches with JDWP and IntelliJ attaches to it as normal. Only breakpoints placed on lines inside the `.feature` file itself are skipped.
+Stepping through steps, breakpoint conditions and pausing on a failed step are not built yet - the
+step buttons continue to the next breakpoint and say so. See the
+[debugging table](status#debugging) for what is and is not there.
+
+## "This project still has Java line breakpoints in feature files"
+
+Breakpoints set by earlier versions of the plugin were saved as **Java** line breakpoints, because
+that is how feature-file debugging used to work. Upgrading does not remove them: they stay in the
+gutter, they can no longer pause anything, and a new Karate breakpoint on the same line appears
+beside them - so the line shows two markers and the first click removes the dead one rather than
+adding a live one.
+
+Rather than let a Debug run go by with your breakpoints apparently ignored, the plugin refuses to
+start and names the files. Open the Breakpoints dialog (Ctrl/Cmd+Shift+F8), delete the entries under
+**Java Line Breakpoints** that point at `.feature` files, and set them again. New ones are created as
+**Karate feature line** breakpoints and work on both Karate majors. This is a one-time cleanup;
+disabling them instead of deleting them also clears the refusal.
+
+## A Java breakpoint doesn't stop during a Karate run
+
+By design, since the debugger stopped using JDWP. Karate runs are debugged by the plugin itself,
+which is what lets both Karate majors stop on the step and show the scenario's own variables; there
+is no JVM debugger attached to a Karate run any more.
+
+To debug Java that a feature calls through `Java.type(...)`, run the `@Karate.Test` JUnit class with
+IntelliJ's ordinary Java or Gradle test configuration and debug that - the JVM debugger behaves as
+usual there. That run has no feature-file breakpoints, so the two are used for different questions.
+
+Note that a breakpoint in the `@Karate.Test` class itself never pauses under a **Karate** run
+configuration, and never did: the plugin launches its own runner rather than your JUnit class. Debug
+that class through the Java or Gradle configuration instead.

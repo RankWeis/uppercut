@@ -80,6 +80,38 @@ per-module detection. See `Karate2UITest`.
       and RC from since-build upward by default, so this is a spot-check of the install rather than
       of the API surface.
 
+## 6b. Feature-file debugging (both majors)
+
+Nothing automated covers the debug session itself (see `docs/DEBUGGER.md`); the agent, the channel and
+the value rendering have unit tests, and `:v1:debugHarness` / `:v2:debugHarness` cover the runner
+halves against real suites, but the IDE half has only this list. Run these in
+`testProjects/karate-versions`. **Verified 2026-09-06** on macOS / IDEA 2026.2 - v2 against phase 2,
+then the whole list again on v1 after phase 4 moved it onto the same debugger.
+
+- [x] Gutter breakpoint on a step line shows one red dot, on both modules. *(A leftover `java-line`
+      breakpoint from a previous version draws a second one on that line alone - see the refusal
+      below.)*
+- [x] Debug on a project that still holds a Java line breakpoint in a feature file refuses to start
+      and names the file, in a balloon in the corner.
+- [x] After deleting it, Debug pauses before the breakpointed step, brings frames and variables
+      forward, and the frame names the step and scenario.
+- [x] Variables show what Karate holds - `id`, `num`, `env`, and a called feature's `result` as a map
+      that opens - not Java frames from inside karate-core.
+- [x] Evaluate runs Karate expressions: `id`, `result.greeting`. A deliberately wrong expression
+      shows Karate's own error **and the run still finishes with nothing failed** - on Karate 1 that
+      is the failed-reason restore in `KarateV1DebugAdapter`.
+- [x] Resume continues to the next breakpoint or to the end; the test tree finishes normally.
+- [x] A breakpoint added while the run is suspended is picked up. *(Note: a run started from a single
+      scenario only executes that scenario, so a breakpoint in another scenario of the same file will
+      not be reached - that is not a fault.)*
+- [x] The step buttons continue to the next breakpoint and say so.
+- [x] Stop while paused ends the run with no java process left behind (`jps`).
+- [x] Karate 1 and Karate 2 both open a single Debug tab; no JVM debugger attaches.
+
+Not covered, for want of a fixture: a breakpoint in Java a feature calls through `Java.type(...)`.
+A breakpoint in the `@Karate.Test` JUnit class proves nothing here - a Karate run configuration
+launches the plugin's runner, not that class.
+
 ## 7. Environment matrix
 
 - [ ] Linux run of the whole automated suite (first CI run covers this - watch it).

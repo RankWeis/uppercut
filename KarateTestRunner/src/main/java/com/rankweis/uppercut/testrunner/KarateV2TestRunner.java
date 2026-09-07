@@ -1,5 +1,7 @@
 package com.rankweis.uppercut.testrunner;
 
+import com.rankweis.uppercut.testrunner.debug.DebugAgent;
+import com.rankweis.uppercut.testrunner.debug.KarateV2DebugAdapter;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -33,13 +35,23 @@ public class KarateV2TestRunner {
     "SUITE_ENTER", "SUITE_EXIT", "FEATURE_ENTER", "FEATURE_EXIT",
     "OUTLINE_ENTER", "SCENARIO_ENTER", "SCENARIO_EXIT", "STEP_EXIT", "ERROR");
 
+  /** How long to wait for the IDE's first breakpoint set before running anyway. */
+  private static final long HANDSHAKE_TIMEOUT_MILLIS = 15_000L;
+
   private final Map<String, List<String>> params;
+
+  /** Non-null only under Debug, and only once the IDE has answered on the debug port. */
+  private KarateV2DebugAdapter debugAdapter;
 
   public KarateV2TestRunner(Map<String, List<String>> params) {
     this.params = params;
   }
 
-  void doTest() throws Exception {
+  /**
+   * Public so the debug harness in {@code testProjects/karate-versions} can drive exactly this path
+   * against a real Karate 2 classpath; {@link KarateTestRunner#main} is the production caller.
+   */
+  public void doTest() throws Exception {
     String[] testNames =
       Optional.ofNullable(params.get("testname")).orElse(List.of()).stream()
         .map(KarateV2TestRunner::toV2Path)
@@ -81,12 +93,14 @@ public class KarateV2TestRunner {
       builderClass.getMethod("karateEnv", String.class).invoke(builder, env.get());
     }
 
+    DebugAgent agent = connectDebugAgent(builder, builderClass);
+
     Class<?> listenerClass = Class.forName("io.karatelabs.core.RunListener");
     Object listener = Proxy.newProxyInstance(
       Thread.currentThread().getContextClassLoader(),
       new Class<?>[]{listenerClass},
       (proxy, method, args) -> switch (method.getName()) {
-        case "onEvent" -> emitEvent(args[0]);
+        case "onEvent" -> onEvent(args[0]);
         case "toString" -> "UppercutV2RunListener";
         case "hashCode" -> System.identityHashCode(proxy);
         case "equals" -> proxy == args[0];
@@ -99,7 +113,55 @@ public class KarateV2TestRunner {
         .map(l -> l.get(0))
         .map(Integer::parseInt)
         .orElse(1);
-    builderClass.getMethod("parallel", int.class).invoke(builder, parallelism);
+    try {
+      builderClass.getMethod("parallel", int.class).invoke(builder, parallelism);
+    } finally {
+      if (agent != null) {
+        // Whatever ended the suite - success, failure, an exception on the way in - no thread may be
+        // left parked on a breakpoint with nobody to release it.
+        agent.close();
+      }
+    }
+  }
+
+  /**
+   * Opens the debug channel when the IDE launched this run under Debug ({@code --debug-port}), and
+   * installs Karate 2's interceptor on the builder.
+   *
+   * <p>Returns null - and the run proceeds with no debugger at all - when there is no port, when the
+   * IDE does not answer, or when this Karate build has no {@code debugSupport}. Losing breakpoints is
+   * a bad debug session; failing the run because a socket did not connect is a bad test run.</p>
+   */
+  private DebugAgent connectDebugAgent(Object builder, Class<?> builderClass) {
+    String port = Optional.ofNullable(params.get("debug-port")).orElse(List.of())
+      .stream().findFirst().orElse(null);
+    if (port == null || port.isBlank()) {
+      return null;
+    }
+    DebugAgent agent = new DebugAgent();
+    if (!agent.connect(Integer.parseInt(port), HANDSHAKE_TIMEOUT_MILLIS, 2)) {
+      return null;
+    }
+    debugAdapter = KarateV2DebugAdapter.install(builder, builderClass, agent);
+    if (debugAdapter == null) {
+      agent.close();
+      return null;
+    }
+    return agent;
+  }
+
+  /**
+   * Every run event goes two places: the debug adapter, which needs STEP_ENTER to pair the executing
+   * thread with its ScenarioRuntime, and the IDE's test tree.
+   */
+  private boolean onEvent(Object runEvent) {
+    // Emit first: the debug adapter parks the thread on a failed step, and the IDE should have the
+    // step in its test tree before the run stops on it rather than after it is resumed.
+    boolean proceed = emitEvent(runEvent);
+    if (debugAdapter != null) {
+      debugAdapter.observe(runEvent);
+    }
+    return proceed;
   }
 
   /**
@@ -211,8 +273,12 @@ public class KarateV2TestRunner {
     }
   }
 
-  /** Minimal JSON writer for the Map/List/String/Number/Boolean shapes produced by {@code RunEvent.toJson()}. */
-  static String toJsonString(Object o) {
+  /**
+   * Minimal JSON writer for the Map/List/String/Number/Boolean shapes produced by
+   * {@code RunEvent.toJson()}. Public because the debug channel emits the same shapes and must escape
+   * them the same way - one writer, one set of escaping bugs.
+   */
+  public static String toJsonString(Object o) {
     if (o == null) {
       return "null";
     }

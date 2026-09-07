@@ -4,6 +4,59 @@
 
 ## [Unreleased]
 
+Since 3.0, Uppercut has gained two things worth knowing about: **Karate 2 support**, and **debugging
+that works on feature files themselves**.
+
+### Added
+
+- **Breakpoints in feature files, on Karate 1 and Karate 2.** Click the gutter next to a step, press
+  Debug, and the run stops before that step with the line highlighted. The debugger shows the
+  scenario's variables the way Karate holds them — `response`, and whatever your `def`s have set,
+  as trees you can open — and Evaluate runs *Karate* expressions in the paused scenario, so
+  `response.items[0]` means there exactly what it means in the feature. Breakpoints can be added and
+  moved while the run is suspended. Scenarios run one at a time while debugging, so a suspended run
+  is followable.
+
+- **A failed step stops the run.** Rather than guessing where to put a breakpoint and running again,
+  Debug stops on the step that failed, with the scenario still standing: the error is shown and the
+  variables are as the failure left them. On by default, with a **Pause on Failed Step** toggle on the
+  Debug toolbar for the moment a suite is failing in twenty places and stopping at each one is not
+  what you came for.
+
+- **Stepping.** The step buttons run to the next step. A step that calls another feature stops on the
+  called feature's first step rather than after the call — telling step over from step into is not
+  built yet.
+
+- **Conditional breakpoints and Skip Step.** Put a Karate expression in a breakpoint's Condition field
+  and the run stops there only when it holds; a condition that cannot be evaluated stops the run and
+  says why rather than quietly never stopping. **Skip Step** on the debugger toolbar continues without
+  running the step the run is stopped on, using Karate's own skip.
+
+- **Karate 2 (`karate-junit6`) runs from the IDE**, first shipped in 3.0 and now with debugging to
+  match. The Karate version is detected per module from the classpath, so a repository can migrate
+  one module at a time; Settings > Tools > Karate pins it if you would rather choose. Karate 1
+  projects are unaffected and remain the default.
+
+### Changed
+
+- **Karate 1 breakpoints stop on the step itself.** They used to be Java breakpoints bound to a
+  step-definition method found by matching the step's text — which stopped inside Karate's own code
+  with Java locals in view, and silently failed to bind for steps no method matched. You now stop on
+  the step, with the scenario's variables.
+
+  **One-time cleanup:** breakpoints you already had in feature files were saved as *Java* line
+  breakpoints and cannot pause a Karate run any more. Rather than let a Debug run go by with your
+  breakpoints apparently ignored, the plugin refuses to start and names the files. Delete them under
+  **Java Line Breakpoints** in the Breakpoints dialog (Ctrl/Cmd+Shift+F8) and set them again.
+
+### Removed
+
+- **Java breakpoints no longer stop during a Karate run.** Karate has no user-written step
+  definitions, so the JVM debugger was only reachable for Java a feature calls through `Java.type`
+  and for stepping into Karate itself — and keeping it meant every Karate run carried two debuggers.
+  To debug Java called from a feature, run your `@Karate.Test` JUnit class through IntelliJ's
+  ordinary Java or Gradle test configuration.
+
 ## [3.0.1] - 2026-09-06
 
 ### Added

@@ -39,4 +39,4 @@ Karate 1 and Karate 2 projects both work, and the version is detected **per modu
 
 ## Debugging
 
-Press Debug on a Karate 1 run and breakpoints in your feature files are hit, with the usual stepping and variables view for the Java underneath. Karate 2 debugging is designed and next in line; see the [status page](status) for where that stands.
+Press Debug and a breakpoint on a step in a feature file stops the run there, on both Karate majors. The debugger shows the scenario's variables as Karate holds them, and Evaluate runs Karate expressions in the paused scenario. Stepping through steps isn't built yet, and Java breakpoints no longer stop during a Karate run - see the [status page](status#debugging) for both.

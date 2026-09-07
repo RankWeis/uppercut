@@ -20,6 +20,9 @@ dependencies {
         isTransitive = false
     }
     implementation("ch.qos.logback:logback-classic:${properties("logbackVersion").get()}")
+
+    testImplementation(libs.junitJupiter)
+    testRuntimeOnly(libs.junitPlatformLauncher)
 }
 
 java {
