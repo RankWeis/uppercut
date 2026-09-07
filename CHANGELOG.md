@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Highlights
+
+- **Debug the Java a feature calls.** Tick **Attach the JVM debugger too** on a Karate run
+  configuration and Debug opens a second tab where Java breakpoints stop - for code reached through
+  `Java.type(...)`, or for stepping into Karate itself. Off by default.
+
 ### Added
 
 - **An opt-in JVM debugger, in its own tab.** Karate runs are debugged by the plugin itself, with no
