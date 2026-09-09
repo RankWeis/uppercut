@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
+import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import io.karatelabs.js.KarateJsNoPluginExtension;
 import java.util.List;
 import org.mockito.Mock;
@@ -92,6 +93,54 @@ public class UppercutLexerTest extends LightPlatformTestCase {
     lexer.start("", 0, 0, 0);
     lexer.advance();
     assertNull(lexer.getTokenType());
+  }
+
+  /**
+   * The editor's incremental highlighter requires a gapless token sequence in which every token
+   * advances. A cell that ends at or before it starts breaks that sequence and stalls the lexer -
+   * see https://github.com/rankweis/uppercut/issues/380, where typing an Examples table froze the IDE.
+   */
+  private void assertLexesCleanly(String text) {
+    lexer.start(text, 0, text.length(), 0);
+    int expectedStart = 0;
+    int guard = 0;
+    while (lexer.getTokenType() != null) {
+      final int start = lexer.getTokenStart();
+      final int end = lexer.getTokenEnd();
+      assertTrue("token " + lexer.getTokenType() + " ends at " + end + " but starts at " + start
+        + " in [" + text + "]", end > start);
+      assertEquals("gap or overlap before " + lexer.getTokenType() + " in [" + text + "]",
+        expectedStart, start);
+      expectedStart = end;
+      if (++guard > 5000) {
+        fail("lexer did not terminate on [" + text + "]");
+      }
+      lexer.advance();
+    }
+    assertEquals("tokens do not cover [" + text + "]", text.length(), expectedStart);
+  }
+
+  public void testEmptyTableCellDoesNotStallTheLexer() {
+    assertLexesCleanly("Examples:\n  |a||b|\n");
+  }
+
+  public void testDoublePipeAfterSpaceDoesNotStallTheLexer() {
+    assertLexesCleanly("Examples:\n  |dateOfBirth| ||\n");
+  }
+
+  public void testUnfinishedTableRowDoesNotStallTheLexer() {
+    assertLexesCleanly("Examples:\n  |dateOfBirth| ||+\n");
+  }
+
+  public void testLogicalOrOutsideTableIsNotDelimiter() {
+    String text = "* if (a || b) print 'x'\n";
+    assertLexesCleanly(text);
+    lexer.start(text, 0, text.length(), 0);
+    while (lexer.getTokenType() != null) {
+      assertNotSame("'||' outside a table must not lex as a table delimiter",
+        KarateTokenTypes.PIPE, lexer.getTokenType());
+      lexer.advance();
+    }
   }
 
   public void testContainsCharEarlierInLine() {
