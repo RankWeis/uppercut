@@ -16,6 +16,10 @@
   lexer produce a cell that ended before it began and then stop advancing, so the editor rebuilt a
   broken token sequence on every keystroke. Any reparse of such a file could hang, not only typing
   in one. (#380)
+- Closed off two more ways the lexer could hang on a feature file, both neighbours of the same
+  fault: resuming a highlight part-way through an embedded JavaScript, JSON or XML block used to
+  read positions from whichever block was lexed last, and a Karate marker such as `#(response.id)`
+  or `#string` running past the end of an embedded JSON block could spin. Neither had been reported.
 
 ## [3.2.0] - 2026-09-07
 
