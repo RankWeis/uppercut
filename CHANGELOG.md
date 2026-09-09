@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Stopped filling `idea.log` with stack traces while you type. Every keystroke that left a step's
+  embedded JavaScript half-written logged a parse failure at warning level, stack trace and all —
+  and half-written is what JavaScript looks like for as long as you are writing it. The mistake is
+  still marked in the editor where it belongs; only the logging is gone.
+
 ## [3.2.1] - 2026-09-09
 
 ### Highlights

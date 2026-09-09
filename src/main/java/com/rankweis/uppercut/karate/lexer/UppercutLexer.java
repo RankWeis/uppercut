@@ -81,7 +81,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 public class UppercutLexer extends LexerBase {
 
   protected CharSequence myBuffer = Strings.EMPTY_CHAR_SEQUENCE;
-  protected int myStartOffset = 0;
   protected int myEndOffset = 0;
   private int myPosition;
   private IElementType myCurrentToken;
@@ -186,7 +185,6 @@ public class UppercutLexer extends LexerBase {
 
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState, boolean advance) {
     myBuffer = buffer;
-    myStartOffset = startOffset;
     myEndOffset = endOffset;
     myPosition = startOffset;
     myState = initialState;

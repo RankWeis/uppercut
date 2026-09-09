@@ -53,7 +53,10 @@ public class KarateJsParser implements PsiParser {
     try {
       new Parser(new Source(sb.toString()), b, currentOffset).parse();
     } catch (Exception e) {
-      logger.warn("Error parsing", e);
+      // Half-written JavaScript is the normal state of a file being typed in, and the error is
+      // already reported where it belongs - as an error element on the offending token, below.
+      // At warn this logged a stack trace to stdout on every keystroke.
+      logger.debug("Error parsing embedded JavaScript", e);
       int errorOffset = b.getCurrentOffset();
       markRoot.rollbackTo();
       PsiBuilder.Marker error = b.mark();
