@@ -4,6 +4,19 @@
 
 ## [Unreleased]
 
+### Highlights
+
+- **Writing an `Examples:` table no longer freezes the IDE.** A row containing `||` sent the lexer
+  into a loop that pegged the CPU until the IDE was killed. (#380)
+
+### Fixed
+
+- Fixed the IDE freezing, with the CPU pegged, while writing an `Examples:` table. A row containing
+  `||` — an empty cell, and also what is on screen for a moment while typing a row out — made the
+  lexer produce a cell that ended before it began and then stop advancing, so the editor rebuilt a
+  broken token sequence on every keystroke. Any reparse of such a file could hang, not only typing
+  in one. (#380)
+
 ## [3.2.0] - 2026-09-07
 
 ### Highlights

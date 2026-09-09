@@ -486,9 +486,10 @@ public class UppercutLexer extends LexerBase {
       myCurrentToken = TEXT;
       advanceToNextInterestingToken();
     } else if (c == '|' && myState != STATE_INSIDE_PYSTRING
-      && (myPosition + 1 >= myEndOffset || myBuffer.charAt(myPosition + 1) != '|')) {
+      && (myState == STATE_TABLE || myPosition + 1 >= myEndOffset || myBuffer.charAt(myPosition + 1) != '|')) {
       // Single '|' is a table pipe delimiter. '||' is a logical OR operator
-      // (e.g., in Karate's "* if (a || b)") and should be treated as TEXT.
+      // (e.g., in Karate's "* if (a || b)") and should be treated as TEXT - but only outside a
+      // table, where '||' is an empty cell between two delimiters.
       myCurrentToken = KarateTokenTypes.PIPE;
       myPosition++;
       myState = STATE_TABLE;
@@ -520,8 +521,14 @@ public class UppercutLexer extends LexerBase {
         }
         myPosition++;
       }
-      while (myPosition > 0 && Character.isWhitespace(myBuffer.charAt(myPosition - 1))) {
+      // Trailing whitespace belongs to the following WHITE_SPACE token, not to the cell. Stop at
+      // the token start: a cell that ends at or before where it began stalls the lexer, and the
+      // editor's incremental highlighter spins on the broken token sequence.
+      while (myPosition > myCurrentTokenStart && Character.isWhitespace(myBuffer.charAt(myPosition - 1))) {
         myPosition--;
+      }
+      if (myPosition == myCurrentTokenStart) {
+        myPosition++;
       }
     } else if (isStringAtPosition("function") && containsCharEarlierInLine('=') && jsLexer != null) {
       int endOfFunction = findNextMatchingClosingBrace();
