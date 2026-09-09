@@ -6,6 +6,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.rankweis.uppercut.karate.psi.GherkinKeywordProvider;
 import com.rankweis.uppercut.karate.psi.KarateTokenTypes;
 import io.karatelabs.js.KarateJsNoPluginExtension;
+import java.util.ArrayList;
 import java.util.List;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -140,6 +141,54 @@ public class UppercutLexerTest extends LightPlatformTestCase {
       assertNotSame("'||' outside a table must not lex as a table delimiter",
         KarateTokenTypes.PIPE, lexer.getTokenType());
       lexer.advance();
+    }
+  }
+
+  /**
+   * A state carrying a sub-lexer's offset means nothing without that sub-lexer, which start() has
+   * no way to rebuild. Restarting from one used to read offsets off whichever region the sub-lexer
+   * was last pointed at; the lexer must fall back to plain Karate rather than emit a token that
+   * ends before it began.
+   */
+  public void testRestartFromEveryTokenBoundaryStaysValid() {
+    String text = """
+      Feature: f
+
+        Background:
+          * def now = function() { return java.lang.System.currentTimeMillis() }
+          * def body = { "id": "#(response.id)", "kind": "#string" }
+
+        Scenario Outline: s
+          Examples:
+            |a|b|
+      """;
+    List<Integer> states = new ArrayList<>();
+    List<Integer> starts = new ArrayList<>();
+    lexer.start(text, 0, text.length(), 0);
+    while (lexer.getTokenType() != null) {
+      starts.add(lexer.getTokenStart());
+      states.add(lexer.getState());
+      lexer.advance();
+    }
+    // the state recorded on token i is what a restart at token i+1 would replay
+    for (int i = 0; i < starts.size() - 1; i++) {
+      lexer.start(text, starts.get(i + 1), text.length(), states.get(i));
+      int expectedStart = starts.get(i + 1);
+      int guard = 0;
+      while (lexer.getTokenType() != null) {
+        assertEquals("gap or overlap restarting at " + starts.get(i + 1) + " in state " + states.get(i),
+          expectedStart, lexer.getTokenStart());
+        assertTrue("token " + lexer.getTokenType() + " ends at " + lexer.getTokenEnd()
+          + " but starts at " + lexer.getTokenStart() + ", restarting at " + starts.get(i + 1)
+          + " in state " + states.get(i), lexer.getTokenEnd() > lexer.getTokenStart());
+        expectedStart = lexer.getTokenEnd();
+        if (++guard > 5000) {
+          fail("lexer did not terminate restarting at " + starts.get(i + 1) + " in state " + states.get(i));
+        }
+        lexer.advance();
+      }
+      assertEquals("tokens do not reach the end restarting at " + starts.get(i + 1),
+        text.length(), expectedStart);
     }
   }
 

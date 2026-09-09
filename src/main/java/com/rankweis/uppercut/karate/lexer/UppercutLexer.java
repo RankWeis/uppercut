@@ -18,7 +18,6 @@ import static com.rankweis.uppercut.karate.psi.KarateTokenTypes.VARIABLE;
 import com.intellij.json.json5.Json5Lexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
-import com.intellij.lexer.LexerPosition;
 import com.intellij.lexer.XmlLexer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -191,6 +190,16 @@ public class UppercutLexer extends LexerBase {
     myEndOffset = endOffset;
     myPosition = startOffset;
     myState = initialState;
+
+    // An injection state only means something alongside the sub-lexer that produced it, and a
+    // sub-lexer cannot be rebuilt from the state alone - its region bounds are not in there. Left
+    // as-is, advance() would read offsets off whichever region the sub-lexer was last started on
+    // and hand back a token ending before it began, which stalls the lexer and breaks the editor's
+    // token sequence. Re-lex from here as Karate instead: the colours inside the injection are
+    // wrong until the next full pass, which beats a hang.
+    if (injectingJson() || injectingJavascript() || injectingXml()) {
+      myState = STATE_DEFAULT;
+    }
 
     // setup context — count pystring markers before start position to detect
     // if we're resuming inside an unclosed pystring
@@ -857,24 +866,6 @@ public class UppercutLexer extends LexerBase {
     myPosition = xmlLexer.getTokenEnd();
   }
 
-  @Override
-  public void restore(@NotNull LexerPosition position) {
-    super.restore(position);
-    if (injecting()) {
-      int endPos = myPosition;
-      while (endPos < myEndOffset && !isStringAtPosition(PYSTRING_MARKER, endPos)) {
-        endPos++;
-      }
-      endPos = Math.min(endPos, myEndOffset);
-      if (injectingJson()) {
-        jsonLexer.start(myBuffer, myStartOffset, endPos, jsonLexer.getState() - INJECTING_JSON);
-      } else if (injectingJavascript()) {
-        jsLexer.start(myBuffer, myStartOffset, endPos, jsLexer.getState() - INJECTING_JAVASCRIPT);
-      } else if (injectingXml()) {
-        xmlLexer.start(myBuffer, myStartOffset, endPos, xmlLexer.getState() - INJECTING_XML);
-      }
-    }
-  }
 
   /**
    * Advances one token within a JSON injection region. Before delegating to the JSON sub-lexer,
@@ -901,7 +892,7 @@ public class UppercutLexer extends LexerBase {
         myBuffer.subSequence(myPosition, closingBrace).toString().trim()).matches()) {
         myCurrentToken = JSON_INJECTABLE;
         myPosition = closingBrace;
-        while (jsonLexer.getTokenEnd() < closingBrace) {
+        while (jsonLexer.getTokenType() != null && jsonLexer.getTokenEnd() < closingBrace) {
           jsonLexer.advance();
         }
         return;
@@ -916,7 +907,7 @@ public class UppercutLexer extends LexerBase {
         myBuffer.subSequence(myPosition, closingBrace).toString().trim()).matches()) {
         myCurrentToken = JSON_INJECTABLE;
         myPosition = closingBrace;
-        while (jsonLexer.getTokenEnd() < closingBrace) {
+        while (jsonLexer.getTokenType() != null && jsonLexer.getTokenEnd() < closingBrace) {
           jsonLexer.advance();
         }
         return;
@@ -935,7 +926,7 @@ public class UppercutLexer extends LexerBase {
       if (injectable > 0) {
         myCurrentToken = JSON_INJECTABLE;
         myPosition += injectable;
-        while (jsonLexer.getTokenEnd() < myPosition) {
+        while (jsonLexer.getTokenType() != null && jsonLexer.getTokenEnd() < myPosition) {
           jsonLexer.advance();
         }
         return;
