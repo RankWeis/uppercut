@@ -3,14 +3,6 @@
 
 package com.rankweis.uppercut.karate;
 
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -21,7 +13,6 @@ import com.rankweis.uppercut.karate.psi.GherkinStep;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,22 +79,5 @@ public abstract class AbstractStepDefinitionCreator implements StepDefinitionCre
       }
     }
     return null;
-  }
-
-  protected void closeActiveTemplateBuilders(PsiFile file) {
-    final Project project = file.getProject();
-    final VirtualFile vFile = Objects.requireNonNull(file.getVirtualFile());
-    final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, vFile);
-    FileEditorManager.getInstance(project).getAllEditors(vFile);
-    FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-
-    assert editor != null;
-    final TemplateManager templateManager = TemplateManager.getInstance(file.getProject());
-    final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-    final Template template = templateManager.getActiveTemplate(editor);
-    if (templateState != null && template != null) {
-      templateState.gotoEnd(false);
-    }
   }
 }
