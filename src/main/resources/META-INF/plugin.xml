@@ -8,6 +8,9 @@
   <depends optional="true" config-file="plugin-withJs.xml">JavaScript</depends>
   <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.json</depends>
+  <!-- XML, HTML and the XML lexer used for embedded XML blocks. Part of the core platform up to
+       2026.2; a bundled plugin of its own (com.intellij.xml) from 2026.3. -->
+  <depends>com.intellij.modules.xml</depends>
 
   <resource-bundle>messages.MyBundle</resource-bundle>
 
