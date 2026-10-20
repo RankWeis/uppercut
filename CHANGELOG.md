@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.2.2-2026.2] - 2026-10-20
+
 ### Fixed
 
 - Declared the dependency on IntelliJ's XML support (`com.intellij.modules.xml`). Highlighting XML
@@ -563,7 +565,8 @@ that works on feature files themselves**.
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.2.1...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.2.2-2026.2...HEAD
+[3.2.2-2026.2]: https://github.com/rankweis/uppercut/compare/v3.2.1...v3.2.2-2026.2
 [3.2.1]: https://github.com/rankweis/uppercut/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/rankweis/uppercut/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/rankweis/uppercut/compare/v3.0.1...v3.1.0
