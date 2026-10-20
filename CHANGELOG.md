@@ -6,6 +6,10 @@
 
 ### Fixed
 
+- Declared the dependency on IntelliJ's XML support (`com.intellij.modules.xml`). Highlighting XML
+  inside a feature file uses the platform's XML lexer, which 2026.3 moves out of the core platform
+  into its own bundled plugin; the plugin no longer relies on reaching it through another plugin's
+  dependencies.
 - Stopped filling `idea.log` with stack traces while you type. Every keystroke that left a step's
   embedded JavaScript half-written logged a parse failure at warning level, stack trace and all —
   and half-written is what JavaScript looks like for as long as you are writing it. The mistake is
