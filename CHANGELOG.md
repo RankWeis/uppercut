@@ -4,27 +4,10 @@
 
 ## [Unreleased]
 
-### Highlights
-
-- **This release needs IntelliJ IDEA 2026.3 or newer.** On 2026.1 or 2026.2, the Marketplace keeps
-  offering the 3.2.x line, which continues to get fixes for those versions.
-
-### Modified
-
-- Now requires IntelliJ IDEA 2026.3 (build 263) or newer, and is built against it. Users of 2026.1
-  and 2026.2 are served by the separate `ij-2026.2` maintenance line (3.2.x), so nothing changes for
-  them until they upgrade the IDE. Until 2026.3 is released, this line is published to the
-  Marketplace's `eap` channel only.
-- Navigating from the Structure view goes through the platform's navigation entry point instead of
-  calling a method 2026.3 reserves for overriding, and an unused helper that opened editors through
-  an API deprecated in 2026.3 is gone. Both were flagged by the Marketplace's plugin verifier.
+## [3.3.0-cheap] - 2026-10-20
 
 ### Fixed
 
-- Declared the dependency on IntelliJ's XML support (`com.intellij.modules.xml`). Highlighting XML
-  inside a feature file uses the platform's XML lexer, which 2026.3 moves out of the core platform
-  into its own bundled plugin; the plugin no longer relies on reaching it through another plugin's
-  dependencies.
 - Stopped filling `idea.log` with stack traces while you type. Every keystroke that left a step's
   embedded JavaScript half-written logged a parse failure at warning level, stack trace and all —
   and half-written is what JavaScript looks like for as long as you are writing it. The mistake is
@@ -578,7 +561,8 @@ that works on feature files themselves**.
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.2.1...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.3.0-cheap...HEAD
+[3.3.0-cheap]: https://github.com/rankweis/uppercut/compare/v3.2.1...v3.3.0-cheap
 [3.2.1]: https://github.com/rankweis/uppercut/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/rankweis/uppercut/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/rankweis/uppercut/compare/v3.0.1...v3.1.0
