@@ -13,7 +13,8 @@
 
 - Now requires IntelliJ IDEA 2026.3 (build 263) or newer, and is built against it. Users of 2026.1
   and 2026.2 are served by the separate `ij-2026.2` maintenance line (3.2.x), so nothing changes for
-  them until they upgrade the IDE.
+  them until they upgrade the IDE. Until 2026.3 is released, this line is published to the
+  Marketplace's `eap` channel only.
 - Navigating from the Structure view goes through the platform's navigation entry point instead of
   calling a method 2026.3 reserves for overriding, and an unused helper that opened editors through
   an API deprecated in 2026.3 is gone. Both were flagged by the Marketplace's plugin verifier.
