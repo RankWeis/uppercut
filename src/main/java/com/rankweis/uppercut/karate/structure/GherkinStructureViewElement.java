@@ -9,6 +9,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.OpenSourceUtil;
 import com.rankweis.uppercut.karate.UppercutIcon;
 import com.rankweis.uppercut.karate.psi.GherkinFeature;
 import com.rankweis.uppercut.karate.psi.GherkinPsiElement;
@@ -102,7 +103,7 @@ public class GherkinStructureViewElement implements StructureViewTreeElement, It
   public void navigate(boolean requestFocus) {
     PsiElement element = getElement();
     if (element instanceof Navigatable navigatable) {
-      navigatable.navigate(requestFocus);
+      OpenSourceUtil.navigate(requestFocus, navigatable);
     }
   }
 

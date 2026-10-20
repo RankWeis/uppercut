@@ -17,8 +17,9 @@ What works, what's partial, and what's coming - by feature and by Karate version
 |:--|:--|
 | Karate 1.x (`karate-junit5`) | Supported. Unchanged by the Karate 2 work; remains the default for existing projects |
 | Karate 2.x (`karate-junit6`) | Early access since 3.0.0 |
-| IntelliJ IDEA Ultimate | Supported, 2026.1 and newer |
-| IntelliJ IDEA Community | Supported, 2026.1 and newer. JavaScript inside features is handled by the plugin's own engine |
+| IntelliJ IDEA Ultimate | Supported, 2026.3 and newer |
+| IntelliJ IDEA Community | Supported, 2026.3 and newer. JavaScript inside features is handled by the plugin's own engine |
+| IntelliJ IDEA 2026.1 and 2026.2 | Served by the 3.2.x maintenance line, which the Marketplace offers automatically on those versions |
 | Newer IDE releases | No upper version bound. The plugin stays installable when a new IDE ships; if a platform change breaks it, the Marketplace's verifier flags that version and a fix follows |
 
 ## Editor

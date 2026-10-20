@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+### Highlights
+
+- **This release needs IntelliJ IDEA 2026.3 or newer.** On 2026.1 or 2026.2, the Marketplace keeps
+  offering the 3.2.x line, which continues to get fixes for those versions.
+
+### Modified
+
+- Now requires IntelliJ IDEA 2026.3 (build 263) or newer, and is built against it. Users of 2026.1
+  and 2026.2 are served by the separate `ij-2026.2` maintenance line (3.2.x), so nothing changes for
+  them until they upgrade the IDE.
+- Navigating from the Structure view goes through the platform's navigation entry point instead of
+  calling a method 2026.3 reserves for overriding, and an unused helper that opened editors through
+  an API deprecated in 2026.3 is gone. Both were flagged by the Marketplace's plugin verifier.
+
 ### Fixed
 
 - Declared the dependency on IntelliJ's XML support (`com.intellij.modules.xml`). Highlighting XML
