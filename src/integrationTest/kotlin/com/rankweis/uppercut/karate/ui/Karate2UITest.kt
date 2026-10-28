@@ -109,8 +109,17 @@ class Karate2UITest {
             // whatever IU is newest: with no until-build the plugin would load on the next major, and a
             // moved @Remote module id there would turn the release draft red for reasons unrelated to
             // the change being merged.
-            val testCase = TestCase(IdeInfo.IdeaUltimate, LocalProjectInfo(projectDir)).useRelease(platformVersion())
-            val context = Starter.newContext("karate2Gutter", testCase).apply {
+            val testCase = TestCase(IdeInfo.IdeaUltimate, LocalProjectInfo(projectDir))
+            // useRelease only searches the release feed, so a platformVersion that is still an EAP
+            // build (main tracks the next major before it ships) is not found there. Fall back to the
+            // EAP feed for the same build rather than boot some other IDE.
+            val newContext = { case: TestCase<*> -> Starter.newContext("karate2Gutter", case) }
+            val context = try {
+                newContext(testCase.useRelease(platformVersion()))
+            } catch (e: NoSuchElementException) {
+                println("${platformVersion()} is not a published release; booting it from the EAP feed")
+                newContext(testCase.useEAP(platformVersion()))
+            }.apply {
                 // path.to.build.plugin points at the prepareSandbox plugin DIRECTORY, not a zip
                 val pathToPlugin = System.getProperty("path.to.build.plugin")
                 PluginConfigurator(this).installPluginFromDir(Path(pathToPlugin))

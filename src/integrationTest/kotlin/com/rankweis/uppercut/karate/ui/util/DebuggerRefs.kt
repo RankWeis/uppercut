@@ -6,11 +6,16 @@ import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.VirtualFile
 
+// From 2026.3 the xdebugger API (and DefaultDebugExecutor) lives in a product module with its own
+// classloader, so the driver no longer finds it on the core one ("No such class ... in plugin null")
+// unless told which module owns it.
+internal const val DEBUGGER_MODULE = "com.intellij/intellij.platform.debugger"
+
 /**
  * Remote access to the running debug session, so a test can see that the plugin's debugger actually
  * suspended a run - the one thing about it that no unit test or headless harness can observe.
  */
-@Remote("com.intellij.xdebugger.XDebuggerManager")
+@Remote("com.intellij.xdebugger.XDebuggerManager", plugin = DEBUGGER_MODULE)
 interface XDebuggerManagerRef {
     fun getCurrentSession(): XDebugSessionRef?
 
@@ -21,7 +26,7 @@ interface XDebuggerManagerRef {
     fun getDebugSession(console: ExecutionConsoleRef): XDebugSessionRef?
 }
 
-@Remote("com.intellij.xdebugger.XDebugSession")
+@Remote("com.intellij.xdebugger.XDebugSession", plugin = DEBUGGER_MODULE)
 interface XDebugSessionRef {
     fun getSessionName(): String
     fun isSuspended(): Boolean
@@ -32,7 +37,7 @@ interface XDebugSessionRef {
     fun stop()
 }
 
-@Remote("com.intellij.xdebugger.XSourcePosition")
+@Remote("com.intellij.xdebugger.XSourcePosition", plugin = DEBUGGER_MODULE)
 interface XSourcePositionRef {
     /** Zero-based, as the platform counts editor lines; Karate reports the same line one-based. */
     fun getLine(): Int

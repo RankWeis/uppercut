@@ -29,6 +29,11 @@
   embedded JavaScript half-written logged a parse failure at warning level, stack trace and all —
   and half-written is what JavaScript looks like for as long as you are writing it. The mistake is
   still marked in the editor where it belongs; only the logging is gone.
+- The IDE integration tests run on 2026.3 again. They boot `platformVersion` from the EAP feed when
+  it is not a published release yet, and reach the debugger API through the
+  `intellij.platform.debugger` module, which 2026.3 moves off the core classloader. The weekly
+  newest-IDE job boots the newest EAP while the newest release is older than `pluginSinceBuild`,
+  instead of an IDE that refuses to load the plugin.
 
 ## [3.2.1] - 2026-09-09
 
