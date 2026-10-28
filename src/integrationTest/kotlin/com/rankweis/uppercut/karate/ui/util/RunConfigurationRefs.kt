@@ -43,7 +43,7 @@ interface ProgramRunnerUtilRef {
 @Remote("com.intellij.execution.Executor")
 interface ExecutorRef
 
-@Remote("com.intellij.execution.executors.DefaultDebugExecutor")
+@Remote("com.intellij.execution.executors.DefaultDebugExecutor", plugin = DEBUGGER_MODULE)
 interface DefaultDebugExecutorRef {
     fun getDebugExecutorInstance(): ExecutorRef
 }

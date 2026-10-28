@@ -50,19 +50,34 @@ jobs:
           # about is cached separately below, keyed on the release it boots.
           cache-read-only: true
 
+      # While main targets a major that has not shipped yet, the newest release is below the plugin's
+      # since-build and would refuse to load it - every test would time out on a plugin that never
+      # started. Boot the newest EAP of that major instead. Its build number goes through, not its
+      # version: every EAP of a major shares one version string. Karate2UITest falls back to the EAP
+      # feed for a build that is not a release.
       - name: Resolve newest IDEA release
         id: idea
         run: |
           set -euo pipefail
-          latest=$(curl -sSf --max-time 30 \
-            'https://data.services.jetbrains.com/products/releases?code=IIU&latest=true&type=release' \
-            | jq -r '.IIU[0].version')
-          if [ -z "$latest" ] || [ "$latest" = "null" ]; then
+          feed='https://data.services.jetbrains.com/products/releases?code=IIU&latest=true'
+          read -r version build < <(curl -sSf --max-time 30 "$feed&type=release" \
+            | jq -r '.IIU[0] | "\(.version) \(.build)"')
+          if [ -z "$version" ] || [ "$version" = "null" ]; then
             echo "::error::Could not resolve the newest IntelliJ IDEA release."
             exit 1
           fi
-          echo "Newest IDEA release: $latest"
-          echo "version=$latest" >> $GITHUB_OUTPUT
+          since=$(grep -E '^pluginSinceBuild' gradle.properties | cut -d= -f2 | tr -d ' ')
+          if [ "${build%%.*}" -lt "$since" ]; then
+            echo "Newest release $version ($build) is below since-build $since; using the newest EAP"
+            build=$(curl -sSf --max-time 30 "$feed&type=eap" | jq -r '.IIU[0].build')
+            if [ -z "$build" ] || [ "$build" = "null" ] || [ "${build%%.*}" -lt "$since" ]; then
+              echo "::error::No IntelliJ IDEA release or EAP satisfies since-build $since."
+              exit 1
+            fi
+            version=$build
+          fi
+          echo "IDEA to test against: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
 
       - name: Cache IDE Starter downloads
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
