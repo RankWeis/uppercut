@@ -52,6 +52,7 @@ public class KarateV2EventProcessor {
   }
 
   private final EventSink sink;
+  private final boolean hidePassedStepOutput;
   private int nextId = 1;
   private final Map<String, Integer> topFeatureIdByPath = new HashMap<>();
   private final Map<String, Integer> scenarioIdByKey = new HashMap<>();
@@ -63,7 +64,16 @@ public class KarateV2EventProcessor {
   private final Map<String, List<Integer>> lastFeatureAtDepth = new HashMap<>();
 
   public KarateV2EventProcessor(@NotNull EventSink sink) {
+    this(sink, false);
+  }
+
+  /**
+   * @param hidePassedStepOutput leave out what a passed step printed; the step line itself, and the
+   *     output of any step that did not pass, are still shown (Settings > Tools > Karate, #404)
+   */
+  public KarateV2EventProcessor(@NotNull EventSink sink, boolean hidePassedStepOutput) {
     this.sink = sink;
+    this.hidePassedStepOutput = hidePassedStepOutput;
   }
 
   /** Returns true if the line was consumed as a v2 event. */
@@ -228,8 +238,11 @@ public class KarateV2EventProcessor {
     line.append('\n');
     // Whatever the step printed - print, karate.log - indented beneath it, so output stays with the
     // step that produced it instead of being lost (v2 emits it nowhere else the tree can reach).
+    // With the output hidden, only a step that passed loses it: a failed step's output is usually
+    // the thing worth reading, and an unrecognised status is not assumed to be a pass.
     String stepLog = getString(json, "stepLog");
-    if (stepLog != null && !stepLog.isBlank()) {
+    boolean hideLog = hidePassedStepOutput && "passed".equals(status);
+    if (!hideLog && stepLog != null && !stepLog.isBlank()) {
       stepLog.strip().lines().forEach(l -> line.append("    ").append(l).append('\n'));
     }
     sink.emit(ServiceMessageBuilder.testStdOut(scenarioName).addAttribute("out", line.toString()),

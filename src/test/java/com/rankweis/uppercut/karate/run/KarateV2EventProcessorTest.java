@@ -156,6 +156,26 @@ public class KarateV2EventProcessorTest {
   }
 
   @Test
+  public void hidingStepOutputDropsWhatPassedStepsPrintedButKeepsStepsAndFailures() {
+    processor = new KarateV2EventProcessor(sink, true);
+    process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"prints\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
+    process("STEP_EXIT",
+      "{\"line\":4,\"prefix\":\"*\",\"text\":\"print 'noise'\",\"status\":\"passed\","
+        + "\"stepLog\":\"chatty passed output\\n\"}");
+    process("STEP_EXIT",
+      "{\"line\":5,\"prefix\":\"*\",\"text\":\"match id == 2\",\"status\":\"failed\","
+        + "\"stepLog\":\"why it failed\\n\"}");
+
+    // The passed step's line stays, so the scenario's structure is still readable; only what it
+    // printed goes. A failed step keeps its output, which is what someone reads the tree for (#404).
+    assertContains(sink.messages.get(2), "testStdOut", "name='prints'", "print ", "noise");
+    assertFalse(sink.messages.get(2), sink.messages.get(2).contains("chatty passed output"));
+    assertContains(sink.messages.get(3), "testStdOut", "match id == 2", "failed", "    why it failed");
+  }
+
+  @Test
   public void stepsOfCalledFeatureAttachToTheCalledScenario() {
     process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"caller\",\"line\":1,\"callDepth\":0}");
     process("SCENARIO_ENTER",

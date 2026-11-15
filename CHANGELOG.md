@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+### Highlights
+
+- **A quieter Karate 2 test tree, if you want one.** Settings > Tools > Karate can now hide what
+  passed steps print, keeping the steps themselves and everything a failed step printed. (#404)
+
+### Added
+
+- **Hide what passed steps print in the Karate 2 test tree.** A Karate 2 run shows each step under
+  its scenario with whatever the step printed (`print`, `karate.log`) indented beneath it, which
+  buries the scenario's shape in long scenarios. Tick **Test tree: hide what passed steps print
+  (Karate 2)** under Settings > Tools > Karate and passed steps show as one line each; a step that
+  failed still shows its output, and the scenario's error is reported as before. Off by default,
+  and it applies from the next run. (#404)
+
 ## [3.3.0-cheap] - 2026-10-20
 
 ### Fixed
