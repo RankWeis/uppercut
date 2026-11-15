@@ -174,9 +174,6 @@
       implementation="com.rankweis.uppercut.karate.navigation.KarateGoToSymbolProvider"/>
     <gotoSymbolContributor
       implementation="com.rankweis.uppercut.karate.navigation.KarateChooseByNameContributor"/>
-<!--    <multiHostInjector-->
-<!--      implementation="com.rankweis.uppercut.karate.injector.GherkinLanguageInjectorNoJS"/>-->
-<!--    <formatting.injectedOptions implementation="com.rankweis.uppercut.karate.injector.KarateInjectedFormattingOptionsProvider"/>-->
     <!-- Feature-file breakpoints, on both Karate majors. -->
     <xdebugger.breakpointType
       implementation="com.rankweis.uppercut.karate.debugging.agent.KarateBreakpointType"/>
