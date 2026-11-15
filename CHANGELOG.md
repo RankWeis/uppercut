@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.3.2] - 2026-11-15
+
 ### Highlights
 
 - **A flatter, clearer Karate 2 test tree.** Called features no longer get nodes of their own, so the
@@ -591,7 +593,8 @@ that works on feature files themselves**.
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.3.0-cheap...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.3.2...HEAD
+[3.3.2]: https://github.com/rankweis/uppercut/compare/v3.3.0-cheap...v3.3.2
 [3.3.0-cheap]: https://github.com/rankweis/uppercut/compare/v3.2.1...v3.3.0-cheap
 [3.2.1]: https://github.com/rankweis/uppercut/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/rankweis/uppercut/compare/v3.1.0...v3.2.0
