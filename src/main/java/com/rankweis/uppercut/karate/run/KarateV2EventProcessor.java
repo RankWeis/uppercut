@@ -62,6 +62,8 @@ public class KarateV2EventProcessor {
   // which is the correct behaviour for a sequential run.
   private final Map<String, List<Integer>> lastScenarioAtDepth = new HashMap<>();
   private final Map<String, List<Integer>> lastFeatureAtDepth = new HashMap<>();
+  // Plain console lines printed while a scenario runs, held until the step that printed them exits.
+  private final List<String> heldOutput = new ArrayList<>();
 
   public KarateV2EventProcessor(@NotNull EventSink sink) {
     this(sink, false);
@@ -106,6 +108,51 @@ public class KarateV2EventProcessor {
       LOG.warn("Failed to process Karate 2 event " + type, e);
     }
     return true;
+  }
+
+  /**
+   * Holds a plain (non-event) stdout line printed while a scenario is running, when passed steps'
+   * output is hidden. Returns true if the line was held, false if the caller should show it as usual.
+   *
+   * <p>The step's own captured log is only half of what it prints: Karate's logger also writes every
+   * {@code print} and {@code karate.log} straight to the console (as {@code ... INFO karate.scenario -
+   * env is dev}), and the platform attaches that line to the running scenario. Its status is not
+   * known until the step's STEP_EXIT, so the line waits for it: dropped if the step passed, released
+   * ahead of the step otherwise. Format-independent by design - no assumption about the project's
+   * logging pattern. With parallel scenarios a line cannot be tied to its thread, so a release or
+   * drop may take a neighbouring scenario's line with it; a failed step still keeps its own log.</p>
+   */
+  public boolean holdConsoleOutput(@NotNull String text) {
+    if (!hidePassedStepOutput || scenarioIdByKey.isEmpty()) {
+      return false;
+    }
+    heldOutput.add(text);
+    return true;
+  }
+
+  /** The held lines as one block, emptying the hold; "" when nothing is held. */
+  private String takeHeldOutput() {
+    if (heldOutput.isEmpty()) {
+      return "";
+    }
+    StringBuilder out = new StringBuilder();
+    for (String s : heldOutput) {
+      out.append(s);
+      if (!s.endsWith("\n")) {
+        out.append('\n');
+      }
+    }
+    heldOutput.clear();
+    return out.toString();
+  }
+
+  /** Releases held lines onto a scenario node, e.g. output after its last step. */
+  private void releaseHeldOutput(int scenarioId) {
+    String held = takeHeldOutput();
+    String name = nameById.get(scenarioId);
+    if (!held.isEmpty() && name != null) {
+      sink.emit(ServiceMessageBuilder.testStdOut(name).addAttribute("out", held), scenarioId, 0);
+    }
   }
 
   private void dispatch(String type, JsonObject json) {
@@ -187,6 +234,7 @@ public class KarateV2EventProcessor {
     if (id == null) {
       return;
     }
+    releaseHeldOutput(id);
     String display = nameById.remove(id);
     if (depth > 0) {
       // Opened as a suite in scenarioEnter, so it has to be closed as one. A failure here still
@@ -230,9 +278,13 @@ public class KarateV2EventProcessor {
     }
     String prefix = getString(json, "prefix");
     String status = getString(json, "status");
-    StringBuilder line = new StringBuilder();
+    boolean passed = "passed".equals(status);
+    // Console lines held while this step ran (see holdConsoleOutput) go before the step line, the
+    // order they would have reached the console in - or nowhere, if the step passed.
+    String held = takeHeldOutput();
+    StringBuilder line = new StringBuilder(passed ? "" : held);
     line.append(prefix == null ? "*" : prefix).append(' ').append(text);
-    if (status != null && !"passed".equals(status)) {
+    if (status != null && !passed) {
       line.append("   [").append(status).append(']');
     }
     line.append('\n');
@@ -241,7 +293,7 @@ public class KarateV2EventProcessor {
     // With the output hidden, only a step that passed loses it: a failed step's output is usually
     // the thing worth reading, and an unrecognised status is not assumed to be a pass.
     String stepLog = getString(json, "stepLog");
-    boolean hideLog = hidePassedStepOutput && "passed".equals(status);
+    boolean hideLog = hidePassedStepOutput && passed;
     if (!hideLog && stepLog != null && !stepLog.isBlank()) {
       stepLog.strip().lines().forEach(l -> line.append("    ").append(l).append('\n'));
     }

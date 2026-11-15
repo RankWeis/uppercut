@@ -176,6 +176,47 @@ public class KarateV2EventProcessorTest {
   }
 
   @Test
+  public void hidingStepOutputAlsoHoldsKarateConsoleLinesUntilTheStepResult() {
+    processor = new KarateV2EventProcessor(sink, true);
+    // Before any scenario opens (karate-config.js, the report banner), lines are shown as usual.
+    assertFalse(processor.holdConsoleOutput("12:25:37.789 [main] INFO  karate.runtime - config processed\n"));
+    process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"prints\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
+    // Karate's logger writes each print to the console as well as to the step's log; the platform
+    // would attach that line to the scenario at once, which is why hiding stepLog alone changed nothing.
+    assertTrue(processor.holdConsoleOutput("12:25:37.894 [main] INFO  karate.scenario - env is null\n"));
+    process("STEP_EXIT",
+      "{\"line\":4,\"prefix\":\"*\",\"text\":\"print 'env is', env\",\"status\":\"passed\","
+        + "\"stepLog\":\"env is null\\n\"}");
+    assertTrue(processor.holdConsoleOutput("12:25:37.900 [main] INFO  karate.scenario - why it failed\n"));
+    process("STEP_EXIT",
+      "{\"line\":5,\"prefix\":\"*\",\"text\":\"match id == 2\",\"status\":\"failed\"}");
+    assertTrue(processor.holdConsoleOutput("after the last step\n"));
+    process("SCENARIO_EXIT",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"prints\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0,"
+        + "\"passed\":false,\"error\":\"match failed\"}");
+
+    String all = String.join("\n", sink.messages);
+    assertFalse(all, all.contains("env is null"));
+    // A failed step's console lines come back, ahead of the step that printed them.
+    assertContains(sink.messages.get(3), "testStdOut", "karate.scenario - why it failed", "match id == 2");
+    assertTrue(sink.messages.get(3), sink.messages.get(3).indexOf("why it failed")
+        < sink.messages.get(3).indexOf("match id == 2"));
+    // Whatever follows the last step is not a step's output, so it is released, not dropped.
+    assertContains(sink.messages.get(4), "testStdOut", "after the last step", "|node=2");
+    assertContains(sink.messages.get(5), "testFailed", "name='prints'");
+  }
+
+  @Test
+  public void consoleLinesAreNeverHeldWhenStepOutputIsShown() {
+    process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"prints\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
+    assertFalse(processor.holdConsoleOutput("12:25:37.894 [main] INFO  karate.scenario - env is null\n"));
+  }
+
+  @Test
   public void stepsOfCalledFeatureAttachToTheCalledScenario() {
     process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"caller\",\"line\":1,\"callDepth\":0}");
     process("SCENARIO_ENTER",

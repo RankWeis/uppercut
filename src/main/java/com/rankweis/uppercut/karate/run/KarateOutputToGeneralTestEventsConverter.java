@@ -144,6 +144,12 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
     if (text.startsWith(KarateV2EventProcessor.EVENT_PREFIX)) {
       return getV2EventProcessor().process(text);
     }
+    // Karate 2 also logs a step's prints straight to the console; with passed steps' output hidden,
+    // those lines wait for their step's result instead of going to the tree at once.
+    if (v2EventProcessor != null && ProcessOutputType.isStdout(myCurrentOutputType)
+        && v2EventProcessor.holdConsoleOutput(text)) {
+      return true;
+    }
     Matcher matcher = UPPERCUT_LOG_PATTERN.matcher(text);
     if (text.contains("[config]") || (karateConfigItem != null && text.contains(
       ">> " + karateConfigItem.getName() + " failed"))) {
