@@ -8,8 +8,10 @@ import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +28,10 @@ import org.jetbrains.annotations.Nullable;
  *   <li>{@code FEATURE_EXIT}: name, relativePath, callDepth, ...</li>
  * </ul>
  *
- * <p>Called features arrive between the calling step's events with {@code callDepth} incremented; a
- * last-open-node-per-depth table reproduces the nesting. With {@code parallelism > 1} the depth
- * attribution of called features is heuristic (v2 events carry no thread id); top-level features and
- * scenarios are always exact because their events carry the owning feature path.</p>
+ * <p>Called features arrive between the calling step's events with {@code callDepth} incremented. They
+ * get no nodes: the tree holds only the features and scenarios the user ran, and a called feature's
+ * steps are listed, indented, in the output of the scenario that called it. Each thread tracks its
+ * open scenario and current call depth, so parallel scenarios never claim each other's steps.</p>
  */
 public class KarateV2EventProcessor {
 
@@ -59,8 +61,15 @@ public class KarateV2EventProcessor {
   // Per-thread, because Karate runs scenarios in parallel and their events interleave on one stream.
   // The runner stamps every event with its emitting thread; events without one share a single key,
   // which is the correct behaviour for a sequential run.
-  private final Map<String, List<Integer>> lastScenarioAtDepth = new HashMap<>();
-  private final Map<String, List<Integer>> lastFeatureAtDepth = new HashMap<>();
+  private final Map<String, Integer> openScenarioByThread = new HashMap<>();
+  // How deep in calls each thread currently is: 0 inside a scenario the user ran, 1 inside a feature
+  // that scenario called, and so on. Called steps are indented by it in the caller's output.
+  private final Map<String, Integer> callDepthByThread = new HashMap<>();
+  // Output of called steps not yet placed, per thread and call depth. A called feature's steps finish
+  // before the step that called it, so they wait here until that step's line has been written.
+  private final Map<String, List<StringBuilder>> calledOutputByThread = new HashMap<>();
+  // Feature titles already in the tree, so a second feature with the same title can be told apart.
+  private final Set<String> featureTitles = new HashSet<>();
 
   public KarateV2EventProcessor(@NotNull EventSink sink) {
     this.sink = sink;
@@ -118,16 +127,23 @@ public class KarateV2EventProcessor {
     if (path == null) {
       return;
     }
-    int depth = getInt(json, "callDepth", 0);
+    // A called feature gets no node: the tree lists only what the user ran, and the call's steps are
+    // shown in the calling scenario's output instead (see stepExit). Nodes for called features, under
+    // the caller or at the top level, turned every chain of calls into a staircase or a long run of
+    // identical siblings (#404).
+    if (getInt(json, "callDepth", 0) > 0) {
+      return;
+    }
     String title = getString(json, "name");
     String display = title != null ? title : basename(path);
-    int id = nextId++;
-    String thread = threadOf(json);
-    final int parent = depth == 0 ? 0 : atDepth(lastScenarioAtDepth, thread, depth - 1);
-    if (depth == 0) {
-      topFeatureIdByPath.put(path, id);
+    // Two features with the same title are two identical rows otherwise. The file name goes on the
+    // second and later ones only: the first is in the tree before anyone knows a twin is coming.
+    if (title != null && !featureTitles.add(title)) {
+      display = title + " (" + basename(path) + ")";
     }
-    setAtDepth(lastFeatureAtDepth, thread, depth, id);
+    int id = nextId++;
+    final int parent = 0;
+    topFeatureIdByPath.put(path, id);
     nameById.put(id, display);
     ServiceMessageBuilder msg = ServiceMessageBuilder.testSuiteStarted(display);
     String location = sink.resolveLocation(path, Math.max(getInt(json, "line", 1), 1));
@@ -143,23 +159,28 @@ public class KarateV2EventProcessor {
       return;
     }
     int depth = getInt(json, "callDepth", 0);
+    String thread = threadOf(json);
+    callDepthByThread.put(thread, depth);
+    if (depth > 0) {
+      // A called scenario: no node, its steps go to the calling scenario (see featureEnter).
+      return;
+    }
     int line = getInt(json, "line", 1);
     String name = getString(json, "name");
     String display = name != null ? name : basename(featurePath) + ":" + line;
+    // An outline example is named from the outline's title with its placeholders filled in, so
+    // "greeting <name>" gives "greeting alice". A title with no placeholders gives every example the
+    // same name; number those, by example row, which is stable however the examples are scheduled.
+    if (getBoolean(json, "isOutlineExample") && name != null && name.equals(outlineTitle(json, featurePath))) {
+      display = name + " [" + (getInt(json, "exampleIndex", 0) + 1) + "]";
+    }
     int id = nextId++;
-    String thread = threadOf(json);
-    final int parent = depth == 0
-      ? topFeatureIdByPath.getOrDefault(featurePath, 0)
-      : atDepth(lastFeatureAtDepth, thread, depth);
+    final int parent = topFeatureIdByPath.getOrDefault(featurePath, 0);
     scenarioIdByKey.put(scenarioKey(json, featurePath, depth), id);
-    setAtDepth(lastScenarioAtDepth, thread, depth, id);
+    openScenarioByThread.put(thread, id);
+    calledOutputByThread.remove(thread);
     nameById.put(id, display);
-    // Scenarios reached through a call are reported as suites, not tests: they stay visible (and
-    // navigable) under the calling step, but the run's totals keep counting the scenarios the user
-    // actually asked to run rather than inflating with every called scenario.
-    ServiceMessageBuilder msg = depth == 0
-      ? ServiceMessageBuilder.testStarted(display)
-      : ServiceMessageBuilder.testSuiteStarted(display);
+    ServiceMessageBuilder msg = ServiceMessageBuilder.testStarted(display);
     String location = sink.resolveLocation(featurePath, line);
     if (location != null) {
       msg.addAttribute("locationHint", location);
@@ -173,17 +194,21 @@ public class KarateV2EventProcessor {
       return;
     }
     int depth = getInt(json, "callDepth", 0);
+    String thread = threadOf(json);
+    // Back in the caller. A failure inside the call needs no node of its own: the call step fails,
+    // and so does the calling scenario, with Karate's error.
+    callDepthByThread.put(thread, Math.max(depth - 1, 0));
     Integer id = scenarioIdByKey.remove(scenarioKey(json, featurePath, depth));
     if (id == null) {
       return;
     }
-    String display = nameById.remove(id);
-    if (depth > 0) {
-      // Opened as a suite in scenarioEnter, so it has to be closed as one. A failure here still
-      // reaches the tree: the calling scenario fails too and reports the error itself.
-      sink.emit(ServiceMessageBuilder.testSuiteFinished(display), id, 0);
-      return;
+    openScenarioByThread.remove(thread, id);
+    // Called output whose call step never reported (an aborted call) still belongs to this scenario.
+    String unplaced = takeCalledOutput(thread, 1, true);
+    if (!unplaced.isEmpty()) {
+      sink.emit(ServiceMessageBuilder.testStdOut(nameById.get(id)).addAttribute("out", unplaced), id, 0);
     }
+    String display = nameById.remove(id);
     boolean passed = getBoolean(json, "passed");
     ServiceMessageBuilder msg;
     if (passed) {
@@ -205,23 +230,28 @@ public class KarateV2EventProcessor {
    * did rather than only whether it passed. The v1 path gets this for free from its log lines; v2
    * reports structurally, so without this the test tree has no step detail at all.
    *
-   * <p>Attributed to the deepest currently-open scenario: steps of a called feature then land on
-   * that feature's scenario node rather than on the caller's.
+   * <p>Attributed to the scenario the user ran on this thread, including the steps of any feature it
+   * called, which are indented two spaces per call level. A called feature's steps finish before the
+   * step that called it, so they are held until that step's line is written and listed beneath it.
    */
   private void stepExit(JsonObject json) {
     String text = getString(json, "text");
     if (text == null) {
       return;
     }
-    int scenarioId = deepestOpenScenario(threadOf(json));
+    String thread = threadOf(json);
+    Integer openId = openScenarioByThread.get(thread);
+    int scenarioId = openId == null ? 0 : openId;
     String scenarioName = scenarioId == 0 ? null : nameById.get(scenarioId);
     if (scenarioName == null) {
       return;
     }
+    int depth = callDepthByThread.getOrDefault(thread, 0);
+    String indent = "  ".repeat(depth);
     String prefix = getString(json, "prefix");
     String status = getString(json, "status");
     StringBuilder line = new StringBuilder();
-    line.append(prefix == null ? "*" : prefix).append(' ').append(text);
+    line.append(indent).append(prefix == null ? "*" : prefix).append(' ').append(text);
     if (status != null && !"passed".equals(status)) {
       line.append("   [").append(status).append(']');
     }
@@ -230,43 +260,62 @@ public class KarateV2EventProcessor {
     // step that produced it instead of being lost (v2 emits it nowhere else the tree can reach).
     String stepLog = getString(json, "stepLog");
     if (stepLog != null && !stepLog.isBlank()) {
-      stepLog.strip().lines().forEach(l -> line.append("    ").append(l).append('\n'));
+      stepLog.strip().lines().forEach(l -> line.append(indent).append("    ").append(l).append('\n'));
+    }
+    // Steps of whatever this step called, already finished, go beneath it.
+    line.append(takeCalledOutput(thread, depth + 1, false));
+    if (depth > 0) {
+      // Itself a called step: wait for the step that called it.
+      calledOutput(thread, depth).append(line);
+      return;
     }
     sink.emit(ServiceMessageBuilder.testStdOut(scenarioName).addAttribute("out", line.toString()),
       scenarioId, 0);
   }
 
+  /** The held output of called steps at this call depth on this thread, created if absent. */
+  private StringBuilder calledOutput(String thread, int depth) {
+    List<StringBuilder> byDepth = calledOutputByThread.computeIfAbsent(thread, k -> new ArrayList<>());
+    while (byDepth.size() <= depth) {
+      byDepth.add(new StringBuilder());
+    }
+    return byDepth.get(depth);
+  }
+
   /**
-   * The innermost scenario still open on this thread, so called-feature steps attach to the called
-   * scenario, and concurrent scenarios never claim each other's steps.
+   * Takes the held output at this depth, or with {@code deeper} at this depth and below in nesting
+   * order (deepest last), leaving those depths empty; "" when nothing is held.
    */
-  private int deepestOpenScenario(String thread) {
-    List<Integer> list = lastScenarioAtDepth.get(thread);
-    if (list == null) {
-      return 0;
+  private String takeCalledOutput(String thread, int depth, boolean deeper) {
+    List<StringBuilder> byDepth = calledOutputByThread.get(thread);
+    if (byDepth == null) {
+      return "";
     }
-    for (int depth = list.size() - 1; depth >= 0; depth--) {
-      Integer id = list.get(depth);
-      if (id != null && id != 0 && nameById.containsKey(id)) {
-        return id;
-      }
+    StringBuilder out = new StringBuilder();
+    int last = deeper ? byDepth.size() - 1 : Math.min(depth, byDepth.size() - 1);
+    for (int d = depth; d <= last; d++) {
+      out.append(byDepth.get(d));
+      byDepth.get(d).setLength(0);
     }
-    return 0;
+    return out.toString();
+  }
+
+  /** The outline's own title, from the example's outlineSlug ({@code <feature path>:<title>}). */
+  private static @Nullable String outlineTitle(JsonObject json, String featurePath) {
+    String slug = getString(json, "outlineSlug");
+    String prefix = featurePath + ":";
+    return slug != null && slug.startsWith(prefix) ? slug.substring(prefix.length()) : null;
   }
 
   private void featureExit(JsonObject json) {
-    int depth = getInt(json, "callDepth", 0);
-    Integer id;
-    if (depth == 0) {
-      String path = getString(json, "path");
-      if (path == null) {
-        path = getString(json, "relativePath");
-      }
-      id = path == null ? null : topFeatureIdByPath.remove(path);
-    } else {
-      int atDepth = atDepth(lastFeatureAtDepth, threadOf(json), depth);
-      id = atDepth == 0 ? null : atDepth;
+    if (getInt(json, "callDepth", 0) > 0) {
+      return;
     }
+    String path = getString(json, "path");
+    if (path == null) {
+      path = getString(json, "relativePath");
+    }
+    Integer id = path == null ? null : topFeatureIdByPath.remove(path);
     if (id == null) {
       return;
     }
@@ -301,22 +350,6 @@ public class KarateV2EventProcessor {
   private static String threadOf(JsonObject json) {
     String thread = getString(json, "thread");
     return thread == null ? "" : thread;
-  }
-
-  private int atDepth(Map<String, List<Integer>> byThread, String thread, int depth) {
-    List<Integer> list = byThread.get(thread);
-    if (list == null) {
-      return 0;
-    }
-    return depth >= 0 && depth < list.size() && list.get(depth) != null ? list.get(depth) : 0;
-  }
-
-  private void setAtDepth(Map<String, List<Integer>> byThread, String thread, int depth, int id) {
-    List<Integer> list = byThread.computeIfAbsent(thread, k -> new ArrayList<>());
-    while (list.size() <= depth) {
-      list.add(null);
-    }
-    list.set(depth, id);
   }
 
   /** A non-primitive (a future payload shape) is rendered as JSON text rather than thrown on. */

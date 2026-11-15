@@ -766,13 +766,16 @@ class Karate2UITest {
             val (results, diagnostics) = awaitResults(driver, "users.feature", outputListener)
             driver.takeScreenshot(screenshotDir + "03-test-results")
             val tree = describeTree(results.getTestsRootNode())
-            // users.feature has 2 scenarios; the called feature's scenario is reported as a suite, so
-            // it shows in the tree (asserted below) without counting toward the run's test total.
+            // users.feature has 2 scenarios; the feature it calls gets no node of its own (#404).
             assertEquals(0, results.getFailedTestCount(), "no scenarios should fail$diagnostics")
             assertEquals(2, results.getFinishedTestCount(), "expected both scenarios in the tree$diagnostics")
             // Counts alone would pass on a tree of the right size but the wrong shape.
-            listOf("v2 built-ins and a nested call", "second scenario for tree ordering", "called.feature:4")
+            listOf("v2 built-ins and a nested call", "second scenario for tree ordering")
                 .forEach { assertTrue(tree.contains(it), "'$it' missing from the tree$diagnostics") }
+            // By the called feature's title and by its anonymous scenario's name (users.feature's own
+            // title says "a called feature", so a bare "called" would match it).
+            listOf("called from users.feature", "called.feature:4")
+                .forEach { assertTrue(!tree.contains(it), "'$it' should get no node$diagnostics") }
 
             // Step-level detail: v2 reports structurally, so without STEP_EXIT forwarding the tree
             // says only whether a scenario passed. The second scenario prints, and that output has
@@ -785,6 +788,11 @@ class Karate2UITest {
             assertTrue(
                 consoleText.contains("env is"),
                 "print output missing from the run output$diagnostics\n--- console ---\n$consoleText"
+            )
+            // The called feature's step is listed in the calling scenario's output instead.
+            assertTrue(
+                consoleText.contains("greeting = 'hello ' + name"),
+                "called feature's step missing from the run output$diagnostics\n--- console ---\n$consoleText"
             )
 
             val root = results.getTestsRootNode()
@@ -802,11 +810,6 @@ class Karate2UITest {
                 "scenario location '$location' should point at the source users.feature, " +
                     "not the compiled copy under the build directory$diagnostics"
             )
-            // Nesting a called feature under the calling scenario is v2-converter behaviour; the v1
-            // converter puts called features at the top level. Together with the feature's use of
-            // karate.uuid() (a v2-only builtin, which errors on v1) this identifies the runner that ran.
-            val called = findNode(root, "called.feature:4")
-            assertTrue(called!!.isSuite(), "called scenario should be a suite, not a test$diagnostics")
         }
     }
 
@@ -849,16 +852,15 @@ class Karate2UITest {
                 .forEach { assertTrue(tree.contains(it), "'$it' missing from the v1 tree$diagnostics") }
 
             // Positive proof this went down the v1 path rather than merely "not failing": the v1
-            // converter builds a distinctly different tree - it adds a karate-config.js node and puts
-            // called features at the top level, where the v2 converter nests them under the caller.
+            // converter builds a distinctly different tree - it adds a karate-config.js node and lists
+            // the called feature as a top-level node, where the v2 converter gives it no node at all.
             assertTrue(
                 tree.contains("karate-config.js"),
                 "v1 tree should carry the converter's karate-config.js node$diagnostics"
             )
             // Matched by suffix and only among the root's own children: Karate 1.x names a feature by
             // its path relative to the working directory, so the fixture's src/test/java layout reports
-            // "java/sample/called.feature". Top-level placement is the point - the v2 converter would
-            // have nested this node under the calling scenario.
+            // "java/sample/called.feature".
             assertTrue(
                 results.getTestsRootNode().getChildren().any {
                     (it.getPresentableName() ?: it.getName() ?: "").endsWith("sample/called.feature")

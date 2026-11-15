@@ -61,7 +61,7 @@ public class KarateV2EventProcessorTest {
   }
 
   @Test
-  public void featureAndScenarioLifecycleWithCalledFeatureNesting() {
+  public void calledFeaturesGetNoNodesOfTheirOwn() {
     process("FEATURE_ENTER",
       "{\"path\":\"" + USERS + "\",\"name\":\"sample feature\",\"line\":1,\"callDepth\":0,\"tags\":[]}");
     process("SCENARIO_ENTER",
@@ -83,22 +83,27 @@ public class KarateV2EventProcessorTest {
     process("FEATURE_EXIT",
       "{\"name\":\"sample feature\",\"relativePath\":\"" + USERS + "\",\"callDepth\":0,\"passed\":true}");
 
-    assertEquals(8, sink.messages.size());
+    // The tree holds only what the user ran. Nodes for called features - nested under the caller, or
+    // at the top level - turned a chain of calls into a staircase or a run of identical siblings (#404).
+    assertEquals(4, sink.messages.size());
     // top-level feature: suite under root
     assertContains(sink.messages.get(0), "testSuiteStarted", "name='sample feature'",
       "locationHint='file://resolved/" + USERS + ":1'", "|node=1|parent=0");
     // scenario under its feature
     assertContains(sink.messages.get(1), "testStarted", "name='first scenario'",
       "locationHint='file://resolved/" + USERS + ":3'", "|node=2|parent=1");
-    // called feature nests under the calling scenario
-    assertContains(sink.messages.get(2), "testSuiteStarted", "name='called feature'", "|node=3|parent=2");
-    // anonymous scenario gets basename:line as display name, nests under called feature. Called
-    // scenarios are suites, not tests, so they stay visible without inflating the run's test count.
-    assertContains(sink.messages.get(3), "testSuiteStarted", "name='called.feature:4'", "|node=4|parent=3");
-    assertContains(sink.messages.get(4), "testSuiteFinished", "name='called.feature:4'", "|node=4");
-    assertContains(sink.messages.get(5), "testSuiteFinished", "name='called feature'", "|node=3");
-    assertContains(sink.messages.get(6), "testFinished", "name='first scenario'", "duration='90'", "|node=2");
-    assertContains(sink.messages.get(7), "testSuiteFinished", "name='sample feature'", "|node=1");
+    assertContains(sink.messages.get(2), "testFinished", "name='first scenario'", "duration='90'", "|node=2");
+    assertContains(sink.messages.get(3), "testSuiteFinished", "name='sample feature'", "|node=1");
+  }
+
+  @Test
+  public void anonymousScenarioIsNamedByFileAndLine() {
+    process("FEATURE_ENTER", "{\"path\":\"" + CALLED + "\",\"name\":null,\"line\":2,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + CALLED + "\",\"name\":null,\"line\":4,\"refId\":\"[1:4]\",\"callDepth\":0}");
+
+    assertContains(sink.messages.get(0), "testSuiteStarted", "name='called.feature'");
+    assertContains(sink.messages.get(1), "testStarted", "name='called.feature:4'", "|node=2|parent=1");
   }
 
   @Test
@@ -156,7 +161,7 @@ public class KarateV2EventProcessorTest {
   }
 
   @Test
-  public void stepsOfCalledFeatureAttachToTheCalledScenario() {
+  public void stepsOfCalledFeatureGoToTheCallingScenarioIndentedByCallDepth() {
     process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"caller\",\"line\":1,\"callDepth\":0}");
     process("SCENARIO_ENTER",
       "{\"feature\":\"" + USERS + "\",\"name\":\"calling scenario\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
@@ -164,9 +169,68 @@ public class KarateV2EventProcessorTest {
     process("SCENARIO_ENTER",
       "{\"feature\":\"" + CALLED + "\",\"name\":null,\"line\":4,\"refId\":\"[1:4]\",\"callDepth\":1}");
     process("STEP_EXIT",
-      "{\"line\":5,\"prefix\":\"*\",\"text\":\"def greeting = 'hi'\",\"status\":\"passed\"}");
+      "{\"line\":5,\"prefix\":\"*\",\"text\":\"def greeting = 'hi'\",\"status\":\"passed\","
+        + "\"stepLog\":\"from the callee\\n\"}");
+    process("SCENARIO_EXIT",
+      "{\"feature\":\"" + CALLED + "\",\"name\":null,\"line\":4,\"refId\":\"[1:4]\",\"callDepth\":1,\"passed\":true}");
+    process("FEATURE_EXIT", "{\"name\":\"callee\",\"relativePath\":\"" + CALLED + "\",\"callDepth\":1}");
+    process("STEP_EXIT",
+      "{\"line\":4,\"prefix\":\"*\",\"text\":\"call read('called.feature')\",\"status\":\"passed\"}");
 
-    assertContains(sink.messages.get(4), "testStdOut", "name='called.feature:4'", "def greeting");
+    // No nodes for the callee: its step lands on the calling scenario, beneath the call step that
+    // ran it although it finished first, indented one level with its own output beneath it.
+    assertEquals(3, sink.messages.size());
+    String out = sink.messages.get(2);
+    assertContains(out, "testStdOut", "name='calling scenario'", "|node=2",
+      "out='* call read", "  * def greeting", "      from the callee");
+    assertTrue(out, out.indexOf("call read") < out.indexOf("def greeting"));
+  }
+
+  @Test
+  public void nestedCallsListEachLevelBeneathItsCallStep() {
+    process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"a\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"top\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
+    process("SCENARIO_ENTER", "{\"feature\":\"b.feature\",\"name\":\"b\",\"line\":2,\"callDepth\":1}");
+    process("SCENARIO_ENTER", "{\"feature\":\"c.feature\",\"name\":\"c\",\"line\":2,\"callDepth\":2}");
+    process("STEP_EXIT", "{\"line\":3,\"prefix\":\"*\",\"text\":\"c step\",\"status\":\"passed\"}");
+    process("SCENARIO_EXIT", "{\"feature\":\"c.feature\",\"name\":\"c\",\"line\":2,\"callDepth\":2}");
+    process("STEP_EXIT", "{\"line\":3,\"prefix\":\"*\",\"text\":\"b calls c\",\"status\":\"passed\"}");
+    process("STEP_EXIT", "{\"line\":4,\"prefix\":\"*\",\"text\":\"b after\",\"status\":\"passed\"}");
+    process("SCENARIO_EXIT", "{\"feature\":\"b.feature\",\"name\":\"b\",\"line\":2,\"callDepth\":1}");
+    process("STEP_EXIT", "{\"line\":4,\"prefix\":\"*\",\"text\":\"top calls b\",\"status\":\"passed\"}");
+
+    // Read top to bottom, the output is the call tree: each call step, then what it ran.
+    String out = sink.messages.get(sink.messages.size() - 1);
+    assertContains(out, "out='* top calls b|n  * b calls c|n    * c step|n  * b after|n'");
+  }
+
+  @Test
+  public void secondFeatureWithTheSameTitleIsToldApartByItsFile() {
+    process("FEATURE_ENTER", "{\"path\":\"x/A1.feature\",\"name\":\"Prints stuff\",\"line\":1,\"callDepth\":0}");
+    process("FEATURE_ENTER", "{\"path\":\"x/A1a.feature\",\"name\":\"Prints stuff\",\"line\":1,\"callDepth\":0}");
+    process("FEATURE_ENTER", "{\"path\":\"x/Other.feature\",\"name\":\"Other\",\"line\":1,\"callDepth\":0}");
+
+    assertContains(sink.messages.get(0), "name='Prints stuff'");
+    assertContains(sink.messages.get(1), "name='Prints stuff (A1a.feature)'");
+    assertContains(sink.messages.get(2), "name='Other'");
+  }
+
+  @Test
+  public void outlineExamplesAreNumberedOnlyWhenTheirNamesWouldRepeat() {
+    String outline = "build/resources/test/sample/outline.feature";
+    process("FEATURE_ENTER", "{\"path\":\"" + outline + "\",\"name\":\"o\",\"line\":1,\"callDepth\":0}");
+    // Placeholders in the title already make each example's name distinct.
+    process("SCENARIO_ENTER", "{\"feature\":\"" + outline + "\",\"name\":\"greeting alice\",\"line\":7,"
+      + "\"refId\":\"[1.1:7]\",\"callDepth\":0,\"isOutlineExample\":true,\"exampleIndex\":0,"
+      + "\"outlineSlug\":\"" + outline + ":greeting <name>\"}");
+    // Without placeholders every example has the outline's title: number them by example row.
+    process("SCENARIO_ENTER", "{\"feature\":\"" + outline + "\",\"name\":\"Retrieve user by ID\",\"line\":12,"
+      + "\"refId\":\"[2.2:12]\",\"callDepth\":0,\"isOutlineExample\":true,\"exampleIndex\":1,"
+      + "\"outlineSlug\":\"" + outline + ":Retrieve user by ID\"}");
+
+    assertContains(sink.messages.get(1), "name='greeting alice'");
+    assertContains(sink.messages.get(2), "name='Retrieve user by ID |[2|]'");
   }
 
   @Test
@@ -191,10 +255,9 @@ public class KarateV2EventProcessorTest {
   }
 
   @Test
-  public void parallelCallsOfTheSameFeatureKeepSeparateNodes() {
-    // Two top-level scenarios on different threads call the same feature at the same depth. Without
-    // the thread in the scenario key the second ENTER overwrote the first's id, the first EXIT closed
-    // the second's node, and the first caller's later steps attached to a stale called-scenario node.
+  public void parallelCallsOfTheSameFeatureKeepStepsWithTheirCaller() {
+    // Two top-level scenarios on different threads call the same feature at the same depth. Each
+    // thread's steps, called or not, must land on that thread's scenario, at that thread's depth.
     process("FEATURE_ENTER",
       "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0,\"thread\":\"t1\"}");
     process("SCENARIO_ENTER", "{\"feature\":\"" + USERS + "\",\"name\":\"alpha\",\"line\":3,"
@@ -210,22 +273,27 @@ public class KarateV2EventProcessorTest {
       "{\"path\":\"" + CALLED + "\",\"name\":\"login\",\"line\":1,\"callDepth\":1,\"thread\":\"t2\"}");
     process("SCENARIO_ENTER", "{\"feature\":\"" + CALLED + "\",\"name\":\"do login\",\"line\":4,"
       + "\"refId\":\"[1:4]\",\"callDepth\":1,\"thread\":\"t2\"}");
-    // ids are allocated in ENTER order: f=1, alpha=2, beta=3, login(t1)=4, do login(t1)=5, ..., do login(t2)=7
-    final int t1CalledId = 5;
-    final int t2CalledId = 7;
-    // t1's call finishes first and must close ITS node, not t2's
+    // ids are allocated to nodes only: f=1, alpha=2, beta=3; the calls get none
+    assertEquals(3, sink.messages.size());
+    // t1's call finishes first; a step from t1 after it is alpha's own, unindented
     process("SCENARIO_EXIT", "{\"feature\":\"" + CALLED + "\",\"name\":\"do login\",\"line\":4,"
       + "\"refId\":\"[1:4]\",\"callDepth\":1,\"passed\":true,\"thread\":\"t1\"}");
-    String t1Close = sink.messages.get(sink.messages.size() - 1);
-    assertContains(t1Close, "testSuiteFinished", "name='do login'", "|node=" + t1CalledId + "|");
-    // a step from t1 after its call returned belongs to alpha again, not to a stale called node
     process("STEP_EXIT",
       "{\"line\":5,\"prefix\":\"*\",\"text\":\"after call\",\"status\":\"passed\",\"thread\":\"t1\"}");
-    assertContains(sink.messages.get(sink.messages.size() - 1), "testStdOut", "name='alpha'", "after call");
-    // and t2's call still closes its own node
+    assertContains(sink.messages.get(sink.messages.size() - 1), "testStdOut", "name='alpha'", "|node=2",
+      "out='* after call");
+    assertEquals(4, sink.messages.size());
+    // t2 is still inside its call: its step waits for t2's call step, and closing the call does not
+    // close beta
+    process("STEP_EXIT",
+      "{\"line\":5,\"prefix\":\"*\",\"text\":\"login step\",\"status\":\"passed\",\"thread\":\"t2\"}");
     process("SCENARIO_EXIT", "{\"feature\":\"" + CALLED + "\",\"name\":\"do login\",\"line\":4,"
       + "\"refId\":\"[1:4]\",\"callDepth\":1,\"passed\":true,\"thread\":\"t2\"}");
-    assertContains(sink.messages.get(sink.messages.size() - 1), "testSuiteFinished", "|node=" + t2CalledId + "|");
+    assertEquals(4, sink.messages.size());
+    process("STEP_EXIT",
+      "{\"line\":10,\"prefix\":\"*\",\"text\":\"beta calls login\",\"status\":\"passed\",\"thread\":\"t2\"}");
+    assertContains(sink.messages.get(4), "testStdOut", "name='beta'", "|node=3",
+      "out='* beta calls login|n  * login step");
   }
 
   @Test
