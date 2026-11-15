@@ -33,12 +33,6 @@ public final class KarateSettingsState implements PersistentStateComponent<Karat
    * it off when debugging a suite with many expected failures.
    */
   private boolean pauseOnFailedStep = true;
-  /**
-   * Whether a Karate 2 run leaves out what a passed step printed (print, karate.log) under that step
-   * in the test tree. The step lines stay, and a step that did not pass keeps its output, since that
-   * is usually the output worth reading. Off by default (#404).
-   */
-  private boolean hidePassedStepOutput = false;
   private KarateVersionPreference karateVersionPreference = KarateVersionPreference.AUTO;
 
   public static KarateSettingsState getInstance() {
@@ -55,7 +49,6 @@ public final class KarateSettingsState implements PersistentStateComponent<Karat
   @Override
   public void loadState(KarateSettingsState state) {
     this.pauseOnFailedStep = state.pauseOnFailedStep;
-    this.hidePassedStepOutput = state.hidePassedStepOutput;
     this.defaultEnvironment = state.defaultEnvironment;
     this.useKarateJavaScriptEngine = state.useKarateJavaScriptEngine;
     this.defaultParallelism = state.defaultParallelism == null ? 1 : state.defaultParallelism;

@@ -103,10 +103,12 @@ The `eventProbe` task was executed against real Karate 2.1.1; observed:
   `SCENARIO_EXIT` adds `{passed, skipped, durationMillis}` and, on failure, `error=<message>`.
   `FEATURE_ENTER`: `{path, name, line, callDepth, tags}`. An `ERROR` event additionally fires
   with `{feature, scenario, message}`.
-- **Called features nest trivially.** The called feature emits its own `FEATURE_ENTER` /
+- **Called features are easy to place.** The called feature emits its own `FEATURE_ENTER` /
   `SCENARIO_ENTER` / ... / `FEATURE_EXIT` between the calling step's `STEP_ENTER`/`STEP_EXIT`,
   with `callDepth=1`. A simple ENTER/EXIT stack in the converter replaces the entire v1
-  caller-chain reflection hack.
+  caller-chain reflection hack. The tree gives called features no nodes at all: their steps go,
+  indented by call depth, into the calling scenario's output. They were first nested under the
+  calling scenario, which turned call chains into a staircase (#404).
 - **`onEvent` returning `true` keeps the suite running** and does NOT suppress Karate's own
   console output.
 - **Line filtering works:** `path("classpath:spike/users.feature:12")` ran exactly the scenario
@@ -126,7 +128,8 @@ Both open items from the spike were settled in the IDE:
   `src/test/java`, not `build/resources`.
 
 Verified by hand on 2026-09-05: parallelism 4 over the fixture's `sample` folder produces the
-expected tree (feature nodes, scenarios with steps, called features nested under their caller).
+expected tree (feature nodes, scenarios with steps, called features nested under their caller -
+since #404 called features get no nodes).
 
 ## Editor impact: JS syntax only
 

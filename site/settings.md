@@ -39,12 +39,6 @@ Off by default. When on, the plugin handles the JavaScript inside feature files 
 
 Its engine is a port of the parser inside Karate itself, so it accepts what Karate accepts. It doesn't do JavaScript-plugin things like resolving symbols across `.js` files or reporting unused variables. Takes effect after a restart.
 
-### Test tree: hide what passed steps print (Karate 2)
-
-Off by default. A Karate 2 run lists each step under its scenario in the test tree, with whatever the step printed - `print`, `karate.log` - indented beneath it. Tick this to leave that output out for steps that passed, so a long scenario reads as its steps and nothing else. A step that failed keeps its output, and the scenario's error is reported as usual. Takes effect from the next run.
-
-Karate 1 runs are unaffected: their output comes from Karate's own log rather than per step, so there is nothing to tell apart.
-
 ## Run configuration
 
 Created for you when you run from the gutter; edit it from Run > Edit Configurations.

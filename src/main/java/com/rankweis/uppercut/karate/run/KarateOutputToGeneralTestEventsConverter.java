@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -143,12 +142,6 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
   private boolean processEventText(final String text) {
     if (text.startsWith(KarateV2EventProcessor.EVENT_PREFIX)) {
       return getV2EventProcessor().process(text);
-    }
-    // Karate 2 also logs a step's prints straight to the console; with passed steps' output hidden,
-    // those lines wait for their step's result instead of going to the tree at once.
-    if (v2EventProcessor != null && ProcessOutputType.isStdout(myCurrentOutputType)
-        && v2EventProcessor.holdConsoleOutput(text)) {
-      return true;
     }
     Matcher matcher = UPPERCUT_LOG_PATTERN.matcher(text);
     if (text.contains("[config]") || (karateConfigItem != null && text.contains(
@@ -382,16 +375,9 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
             testConsoleProperties.getProject(), featurePath);
           return file == null ? null : "file://" + file.getPath() + ":" + line;
         }
-      }, hidePassedStepOutput());
+      });
     }
     return v2EventProcessor;
-  }
-
-  /** Read once per run, when the first v2 event arrives; a change applies from the next run. */
-  private static boolean hidePassedStepOutput() {
-    KarateSettingsState settings =
-      ApplicationManager.getApplication() == null ? null : KarateSettingsState.getInstance();
-    return settings != null && settings.isHidePassedStepOutput();
   }
 
 }

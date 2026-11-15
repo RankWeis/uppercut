@@ -6,17 +6,28 @@
 
 ### Highlights
 
-- **A quieter Karate 2 test tree, if you want one.** Settings > Tools > Karate can now hide what
-  passed steps print, keeping the steps themselves and everything a failed step printed. (#404)
+- **A flatter, clearer Karate 2 test tree.** Called features no longer get nodes of their own, so the
+  tree shows just the features and scenarios you ran, with each call's steps listed under the step
+  that made it. Features sharing a title and repeated outline examples are told apart. (#404)
 
 ### Added
 
-- **Hide what passed steps print in the Karate 2 test tree.** A Karate 2 run shows each step under
-  its scenario with whatever the step printed (`print`, `karate.log`) indented beneath it, which
-  buries the scenario's shape in long scenarios. Tick **Test tree: hide what passed steps print
-  (Karate 2)** under Settings > Tools > Karate and passed steps show as one line each; a step that
-  failed still shows its output, and the scenario's error is reported as before. Off by default,
-  and it applies from the next run. (#404)
+- **Karate 2 tells apart features that share a title.** When a second feature in a run has the same
+  title as one already in the test tree, its file name is added: `Prints stuff (A1a.feature)`.
+- **Karate 2 numbers Scenario Outline examples whose names would repeat.** An outline whose title
+  has no `<placeholders>` used to list every example under the same name; they now read
+  `Retrieve user by ID [1]`, `[2]`, and so on, by example row. Titles with placeholders already name
+  each example by its values and are unchanged.
+
+### Modified
+
+- **Karate 2 no longer adds test-tree nodes for called features.** Every `call read(...)` used to add
+  a feature node and a scenario node under the calling scenario, so a feature calling a feature
+  calling a feature became a staircase of nodes as deep as the chain, burying the scenarios you ran.
+  The tree now holds only the features and scenarios you ran. A called feature's steps, and what they
+  printed, are listed in the calling scenario's output beneath the step that called them, indented
+  by call depth, and a failure inside a call still fails the calling scenario with Karate's error.
+  (#404)
 
 ## [3.3.0-cheap] - 2026-10-20
 

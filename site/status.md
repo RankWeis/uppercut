@@ -45,9 +45,10 @@ These are the same for Karate 1 and Karate 2 - the language is the same.
 |:--|:--|:--|
 | Run a feature, scenario or tag from the gutter | Supported | Early access |
 | Live test tree with per-scenario steps and output | Supported | Early access |
-| Called features nested under the calling scenario | Supported | Early access |
+| Called features in the test tree | Listed as top-level nodes | No nodes of their own: the call's steps appear in the calling scenario's output, beneath the step that called them. Early access |
+| Features sharing a title told apart | Supported. Features are listed by file path | Early access. The second and later get their file name: `Prints stuff (A1a.feature)` |
 | Navigate from the test tree to the source line | Supported | Early access |
-| Scenario Outline examples shown individually | Supported | Early access |
+| Scenario Outline examples shown individually | Supported | Early access. Numbered (`[1]`, `[2]`) when the outline's title has no placeholders to tell them apart |
 | Environment and parallelism per run | Supported | Early access |
 | Version detected per module | n/a | Early access. Mixed-version repositories migrate one module at a time |
 | Settings pin (V1 / V2) | Supported | Supported. The pin wins whenever the classpath is ambiguous |
