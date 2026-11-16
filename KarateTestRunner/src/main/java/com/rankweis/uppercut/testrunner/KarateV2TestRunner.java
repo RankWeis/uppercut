@@ -208,6 +208,7 @@ public class KarateV2TestRunner {
       toJson.setAccessible(true);
       Object json = toJson.invoke(runEvent);
       if ("STEP_EXIT".equals(type)) {
+        json = withStepKeyword(runEvent, json);
         json = withStepLog(runEvent, json);
       }
       // v2 events carry no thread id, but this listener runs on the thread executing the step, so
@@ -221,17 +222,6 @@ public class KarateV2TestRunner {
     return true;
   }
 
-  /**
-   * Adds the step's captured log to a STEP_EXIT payload as {@code stepLog}.
-   *
-   * <p>Karate keeps what a step printed - {@code print} output, {@code karate.log} calls - on
-   * {@code StepResult.getLog()}, but {@code StepRunEvent.toJson()} omits it; it only reaches the
-   * aggregate emitted at FEATURE_EXIT, by which time the IDE has already closed the scenario nodes.
-   * Reading it here is what lets the test tree show a step's output beside the step.
-   *
-   * <p>Best effort: any reflection failure returns the original payload, so a Karate version that
-   * reshapes these types costs the log line, not the run.
-   */
   /** Stamps the emitting thread onto the payload; the IDE keys its per-scenario state on it. */
   @SuppressWarnings("unchecked")
   private static Object withThread(Object json) {
@@ -247,6 +237,53 @@ public class KarateV2TestRunner {
     return enriched;
   }
 
+  /**
+   * Adds the step's keyword to a STEP_EXIT payload as {@code keyword}.
+   *
+   * <p>Karate 2 parses {@code * def id = response.id} into a keyword ({@code def}) and a text
+   * ({@code id = response.id}), and {@code StepRunEvent.toJson()} sends only the text. Without the
+   * keyword the IDE would list that step as {@code * id = response.id}, and {@code * method post} as
+   * {@code * post} (#404). Steps with no keyword - a bare expression, or Given/When prose - have none.
+   *
+   * <p>Best effort, like {@link #withStepLog}: a reflection failure returns the original payload.
+   */
+  @SuppressWarnings("unchecked")
+  private static Object withStepKeyword(Object runEvent, Object json) {
+    try {
+      if (!(json instanceof Map)) {
+        return json;
+      }
+      Method step = runEvent.getClass().getMethod("step");
+      step.setAccessible(true);
+      Object stepObject = step.invoke(runEvent);
+      if (stepObject == null) {
+        return json;
+      }
+      Method getKeyword = stepObject.getClass().getMethod("getKeyword");
+      getKeyword.setAccessible(true);
+      Object keyword = getKeyword.invoke(stepObject);
+      if (keyword == null || String.valueOf(keyword).isBlank()) {
+        return json;
+      }
+      Map<String, Object> enriched = new LinkedHashMap<>((Map<String, Object>) json);
+      enriched.put("keyword", String.valueOf(keyword));
+      return enriched;
+    } catch (Exception e) {
+      return json;
+    }
+  }
+
+  /**
+   * Adds the step's captured log to a STEP_EXIT payload as {@code stepLog}.
+   *
+   * <p>Karate keeps what a step printed - {@code print} output, {@code karate.log} calls - on
+   * {@code StepResult.getLog()}, but {@code StepRunEvent.toJson()} omits it; it only reaches the
+   * aggregate emitted at FEATURE_EXIT, by which time the IDE has already closed the scenario nodes.
+   * Reading it here is what lets the test tree show a step's output beside the step.
+   *
+   * <p>Best effort: any reflection failure returns the original payload, so a Karate version that
+   * reshapes these types costs the log line, not the run.
+   */
   @SuppressWarnings("unchecked")
   private static Object withStepLog(Object runEvent, Object json) {
     try {

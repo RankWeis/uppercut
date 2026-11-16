@@ -33,6 +33,12 @@ public final class KarateSettingsState implements PersistentStateComponent<Karat
    * it off when debugging a suite with many expected failures.
    */
   private boolean pauseOnFailedStep = true;
+  /**
+   * Whether a Karate 2 run lists every step in its output, passed ones included. Off by default: the
+   * listing repeats the feature file line by line (#404). Steps that fail or are skipped are listed
+   * either way, and what a step prints is always shown.
+   */
+  private boolean showPassedSteps = false;
   private KarateVersionPreference karateVersionPreference = KarateVersionPreference.AUTO;
 
   public static KarateSettingsState getInstance() {
@@ -49,6 +55,7 @@ public final class KarateSettingsState implements PersistentStateComponent<Karat
   @Override
   public void loadState(KarateSettingsState state) {
     this.pauseOnFailedStep = state.pauseOnFailedStep;
+    this.showPassedSteps = state.showPassedSteps;
     this.defaultEnvironment = state.defaultEnvironment;
     this.useKarateJavaScriptEngine = state.useKarateJavaScriptEngine;
     this.defaultParallelism = state.defaultParallelism == null ? 1 : state.defaultParallelism;

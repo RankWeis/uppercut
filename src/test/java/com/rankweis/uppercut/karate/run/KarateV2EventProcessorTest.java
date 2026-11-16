@@ -127,41 +127,129 @@ public class KarateV2EventProcessorTest {
   }
 
   @Test
+  public void passedStepsAreNotListedByDefault() {
+    // The run from #404: every passed step was echoed into the run output, which then read like the
+    // feature file with its keywords stripped. Passed steps are now left out unless asked for.
+    process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"create a user\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
+    process("STEP_EXIT", "{\"line\":4,\"prefix\":\"*\",\"keyword\":\"url\","
+      + "\"text\":\"'https://jsonplaceholder.typicode.com/users'\",\"status\":\"passed\"}");
+    process("STEP_EXIT",
+      "{\"line\":5,\"prefix\":\"*\",\"keyword\":\"method\",\"text\":\"post\",\"status\":\"passed\"}");
+    process("STEP_EXIT", "{\"line\":6,\"prefix\":\"*\",\"keyword\":\"status\",\"text\":\"201\",\"status\":\"passed\"}");
+
+    assertEquals("feature and scenario started, nothing else: " + sink.messages, 2, sink.messages.size());
+  }
+
+  @Test
+  public void stepsThatDidNotPassAreListedByDefault() {
+    process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"s\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
+    process("STEP_EXIT", "{\"line\":4,\"prefix\":\"*\",\"keyword\":\"def\",\"text\":\"id = 1\",\"status\":\"passed\"}");
+    process("STEP_EXIT",
+      "{\"line\":5,\"prefix\":\"*\",\"keyword\":\"match\",\"text\":\"id == 2\",\"status\":\"failed\"}");
+    process("STEP_EXIT", "{\"line\":6,\"prefix\":\"*\",\"keyword\":\"print\",\"text\":\"id\",\"status\":\"skipped\"}");
+
+    // Where the scenario went wrong stays visible; the error itself arrives on SCENARIO_EXIT.
+    assertEquals(4, sink.messages.size());
+    assertContains(sink.messages.get(2), "testStdOut", "name='s'", "out='* match id == 2   |[failed|]|n'");
+    assertContains(sink.messages.get(3), "testStdOut", "name='s'", "out='* print id   |[skipped|]|n'");
+  }
+
+  @Test
+  public void printOutputOfPassedStepIsKeptWhenTheStepIsNotListed() {
+    // A project with no logging provider has a silent console; this is its only print output.
+    process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"prints\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
+    process("STEP_EXIT", "{\"line\":4,\"prefix\":\"*\",\"keyword\":\"print\",\"text\":\"'env is', env\","
+      + "\"status\":\"passed\",\"stepLog\":\"env is dev\\nsecond line\\n\"}");
+
+    assertContains(sink.messages.get(2), "testStdOut", "name='prints'", "out='env is dev|nsecond line|n'");
+  }
+
+  @Test
+  public void failureInsideCallIsListedBeneathTheCallStepByDefault() {
+    process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"caller\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"calling\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + CALLED + "\",\"name\":null,\"line\":4,\"refId\":\"[1:4]\",\"callDepth\":1}");
+    process("STEP_EXIT", "{\"line\":5,\"prefix\":\"*\",\"keyword\":\"def\",\"text\":\"a = 1\",\"status\":\"passed\"}");
+    process("STEP_EXIT",
+      "{\"line\":6,\"prefix\":\"*\",\"keyword\":\"match\",\"text\":\"a == 2\",\"status\":\"failed\"}");
+    process("SCENARIO_EXIT",
+      "{\"feature\":\"" + CALLED + "\",\"name\":null,\"line\":4,\"refId\":\"[1:4]\",\"callDepth\":1,\"passed\":false}");
+    process("STEP_EXIT", "{\"line\":4,\"prefix\":\"*\",\"keyword\":\"call\",\"text\":\"read('called.feature')\","
+      + "\"status\":\"failed\"}");
+
+    // The failed call step, then the failed step inside it; the callee's passed step is left out.
+    assertContains(sink.messages.get(sink.messages.size() - 1), "testStdOut", "name='calling'",
+      "out='* call read(|'called.feature|')   |[failed|]|n  * match a == 2   |[failed|]|n'");
+  }
+
+  @Test
   public void stepsAreReportedAsOutputOnTheirScenario() {
+    showPassedSteps();
     process("FEATURE_ENTER",
       "{\"path\":\"" + USERS + "\",\"name\":\"sample feature\",\"line\":1,\"callDepth\":0}");
     process("SCENARIO_ENTER",
       "{\"feature\":\"" + USERS + "\",\"name\":\"first scenario\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
-    process("STEP_EXIT",
-      "{\"line\":4,\"prefix\":\"*\",\"text\":\"def id = 1\",\"status\":\"passed\",\"durationMillis\":12.3}");
-    process("STEP_EXIT",
-      "{\"line\":5,\"prefix\":\"*\",\"text\":\"match id == 2\",\"status\":\"failed\",\"durationMillis\":1.0}");
+    process("STEP_EXIT", "{\"line\":4,\"prefix\":\"*\",\"keyword\":\"def\",\"text\":\"id = 1\","
+      + "\"status\":\"passed\",\"durationMillis\":12.3}");
+    process("STEP_EXIT", "{\"line\":5,\"prefix\":\"*\",\"keyword\":\"match\",\"text\":\"id == 2\","
+      + "\"status\":\"failed\",\"durationMillis\":1.0}");
 
     // Steps attach to the scenario that ran them, so the tree shows what a run did - not only
     // whether it passed. The v1 path gets this from its log lines; v2 reports structurally.
-    assertContains(sink.messages.get(2), "testStdOut", "name='first scenario'", "def id = 1", "|node=2");
-    assertContains(sink.messages.get(3), "testStdOut", "name='first scenario'", "match id == 2", "failed");
+    assertContains(sink.messages.get(2), "testStdOut", "name='first scenario'", "out='* def id = 1|n'", "|node=2");
+    assertContains(sink.messages.get(3), "testStdOut", "name='first scenario'", "* match id == 2", "failed");
+  }
+
+  @Test
+  public void theKeywordKarateSendsApartIsWrittenBeforeTheText() {
+    // Karate 2's StepRunEvent sends `* def user =` as text "user =" and `* method post` as "post";
+    // the runner adds the keyword. Without it #404's log read `* user =` and `* post`.
+    showPassedSteps();
+    process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0}");
+    process("SCENARIO_ENTER",
+      "{\"feature\":\"" + USERS + "\",\"name\":\"s\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
+    process("STEP_EXIT", "{\"line\":4,\"prefix\":\"*\",\"keyword\":\"def\",\"text\":\"user =\",\"status\":\"passed\"}");
+    process("STEP_EXIT",
+      "{\"line\":5,\"prefix\":\"*\",\"keyword\":\"method\",\"text\":\"post\",\"status\":\"passed\"}");
+    // A bare expression, and Given/When prose, have no keyword
+    process("STEP_EXIT", "{\"line\":6,\"prefix\":\"*\",\"text\":\"karate.log('x')\",\"status\":\"passed\"}");
+    process("STEP_EXIT", "{\"line\":7,\"prefix\":\"Given\",\"text\":\"a user\",\"status\":\"passed\"}");
+
+    assertContains(sink.messages.get(2), "out='* def user =|n'");
+    assertContains(sink.messages.get(3), "out='* method post|n'");
+    assertContains(sink.messages.get(4), "out='* karate.log(|'x|')|n'");
+    assertContains(sink.messages.get(5), "out='Given a user|n'");
   }
 
   @Test
   public void stepOutputIsShownBeneathItsStep() {
+    showPassedSteps();
     process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"f\",\"line\":1,\"callDepth\":0}");
     process("SCENARIO_ENTER",
       "{\"feature\":\"" + USERS + "\",\"name\":\"prints\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
     // What print/karate.log produced: v2 keeps it on StepResult.getLog(), which the runner adds to
     // the STEP_EXIT payload because the aggregate carrying it arrives after the nodes are closed.
     process("STEP_EXIT",
-      "{\"line\":4,\"prefix\":\"*\",\"text\":\"print 'env is', env\",\"status\":\"passed\","
+      "{\"line\":4,\"prefix\":\"*\",\"keyword\":\"print\",\"text\":\"'env is', env\",\"status\":\"passed\","
         + "\"stepLog\":\"env is dev\\nsecond line\\n\"}");
 
     // Service messages escape quotes and newlines (' -> |', \n -> |n), so assert on the unescaped
     // fragments: the step text, then each log line indented beneath it.
     assertContains(sink.messages.get(2), "testStdOut", "name='prints'",
-      "print ", " env", "    env is dev", "    second line");
+      "* print ", " env", "    env is dev", "    second line");
   }
 
   @Test
   public void stepsOfCalledFeatureGoToTheCallingScenarioIndentedByCallDepth() {
+    showPassedSteps();
     process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"caller\",\"line\":1,\"callDepth\":0}");
     process("SCENARIO_ENTER",
       "{\"feature\":\"" + USERS + "\",\"name\":\"calling scenario\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
@@ -169,13 +257,13 @@ public class KarateV2EventProcessorTest {
     process("SCENARIO_ENTER",
       "{\"feature\":\"" + CALLED + "\",\"name\":null,\"line\":4,\"refId\":\"[1:4]\",\"callDepth\":1}");
     process("STEP_EXIT",
-      "{\"line\":5,\"prefix\":\"*\",\"text\":\"def greeting = 'hi'\",\"status\":\"passed\","
+      "{\"line\":5,\"prefix\":\"*\",\"keyword\":\"def\",\"text\":\"greeting = 'hi'\",\"status\":\"passed\","
         + "\"stepLog\":\"from the callee\\n\"}");
     process("SCENARIO_EXIT",
       "{\"feature\":\"" + CALLED + "\",\"name\":null,\"line\":4,\"refId\":\"[1:4]\",\"callDepth\":1,\"passed\":true}");
     process("FEATURE_EXIT", "{\"name\":\"callee\",\"relativePath\":\"" + CALLED + "\",\"callDepth\":1}");
     process("STEP_EXIT",
-      "{\"line\":4,\"prefix\":\"*\",\"text\":\"call read('called.feature')\",\"status\":\"passed\"}");
+      "{\"line\":4,\"prefix\":\"*\",\"keyword\":\"call\",\"text\":\"read('called.feature')\",\"status\":\"passed\"}");
 
     // No nodes for the callee: its step lands on the calling scenario, beneath the call step that
     // ran it although it finished first, indented one level with its own output beneath it.
@@ -188,6 +276,7 @@ public class KarateV2EventProcessorTest {
 
   @Test
   public void nestedCallsListEachLevelBeneathItsCallStep() {
+    showPassedSteps();
     process("FEATURE_ENTER", "{\"path\":\"" + USERS + "\",\"name\":\"a\",\"line\":1,\"callDepth\":0}");
     process("SCENARIO_ENTER",
       "{\"feature\":\"" + USERS + "\",\"name\":\"top\",\"line\":3,\"refId\":\"[1:3]\",\"callDepth\":0}");
@@ -235,6 +324,7 @@ public class KarateV2EventProcessorTest {
 
   @Test
   public void interleavedParallelScenariosKeepTheirOwnSteps() {
+    showPassedSteps();
     // Karate runs scenarios on several threads and their events interleave on one stdout stream.
     // The runner stamps each event with its thread; without keying on it, a step lands on whichever
     // scenario opened most recently - which under parallelism is usually the wrong one.
@@ -256,6 +346,7 @@ public class KarateV2EventProcessorTest {
 
   @Test
   public void parallelCallsOfTheSameFeatureKeepStepsWithTheirCaller() {
+    showPassedSteps();
     // Two top-level scenarios on different threads call the same feature at the same depth. Each
     // thread's steps, called or not, must land on that thread's scenario, at that thread's depth.
     process("FEATURE_ENTER",
@@ -324,6 +415,11 @@ public class KarateV2EventProcessorTest {
     assertTrue(processor.process("<<UPPERCUT-V2>> SCENARIO_ENTER not-json-at-all"));
     assertTrue(processor.process("<<UPPERCUT-V2>> FEATURE_ENTER [1,2,3]"));
     assertTrue(sink.messages.isEmpty());
+  }
+
+  /** The "list passed steps" setting turned on, for tests of how the full listing is laid out. */
+  private void showPassedSteps() {
+    processor = new KarateV2EventProcessor(sink, true);
   }
 
   private void process(String type, String json) {

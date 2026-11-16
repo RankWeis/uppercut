@@ -54,6 +54,10 @@ public class KarateV2EventProcessor {
   }
 
   private final EventSink sink;
+  // Whether passed steps are listed in the run output. Off by default: a listing of every step that
+  // passed repeats the feature file and buries the output that matters (#404). Steps that did not
+  // pass are always listed, and what any step printed is always kept.
+  private final boolean showPassedSteps;
   private int nextId = 1;
   private final Map<String, Integer> topFeatureIdByPath = new HashMap<>();
   private final Map<String, Integer> scenarioIdByKey = new HashMap<>();
@@ -72,7 +76,12 @@ public class KarateV2EventProcessor {
   private final Set<String> featureTitles = new HashSet<>();
 
   public KarateV2EventProcessor(@NotNull EventSink sink) {
+    this(sink, false);
+  }
+
+  public KarateV2EventProcessor(@NotNull EventSink sink, boolean showPassedSteps) {
     this.sink = sink;
+    this.showPassedSteps = showPassedSteps;
   }
 
   /** Returns true if the line was consumed as a v2 event. */
@@ -226,9 +235,10 @@ public class KarateV2EventProcessor {
   }
 
   /**
-   * Renders a finished step as output on the scenario that ran it, so a Karate 2 run shows what it
-   * did rather than only whether it passed. The v1 path gets this for free from its log lines; v2
-   * reports structurally, so without this the test tree has no step detail at all.
+   * Renders a finished step as output on the scenario that ran it. A step that did not pass is listed
+   * with its status, so a failure shows where it happened; a passed step is listed only when
+   * {@code showPassedSteps} is on. What a step printed is kept either way: beneath the step's line
+   * when it is listed, on its own when it is not.
    *
    * <p>Attributed to the scenario the user ran on this thread, including the steps of any feature it
    * called, which are indented two spaces per call level. A called feature's steps finish before the
@@ -248,25 +258,34 @@ public class KarateV2EventProcessor {
     }
     int depth = callDepthByThread.getOrDefault(thread, 0);
     String indent = "  ".repeat(depth);
-    String prefix = getString(json, "prefix");
     String status = getString(json, "status");
+    boolean passed = "passed".equals(status);
+    boolean listed = showPassedSteps || !passed;
     StringBuilder line = new StringBuilder();
-    line.append(indent).append(prefix == null ? "*" : prefix).append(' ').append(text);
-    if (status != null && !"passed".equals(status)) {
-      line.append("   [").append(status).append(']');
+    if (listed) {
+      String prefix = getString(json, "prefix");
+      line.append(indent).append(prefix == null ? "*" : prefix).append(' ').append(stepText(json, text));
+      if (!passed && status != null) {
+        line.append("   [").append(status).append(']');
+      }
+      line.append('\n');
     }
-    line.append('\n');
-    // Whatever the step printed - print, karate.log - indented beneath it, so output stays with the
-    // step that produced it instead of being lost (v2 emits it nowhere else the tree can reach).
+    // Whatever the step printed - print, karate.log - indented beneath it when the step is listed, so
+    // output stays with the step that produced it. Kept when the step is not listed: a project with no
+    // logging provider has a silent console, and this is the only place its print output appears.
     String stepLog = getString(json, "stepLog");
     if (stepLog != null && !stepLog.isBlank()) {
-      stepLog.strip().lines().forEach(l -> line.append(indent).append("    ").append(l).append('\n'));
+      String logIndent = listed ? indent + "    " : indent;
+      stepLog.strip().lines().forEach(l -> line.append(logIndent).append(l).append('\n'));
     }
     // Steps of whatever this step called, already finished, go beneath it.
     line.append(takeCalledOutput(thread, depth + 1, false));
     if (depth > 0) {
       // Itself a called step: wait for the step that called it.
       calledOutput(thread, depth).append(line);
+      return;
+    }
+    if (line.isEmpty()) {
       return;
     }
     sink.emit(ServiceMessageBuilder.testStdOut(scenarioName).addAttribute("out", line.toString()),
@@ -298,6 +317,19 @@ public class KarateV2EventProcessor {
       byDepth.get(d).setLength(0);
     }
     return out.toString();
+  }
+
+  /**
+   * The step as written: keyword and text. Karate 2 sends {@code * def id = response.id} as text
+   * {@code id = response.id}; the runner adds the {@code keyword} it dropped. Steps without one - a
+   * bare expression, Given/When prose - send none and are written as their text.
+   */
+  private static String stepText(JsonObject json, String text) {
+    String keyword = getString(json, "keyword");
+    if (keyword == null || keyword.isBlank()) {
+      return text;
+    }
+    return text.isEmpty() ? keyword : keyword + " " + text;
   }
 
   /** The outline's own title, from the example's outlineSlug ({@code <feature path>:<title>}). */

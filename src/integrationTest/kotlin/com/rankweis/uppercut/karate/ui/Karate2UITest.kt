@@ -777,23 +777,22 @@ class Karate2UITest {
             listOf("called from users.feature", "called.feature:4")
                 .forEach { assertTrue(!tree.contains(it), "'$it' should get no node$diagnostics") }
 
-            // Step-level detail: v2 reports structurally, so without STEP_EXIT forwarding the tree
-            // says only whether a scenario passed. The second scenario prints, and that output has
-            // to reach the tree too - it lives on StepResult.getLog(), which toJson() omits.
+            // Step-level detail: v2 reports structurally, so STEP_EXIT is forwarded. The second
+            // scenario prints, and that output has to reach the tree - it lives on
+            // StepResult.getLog(), which toJson() omits.
             val consoleText = consoleTextOf(driver, "users.feature")
-            assertTrue(
-                consoleText.contains("karate.env"),
-                "step text missing from the run output$diagnostics\n--- console ---\n$consoleText"
-            )
             assertTrue(
                 consoleText.contains("env is"),
                 "print output missing from the run output$diagnostics\n--- console ---\n$consoleText"
             )
-            // The called feature's step is listed in the calling scenario's output instead.
-            assertTrue(
-                consoleText.contains("greeting = 'hello ' + name"),
-                "called feature's step missing from the run output$diagnostics\n--- console ---\n$consoleText"
-            )
+            // Passed steps are not listed by default (#404), the called feature's included: every
+            // step here passes, so neither the caller's nor the callee's step text is in the output.
+            listOf("def num = 5", "greeting = 'hello ' + name").forEach {
+                assertTrue(
+                    !consoleText.contains(it),
+                    "passed step '$it' listed in the run output$diagnostics\n--- console ---\n$consoleText"
+                )
+            }
 
             val root = results.getTestsRootNode()
             val scenario = findNode(root, "v2 built-ins and a nested call")

@@ -4,6 +4,24 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Karate 2: a setting to list passed steps in the run output.** Settings > Tools > Karate >
+  *Karate 2: list passed steps in the run output*. Off by default; see Modified. (#404)
+
+### Modified
+
+- **Karate 2 no longer lists passed steps in the run output.** Every step was written back into the
+  output as it finished, so a run's log repeated the feature file line by line around Karate's own
+  output. Steps that fail or are skipped are still listed, marked `[failed]` or `[skipped]`, and what
+  any step printed is still shown. The new setting brings the full listing back. (#404)
+
+### Fixed
+
+- **Karate 2 steps listed in the run output keep their keyword.** Karate 2 reports a step's keyword
+  apart from its text, and only the text was shown: `* def id = response.id` read `* id = response.id`,
+  and `* method post` read `* post`. (#404)
+
 ## [3.3.2] - 2026-11-15
 
 ### Highlights
