@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.3.3] - 2026-11-17
+
 ### Added
 
 - **Karate 2: a setting to list passed steps in the run output.** Settings > Tools > Karate >
@@ -611,7 +613,8 @@ that works on feature files themselves**.
 
 - Initial plugin with syntax highlighting and clickable links.
 
-[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.3.2...HEAD
+[Unreleased]: https://github.com/rankweis/uppercut/compare/v3.3.3...HEAD
+[3.3.3]: https://github.com/rankweis/uppercut/compare/v3.3.2...v3.3.3
 [3.3.2]: https://github.com/rankweis/uppercut/compare/v3.3.0-cheap...v3.3.2
 [3.3.0-cheap]: https://github.com/rankweis/uppercut/compare/v3.2.1...v3.3.0-cheap
 [3.2.1]: https://github.com/rankweis/uppercut/compare/v3.2.0...v3.2.1
