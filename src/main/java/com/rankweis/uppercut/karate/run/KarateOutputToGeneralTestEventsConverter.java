@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.rankweis.uppercut.settings.KarateSettingsState;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -375,7 +376,9 @@ public class KarateOutputToGeneralTestEventsConverter extends OutputToGeneralTes
             testConsoleProperties.getProject(), featurePath);
           return file == null ? null : "file://" + file.getPath() + ":" + line;
         }
-      });
+        // Read once per run, when its first event arrives: changing the setting mid-run would list
+        // passed steps for half the scenarios.
+      }, KarateSettingsState.getInstance().isShowPassedSteps());
     }
     return v2EventProcessor;
   }

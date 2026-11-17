@@ -78,7 +78,10 @@ IDE console
   every event with its emitting (virtual) thread, and the processor keys its per-scenario state
   on thread + feature + refId + call depth, so parallel runs and parallel calls of the same
   feature keep separate nodes. STEP_EXIT payloads carry the step's captured log (`stepLog`,
-  read reflectively from StepResult.getLog()), which is what shows under each step node.
+  read reflectively from StepResult.getLog()) and its `keyword` (Step.getKeyword(): Karate 2's
+  `text` is the step without it, so `* method post` arrives as text `post`). The scenario's output
+  lists steps that did not pass, and what any step printed; passed steps are listed only with the
+  "list passed steps" setting on (#404).
 ```
 
 ## Phases

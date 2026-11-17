@@ -39,6 +39,10 @@ Off by default. When on, the plugin handles the JavaScript inside feature files 
 
 Its engine is a port of the parser inside Karate itself, so it accepts what Karate accepts. It doesn't do JavaScript-plugin things like resolving symbols across `.js` files or reporting unused variables. Takes effect after a restart.
 
+### Karate 2: list passed steps in the run output
+
+Off by default. A Karate 2 run's output shows what your steps printed, plus each step that failed or was skipped, marked `[failed]` or `[skipped]` so you can see where the scenario went wrong. Turn this on to list every step as it runs, passed ones too - `* def id = response.id`, `* method post` - with what each one printed indented beneath it, and the steps of called features indented beneath the step that called them. Takes effect on the next run. Karate 1 runs are unaffected.
+
 ## Run configuration
 
 Created for you when you run from the gutter; edit it from Run > Edit Configurations.
